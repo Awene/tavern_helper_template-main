@@ -1,0 +1,303 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "基本信息": {
+      "type": "object",
+      "properties": {
+        "姓名": {
+          "default": "User",
+          "type": "string"
+        },
+        "寿元": {
+          "type": "object",
+          "properties": {
+            "现值": {
+              "type": "number"
+            },
+            "上限": {
+              "type": "number"
+            }
+          }
+        },
+        "种族": {
+          "default": "人族",
+          "type": "string"
+        },
+        "灵根": {
+          "default": {},
+          "type": "object",
+          "properties": {
+            "名称": {
+              "default": "凡品灵根",
+              "type": "string"
+            },
+            "灵根五行": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "金",
+                  "木",
+                  "水",
+                  "火",
+                  "土",
+                  "阴",
+                  "阳",
+                  "混沌"
+                ]
+              }
+            },
+            "灵根品阶": {
+              "default": "无灵根",
+              "type": "string",
+              "enum": [
+                "单灵根",
+                "双灵根",
+                "三灵根",
+                "四灵根",
+                "五灵根",
+                "无灵根"
+              ]
+            }
+          }
+        },
+        "体质": {
+          "type": "object",
+          "properties": {
+            "名称": {
+              "default": "凡体",
+              "type": "string"
+            },
+            "描述": {
+              "default": "",
+              "type": "string"
+            },
+            "悟性": {
+              "type": "number"
+            },
+            "根骨": {
+              "type": "number"
+            },
+            "气感": {
+              "type": "number"
+            }
+          }
+        },
+        "境界": {
+          "type": "object",
+          "properties": {
+            "当前境界": {
+              "default": "凡人",
+              "type": "string"
+            },
+            "修为进度": {
+              "default": "0/100",
+              "type": "string"
+            },
+            "天谴": {
+              "type": "number"
+            }
+          }
+        },
+        "技艺": {
+          "type": "object",
+          "properties": {
+            "生产类": {
+              "type": "object",
+              "properties": {
+                "炼器": {
+                  "type": "number"
+                },
+                "驯兽": {
+                  "type": "number"
+                },
+                "培育": {
+                  "type": "number"
+                },
+                "卜卦": {
+                  "type": "number"
+                },
+                "炼丹": {
+                  "type": "number"
+                },
+                "制符": {
+                  "type": "number"
+                }
+              }
+            },
+            "战斗类": {
+              "type": "object",
+              "properties": {
+                "御物": {
+                  "type": "number"
+                },
+                "咒法": {
+                  "type": "number"
+                },
+                "幻术": {
+                  "type": "number"
+                },
+                "阵法": {
+                  "type": "number"
+                },
+                "神识": {
+                  "type": "number"
+                },
+                "炼体": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "状态": {
+          "type": "object",
+          "properties": {
+            "气血": {
+              "type": "object",
+              "properties": {
+                "现值": {
+                  "type": "number"
+                },
+                "上限": {
+                  "type": "number"
+                }
+              }
+            },
+            "灵力": {
+              "type": "object",
+              "properties": {
+                "现值": {
+                  "type": "number"
+                },
+                "上限": {
+                  "type": "number"
+                }
+              }
+            },
+            "遁速": {
+              "description": "单位：m/s",
+              "$ref": "#/$defs/__schema0"
+            }
+          }
+        },
+        "地点": {
+          "default": {},
+          "type": "object",
+          "properties": {
+            "世界": {
+              "default": "凡界",
+              "type": "string",
+              "enum": [
+                "凡界",
+                "灵界",
+                "仙界"
+              ]
+            },
+            "地域": {
+              "default": "中原",
+              "type": "string"
+            },
+            "具体地点": {
+              "default": "荒野",
+              "type": "string"
+            }
+          }
+        },
+        "时间": {
+          "type": "object",
+          "properties": {
+            "年": {
+              "default": 1,
+              "type": "number"
+            },
+            "月": {
+              "type": "number"
+            },
+            "日": {
+              "type": "number"
+            },
+            "时辰": {
+              "default": "08:00",
+              "type": "string"
+            }
+          }
+        },
+        "状态效果": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "类型": {
+                "default": "特殊",
+                "type": "string",
+                "enum": [
+                  "增益",
+                  "减益",
+                  "特殊"
+                ]
+              },
+              "效果": {
+                "default": "",
+                "type": "string"
+              },
+              "层数": {
+                "type": "number"
+              },
+              "剩余时间": {
+                "default": "永久",
+                "type": "string"
+              },
+              "来源": {
+                "default": "未知",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "修炼功法": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "default": {},
+        "type": "object",
+        "properties": {
+          "运行中": {
+            "default": false,
+            "type": "boolean"
+          },
+          "品质": {
+            "default": "凡",
+            "type": "string",
+            "enum": [
+              "凡",
+              "黄",
+              "玄",
+              "地",
+              "天"
+            ]
+          },
+          "境界": {
+            "default": "凡人",
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "__schema0": {
+      "type": "number"
+    }
+  }
+}
