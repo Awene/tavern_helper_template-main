@@ -83,7 +83,11 @@ let io: Server;
 function watch_tavern_helper(compiler: webpack.Compiler) {
   if (compiler.options.watch) {
     if (!io) {
+<<<<<<< HEAD
       const port = config.port ?? 6624;
+=======
+      const port = config.port ?? 6621;
+>>>>>>> 4e7451805c5655a416233e7632d1b0693b9cade6
       io = new Server(port, { cors: { origin: '*' } });
       console.info(`\x1b[36m[tavern_helper]\x1b[0m 已启动酒馆监听服务`);
       io.on('connect', socket => {
