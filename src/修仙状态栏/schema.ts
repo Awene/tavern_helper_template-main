@@ -466,7 +466,7 @@ const BasicInfoSchema = z.object({
     .prefault({ 世界: '凡界', 地域: '中原', 具体地点: '荒野' }),
   时间: z
     .object({
-      年: z.coerce.number().prefault(1),
+      年: z.coerce.number().prefault(7000),
       月: z.coerce
         .number()
         .transform(n => _.clamp(n, 1, 12))
@@ -479,7 +479,7 @@ const BasicInfoSchema = z.object({
         .enum(['子时', '丑时', '寅时', '卯时', '辰时', '巳时', '午时', '未时', '申时', '酉时', '戌时', '亥时'])
         .prefault('午时'),
     })
-    .prefault({ 年: 1, 月: 1, 日: 1, 时辰: '午时' }),
+    .prefault({ 年: 7000, 月: 1, 日: 1, 时辰: '午时' }),
   状态效果: z.record(z.string(), StatusEffectSchema).prefault({}),
 });
 
