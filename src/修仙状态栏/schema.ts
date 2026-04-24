@@ -159,7 +159,7 @@ const NPCSchema = z.object({
       年龄: z.coerce
         .number()
         .transform(n => _.clamp(n, 0, Infinity))
-        .prefault(0),
+        .prefault(18),
       寿命: z.coerce
         .number()
         .transform(n => _.clamp(n, 0, Infinity))
@@ -169,7 +169,7 @@ const NPCSchema = z.object({
         .transform(n => _.clamp(n, 0, Infinity))
         .prefault(18),
     })
-    .prefault({ 年龄: 0, 寿命: 100, 外观年龄: 18 }),
+    .prefault({ 年龄: 18, 寿命: 100, 外观年龄: 18 }),
   灵根: z
     .object({
       名称: z.string().prefault('凡品灵根'),
@@ -311,7 +311,7 @@ const BasicInfoSchema = z.object({
       年龄: z.coerce
         .number()
         .transform(n => _.clamp(n, 0, Infinity))
-        .prefault(0),
+        .prefault(18),
       寿命: z.coerce
         .number()
         .transform(n => _.clamp(n, 0, Infinity))
@@ -321,7 +321,7 @@ const BasicInfoSchema = z.object({
         .transform(n => _.clamp(n, 0, Infinity))
         .prefault(18),
     })
-    .prefault({ 年龄: 0, 寿命: 100, 外观年龄: 18 }),
+    .prefault({ 年龄: 18, 寿命: 100, 外观年龄: 18 }),
   灵根: z
     .object({
       名称: z.string().prefault('凡品灵根'),
@@ -488,13 +488,13 @@ export const CultivationStatusSchema = z.object({
   基本信息: BasicInfoSchema.prefault({
     姓名: 'User',
     种族: '人族',
-    寿元: { 年龄: 0, 寿命: 100, 外观年龄: 18 },
+    寿元: { 年龄: 18, 寿命: 100, 外观年龄: 18 },
     灵根: { 名称: '凡品灵根', 灵根五行: [], 灵根品阶: '无灵根' },
     体质: { 名称: '凡体', 描述: '', 悟性: 0, 根骨: 0, 气感: 0 },
     境界: { 当前境界: '凡人', 修为进度: 0, 修为上限: 100, 天谴: 0 },
     状态: { 气血: { 现值: 100, 上限: 100 }, 灵力: { 现值: 100, 上限: 100 }, 遁速: 10 },
     地点: { 世界: '凡界', 地域: '中原', 具体地点: '荒野' },
-    时间: { 年: 1, 月: 1, 日: 1, 时辰: '午时' },
+    时间: { 年: 7000, 月: 1, 日: 1, 时辰: '午时' },
     状态效果: {},
     技艺: { 生产类: {}, 战斗类: {} },
   }),
