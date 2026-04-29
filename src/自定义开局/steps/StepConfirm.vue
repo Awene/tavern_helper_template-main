@@ -21,34 +21,57 @@
           <span style="color: var(--xs-ink-mute);">{{ difficulty.subtitle }} · 共 {{ difficulty.points }} 点</span>
         </span>
       </div>
-      <div class="xs-summary-row" v-if="root">
+      <div class="xs-summary-row" v-if="store.rootChosen">
         <span class="xs-summary-label">灵根</span>
         <span class="xs-summary-value">
-          <strong>{{ root.name }}</strong>
-          <span style="color: var(--xs-ink-mute);">{{ root.品阶 }} · {{ root.五行.join(' / ') }}</span>
+          <strong>{{ rootName }}</strong>
+          <span style="color: var(--xs-ink-mute);">{{ rootTier }} · {{ rootElements.join(' / ') }}</span>
         </span>
       </div>
-      <div class="xs-summary-row" v-if="physique">
+      <div class="xs-summary-row" v-if="store.physiqueChosen">
         <span class="xs-summary-label">体质</span>
         <span class="xs-summary-value">
           <strong>{{ physique.name }}</strong>
-          <span style="color: var(--xs-ink-mute);">悟 {{ physique.悟性 }} · 骨 {{ physique.根骨 }} · 感 {{ physique.气感 }}</span>
+          <span style="color: var(--xs-ink-mute);">
+            {{ physique.tier }} · 悟 {{ physique.悟性 }} · 骨 {{ physique.根骨 }} · 感 {{ physique.气感 }}
+            <template v-if="physique.效果"> · {{ physique.效果.name }} {{ physique.效果.value }}</template>
+          </span>
+        </span>
+      </div>
+      <div class="xs-summary-row">
+        <span class="xs-summary-label">阴阳</span>
+        <span class="xs-summary-value">
+          <strong>{{ store.selection.性别 }}</strong>
+          <span style="color: var(--xs-ink-mute);">
+            {{ store.selection.性别 === '男' ? '元阳' : '元阴' }}：{{ store.selection.元阳元阴 ? '尚存' : '已损' }}
+          </span>
         </span>
       </div>
       <div class="xs-summary-row" v-if="location">
         <span class="xs-summary-label">出生地</span>
         <span class="xs-summary-value">
           <strong>{{ location.name }}</strong>
-          <span style="color: var(--xs-ink-mute);">{{ location.世界 }} · {{ location.地域 }} · {{ location.具体地点 }}</span>
+          <span style="color: var(--xs-ink-mute);">{{ location.世界 }} · {{ location.地域 }} · {{ location.子域 }}</span>
         </span>
       </div>
       <div class="xs-summary-row">
-        <span class="xs-summary-label">资粮</span>
+        <span class="xs-summary-label">资材</span>
         <span class="xs-summary-value">
-          <span v-if="store.selection.itemIds.length === 0" style="color: var(--xs-ink-mute);">未择资粮</span>
+          <span
+            v-if="store.selection.itemIds.length === 0 && store.selection.customItems.length === 0"
+            style="color: var(--xs-ink-mute);"
+          >未择资材</span>
           <template v-else>
             <span v-for="it in selectedItems" :key="it.id" style="margin-right: 8px;">
               <strong>{{ it.name }}</strong>
+            </span>
+            <span
+              v-for="c in store.selection.customItems"
+              :key="c.id"
+              style="margin-right: 8px;"
+              :title="`${c.品质}品 · ${c.境界} · ${c.类型}（自创）`"
+            >
+              <strong style="color: var(--xs-cinnabar-deep);">{{ c.name }}</strong>
             </span>
           </template>
         </span>
@@ -57,7 +80,10 @@
         <span class="xs-summary-label">故事</span>
         <span class="xs-summary-value">
           <strong>{{ story.name }}</strong>
-          <span style="color: var(--xs-ink-mute);">{{ story.subtitle }}</span>
+          <span style="color: var(--xs-ink-mute);">
+            {{ story.subtitle || '' }}
+            <template v-if="story.settings"> · {{ story.settings.宗门 }} · {{ story.settings.初始境界.大境界 }}{{ story.settings.初始境界.小境界 }} · {{ story.settings.时间.年 }}年</template>
+          </span>
         </span>
       </div>
       <div class="xs-summary-row">
@@ -91,23 +117,33 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import {
+  customStoryToOption,
   findDifficulty,
   findItem,
   findLocation,
-  findPhysique,
-  findRoot,
   findStory,
+  physiqueResolved,
+  rootDisplayName,
+  rootTierLabel,
 } from '../config';
 import { useStartStore } from '../store';
-import { buildInitialStatData, writeInitialStatData } from '../export';
+import { commitJourney } from '../export';
 
 const store = useStartStore();
 
 const difficulty = computed(() => findDifficulty(store.selection.difficultyId));
-const root = computed(() => findRoot(store.selection.rootId));
-const physique = computed(() => findPhysique(store.selection.physiqueId));
+const rootName = computed(() => rootDisplayName(store.selection.root));
+const rootTier = computed(() => rootTierLabel(store.selection.root));
+const rootElements = computed(() => store.selection.root.elements);
+const physique = computed(() => physiqueResolved(store.selection.physique));
 const location = computed(() => findLocation(store.selection.locationId));
-const story = computed(() => findStory(store.selection.storyId));
+const story = computed(() => {
+  const id = store.selection.storyId;
+  if (!id) return undefined;
+  const custom = store.selection.customStory;
+  if (custom && custom.id === id) return customStoryToOption(custom);
+  return findStory(id);
+});
 const selectedItems = computed(() =>
   store.selection.itemIds.map(id => findItem(id)).filter(Boolean) as NonNullable<ReturnType<typeof findItem>>[],
 );
@@ -116,8 +152,8 @@ const canConfirm = computed(() => {
   return (
     !store.overBudget &&
     !!store.selection.difficultyId &&
-    !!store.selection.rootId &&
-    !!store.selection.physiqueId &&
+    store.rootChosen &&
+    store.physiqueChosen &&
     !!store.selection.locationId &&
     !!store.selection.storyId &&
     !!store.selection.道号.trim()
@@ -131,12 +167,12 @@ async function onConfirm() {
     else store.showToast('请先完成所有选择');
     return;
   }
-  const data = buildInitialStatData(store.selection);
-  const ok = await writeInitialStatData(data);
-  if (ok) {
-    store.showToast('命途已落定，可返回正文开始你的修行');
+  store.showToast('命途落定中…');
+  const res = await commitJourney(store.selection);
+  if (res.ok) {
+    store.showToast(res.reason || '命途已落定，AI 将为你生成开局剧情');
   } else {
-    store.showToast('写入失败，请检查酒馆变量接口');
+    store.showToast(res.reason || '提交失败，请检查酒馆接口');
   }
 }
 </script>

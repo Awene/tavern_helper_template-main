@@ -1,7 +1,7 @@
 <template>
   <div>
     <h2 class="xs-step-title">择 · 难度</h2>
-    <p class="xs-step-subtitle">难度决定可分配的初始点数；点数将用于灵根、体质、出生地、初始资粮等的购置。</p>
+    <p class="xs-step-subtitle">难度决定可分配的初始点数；点数将用于灵根、体质与初始资材的购置（出生地不耗费点数）。</p>
 
     <div class="xs-card-grid cols-3">
       <OptionCard

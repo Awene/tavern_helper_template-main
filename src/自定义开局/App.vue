@@ -49,6 +49,14 @@
           <span>{{ s.title }}</span>
         </button>
         <span class="xs-nav-spacer" />
+        <button
+          type="button"
+          class="xs-btn xs-btn-ghost xs-theme-btn"
+          @click="toggleTheme"
+          :title="isDark ? '切换日间' : '切换夜间'"
+        >
+          {{ isDark ? '☀ 日' : '🌙 夜' }}
+        </button>
         <button type="button" class="xs-btn xs-btn-ghost" @click="store.presetOpen = true">封存 / 读取</button>
         <span class="xs-points-badge" :class="{ warn: store.overBudget }">
           <span class="label">余</span>
@@ -72,11 +80,21 @@
     <transition name="xs-step">
       <div v-if="store.toast" class="xs-toast">{{ store.toast }}</div>
     </transition>
+
+    <!-- 主题悬浮切换按钮（封面页也可见） -->
+    <button
+      type="button"
+      class="xs-floating-theme"
+      :title="isDark ? '切换日间' : '切换夜间'"
+      @click="toggleTheme"
+    >
+      {{ isDark ? '☀' : '🌙' }}
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useStartStore } from './store';
 import StepCover from './steps/StepCover.vue';
 import StepDifficulty from './steps/StepDifficulty.vue';
@@ -94,10 +112,38 @@ const steps = [
   { title: '难度', comp: StepDifficulty },
   { title: '灵根 · 体质', comp: StepRoot },
   { title: '出生地', comp: StepLocation },
-  { title: '初始资粮', comp: StepInventory },
+  { title: '初始资材', comp: StepInventory },
   { title: '开局故事', comp: StepStory },
   { title: '确认', comp: StepConfirm },
 ];
 
 const currentStepComp = computed(() => steps[store.stepIndex]?.comp ?? StepCover);
+
+// 主题：日间 / 夜间，存 localStorage
+const THEME_KEY = 'xs-theme';
+const isDark = ref(false);
+function applyTheme(theme: 'light' | 'dark') {
+  isDark.value = theme === 'dark';
+  const el = document.documentElement;
+  if (theme === 'dark') el.setAttribute('data-theme', 'dark');
+  else el.removeAttribute('data-theme');
+  try {
+    localStorage.setItem(THEME_KEY, theme);
+  } catch {
+    /* ignore */
+  }
+}
+function toggleTheme() {
+  applyTheme(isDark.value ? 'light' : 'dark');
+}
+onMounted(() => {
+  let saved: 'light' | 'dark' = 'light';
+  try {
+    const v = localStorage.getItem(THEME_KEY);
+    if (v === 'dark' || v === 'light') saved = v;
+  } catch {
+    /* ignore */
+  }
+  applyTheme(saved);
+});
 </script>

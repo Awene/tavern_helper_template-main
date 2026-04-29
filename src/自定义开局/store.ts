@@ -1,34 +1,84 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import {
+  PHYSIQUE_TIER_S,
+  canMutate,
+  canToggleElement,
+  computeCustomItemCost,
+  computeRootCost,
   difficulties,
+  emptyPhysiqueChoice,
+  emptyRootChoice,
   findDifficulty,
   findItem,
-  findLocation,
-  findPhysique,
-  findRoot,
-  findStory,
+  isPhysiqueChoiceValid,
+  makeDefaultPhysiqueChoice,
+  mutationsByElement,
+  normalizePhysiqueChoice,
+  normalizeRootChoice,
+  physiqueCost,
 } from './config';
-import type { Preset, Selection } from './types';
+import type {
+  CustomItem,
+  CustomStory,
+  Gender,
+  PhysiqueTier,
+  Preset,
+  RootChoice,
+  Selection,
+} from './types';
 
 const PRESETS_KEY = 'xs-presets-v1';
 
 const emptySelection = (): Selection => ({
   difficultyId: null,
-  rootId: null,
-  physiqueId: null,
+  root: emptyRootChoice(),
+  physique: emptyPhysiqueChoice(),
+  性别: '男',
+  元阳元阴: true,
   locationId: null,
   itemIds: [],
+  customItems: [],
   storyId: null,
+  customStory: null,
   道号: '',
 });
+
+const normalizeSelection = (raw: any): Selection => {
+  const base = emptySelection();
+  if (!raw || typeof raw !== 'object') return base;
+  // 兼容老格式 customStories[]：取首个迁移为单值
+  let customStory: CustomStory | null = null;
+  if (raw.customStory && typeof raw.customStory === 'object') {
+    customStory = raw.customStory;
+  } else if (Array.isArray(raw.customStories) && raw.customStories.length > 0) {
+    customStory = raw.customStories[0];
+  }
+  return {
+    ...base,
+    ...raw,
+    root: normalizeRootChoice(raw.root),
+    physique: normalizePhysiqueChoice(raw.physique),
+    性别: raw.性别 === '女' || raw.性别 === '其他' ? raw.性别 : '男',
+    元阳元阴: raw.性别 === '其他' ? false : (typeof raw.元阳元阴 === 'boolean' ? raw.元阳元阴 : true),
+    itemIds: Array.isArray(raw.itemIds) ? raw.itemIds : [],
+    customItems: Array.isArray(raw.customItems) ? raw.customItems : [],
+    customStory,
+    道号: typeof raw.道号 === 'string' ? raw.道号 : '',
+  };
+};
 
 const loadPresets = (): Preset[] => {
   try {
     const raw = localStorage.getItem(PRESETS_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) return parsed as Preset[];
+    if (Array.isArray(parsed)) {
+      return (parsed as any[]).map(p => ({
+        ...p,
+        selection: normalizeSelection(p?.selection),
+      })) as Preset[];
+    }
   } catch {
     /* ignore */
   }
@@ -73,21 +123,42 @@ export const useStartStore = defineStore('xs-start', () => {
     return d?.points ?? 0;
   });
 
+  // ============ 灵根点数（动态） ============
+  const rootCost = computed(() => computeRootCost(selection.value.root));
+
+  // ============ 体质点数（动态） ============
+  const physiqueCostValue = computed(() => physiqueCost(selection.value.physique));
+
+  // ============ 自创资材点数（动态） ============
+  const customItemsCost = computed(() => {
+    let n = 0;
+    for (const it of selection.value.customItems) {
+      n += computeCustomItemCost({ 品质: it.品质, 境界: it.境界 });
+    }
+    return n;
+  });
+
   // ============ 已花费点数 ============
+  // 出生地、开局故事不计点数（按设定，仅影响世界观与起点）
   const spentPoints = computed(() => {
     const sel = selection.value;
     let n = 0;
-    n += findRoot(sel.rootId)?.cost ?? 0;
-    n += findPhysique(sel.physiqueId)?.cost ?? 0;
-    n += findLocation(sel.locationId)?.cost ?? 0;
+    n += rootCost.value;
+    n += physiqueCostValue.value;
     for (const itemId of sel.itemIds) n += findItem(itemId)?.cost ?? 0;
-    n += findStory(sel.storyId)?.cost ?? 0;
+    n += customItemsCost.value;
     return n;
   });
 
   const remainingPoints = computed(() => totalPoints.value - spentPoints.value);
 
   const overBudget = computed(() => remainingPoints.value < 0);
+
+  // 灵根是否已经选好（至少 1 个属性）
+  const rootChosen = computed(() => selection.value.root.elements.length > 0);
+
+  // 体质是否已合法选定
+  const physiqueChosen = computed(() => isPhysiqueChoiceValid(selection.value.physique));
 
   // ============ 步骤切换 ============
   function next() {
@@ -104,11 +175,102 @@ export const useStartStore = defineStore('xs-start', () => {
   function selectDifficulty(id: string) {
     selection.value.difficultyId = id;
   }
-  function selectRoot(id: string) {
-    selection.value.rootId = id;
+
+  /** 切换某个属性的选中状态；自动处理互斥与变异联动 */
+  function toggleRootElement(el: string) {
+    const choice = selection.value.root;
+    if (!canToggleElement(choice, el)) return;
+    const idx = choice.elements.indexOf(el);
+    if (idx >= 0) {
+      choice.elements.splice(idx, 1);
+    } else {
+      choice.elements.push(el);
+    }
+    // 元素变化后，若不再满足变异条件则关闭变异
+    if (!canMutate(choice)) {
+      choice.mutation = false;
+      choice.mutationId = null;
+      choice.customName = '';
+    } else {
+      // 变异预设若与新的属性不匹配则清空
+      ensureMutationConsistency(choice);
+    }
   }
-  function selectPhysique(id: string) {
-    selection.value.physiqueId = id;
+
+  function setMutation(on: boolean) {
+    const choice = selection.value.root;
+    if (on && !canMutate(choice)) return;
+    choice.mutation = on;
+    if (!on) {
+      choice.mutationId = null;
+      choice.customName = '';
+    } else {
+      ensureMutationConsistency(choice);
+    }
+  }
+
+  function setMutationId(id: string | null) {
+    const choice = selection.value.root;
+    if (!choice.mutation) return;
+    choice.mutationId = id;
+  }
+
+  function setCustomMutationName(name: string) {
+    const choice = selection.value.root;
+    if (!choice.mutation) return;
+    choice.customName = name;
+  }
+
+  function ensureMutationConsistency(choice: RootChoice) {
+    if (!choice.mutation) return;
+    const el = choice.elements[0];
+    if (!el) return;
+    const presets = mutationsByElement(el);
+    if (choice.mutationId && !presets.find(p => p.id === choice.mutationId)) {
+      // 当前所选预设属于不同属性 -> 重置
+      choice.mutationId = null;
+    }
+  }
+
+  // ============ 体质选择 ============
+  function selectPhysiqueTier(tier: PhysiqueTier) {
+    if (selection.value.physique.tier === tier) return;
+    selection.value.physique = makeDefaultPhysiqueChoice(tier);
+  }
+  function selectPhysiquePreset(presetId: string | null) {
+    selection.value.physique.presetId = presetId;
+    if (presetId === null) {
+      // 切到自拟，保留 tier，三维默认均分
+      const tier = selection.value.physique.tier;
+      const fresh = makeDefaultPhysiqueChoice(tier);
+      selection.value.physique.custom悟性 = fresh.custom悟性;
+      selection.value.physique.custom根骨 = fresh.custom根骨;
+      selection.value.physique.custom气感 = fresh.custom气感;
+    }
+  }
+  function setPhysiqueCustomName(name: string) {
+    selection.value.physique.customName = name;
+  }
+  function setPhysiqueCustomEffect(name: string, value: string) {
+    selection.value.physique.customEffectName = name;
+    selection.value.physique.customEffectValue = value;
+  }
+  function setPhysiqueCustomStat(key: '悟性' | '根骨' | '气感', value: number) {
+    const v = Math.max(0, Math.floor(Number.isFinite(value) ? value : 0));
+    if (key === '悟性') selection.value.physique.custom悟性 = v;
+    else if (key === '根骨') selection.value.physique.custom根骨 = v;
+    else selection.value.physique.custom气感 = v;
+  }
+  /** 自动把当前差额补到指定维度上，使总和等于 S */
+  function autoBalancePhysique(targetKey: '悟性' | '根骨' | '气感') {
+    const choice = selection.value.physique;
+    const S = PHYSIQUE_TIER_S[choice.tier];
+    const sum = choice.custom悟性 + choice.custom根骨 + choice.custom气感;
+    const delta = S - sum;
+    if (delta === 0) return;
+    if (targetKey === '悟性') choice.custom悟性 = Math.max(1, choice.custom悟性 + delta);
+    else if (targetKey === '根骨') choice.custom根骨 = Math.max(1, choice.custom根骨 + delta);
+    else choice.custom气感 = Math.max(1, choice.custom气感 + delta);
   }
   function selectLocation(id: string) {
     selection.value.locationId = id;
@@ -122,6 +284,53 @@ export const useStartStore = defineStore('xs-start', () => {
   function isItemSelected(id: string): boolean {
     return selection.value.itemIds.includes(id);
   }
+  // ============ 自创资材 ============
+  function addCustomItem(item: Omit<CustomItem, 'id'>): CustomItem {
+    const full: CustomItem = {
+      ...item,
+      id: 'custom-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    };
+    selection.value.customItems.push(full);
+    return full;
+  }
+  function updateCustomItem(id: string, patch: Partial<Omit<CustomItem, 'id'>>) {
+    const idx = selection.value.customItems.findIndex(c => c.id === id);
+    if (idx < 0) return;
+    selection.value.customItems[idx] = { ...selection.value.customItems[idx], ...patch };
+  }
+  function removeCustomItem(id: string) {
+    const idx = selection.value.customItems.findIndex(c => c.id === id);
+    if (idx >= 0) selection.value.customItems.splice(idx, 1);
+  }
+
+  // ============ 性别 / 元阳元阴 ============
+  function setGender(g: Gender) {
+    selection.value.性别 = g;
+    // 其他性别强制 元阳/元阴 = false
+    if (g === '其他') selection.value.元阳元阴 = false;
+  }
+  function setVirgin(v: boolean) {
+    if (selection.value.性别 === '其他') return;
+    selection.value.元阳元阴 = v;
+  }
+
+  // ============ 自创开局剧本（仅一篇） ============
+  /** 写入或替换玩家的自创剧本；返回完整对象 */
+  function setCustomStory(story: Omit<CustomStory, 'id'>): CustomStory {
+    const existing = selection.value.customStory;
+    const full: CustomStory = {
+      ...story,
+      id: existing?.id || 'cstory-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    };
+    selection.value.customStory = full;
+    return full;
+  }
+  function clearCustomStory() {
+    const id = selection.value.customStory?.id;
+    selection.value.customStory = null;
+    if (id && selection.value.storyId === id) selection.value.storyId = null;
+  }
+
   function selectStory(id: string) {
     selection.value.storyId = id;
   }
@@ -134,7 +343,8 @@ export const useStartStore = defineStore('xs-start', () => {
   // 选择默认难度后的初始化（仅在还未选时）
   function ensureDefaultDifficulty() {
     if (!selection.value.difficultyId && difficulties.length > 0) {
-      selection.value.difficultyId = difficulties[1]?.id ?? difficulties[0].id;
+      const normal = difficulties.find(d => d.id === 'normal');
+      selection.value.difficultyId = normal?.id ?? difficulties[0].id;
     }
   }
 
@@ -160,7 +370,7 @@ export const useStartStore = defineStore('xs-start', () => {
   function loadPreset(id: string) {
     const p = presets.value.find(x => x.id === id);
     if (!p) return false;
-    selection.value = JSON.parse(JSON.stringify(p.selection));
+    selection.value = normalizeSelection(JSON.parse(JSON.stringify(p.selection)));
     showToast(`已读取「${p.name}」`);
     return true;
   }
@@ -180,15 +390,35 @@ export const useStartStore = defineStore('xs-start', () => {
     spentPoints,
     remainingPoints,
     overBudget,
+    rootCost,
+    rootChosen,
+    physiqueCost: physiqueCostValue,
+    physiqueChosen,
     next,
     prev,
     goto,
     selectDifficulty,
-    selectRoot,
-    selectPhysique,
+    toggleRootElement,
+    setMutation,
+    setMutationId,
+    setCustomMutationName,
+    selectPhysiqueTier,
+    selectPhysiquePreset,
+    setPhysiqueCustomName,
+    setPhysiqueCustomEffect,
+    setPhysiqueCustomStat,
+    autoBalancePhysique,
     selectLocation,
     toggleItem,
     isItemSelected,
+    addCustomItem,
+    updateCustomItem,
+    removeCustomItem,
+    customItemsCost,
+    setGender,
+    setVirgin,
+    setCustomStory,
+    clearCustomStory,
     selectStory,
     resetAll,
     ensureDefaultDifficulty,

@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "PowerShell($lines = Get-Content \"d:\\\\application\\\\Tavern\\\\mod\\\\世界书\\\\tavern_helper_template-main\\\\dist\\\\修仙状态栏\\\\index.html\"; for \\($i=0; $i -lt $lines.Count; $i++\\) { $idx = $lines[$i].IndexOf\\(\"100vh\"\\); if \\($idx -ge 0\\) { Write-Host \"Line $\\($i+1\\) at $idx\"; $start = [Math]::Max\\(0, $idx-60\\); $len = [Math]::Min\\(160, $lines[$i].Length-$start\\); Write-Host $lines[$i].Substring\\($start, $len\\); Write-Host \"---\" } })",
-      "Bash(pnpm build:dev)"
+      "Bash(pnpm build:dev)",
+      "Bash(grep -nE \"你 |\\\\\\\\\\\\\\\\n\\\\\\\\\\\\\\\\n\" \"d:/application/Tavern/settings/git/世界书/tavern_helper_template-main/src/自定义开局/config/stories.ts\")",
+      "Bash(grep -o '\\\\$[01]' \"d:/application/Tavern/settings/git/世界书/tavern_helper_template-main/dist/面板美化/正文美化/index.html\")",
+      "Bash(grep -no '\\\\$[01]' \"d:/application/Tavern/settings/git/世界书/tavern_helper_template-main/dist/面板美化/正文美化/index.html\")",
+      "Bash(awk 'NR==27 || NR==39 || NR==151 || NR==156' \"d:/application/Tavern/settings/git/世界书/tavern_helper_template-main/dist/面板美化/正文美化/index.html\")",
+      "Bash(grep -on '\\\\$1' \"d:/application/Tavern/settings/git/世界书/tavern_helper_template-main/dist/面板美化/正文美化/index.html\")"
     ]
   }
 }

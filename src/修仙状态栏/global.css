@@ -44,6 +44,30 @@
   --xy-el-hundun: #2a2520;
 }
 
+/* ============ 夜间模式 ============ */
+:root[data-theme='dark'],
+html[data-theme='dark'] {
+  --xy-paper: #1f1c25;
+  --xy-paper-soft: #25212c;
+  --xy-paper-warm: #2c2632;
+  --xy-ink: #e8d5b7;
+  --xy-ink-soft: #c5b696;
+  --xy-ink-mute: #8d7f6b;
+  --xy-cinnabar: #d96a6a;
+  --xy-cinnabar-deep: #b04848;
+  --xy-jade: #7ba590;
+  --xy-jade-deep: #4f8267;
+  --xy-gold: #d8b878;
+  --xy-gold-deep: #a88c52;
+  --xy-mountain: #4a5a5a;
+  --xy-mist: rgba(40, 35, 50, 0.55);
+  --xy-glass: rgba(50, 45, 60, 0.62);
+  --xy-glass-strong: rgba(50, 45, 60, 0.86);
+  --xy-line: rgba(232, 213, 183, 0.18);
+  --xy-line-gold: rgba(216, 184, 120, 0.35);
+  --xy-shadow: 0 6px 24px -8px rgba(0, 0, 0, 0.6);
+}
+
 /* 全局重置 */
 * {
   margin: 0;
@@ -63,6 +87,40 @@ body {
     radial-gradient(circle at 10% 10%, rgba(201, 169, 110, 0.08), transparent 40%),
     radial-gradient(circle at 90% 80%, rgba(91, 138, 114, 0.06), transparent 40%),
     linear-gradient(180deg, #f7f1e3 0%, #ede2c5 100%);
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
+}
+html[data-theme='dark'],
+:root[data-theme='dark'] {
+  background:
+    radial-gradient(circle at 10% 10%, rgba(216, 184, 120, 0.06), transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(123, 165, 144, 0.05), transparent 40%),
+    linear-gradient(180deg, #1a1820 0%, #261f2b 100%);
+}
+
+/* ============ 悬浮主题切换按钮 ============ */
+.xy-floating-theme {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--xy-line-gold);
+  background: var(--xy-paper-warm);
+  color: var(--xy-ink);
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 9000;
+  box-shadow: var(--xy-shadow);
+  transition: all 0.2s ease;
+}
+.xy-floating-theme:hover {
+  background: var(--xy-cinnabar);
+  color: #fff;
+  border-color: var(--xy-cinnabar-deep);
+  transform: translateY(-2px);
 }
 
 /* 仿宣纸纹理 */

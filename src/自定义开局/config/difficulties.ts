@@ -1,6 +1,22 @@
 import type { DifficultyOption } from '../types';
 
+/**
+ * 难度卡按点数从大到小排列：40 → 30 → 20 → 12 → 6 → 0。
+ * 显示顺序由数组顺序决定，请勿改动。
+ */
 export const difficulties: DifficultyOption[] = [
+  {
+    id: 'blessed',
+    name: '仙缘汇聚',
+    subtitle: '天命眷顾',
+    desc: '万千机缘汇于一身，根骨灵根任凭挑选，资粮取之不尽。适合纯粹体验剧情而无意囿于资源者。',
+    cost: 0,
+    points: 40,
+    level: 0,
+    tone: 'jade',
+    glyph: '缘',
+    tags: ['传说'],
+  },
   {
     id: 'easy',
     name: '小道悠游',
@@ -44,6 +60,18 @@ export const difficulties: DifficultyOption[] = [
     level: 4,
     tone: 'ink',
     glyph: '逆',
+  },
+  {
+    id: 'zero',
+    name: '鸿濛归零',
+    subtitle: '白手起家',
+    desc: '不予分毫扶持——灵根、体质、资材皆需用 0 点抠出；纯凭凡夫之心硬闯仙途。',
+    cost: 0,
+    points: 0,
+    level: 5,
+    tone: 'ink',
+    glyph: '空',
+    tags: ['极限'],
   },
 ];
 

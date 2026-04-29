@@ -472,11 +472,22 @@
         {{ state.toast }}
       </div>
     </transition>
+
+    <!-- 主题切换悬浮按钮 -->
+    <button
+      type="button"
+      class="xy-floating-theme"
+      :title="isDark ? '切换日间' : '切换夜间'"
+      @click="toggleTheme"
+    >
+      {{ isDark ? '☀' : '🌙' }}
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
 import _ from 'lodash';
+import { onMounted, ref } from 'vue';
 import { useDataStore } from './store';
 import PageArts from './pages/PageArts.vue';
 import PageStorage from './pages/PageStorage.vue';
@@ -508,4 +519,32 @@ import {
 } from './composables';
 
 const store = useDataStore();
+
+// 主题：日间 / 夜间
+const THEME_KEY = 'xy-theme';
+const isDark = ref(false);
+function applyTheme(theme: 'light' | 'dark') {
+  isDark.value = theme === 'dark';
+  const el = document.documentElement;
+  if (theme === 'dark') el.setAttribute('data-theme', 'dark');
+  else el.removeAttribute('data-theme');
+  try {
+    localStorage.setItem(THEME_KEY, theme);
+  } catch {
+    /* ignore */
+  }
+}
+function toggleTheme() {
+  applyTheme(isDark.value ? 'light' : 'dark');
+}
+onMounted(() => {
+  let saved: 'light' | 'dark' = 'light';
+  try {
+    const v = localStorage.getItem(THEME_KEY);
+    if (v === 'dark' || v === 'light') saved = v;
+  } catch {
+    /* ignore */
+  }
+  applyTheme(saved);
+});
 </script>
