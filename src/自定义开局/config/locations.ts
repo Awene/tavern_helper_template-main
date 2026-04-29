@@ -1,0 +1,67 @@
+import type { LocationOption } from '../types';
+
+export const locations: LocationOption[] = [
+  {
+    id: 'loc-tianxuan',
+    name: '天玄剑宗·万剑坪',
+    subtitle: '西域 · 无垠雪山',
+    desc: '剑宗外门弟子的杂役院；终年飞雪，剑意凛冽。适合剑修与勤奋者。',
+    cost: 2,
+    世界: '凡界',
+    地域: '西域',
+    具体地点: '无垠雪山-天玄剑宗-万剑坪',
+    glyph: '剑',
+    tags: ['宗门'],
+  },
+  {
+    id: 'loc-langlin',
+    name: '琉璃丹宗·药圃',
+    subtitle: '东土 · 灵溪谷',
+    desc: '丹宗药圃，灵草遍野。适合炼丹师与医道修士。',
+    cost: 2,
+    世界: '凡界',
+    地域: '东土',
+    具体地点: '灵溪谷-琉璃丹宗-药圃',
+    glyph: '丹',
+    tags: ['宗门'],
+  },
+  {
+    id: 'loc-yexiao',
+    name: '凡俗村落·野晓村',
+    subtitle: '中原 · 麦原野',
+    desc: '凡人村落，灵气稀薄。修真路始于一粒灵米，需自寻机缘。',
+    cost: -2,
+    世界: '凡界',
+    地域: '中原',
+    具体地点: '麦原野-野晓村',
+    glyph: '俗',
+    tags: ['赠送点数'],
+  },
+  {
+    id: 'loc-qingqiu',
+    name: '青丘狐族·月华林',
+    subtitle: '南疆 · 妖境',
+    desc: '狐族小辈，灵秀慧黠。妖修起步，与人族沟通需谨慎。',
+    cost: 5,
+    世界: '凡界',
+    地域: '南疆',
+    具体地点: '青丘-月华林',
+    glyph: '妖',
+    tags: ['妖修'],
+  },
+  {
+    id: 'loc-zhenmosi',
+    name: '镇魔司·北境军营',
+    subtitle: '北境 · 风雪关',
+    desc: '凡间朝廷的镇魔司武修，与魔修周旋于风雪一线之间。',
+    cost: 3,
+    世界: '凡界',
+    地域: '北境',
+    具体地点: '风雪关-镇魔司军营',
+    glyph: '魔',
+    tags: ['军伍'],
+  },
+];
+
+export const findLocation = (id: string | null) =>
+  locations.find(l => l.id === id);

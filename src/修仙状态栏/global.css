@@ -63,14 +63,12 @@ body {
     radial-gradient(circle at 10% 10%, rgba(201, 169, 110, 0.08), transparent 40%),
     radial-gradient(circle at 90% 80%, rgba(91, 138, 114, 0.06), transparent 40%),
     linear-gradient(180deg, #f7f1e3 0%, #ede2c5 100%);
-  background-attachment: fixed;
-  min-height: 100vh;
 }
 
 /* 仿宣纸纹理 */
 body::before {
   content: '';
-  position: fixed;
+  position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 0;

@@ -1,0 +1,147 @@
+/* ===================================================
+ * 自定义开局 · 全局样式
+ * 风格：古风留白 / 山水仙鹤 / 毛玻璃 / 朱砂烫金
+ * =================================================== */
+
+@import url('https://fonts.font.im/css?family=Ma+Shan+Zheng|ZCOOL+XiaoWei|Noto+Serif+SC:400,500,700&display=swap');
+
+:root {
+  /* —— 主色板 —— */
+  --xs-paper: #f7f1e3;
+  --xs-paper-soft: #faf6ee;
+  --xs-paper-warm: #f0e7d0;
+  --xs-paper-deep: #e6d8b1;
+
+  --xs-ink: #2a2520;
+  --xs-ink-soft: #5a5249;
+  --xs-ink-mute: #8b8275;
+  --xs-ink-faint: #b9b0a0;
+
+  --xs-cinnabar: #b13a3a;
+  --xs-cinnabar-deep: #8a2828;
+  --xs-cinnabar-glow: rgba(177, 58, 58, 0.55);
+
+  --xs-jade: #5b8a72;
+  --xs-jade-deep: #3d6b54;
+
+  --xs-gold: #c9a96e;
+  --xs-gold-deep: #a07f48;
+  --xs-gold-glow: rgba(201, 169, 110, 0.55);
+
+  --xs-mountain: #6e7c7c;
+  --xs-mist: rgba(247, 241, 227, 0.55);
+
+  --xs-glass: rgba(250, 246, 238, 0.62);
+  --xs-glass-strong: rgba(250, 246, 238, 0.86);
+
+  --xs-line: rgba(42, 37, 32, 0.18);
+  --xs-line-gold: rgba(201, 169, 110, 0.42);
+
+  --xs-shadow: 0 6px 24px -8px rgba(42, 37, 32, 0.22);
+  --xs-shadow-lift: 0 14px 40px -10px rgba(42, 37, 32, 0.32);
+
+  /* —— 字体 —— */
+  --xs-font-title: 'Ma Shan Zheng', 'STKaiti', 'KaiTi', 'AR PL UKai CN', cursive;
+  --xs-font-display: 'ZCOOL XiaoWei', 'STKaiti', 'KaiTi', serif;
+  --xs-font-body: 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', 'NSimSun', serif;
+
+  /* —— 五行 —— */
+  --xs-el-jin: #c9a96e;
+  --xs-el-mu: #5b8a72;
+  --xs-el-shui: #4a7a9b;
+  --xs-el-huo: #b13a3a;
+  --xs-el-tu: #997653;
+  --xs-el-yin: #4a4458;
+  --xs-el-yang: #d4a04c;
+  --xs-el-hundun: #2a2520;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  font-family: var(--xs-font-body);
+  color: var(--xs-ink);
+  line-height: 1.7;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(201, 169, 110, 0.10), transparent 45%),
+    radial-gradient(circle at 88% 78%, rgba(91, 138, 114, 0.08), transparent 45%),
+    linear-gradient(180deg, #f7f1e3 0%, #ede2c5 100%);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+input,
+textarea {
+  font-family: inherit;
+  border: 1px solid var(--xs-line);
+  background: var(--xs-glass);
+  border-radius: 4px;
+  padding: 6px 10px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  color: var(--xs-ink);
+  outline: none;
+}
+input:focus,
+textarea:focus {
+  border-color: var(--xs-gold);
+  box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.18);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(201, 169, 110, 0.4);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 169, 110, 0.7);
+}
+
+/* ============ 通用动画 ============ */
+@keyframes xs-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes xs-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes xs-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-10px) rotate(-1deg); }
+}
+@keyframes xs-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(177, 58, 58, 0.45); }
+  50%      { box-shadow: 0 0 0 12px rgba(177, 58, 58, 0); }
+}
+@keyframes xs-shimmer {
+  0%   { background-position: -150% 0; }
+  100% { background-position: 250% 0; }
+}
+@keyframes xs-ink-bloom {
+  0%   { opacity: 0; transform: scale(0.85); filter: blur(8px); }
+  60%  { opacity: 0.95; transform: scale(1.02); filter: blur(0); }
+  100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}

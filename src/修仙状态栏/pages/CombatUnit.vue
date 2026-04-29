@@ -49,31 +49,45 @@
         <span class="xy-unit-bar-track">
           <span class="xy-unit-bar-fill blood" :style="{ width: hpPct + '%' }" />
         </span>
-        <span class="xy-unit-bar-num">{{ hp.现值 }}/{{ hp.上限 }}</span>
+        <span class="xy-unit-bar-num">
+          <template v-if="unit.资源池?.气血">
+            <EditableValue v-model.number="unit.资源池.气血.现值" type="number" label="气血现值" :min="0" />/<EditableValue v-model.number="unit.资源池.气血.上限" type="number" label="气血上限" :min="1" />
+          </template>
+          <template v-else>{{ hp.现值 }}/{{ hp.上限 }}</template>
+        </span>
       </div>
       <div class="xy-unit-bar">
         <span class="xy-unit-bar-label">灵力</span>
         <span class="xy-unit-bar-track">
           <span class="xy-unit-bar-fill spirit" :style="{ width: mpPct + '%' }" />
         </span>
-        <span class="xy-unit-bar-num">{{ mp.现值 }}/{{ mp.上限 }}</span>
+        <span class="xy-unit-bar-num">
+          <template v-if="unit.资源池?.灵力">
+            <EditableValue v-model.number="unit.资源池.灵力.现值" type="number" label="灵力现值" :min="0" />/<EditableValue v-model.number="unit.资源池.灵力.上限" type="number" label="灵力上限" :min="0" />
+          </template>
+          <template v-else>{{ mp.现值 }}/{{ mp.上限 }}</template>
+        </span>
       </div>
     </div>
 
     <div class="xy-unit-stats">
-      <span class="xy-eq-stat xy-stat-def">防 {{ unit.防御力 ?? 0 }}</span>
-      <span class="xy-eq-stat">遁 {{ unit.资源池?.遁速 ?? 0 }}</span>
+      <span class="xy-eq-stat xy-stat-def">防 <EditableValue v-model.number="unit.防御力" type="number" label="防御力" :min="0" :format="(v) => v ?? 0" /></span>
+      <span class="xy-eq-stat">
+        遁
+        <EditableValue v-if="unit.资源池" v-model.number="unit.资源池.遁速" type="number" label="遁速" :min="0" :format="(v) => v ?? 0" />
+        <template v-else>{{ unit.资源池?.遁速 ?? 0 }}</template>
+      </span>
     </div>
 
-    <div v-if="unit.描述" class="xy-item-desc">{{ unit.描述 }}</div>
+    <div v-if="unit.描述 || state.editMode" class="xy-item-desc"><EditableValue v-model="unit.描述" label="描述" multiline /></div>
 
     <div v-if="!isEmpty(unit.技能)" class="xy-skill-list">
       <div v-for="(sv, sn) in unit.技能" :key="sn" class="xy-skill-line">
         <span class="xy-skill-line-name">{{ sn }}</span>
-        <span class="xy-skill-line-atk">攻 {{ sv.攻击力 ?? 0 }}</span>
-        <span v-if="sv.消耗" class="xy-pill xy-pill-cost">耗 {{ sv.消耗 }}</span>
-        <div v-if="!isEmpty(sv.效果)" class="xy-skill-line-effects">
-          <span v-for="(d, n) in sv.效果" :key="n" class="xy-effect-line">{{ n }}：{{ d }}</span>
+        <span class="xy-skill-line-atk">攻 <EditableValue v-model.number="sv.攻击力" type="number" label="攻击力" :min="0" :format="(v) => v ?? 0" /></span>
+        <span v-if="sv.消耗 || state.editMode" class="xy-pill xy-pill-cost">耗 <EditableValue v-model="sv.消耗" label="消耗" /></span>
+        <div v-if="!isEmpty(sv.效果) || state.editMode" class="xy-skill-line-effects">
+          <EffectList v-model="sv.效果" />
         </div>
       </div>
     </div>
@@ -83,6 +97,9 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { computed } from 'vue';
+import EditableValue from './EditableValue.vue';
+import EffectList from './EffectList.vue';
+import { state } from '../composables';
 
 const props = defineProps<{
   unit: any;

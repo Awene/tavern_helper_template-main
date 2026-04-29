@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($lines = Get-Content \"d:\\\\application\\\\Tavern\\\\mod\\\\世界书\\\\tavern_helper_template-main\\\\dist\\\\修仙状态栏\\\\index.html\"; for \\($i=0; $i -lt $lines.Count; $i++\\) { $idx = $lines[$i].IndexOf\\(\"100vh\"\\); if \\($idx -ge 0\\) { Write-Host \"Line $\\($i+1\\) at $idx\"; $start = [Math]::Max\\(0, $idx-60\\); $len = [Math]::Min\\(160, $lines[$i].Length-$start\\); Write-Host $lines[$i].Substring\\($start, $len\\); Write-Host \"---\" } })",
+      "Bash(pnpm build:dev)"
+    ]
+  }
+}
