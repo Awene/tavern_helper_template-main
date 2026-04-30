@@ -173,7 +173,7 @@ const elColor = (el: string) =>
 .xy-trash:hover {
   color: var(--xy-cinnabar);
   border-color: var(--xy-cinnabar);
-  background: rgba(177, 58, 58, 0.08);
+  background: var(--xy-tint-cinnabar-mid);
 }
 
 .xy-q-bg-凡 {
@@ -181,19 +181,19 @@ const elColor = (el: string) =>
 }
 .xy-q-bg-黄 {
   border-left: 3px solid var(--xy-gold-deep);
-  background: linear-gradient(135deg, rgba(212, 176, 106, 0.08), var(--xy-glass));
+  background: linear-gradient(135deg, var(--xy-tint-gold-mid), var(--xy-glass));
 }
 .xy-q-bg-玄 {
   border-left: 3px solid #6b6f7a;
-  background: linear-gradient(135deg, rgba(120, 130, 150, 0.08), var(--xy-glass));
+  background: linear-gradient(135deg, rgba(120, 130, 150, 0.12), var(--xy-glass));
 }
 .xy-q-bg-地 {
   border-left: 3px solid #8a5a3a;
-  background: linear-gradient(135deg, rgba(160, 100, 60, 0.1), var(--xy-glass));
+  background: linear-gradient(135deg, rgba(160, 100, 60, 0.14), var(--xy-glass));
 }
 .xy-q-bg-天 {
   border-left: 3px solid var(--xy-gold);
-  background: linear-gradient(135deg, rgba(201, 169, 110, 0.1), var(--xy-glass));
+  background: linear-gradient(135deg, var(--xy-tint-gold-mid), var(--xy-glass));
 }
 
 .xy-item-head {
@@ -241,15 +241,15 @@ const elColor = (el: string) =>
   background: linear-gradient(135deg, var(--xy-cinnabar), var(--xy-cinnabar-deep));
   color: var(--xy-paper);
   border-color: var(--xy-cinnabar);
-  box-shadow: 0 0 0 2px rgba(177, 58, 58, 0.18);
+  box-shadow: 0 0 0 2px var(--xy-tint-cinnabar-edge);
 }
 .xy-unit-badge {
   font-size: 10.5px;
   padding: 1px 6px;
   border-radius: 8px;
-  background: rgba(177, 58, 58, 0.1);
+  background: var(--xy-tint-cinnabar-strong);
   color: var(--xy-cinnabar-deep);
-  border: 1px solid rgba(177, 58, 58, 0.25);
+  border: 1px solid var(--xy-tint-cinnabar-border);
   letter-spacing: 1px;
 }
 
@@ -263,13 +263,13 @@ const elColor = (el: string) =>
   letter-spacing: 0.5px;
 }
 .xy-pill-soft {
-  background: rgba(91, 138, 114, 0.08);
-  border-color: rgba(91, 138, 114, 0.25);
+  background: var(--xy-tint-jade-soft);
+  border-color: var(--xy-tint-jade-border);
   color: var(--xy-jade-deep);
 }
 .xy-pill-cost {
-  background: rgba(177, 58, 58, 0.08);
-  border-color: rgba(177, 58, 58, 0.25);
+  background: var(--xy-tint-cinnabar-mid);
+  border-color: var(--xy-tint-cinnabar-border);
   color: var(--xy-cinnabar-deep);
 }
 
@@ -299,7 +299,7 @@ const elColor = (el: string) =>
 .xy-q-天 {
   background: linear-gradient(135deg, #d4af37, #8b6914);
   color: #fff;
-  box-shadow: 0 0 6px rgba(212, 175, 55, 0.3);
+  box-shadow: 0 0 6px var(--xy-tint-gold-glow);
 }
 
 .xy-element {
@@ -322,12 +322,12 @@ const elColor = (el: string) =>
   font-size: 10.5px;
   padding: 1px 6px;
   border-radius: 8px;
-  background: rgba(42, 37, 32, 0.05);
+  background: var(--xy-tint-ink-soft);
   color: var(--xy-ink-mute);
 }
 
 .xy-unit-active {
-  background: linear-gradient(135deg, rgba(201, 169, 110, 0.12), var(--xy-glass));
+  background: linear-gradient(135deg, var(--xy-tint-gold-strong), var(--xy-glass));
   border-color: var(--xy-gold);
 }
 .xy-unit-bars {
@@ -349,7 +349,7 @@ const elColor = (el: string) =>
 .xy-unit-bar-track {
   flex: 1 1 auto;
   height: 6px;
-  background: rgba(42, 37, 32, 0.08);
+  background: var(--xy-tint-ink-strong);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -382,11 +382,11 @@ const elColor = (el: string) =>
   letter-spacing: 1px;
   padding: 2px 8px;
   border-radius: 2px;
-  background: rgba(42, 37, 32, 0.05);
+  background: var(--xy-tint-ink-soft);
 }
 .xy-stat-def {
   color: var(--xy-jade-deep);
-  background: rgba(91, 138, 114, 0.12);
+  background: var(--xy-tint-jade-mid);
 }
 
 .xy-skill-list {
@@ -402,7 +402,7 @@ const elColor = (el: string) =>
   gap: 6px;
   font-size: 12px;
   padding: 4px 8px;
-  background: rgba(42, 37, 32, 0.04);
+  background: var(--xy-tint-ink-faint);
   border-radius: 3px;
   border-left: 2px solid var(--xy-line-gold);
 }
@@ -428,6 +428,6 @@ const elColor = (el: string) =>
   color: var(--xy-ink-soft);
   padding: 1px 6px;
   border-left: 2px solid var(--xy-jade);
-  background: rgba(91, 138, 114, 0.06);
+  background: var(--xy-tint-jade-faint);
 }
 </style>

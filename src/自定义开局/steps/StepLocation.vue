@@ -245,7 +245,7 @@ watch(
 }
 .xs-loc-leaf-card.active {
   border-color: var(--xs-cinnabar);
-  background: linear-gradient(180deg, rgba(177, 58, 58, 0.06), var(--xs-glass-strong));
+  background: linear-gradient(180deg, var(--xs-tint-cinnabar-soft), var(--xs-glass-strong));
   box-shadow: 0 0 0 1px var(--xs-cinnabar) inset, 0 8px 24px -10px var(--xs-cinnabar-glow);
 }
 .xs-loc-leaf-head {
@@ -276,7 +276,7 @@ watch(
   padding: 10px 14px;
   border: 1px solid var(--xs-cinnabar);
   border-radius: 10px;
-  background: linear-gradient(180deg, rgba(177, 58, 58, 0.04), var(--xs-glass-strong));
+  background: linear-gradient(180deg, var(--xs-tint-cinnabar-faint), var(--xs-glass-strong));
 }
 .xs-loc-preview-path {
   font-family: var(--xs-font-display);

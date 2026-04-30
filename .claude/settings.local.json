@@ -7,7 +7,15 @@
       "Bash(grep -o '\\\\$[01]' \"d:/application/Tavern/settings/git/世界书/tavern_helper_template-main/dist/面板美化/正文美化/index.html\")",
       "Bash(grep -no '\\\\$[01]' \"d:/application/Tavern/settings/git/世界书/tavern_helper_template-main/dist/面板美化/正文美化/index.html\")",
       "Bash(awk 'NR==27 || NR==39 || NR==151 || NR==156' \"d:/application/Tavern/settings/git/世界书/tavern_helper_template-main/dist/面板美化/正文美化/index.html\")",
-      "Bash(grep -on '\\\\$1' \"d:/application/Tavern/settings/git/世界书/tavern_helper_template-main/dist/面板美化/正文美化/index.html\")"
+      "Bash(grep -on '\\\\$1' \"d:/application/Tavern/settings/git/世界书/tavern_helper_template-main/dist/面板美化/正文美化/index.html\")",
+      "Bash(npx vue-tsc *)",
+      "Bash(grep -n -E \"\\\\\\\\\\\\$&|\\\\\\\\\\\\$'|\\\\\\\\\\\\$\\\\`|\\\\\\\\\\\\$<\" \"/d/application/Tavern/mod/世界书/Cultivation-Card-Game/正则/正文美化\\(测试\\).txt\")",
+      "Bash(awk '/<script>/{p=1; next} /<\\\\/script>/{p=0} p' \"/d/application/Tavern/mod/世界书/tavern_helper_template-main/src/面板美化/正文美化.html\")",
+      "Bash(awk '/<script>/{p=NR; next} /<\\\\/script>/{p=0} p {print NR\": \"$0}' \"/d/application/Tavern/mod/世界书/tavern_helper_template-main/src/面板美化/正文美化.html\")",
+      "Bash(grep -c \"<\\\\\\\\\\\\\\\\/script\" \"/d/application/Tavern/mod/世界书/tavern_helper_template-main/src/面板美化/正文美化.html\")"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
     ]
   }
 }

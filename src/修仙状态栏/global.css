@@ -28,6 +28,64 @@
   --xy-line-gold: rgba(201, 169, 110, 0.42);
   --xy-shadow: 0 6px 24px -8px rgba(42, 37, 32, 0.22);
 
+  /* —— 主题感知的薄涂层（按主题切换） —— */
+  --xy-tint-cinnabar-faint: rgba(177, 58, 58, 0.04);
+  --xy-tint-cinnabar-soft: rgba(177, 58, 58, 0.06);
+  --xy-tint-cinnabar-mid: rgba(177, 58, 58, 0.08);
+  --xy-tint-cinnabar-strong: rgba(177, 58, 58, 0.10);
+  --xy-tint-cinnabar-bold: rgba(177, 58, 58, 0.14);
+  --xy-tint-cinnabar-edge: rgba(177, 58, 58, 0.18);
+  --xy-tint-cinnabar-border: rgba(177, 58, 58, 0.25);
+  --xy-tint-cinnabar-dash: rgba(177, 58, 58, 0.4);
+  --xy-tint-cinnabar-glyph: rgba(177, 58, 58, 0.18);
+
+  --xy-tint-jade-faint: rgba(91, 138, 114, 0.06);
+  --xy-tint-jade-soft: rgba(91, 138, 114, 0.08);
+  --xy-tint-jade-mid: rgba(91, 138, 114, 0.12);
+  --xy-tint-jade-strong: rgba(91, 138, 114, 0.15);
+  --xy-tint-jade-border: rgba(91, 138, 114, 0.25);
+
+  --xy-tint-gold-faint: rgba(201, 169, 110, 0.05);
+  --xy-tint-gold-soft: rgba(201, 169, 110, 0.07);
+  --xy-tint-gold-mid: rgba(201, 169, 110, 0.10);
+  --xy-tint-gold-strong: rgba(201, 169, 110, 0.12);
+  --xy-tint-gold-bold: rgba(201, 169, 110, 0.16);
+  --xy-tint-gold-glow: rgba(201, 169, 110, 0.32);
+  --xy-tint-gold-glyph: rgba(201, 169, 110, 0.18);
+
+  --xy-tint-ink-faint: rgba(42, 37, 32, 0.04);
+  --xy-tint-ink-soft: rgba(42, 37, 32, 0.05);
+  --xy-tint-ink-mid: rgba(42, 37, 32, 0.06);
+  --xy-tint-ink-strong: rgba(42, 37, 32, 0.08);
+
+  /* —— 卷轴主面板 —— */
+  --xy-scroll-bg: linear-gradient(180deg, rgba(250, 246, 238, 0.92) 0%, rgba(247, 241, 227, 0.88) 100%);
+  --xy-scroll-sheen: rgba(255, 255, 255, 0.6);
+  --xy-scroll-shadow: rgba(42, 37, 32, 0.25);
+  --xy-scroll-edge: rgba(201, 169, 110, 0.28);
+
+  /* —— 装饰用 SVG（远山 / 仙鹤）—— */
+  --xy-deco-mountain-1: rgba(110, 124, 124, 0.32);
+  --xy-deco-mountain-2: rgba(110, 124, 124, 0.04);
+  --xy-deco-mountain-3: rgba(42, 37, 32, 0.22);
+  --xy-deco-mountain-4: rgba(42, 37, 32, 0.02);
+  --xy-deco-crane-1: rgba(42, 37, 32, 0.55);
+  --xy-deco-crane-2: rgba(42, 37, 32, 0.4);
+
+  /* —— 杂项 —— */
+  --xy-shimmer-stripe: rgba(255, 255, 255, 0.55);
+  --xy-toast-bg: rgba(42, 37, 32, 0.92);
+  --xy-overlay-mask: rgba(20, 17, 14, 0.62);
+  --xy-confirm-bg: rgba(20, 17, 14, 0.78);
+
+  /* 阴 / 阳 标签 */
+  --xy-yang-color: #b85a3a;
+  --xy-yang-border: rgba(184, 90, 58, 0.45);
+  --xy-yang-bg: rgba(184, 90, 58, 0.10);
+  --xy-yin-color: #6b3c8a;
+  --xy-yin-border: rgba(107, 60, 138, 0.40);
+  --xy-yin-bg: rgba(107, 60, 138, 0.10);
+
   /* 字体 */
   --xy-font-title: 'Ma Shan Zheng', 'STKaiti', 'KaiTi', 'AR PL UKai CN', cursive;
   --xy-font-display: 'ZCOOL XiaoWei', 'STKaiti', 'KaiTi', serif;
@@ -66,6 +124,61 @@ html[data-theme='dark'] {
   --xy-line: rgba(232, 213, 183, 0.18);
   --xy-line-gold: rgba(216, 184, 120, 0.35);
   --xy-shadow: 0 6px 24px -8px rgba(0, 0, 0, 0.6);
+
+  /* 夜间薄涂层：调亮配色，避免被暗底吃掉 */
+  --xy-tint-cinnabar-faint: rgba(217, 106, 106, 0.10);
+  --xy-tint-cinnabar-soft: rgba(217, 106, 106, 0.14);
+  --xy-tint-cinnabar-mid: rgba(217, 106, 106, 0.18);
+  --xy-tint-cinnabar-strong: rgba(217, 106, 106, 0.22);
+  --xy-tint-cinnabar-bold: rgba(217, 106, 106, 0.28);
+  --xy-tint-cinnabar-edge: rgba(217, 106, 106, 0.35);
+  --xy-tint-cinnabar-border: rgba(217, 106, 106, 0.42);
+  --xy-tint-cinnabar-dash: rgba(217, 106, 106, 0.55);
+  --xy-tint-cinnabar-glyph: rgba(217, 106, 106, 0.25);
+
+  --xy-tint-jade-faint: rgba(123, 165, 144, 0.10);
+  --xy-tint-jade-soft: rgba(123, 165, 144, 0.14);
+  --xy-tint-jade-mid: rgba(123, 165, 144, 0.20);
+  --xy-tint-jade-strong: rgba(123, 165, 144, 0.24);
+  --xy-tint-jade-border: rgba(123, 165, 144, 0.40);
+
+  --xy-tint-gold-faint: rgba(216, 184, 120, 0.08);
+  --xy-tint-gold-soft: rgba(216, 184, 120, 0.12);
+  --xy-tint-gold-mid: rgba(216, 184, 120, 0.16);
+  --xy-tint-gold-strong: rgba(216, 184, 120, 0.20);
+  --xy-tint-gold-bold: rgba(216, 184, 120, 0.24);
+  --xy-tint-gold-glow: rgba(216, 184, 120, 0.40);
+  --xy-tint-gold-glyph: rgba(216, 184, 120, 0.22);
+
+  --xy-tint-ink-faint: rgba(0, 0, 0, 0.20);
+  --xy-tint-ink-soft: rgba(0, 0, 0, 0.25);
+  --xy-tint-ink-mid: rgba(0, 0, 0, 0.32);
+  --xy-tint-ink-strong: rgba(0, 0, 0, 0.40);
+
+  --xy-scroll-bg: linear-gradient(180deg, rgba(40, 35, 50, 0.86) 0%, rgba(48, 42, 58, 0.78) 100%);
+  --xy-scroll-sheen: rgba(255, 255, 255, 0.04);
+  --xy-scroll-shadow: rgba(0, 0, 0, 0.55);
+  --xy-scroll-edge: rgba(216, 184, 120, 0.28);
+
+  --xy-deco-mountain-1: rgba(123, 165, 144, 0.18);
+  --xy-deco-mountain-2: rgba(123, 165, 144, 0.02);
+  --xy-deco-mountain-3: rgba(216, 184, 120, 0.10);
+  --xy-deco-mountain-4: rgba(216, 184, 120, 0.01);
+  --xy-deco-crane-1: rgba(232, 213, 183, 0.45);
+  --xy-deco-crane-2: rgba(232, 213, 183, 0.32);
+
+  --xy-shimmer-stripe: rgba(255, 255, 255, 0.10);
+  --xy-toast-bg: rgba(15, 12, 20, 0.94);
+  --xy-overlay-mask: rgba(0, 0, 0, 0.65);
+  --xy-confirm-bg: rgba(15, 12, 20, 0.82);
+
+  /* 夜间阴阳：调亮一档以保对比 */
+  --xy-yang-color: #e08362;
+  --xy-yang-border: rgba(224, 131, 98, 0.55);
+  --xy-yang-bg: rgba(224, 131, 98, 0.18);
+  --xy-yin-color: #b794d3;
+  --xy-yin-border: rgba(183, 148, 211, 0.50);
+  --xy-yin-bg: rgba(183, 148, 211, 0.18);
 }
 
 /* 全局重置 */
@@ -92,7 +205,9 @@ body {
     color 0.3s ease;
 }
 html[data-theme='dark'],
-:root[data-theme='dark'] {
+:root[data-theme='dark'],
+html[data-theme='dark'] body,
+:root[data-theme='dark'] body {
   background:
     radial-gradient(circle at 10% 10%, rgba(216, 184, 120, 0.06), transparent 40%),
     radial-gradient(circle at 90% 80%, rgba(123, 165, 144, 0.05), transparent 40%),
@@ -148,12 +263,12 @@ body::before {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(201, 169, 110, 0.4);
+  background: var(--xy-line-gold);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(201, 169, 110, 0.7);
+  background: var(--xy-gold);
 }
 
 button {
@@ -186,7 +301,7 @@ textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--xy-gold);
-  box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.18);
+  box-shadow: 0 0 0 3px var(--xy-tint-gold-glyph);
 }
 
 /* 通用动画 */

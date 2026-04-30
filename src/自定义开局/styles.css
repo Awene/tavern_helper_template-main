@@ -35,19 +35,29 @@
 .xs-crane-1 { top: 6%; right: 7%; animation-delay: 0s; }
 .xs-crane-2 { top: 22%; left: 6%; width: 38px; height: 28px; animation-delay: 1.6s; opacity: 0.45; }
 
+/* SVG 装饰：山水/仙鹤的颜色随主题切换 */
+.xs-mt-stop-1 { stop-color: var(--xs-deco-mountain-1); }
+.xs-mt-stop-2 { stop-color: var(--xs-deco-mountain-2); }
+.xs-mt-stop-3 { stop-color: var(--xs-deco-mountain-3); }
+.xs-mt-stop-4 { stop-color: var(--xs-deco-mountain-4); }
+.xs-crane-body { fill: var(--xs-deco-crane-1); }
+.xs-crane-body--soft { fill: var(--xs-deco-crane-2); }
+.xs-crane-tail { stroke: var(--xs-deco-crane-1); }
+
 /* ============ 卷轴主体 ============ */
 .xs-scroll {
   position: relative;
   z-index: 1;
-  background: linear-gradient(180deg, rgba(250, 246, 238, 0.94) 0%, rgba(247, 241, 227, 0.9) 100%);
+  background: var(--xs-scroll-bg);
   border-radius: 14px;
   padding: 28px 26px 22px;
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.6) inset,
-    0 14px 44px -14px rgba(42, 37, 32, 0.28),
-    0 0 0 1px rgba(201, 169, 110, 0.32);
+    0 1px 0 var(--xs-scroll-sheen) inset,
+    0 14px 44px -14px var(--xs-scroll-shadow),
+    0 0 0 1px var(--xs-scroll-edge);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 .xs-scroll::before,
 .xs-scroll::after {
@@ -98,7 +108,7 @@
 .xs-nav-step.done {
   color: var(--xs-jade-deep);
   border-color: var(--xs-jade);
-  background: rgba(91, 138, 114, 0.06);
+  background: var(--xs-tint-jade-soft);
 }
 .xs-nav-step-num {
   font-size: 10.5px;
@@ -122,7 +132,7 @@
   box-shadow: var(--xs-shadow);
 }
 .xs-points-badge.warn {
-  background: rgba(177, 58, 58, 0.08);
+  background: var(--xs-tint-cinnabar-soft);
   border-color: var(--xs-cinnabar);
   color: var(--xs-cinnabar);
 }
@@ -192,7 +202,7 @@
 }
 .xs-card.selected {
   border-color: var(--xs-cinnabar);
-  background: linear-gradient(180deg, rgba(177, 58, 58, 0.06), var(--xs-glass-strong));
+  background: linear-gradient(180deg, var(--xs-tint-cinnabar-soft), var(--xs-glass-strong));
   box-shadow:
     0 0 0 1px var(--xs-cinnabar) inset,
     0 12px 36px -12px var(--xs-cinnabar-glow);
@@ -214,13 +224,13 @@
   top: -10px;
   font-family: var(--xs-font-title);
   font-size: 80px;
-  color: rgba(201, 169, 110, 0.16);
+  color: var(--xs-tint-glyph);
   pointer-events: none;
   user-select: none;
   line-height: 1;
 }
 .xs-card.selected .xs-card-glyph {
-  color: rgba(177, 58, 58, 0.18);
+  color: var(--xs-tint-glyph-active);
 }
 
 .xs-card-head {
@@ -272,20 +282,20 @@
   padding: 2px 7px;
   font-size: 11px;
   border-radius: 8px;
-  background: rgba(42, 37, 32, 0.05);
+  background: var(--xs-tint-ink-mid);
   color: var(--xs-ink);
   letter-spacing: 0.5px;
 }
 .xs-pill-gold {
-  background: rgba(201, 169, 110, 0.16);
+  background: var(--xs-tint-gold-mid);
   color: var(--xs-gold-deep);
 }
 .xs-pill-jade {
-  background: rgba(91, 138, 114, 0.14);
+  background: var(--xs-tint-jade-mid);
   color: var(--xs-jade-deep);
 }
 .xs-pill-cinnabar {
-  background: rgba(177, 58, 58, 0.10);
+  background: var(--xs-tint-cinnabar-mid);
   color: var(--xs-cinnabar);
 }
 
@@ -302,7 +312,7 @@
   font-size: 11px;
   color: #fff;
   background: var(--el);
-  box-shadow: 0 0 0 2px rgba(247, 241, 227, 0.7), 0 0 0 3px var(--el);
+  box-shadow: 0 0 0 2px var(--xs-element-halo), 0 0 0 3px var(--el);
 }
 
 /* ============ 步骤底部按钮条 ============ */
@@ -330,7 +340,7 @@
   transition: all 0.18s ease;
 }
 .xs-btn:hover:not(:disabled) {
-  background: rgba(201, 169, 110, 0.18);
+  background: var(--xs-tint-gold-strong);
   color: var(--xs-cinnabar);
   border-color: var(--xs-cinnabar);
 }
@@ -379,8 +389,8 @@
   justify-content: center;
   border: 2px solid var(--xs-cinnabar);
   border-radius: 6px;
-  background: rgba(177, 58, 58, 0.92);
-  color: var(--xs-paper);
+  background: var(--xs-cinnabar);
+  color: #fff;
   font-family: var(--xs-font-title);
   font-size: 24px;
   letter-spacing: 2px;
@@ -507,7 +517,7 @@
 .xs-tabs {
   display: flex;
   gap: 4px;
-  background: rgba(42, 37, 32, 0.05);
+  background: var(--xs-tint-ink-mid);
   padding: 3px;
   border-radius: 8px;
   margin-bottom: 14px;
@@ -542,7 +552,7 @@
   font-size: 13px;
   color: var(--xs-ink-soft);
   padding: 8px 12px;
-  background: rgba(42, 37, 32, 0.04);
+  background: var(--xs-tint-ink-soft);
   border-left: 3px solid var(--xs-gold);
   border-radius: 4px;
   margin-top: 8px;
@@ -574,7 +584,7 @@
 }
 .xs-name-input:focus {
   border-color: var(--xs-cinnabar);
-  box-shadow: 0 0 0 3px rgba(177, 58, 58, 0.15);
+  box-shadow: 0 0 0 3px var(--xs-tint-cinnabar-strong);
 }
 
 /* ============ 确认页摘要 ============ */

@@ -577,7 +577,7 @@ const virginHint = computed(() => {
   font-size: 11px;
   color: #fff;
   background: var(--el);
-  box-shadow: 0 0 0 2px rgba(247, 241, 227, 0.7), 0 0 0 3px var(--el);
+  box-shadow: 0 0 0 2px var(--xs-element-halo), 0 0 0 3px var(--el);
 }
 .xs-element-chip-name {
   font-family: var(--xs-font-display);
@@ -589,11 +589,11 @@ const virginHint = computed(() => {
   border: 1px dashed var(--xs-line);
   border-radius: 8px;
   padding: 10px 12px;
-  background: rgba(201, 169, 110, 0.06);
+  background: var(--xs-tint-gold-soft);
 }
 .xs-mutation-panel.on {
   border-color: var(--xs-cinnabar);
-  background: rgba(177, 58, 58, 0.06);
+  background: var(--xs-tint-cinnabar-soft);
 }
 .xs-mutation-toggle {
   display: flex;
@@ -659,7 +659,7 @@ const virginHint = computed(() => {
 }
 .xs-mutation-custom input:focus {
   border-color: var(--xs-cinnabar);
-  box-shadow: 0 0 0 3px rgba(177, 58, 58, 0.15);
+  box-shadow: 0 0 0 3px var(--xs-tint-cinnabar-strong);
   outline: none;
 }
 
@@ -671,8 +671,8 @@ const virginHint = computed(() => {
   padding: 12px 14px;
   border: 1px solid var(--xs-cinnabar);
   border-radius: 10px;
-  background: linear-gradient(180deg, rgba(177, 58, 58, 0.04), var(--xs-glass-strong));
-  box-shadow: 0 0 0 1px rgba(177, 58, 58, 0.1) inset;
+  background: linear-gradient(180deg, var(--xs-tint-cinnabar-faint), var(--xs-glass-strong));
+  box-shadow: 0 0 0 1px var(--xs-tint-cinnabar-mid) inset;
 }
 .xs-root-preview.empty {
   border-color: var(--xs-line);
@@ -801,12 +801,12 @@ const virginHint = computed(() => {
 }
 .xs-physique-card.active {
   border-color: var(--xs-cinnabar);
-  background: linear-gradient(180deg, rgba(177, 58, 58, 0.06), var(--xs-glass-strong));
+  background: linear-gradient(180deg, var(--xs-tint-cinnabar-soft), var(--xs-glass-strong));
   box-shadow: 0 0 0 1px var(--xs-cinnabar) inset, 0 8px 24px -10px var(--xs-cinnabar-glow);
 }
 .xs-physique-card-custom {
   border-style: dashed;
-  background: rgba(201, 169, 110, 0.06);
+  background: var(--xs-tint-gold-soft);
 }
 .xs-physique-card-head {
   display: flex;
@@ -849,7 +849,7 @@ const virginHint = computed(() => {
   padding: 12px 14px;
   border: 1px dashed var(--xs-cinnabar);
   border-radius: 8px;
-  background: rgba(177, 58, 58, 0.04);
+  background: var(--xs-tint-cinnabar-faint);
 }
 .xs-physique-edit-row {
   display: flex;
@@ -876,7 +876,7 @@ const virginHint = computed(() => {
 }
 .xs-physique-edit-row input:focus {
   border-color: var(--xs-cinnabar);
-  box-shadow: 0 0 0 3px rgba(177, 58, 58, 0.15);
+  box-shadow: 0 0 0 3px var(--xs-tint-cinnabar-strong);
   outline: none;
 }
 .xs-effect-name-input { flex: 0 0 160px; }
@@ -905,7 +905,7 @@ const virginHint = computed(() => {
 }
 .xs-stat-input-group input[type='number']:focus {
   border-color: var(--xs-cinnabar);
-  box-shadow: 0 0 0 3px rgba(177, 58, 58, 0.15);
+  box-shadow: 0 0 0 3px var(--xs-tint-cinnabar-strong);
   outline: none;
 }
 .xs-stat-sum {
@@ -919,12 +919,12 @@ const virginHint = computed(() => {
 .xs-stat-sum.ok {
   color: var(--xs-jade-deep);
   border-color: var(--xs-jade);
-  background: rgba(91, 138, 114, 0.08);
+  background: var(--xs-tint-jade-soft);
 }
 .xs-stat-sum.bad {
   color: var(--xs-cinnabar);
   border-color: var(--xs-cinnabar);
-  background: rgba(177, 58, 58, 0.06);
+  background: var(--xs-tint-cinnabar-soft);
 }
 .xs-stat-balance-btn {
   padding: 4px 12px;

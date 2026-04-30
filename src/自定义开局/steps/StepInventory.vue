@@ -449,7 +449,7 @@ function customCost(c: CustomItem): number {
   padding: 10px 12px;
   border: 1px dashed var(--xs-cinnabar);
   border-radius: 10px;
-  background: rgba(177, 58, 58, 0.04);
+  background: var(--xs-tint-cinnabar-faint);
 }
 .xs-custom-card-head {
   display: flex;
@@ -492,7 +492,7 @@ function customCost(c: CustomItem): number {
   padding: 12px 14px;
   border: 1px dashed var(--xs-cinnabar);
   border-radius: 10px;
-  background: rgba(177, 58, 58, 0.04);
+  background: var(--xs-tint-cinnabar-faint);
   margin-top: 8px;
 }
 .xs-custom-edit-row {
@@ -522,7 +522,7 @@ function customCost(c: CustomItem): number {
 .xs-custom-edit-row select:focus {
   border-color: var(--xs-cinnabar);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(177, 58, 58, 0.15);
+  box-shadow: 0 0 0 3px var(--xs-tint-cinnabar-strong);
 }
 .xs-custom-edit-row select {
   font-family: var(--xs-font-display);
@@ -588,7 +588,7 @@ function customCost(c: CustomItem): number {
 .xs-inv-filter select:focus {
   border-color: var(--xs-cinnabar);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(177, 58, 58, 0.15);
+  box-shadow: 0 0 0 3px var(--xs-tint-cinnabar-strong);
 }
 .xs-inv-clear {
   padding: 4px 12px;

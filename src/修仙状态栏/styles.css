@@ -50,17 +50,26 @@
 .xy-scroll {
   position: relative;
   z-index: 1;
-  background: linear-gradient(180deg, rgba(250, 246, 238, 0.92) 0%, rgba(247, 241, 227, 0.88) 100%);
+  background: var(--xy-scroll-bg);
   border-radius: 14px;
   padding: 22px 18px 18px;
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.6) inset,
-    0 12px 36px -12px rgba(42, 37, 32, 0.25),
-    0 0 0 1px rgba(201, 169, 110, 0.28);
+    0 1px 0 var(--xy-scroll-sheen) inset,
+    0 12px 36px -12px var(--xy-scroll-shadow),
+    0 0 0 1px var(--xy-scroll-edge);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  transition: padding 0.25s ease;
+  transition: padding 0.25s ease, background 0.3s ease, box-shadow 0.3s ease;
 }
+
+/* SVG 装饰：远山 / 仙鹤 主题感知 */
+.xy-mt-stop-1 { stop-color: var(--xy-deco-mountain-1); }
+.xy-mt-stop-2 { stop-color: var(--xy-deco-mountain-2); }
+.xy-mt-stop-3 { stop-color: var(--xy-deco-mountain-3); }
+.xy-mt-stop-4 { stop-color: var(--xy-deco-mountain-4); }
+.xy-crane-body { fill: var(--xy-deco-crane-1); }
+.xy-crane-body--soft { fill: var(--xy-deco-crane-2); }
+.xy-crane-tail { stroke: var(--xy-deco-crane-1); }
 .xy-scroll-collapsed {
   padding: 8px 14px;
 }
@@ -99,7 +108,7 @@
   transition: all 0.18s ease;
 }
 .xy-edit-toggle:hover {
-  background: rgba(201, 169, 110, 0.12);
+  background: var(--xy-tint-gold-strong);
   color: var(--xy-ink);
 }
 .xy-edit-toggle.active {
@@ -153,7 +162,7 @@
   border-radius: 4px;
   padding: 1px 6px;
   outline: none;
-  box-shadow: 0 0 0 2px rgba(177, 58, 58, 0.18);
+  box-shadow: 0 0 0 2px var(--xy-tint-cinnabar-edge);
   min-width: 60px;
   max-width: 100%;
 }
@@ -206,8 +215,8 @@
   margin: 4px 0 0 0;
   font-size: 11px;
   color: var(--xy-cinnabar);
-  background: rgba(177, 58, 58, 0.06);
-  border: 1px dashed rgba(177, 58, 58, 0.4);
+  background: var(--xy-tint-cinnabar-soft);
+  border: 1px dashed var(--xy-tint-cinnabar-dash);
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.15s ease;
@@ -215,7 +224,7 @@
   letter-spacing: 1px;
 }
 .xy-effect-add:hover {
-  background: rgba(177, 58, 58, 0.14);
+  background: var(--xy-tint-cinnabar-bold);
 }
 .xy-effect-del {
   display: inline-flex;
@@ -260,7 +269,7 @@
   transition: all 0.18s ease;
 }
 .xy-app-collapse-btn:hover {
-  background: rgba(201, 169, 110, 0.12);
+  background: var(--xy-tint-gold-strong);
   color: var(--xy-ink);
 }
 .xy-app-collapse-caret {
@@ -302,7 +311,7 @@
 .xy-trash:hover {
   color: var(--xy-cinnabar);
   border-color: var(--xy-cinnabar);
-  background: rgba(177, 58, 58, 0.08);
+  background: var(--xy-tint-cinnabar-mid);
 }
 .xy-trash-npc {
   top: 4px;
@@ -327,7 +336,7 @@
 .xy-confirm-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(20, 17, 14, 0.62);
+  background: var(--xy-overlay-mask);
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
   display: flex;
@@ -468,7 +477,7 @@
   padding: 1px 6px;
   border-radius: 2px;
   letter-spacing: 1px;
-  background: rgba(177, 58, 58, 0.08);
+  background: var(--xy-tint-cinnabar-mid);
 }
 
 .xy-meta-line {
@@ -571,7 +580,7 @@
 .xy-lightbox {
   position: fixed;
   inset: 0;
-  background: rgba(20, 17, 14, 0.78);
+  background: var(--xy-confirm-bg);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   display: flex;
@@ -671,7 +680,7 @@
 .xy-bar-track {
   position: relative;
   height: 6px;
-  background: rgba(42, 37, 32, 0.08);
+  background: var(--xy-tint-ink-strong);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -687,7 +696,7 @@
   inset: 0 auto 0 0;
   border-radius: 4px;
   pointer-events: none;
-  background: linear-gradient(90deg, transparent 30%, rgba(255, 255, 255, 0.55), transparent 70%);
+  background: linear-gradient(90deg, transparent 30%, var(--xy-shimmer-stripe), transparent 70%);
   background-size: 200% 100%;
   animation: xy-shimmer 3s linear infinite;
   mix-blend-mode: overlay;
@@ -729,7 +738,7 @@
   box-shadow: 0 3px 8px -3px rgba(42, 37, 32, 0.22);
 }
 .xy-buff-chip.active {
-  box-shadow: 0 0 0 2px rgba(201, 169, 110, 0.32);
+  box-shadow: 0 0 0 2px var(--xy-tint-gold-glow);
 }
 .xy-buff-chip small {
   margin-left: 3px;
@@ -748,15 +757,15 @@
 }
 .xy-buff-detail.xy-buff-增益 {
   border-left-color: var(--xy-jade);
-  background: rgba(91, 138, 114, 0.06);
+  background: var(--xy-tint-jade-faint);
 }
 .xy-buff-detail.xy-buff-减益 {
   border-left-color: var(--xy-cinnabar);
-  background: rgba(177, 58, 58, 0.06);
+  background: var(--xy-tint-cinnabar-soft);
 }
 .xy-buff-detail.xy-buff-特殊 {
   border-left-color: var(--xy-gold);
-  background: rgba(201, 169, 110, 0.07);
+  background: var(--xy-tint-gold-soft);
 }
 .xy-buff-detail-head {
   display: flex;
@@ -796,17 +805,17 @@
 .xy-buff-增益 {
   border-color: var(--xy-jade);
   color: var(--xy-jade-deep);
-  background: rgba(91, 138, 114, 0.08);
+  background: var(--xy-tint-jade-soft);
 }
 .xy-buff-减益 {
   border-color: var(--xy-cinnabar);
   color: var(--xy-cinnabar-deep);
-  background: rgba(177, 58, 58, 0.08);
+  background: var(--xy-tint-cinnabar-mid);
 }
 .xy-buff-特殊 {
   border-color: var(--xy-gold);
   color: var(--xy-gold-deep);
-  background: rgba(201, 169, 110, 0.1);
+  background: var(--xy-tint-gold-mid);
 }
 
 /* ============ Tab 导航 ============ */
@@ -815,7 +824,7 @@
   gap: 4px;
   margin-bottom: 14px;
   padding: 4px;
-  background: rgba(42, 37, 32, 0.05);
+  background: var(--xy-tint-ink-soft);
   border-radius: 8px;
   overflow-x: auto;
   scrollbar-width: none;
@@ -943,7 +952,7 @@ button.xy-card-title-clickable .xy-collapse-count {
   flex: 0 0 auto;
   font-size: 11px;
   color: var(--xy-cinnabar);
-  background: rgba(177, 58, 58, 0.1);
+  background: var(--xy-tint-cinnabar-strong);
   padding: 1px 7px;
   border-radius: 8px;
   letter-spacing: 0;
@@ -1111,7 +1120,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
 .xy-skill-bar {
   flex: 1 1 auto;
   height: 4px;
-  background: rgba(42, 37, 32, 0.08);
+  background: var(--xy-tint-ink-strong);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -1183,7 +1192,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
   font-size: 11px;
   padding: 1px 6px;
   border-radius: 2px;
-  background: rgba(42, 37, 32, 0.06);
+  background: var(--xy-tint-ink-mid);
   color: var(--xy-ink-mute);
 }
 .xy-buff-time {
@@ -1231,9 +1240,9 @@ button.xy-card-title-clickable.open .xy-card-summary {
   box-shadow: 0 8px 24px -8px rgba(42, 37, 32, 0.25);
 }
 .xy-art-active {
-  background: linear-gradient(135deg, rgba(201, 169, 110, 0.15), rgba(250, 246, 238, 0.7));
+  background: linear-gradient(135deg, var(--xy-tint-gold-bold), var(--xy-glass-strong));
   border-color: var(--xy-gold);
-  box-shadow: 0 0 0 1px rgba(201, 169, 110, 0.3), 0 4px 16px -4px rgba(201, 169, 110, 0.4);
+  box-shadow: 0 0 0 1px var(--xy-tint-gold-glow), 0 4px 16px -4px var(--xy-tint-gold-glow);
 }
 .xy-art-active::after {
   content: '运';
@@ -1242,7 +1251,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
   right: 8px;
   font-family: var(--xy-font-title);
   font-size: 28px;
-  color: rgba(177, 58, 58, 0.18);
+  color: var(--xy-tint-cinnabar-glyph);
   pointer-events: none;
 }
 .xy-art-head {
@@ -1284,7 +1293,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
   background: linear-gradient(135deg, var(--xy-cinnabar), var(--xy-cinnabar-deep));
   color: var(--xy-paper);
   border-color: var(--xy-cinnabar);
-  box-shadow: 0 0 0 2px rgba(177, 58, 58, 0.18);
+  box-shadow: 0 0 0 2px var(--xy-tint-cinnabar-edge);
 }
 .xy-art-meta {
   display: flex;
@@ -1309,7 +1318,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
   color: var(--xy-ink-soft);
   padding: 2px 6px;
   border-left: 2px solid var(--xy-jade);
-  background: rgba(91, 138, 114, 0.06);
+  background: var(--xy-tint-jade-faint);
 }
 .xy-tags {
   display: flex;
@@ -1321,7 +1330,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
   font-size: 10.5px;
   padding: 1px 6px;
   border-radius: 8px;
-  background: rgba(42, 37, 32, 0.05);
+  background: var(--xy-tint-ink-soft);
   color: var(--xy-ink-mute);
 }
 
@@ -1336,13 +1345,13 @@ button.xy-card-title-clickable.open .xy-card-summary {
   letter-spacing: 0.5px;
 }
 .xy-pill-soft {
-  background: rgba(91, 138, 114, 0.08);
-  border-color: rgba(91, 138, 114, 0.25);
+  background: var(--xy-tint-jade-soft);
+  border-color: var(--xy-tint-jade-border);
   color: var(--xy-jade-deep);
 }
 .xy-pill-cost {
-  background: rgba(177, 58, 58, 0.08);
-  border-color: rgba(177, 58, 58, 0.25);
+  background: var(--xy-tint-cinnabar-mid);
+  border-color: var(--xy-tint-cinnabar-border);
   color: var(--xy-cinnabar-deep);
 }
 
@@ -1372,7 +1381,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
 .xy-q-天 {
   background: linear-gradient(135deg, #c9a96e, #b13a3a);
   color: #fff;
-  box-shadow: 0 0 8px rgba(201, 169, 110, 0.6);
+  box-shadow: 0 0 8px var(--xy-tint-gold-glow);
 }
 
 /* ============ 储物 ============ */
@@ -1382,7 +1391,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
   gap: 10px;
   padding: 6px 14px;
   background:
-    radial-gradient(circle at 85% 50%, rgba(201, 169, 110, 0.18), transparent 60%),
+    radial-gradient(circle at 85% 50%, var(--xy-tint-gold-bold), transparent 60%),
     linear-gradient(135deg, var(--xy-paper-soft), var(--xy-paper-warm));
   border: 1px solid var(--xy-line-gold);
   border-radius: 6px;
@@ -1397,7 +1406,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
   font-family: var(--xy-font-title);
   font-size: 44px;
   line-height: 1;
-  color: rgba(201, 169, 110, 0.18);
+  color: var(--xy-tint-gold-glyph);
 }
 .xy-stone-label {
   font-family: var(--xy-font-display);
@@ -1414,7 +1423,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
 .xy-storage-tabs {
   display: flex;
   gap: 4px;
-  background: rgba(42, 37, 32, 0.05);
+  background: var(--xy-tint-ink-soft);
   padding: 3px;
   border-radius: 6px;
 }
@@ -1474,7 +1483,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
 }
 .xy-q-bg-天 {
   border-left: 3px solid var(--xy-gold);
-  background: linear-gradient(135deg, rgba(201, 169, 110, 0.1), var(--xy-glass));
+  background: linear-gradient(135deg, var(--xy-tint-gold-mid), var(--xy-glass));
 }
 .xy-item-head {
   display: flex;
@@ -1524,20 +1533,20 @@ button.xy-card-title-clickable.open .xy-card-summary {
   letter-spacing: 1px;
   padding: 2px 8px;
   border-radius: 2px;
-  background: rgba(42, 37, 32, 0.05);
+  background: var(--xy-tint-ink-soft);
 }
 .xy-stat-atk {
   color: var(--xy-cinnabar-deep);
-  background: rgba(177, 58, 58, 0.1);
+  background: var(--xy-tint-cinnabar-strong);
 }
 .xy-stat-def {
   color: var(--xy-jade-deep);
-  background: rgba(91, 138, 114, 0.12);
+  background: var(--xy-tint-jade-mid);
 }
 
 /* 傀儡/灵兽 */
 .xy-unit-active {
-  background: linear-gradient(135deg, rgba(201, 169, 110, 0.12), var(--xy-glass));
+  background: linear-gradient(135deg, var(--xy-tint-gold-strong), var(--xy-glass));
   border-color: var(--xy-gold);
 }
 .xy-unit-bars {
@@ -1559,7 +1568,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
 .xy-unit-bar-track {
   flex: 1 1 auto;
   height: 5px;
-  background: rgba(42, 37, 32, 0.08);
+  background: var(--xy-tint-ink-strong);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -1597,7 +1606,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
   gap: 6px;
   font-size: 12px;
   padding: 3px 6px;
-  background: rgba(42, 37, 32, 0.04);
+  background: var(--xy-tint-ink-faint);
   border-radius: 3px;
 }
 .xy-skill-line-name {
@@ -1734,7 +1743,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
 .xy-npc-online {
   font-size: 10px;
   padding: 1px 6px;
-  background: rgba(91, 138, 114, 0.15);
+  background: var(--xy-tint-jade-strong);
   color: var(--xy-jade-deep);
   border-radius: 8px;
 }
@@ -1747,7 +1756,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
   gap: 4px;
 }
 .xy-npc-id {
-  background: rgba(42, 37, 32, 0.05);
+  background: var(--xy-tint-ink-soft);
   padding: 0 5px;
   border-radius: 2px;
 }
@@ -1766,14 +1775,14 @@ button.xy-card-title-clickable.open .xy-card-summary {
   border: 1px solid;
 }
 .xy-npc-yang {
-  color: #b85a3a;
-  border-color: rgba(184, 90, 58, 0.45);
-  background: rgba(184, 90, 58, 0.08);
+  color: var(--xy-yang-color, #b85a3a);
+  border-color: var(--xy-yang-border, rgba(184, 90, 58, 0.45));
+  background: var(--xy-yang-bg, rgba(184, 90, 58, 0.12));
 }
 .xy-npc-yin {
-  color: #6b3c8a;
-  border-color: rgba(107, 60, 138, 0.4);
-  background: rgba(107, 60, 138, 0.08);
+  color: var(--xy-yin-color, #6b3c8a);
+  border-color: var(--xy-yin-border, rgba(107, 60, 138, 0.4));
+  background: var(--xy-yin-bg, rgba(107, 60, 138, 0.12));
 }
 
 .xy-favor {
@@ -1795,7 +1804,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
 }
 .xy-favor-high {
   border-color: var(--xy-cinnabar);
-  background: rgba(177, 58, 58, 0.08);
+  background: var(--xy-tint-cinnabar-mid);
 }
 .xy-favor-high .xy-favor-num {
   color: var(--xy-cinnabar);
@@ -1814,7 +1823,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
 }
 .xy-favor-bad {
   border-color: var(--xy-ink-soft);
-  background: rgba(42, 37, 32, 0.08);
+  background: var(--xy-tint-ink-strong);
 }
 .xy-favor-bad .xy-favor-num {
   color: var(--xy-ink);
@@ -1880,7 +1889,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
   margin: 0;
   border: 1px solid var(--xy-line);
   border-radius: 4px;
-  background: rgba(42, 37, 32, 0.04);
+  background: var(--xy-tint-ink-faint);
   cursor: pointer;
   font-family: inherit;
   color: var(--xy-ink);
@@ -1888,11 +1897,11 @@ button.xy-card-title-clickable.open .xy-card-summary {
   text-align: left;
 }
 .xy-collapse-head:hover {
-  background: rgba(42, 37, 32, 0.08);
+  background: var(--xy-tint-ink-strong);
   border-color: var(--xy-line-gold);
 }
 .xy-collapse-head.open {
-  background: rgba(201, 169, 110, 0.08);
+  background: var(--xy-tint-gold-mid);
   border-color: var(--xy-line-gold);
 }
 .xy-collapse-title {
@@ -1907,7 +1916,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
   color: var(--xy-cinnabar);
   padding: 0 6px;
   border-radius: 6px;
-  background: rgba(177, 58, 58, 0.08);
+  background: var(--xy-tint-cinnabar-mid);
 }
 .xy-collapse-lock {
   margin-left: 2px;
@@ -1948,7 +1957,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
   color: var(--xy-ink-mute);
 }
 .xy-collapse-sub.open {
-  background: rgba(201, 169, 110, 0.05);
+  background: var(--xy-tint-gold-faint);
 }
 
 /* 状态层数小标 */
@@ -1974,7 +1983,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
   left: 50%;
   transform: translateX(-50%);
   padding: 10px 18px;
-  background: rgba(42, 37, 32, 0.92);
+  background: var(--xy-toast-bg);
   color: var(--xy-paper);
   border-radius: 22px;
   font-size: 12.5px;
@@ -2016,7 +2025,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
 .xy-npc-bars .xy-unit-bar-track {
   flex: 1 1 auto;
   height: 6px;
-  background: rgba(42, 37, 32, 0.08);
+  background: var(--xy-tint-ink-strong);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -2072,7 +2081,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
   font-size: 11.5px;
   padding: 2px 7px;
   border-radius: 8px;
-  background: rgba(42, 37, 32, 0.05);
+  background: var(--xy-tint-ink-soft);
   color: var(--xy-ink);
   letter-spacing: 0.5px;
   white-space: nowrap;
@@ -2106,7 +2115,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
 }
 .xy-art-mini.xy-art-active {
   border-left-color: var(--xy-cinnabar);
-  background: linear-gradient(135deg, rgba(177, 58, 58, 0.06), var(--xy-glass));
+  background: linear-gradient(135deg, var(--xy-tint-cinnabar-soft), var(--xy-glass));
 }
 .xy-art-mini .xy-art-head {
   display: flex;
@@ -2149,7 +2158,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
   align-items: baseline;
   gap: 8px;
   padding: 4px 10px;
-  background: rgba(212, 176, 106, 0.08);
+  background: var(--xy-tint-gold-mid);
   border-left: 2px solid var(--xy-gold);
   border-radius: 3px;
 }
@@ -2204,9 +2213,9 @@ button.xy-card-title-clickable.open .xy-card-summary {
   font-size: 10.5px;
   padding: 1px 6px;
   border-radius: 8px;
-  background: rgba(177, 58, 58, 0.1);
+  background: var(--xy-tint-cinnabar-strong);
   color: var(--xy-cinnabar-deep);
-  border: 1px solid rgba(177, 58, 58, 0.25);
+  border: 1px solid var(--xy-tint-cinnabar-border);
   letter-spacing: 1px;
 }
 
@@ -2244,7 +2253,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
   border-color: var(--xy-cinnabar-deep);
 }
 .xy-chip.active em {
-  color: rgba(247, 241, 227, 0.8);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .xy-rumor-list {
@@ -2370,7 +2379,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
   height: 56px;
   font-family: var(--xy-font-title);
   font-size: 32px;
-  color: rgba(177, 58, 58, 0.4);
+  color: var(--xy-tint-cinnabar-dash);
   border: 1px dashed var(--xy-line);
   border-radius: 50%;
   margin-bottom: 8px;

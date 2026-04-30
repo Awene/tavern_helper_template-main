@@ -458,7 +458,7 @@ function selectCustom() {
   padding: 12px 14px;
   border: 1px dashed var(--xs-cinnabar);
   border-radius: 10px;
-  background: rgba(177, 58, 58, 0.04);
+  background: var(--xs-tint-cinnabar-faint);
 }
 .xs-custom-edit-row {
   display: flex;
@@ -505,7 +505,7 @@ function selectCustom() {
 .xs-custom-edit-row select:focus {
   border-color: var(--xs-cinnabar);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(177, 58, 58, 0.15);
+  box-shadow: 0 0 0 3px var(--xs-tint-cinnabar-strong);
 }
 .xs-edit-time input[type='number'] {
   width: 80px;
@@ -603,7 +603,7 @@ function selectCustom() {
 }
 .xs-story-card.active {
   border-color: var(--xs-cinnabar);
-  background: linear-gradient(180deg, rgba(177, 58, 58, 0.06), var(--xs-glass-strong));
+  background: linear-gradient(180deg, var(--xs-tint-cinnabar-soft), var(--xs-glass-strong));
   box-shadow: 0 0 0 1px var(--xs-cinnabar) inset, 0 8px 24px -10px var(--xs-cinnabar-glow);
 }
 .xs-story-card.disabled {
@@ -645,7 +645,7 @@ function selectCustom() {
   font-size: 11.5px;
   padding: 2px 8px;
   border-radius: 8px;
-  background: rgba(91, 138, 114, 0.10);
+  background: var(--xs-tint-jade-mid);
   color: var(--xs-jade-deep);
   letter-spacing: 0.5px;
 }
@@ -660,7 +660,7 @@ function selectCustom() {
   font-size: 13px;
   color: var(--xs-ink-soft);
   padding: 8px 12px;
-  background: rgba(42, 37, 32, 0.04);
+  background: var(--xs-tint-ink-soft);
   border-left: 3px solid var(--xs-gold);
   border-radius: 4px;
   margin-top: 8px;
@@ -670,7 +670,7 @@ function selectCustom() {
   padding: 6px 10px;
   border: 1px dashed var(--xs-cinnabar);
   border-radius: 6px;
-  background: rgba(177, 58, 58, 0.06);
+  background: var(--xs-tint-cinnabar-soft);
 }
 .xs-story-blocked-title {
   font-family: var(--xs-font-display);

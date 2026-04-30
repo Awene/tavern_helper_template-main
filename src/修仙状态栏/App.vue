@@ -5,12 +5,12 @@
       <svg class="xy-bg-mountain" viewBox="0 0 1200 240" preserveAspectRatio="none">
         <defs>
           <linearGradient id="mtGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="rgba(110,124,124,0.32)" />
-            <stop offset="100%" stop-color="rgba(110,124,124,0.04)" />
+            <stop class="xy-mt-stop-1" offset="0%" />
+            <stop class="xy-mt-stop-2" offset="100%" />
           </linearGradient>
           <linearGradient id="mtGrad2" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="rgba(42,37,32,0.22)" />
-            <stop offset="100%" stop-color="rgba(42,37,32,0.02)" />
+            <stop class="xy-mt-stop-3" offset="0%" />
+            <stop class="xy-mt-stop-4" offset="100%" />
           </linearGradient>
         </defs>
         <path d="M0,200 Q120,80 220,140 T420,120 T620,160 T840,100 T1060,150 T1200,130 L1200,240 L0,240 Z" fill="url(#mtGrad)" />
@@ -18,16 +18,16 @@
       </svg>
       <svg class="xy-crane xy-crane-1" viewBox="0 0 80 60">
         <path
+          class="xy-crane-body"
           d="M5,40 Q15,28 28,30 Q34,22 42,26 Q50,20 56,28 Q62,26 70,32 Q66,38 58,38 Q52,44 44,42 Q38,48 30,44 Q22,48 14,44 Q8,46 5,40 Z"
-          fill="rgba(42,37,32,0.55)"
         />
         <circle cx="62" cy="29" r="1.2" fill="#b13a3a" />
-        <path d="M64,28 L72,24" stroke="rgba(42,37,32,0.55)" stroke-width="1" fill="none" />
+        <path class="xy-crane-tail" d="M64,28 L72,24" stroke-width="1" fill="none" />
       </svg>
       <svg class="xy-crane xy-crane-2" viewBox="0 0 80 60">
         <path
+          class="xy-crane-body xy-crane-body--soft"
           d="M5,40 Q15,28 28,30 Q34,22 42,26 Q50,20 56,28 Q62,26 70,32 Q66,38 58,38 Q52,44 44,42 Q38,48 30,44 Q22,48 14,44 Q8,46 5,40 Z"
-          fill="rgba(42,37,32,0.4)"
         />
       </svg>
     </div>

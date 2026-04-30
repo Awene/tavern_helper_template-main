@@ -42,6 +42,38 @@
   --xs-shadow: 0 6px 24px -8px rgba(42, 37, 32, 0.22);
   --xs-shadow-lift: 0 14px 40px -10px rgba(42, 37, 32, 0.32);
 
+  /* —— 主题色调（薄涂层），按主题切换 —— */
+  --xs-tint-cinnabar-faint: rgba(177, 58, 58, 0.04);
+  --xs-tint-cinnabar-soft: rgba(177, 58, 58, 0.06);
+  --xs-tint-cinnabar-mid: rgba(177, 58, 58, 0.10);
+  --xs-tint-cinnabar-strong: rgba(177, 58, 58, 0.15);
+  --xs-tint-jade-soft: rgba(91, 138, 114, 0.06);
+  --xs-tint-jade-mid: rgba(91, 138, 114, 0.14);
+  --xs-tint-gold-soft: rgba(201, 169, 110, 0.06);
+  --xs-tint-gold-mid: rgba(201, 169, 110, 0.16);
+  --xs-tint-gold-strong: rgba(201, 169, 110, 0.18);
+  --xs-tint-ink-soft: rgba(42, 37, 32, 0.04);
+  --xs-tint-ink-mid: rgba(42, 37, 32, 0.05);
+  --xs-tint-glyph: rgba(201, 169, 110, 0.16);
+  --xs-tint-glyph-active: rgba(177, 58, 58, 0.18);
+
+  /* —— 卷轴主体面板色 —— */
+  --xs-scroll-bg: linear-gradient(180deg, rgba(250, 246, 238, 0.94) 0%, rgba(247, 241, 227, 0.9) 100%);
+  --xs-scroll-sheen: rgba(255, 255, 255, 0.6);
+  --xs-scroll-shadow: rgba(42, 37, 32, 0.28);
+  --xs-scroll-edge: rgba(201, 169, 110, 0.32);
+
+  /* —— 五行小圆环外光晕（与纸面同色，使色块脱壳） —— */
+  --xs-element-halo: rgba(247, 241, 227, 0.7);
+
+  /* —— 装饰用山水/仙鹤墨色 —— */
+  --xs-deco-mountain-1: rgba(110, 124, 124, 0.32);
+  --xs-deco-mountain-2: rgba(110, 124, 124, 0.04);
+  --xs-deco-mountain-3: rgba(42, 37, 32, 0.22);
+  --xs-deco-mountain-4: rgba(42, 37, 32, 0.02);
+  --xs-deco-crane-1: rgba(42, 37, 32, 0.55);
+  --xs-deco-crane-2: rgba(42, 37, 32, 0.4);
+
   /* —— 字体 —— 优先 LXGW WenKai（开源楷体，覆盖 GB18030）/ 系统楷体 / Noto Serif SC */
   --xs-font-title: 'LXGW WenKai', 'STKaiti', 'KaiTi', 'AR PL UKai CN', 'Kaiti SC', '楷体', 'Noto Serif SC', serif;
   --xs-font-display: 'LXGW WenKai', 'STKaiti', 'KaiTi', 'AR PL UKai CN', 'Kaiti SC', '楷体', 'Noto Serif SC', serif;
@@ -93,6 +125,36 @@ html[data-theme='dark'] {
 
   --xs-shadow: 0 6px 24px -8px rgba(0, 0, 0, 0.6);
   --xs-shadow-lift: 0 14px 40px -10px rgba(0, 0, 0, 0.72);
+
+  /* 夜间薄涂层：颜色更亮、不透明度更高，避免被深色卷轴吃掉 */
+  --xs-tint-cinnabar-faint: rgba(217, 106, 106, 0.10);
+  --xs-tint-cinnabar-soft: rgba(217, 106, 106, 0.15);
+  --xs-tint-cinnabar-mid: rgba(217, 106, 106, 0.22);
+  --xs-tint-cinnabar-strong: rgba(217, 106, 106, 0.28);
+  --xs-tint-jade-soft: rgba(123, 165, 144, 0.12);
+  --xs-tint-jade-mid: rgba(123, 165, 144, 0.24);
+  --xs-tint-gold-soft: rgba(216, 184, 120, 0.10);
+  --xs-tint-gold-mid: rgba(216, 184, 120, 0.20);
+  --xs-tint-gold-strong: rgba(216, 184, 120, 0.24);
+  --xs-tint-ink-soft: rgba(0, 0, 0, 0.22);
+  --xs-tint-ink-mid: rgba(0, 0, 0, 0.32);
+  --xs-tint-glyph: rgba(216, 184, 120, 0.18);
+  --xs-tint-glyph-active: rgba(217, 106, 106, 0.24);
+
+  --xs-scroll-bg: linear-gradient(180deg, rgba(40, 35, 50, 0.86) 0%, rgba(48, 42, 58, 0.78) 100%);
+  --xs-scroll-sheen: rgba(255, 255, 255, 0.04);
+  --xs-scroll-shadow: rgba(0, 0, 0, 0.55);
+  --xs-scroll-edge: rgba(216, 184, 120, 0.28);
+
+  /* 夜间小圆环外光晕：与卷轴同色，避免出现亮色"白圈"穿帮 */
+  --xs-element-halo: rgba(40, 35, 50, 0.7);
+
+  --xs-deco-mountain-1: rgba(123, 165, 144, 0.18);
+  --xs-deco-mountain-2: rgba(123, 165, 144, 0.02);
+  --xs-deco-mountain-3: rgba(216, 184, 120, 0.10);
+  --xs-deco-mountain-4: rgba(216, 184, 120, 0.01);
+  --xs-deco-crane-1: rgba(232, 213, 183, 0.45);
+  --xs-deco-crane-2: rgba(232, 213, 183, 0.32);
 }
 
 * {
@@ -163,11 +225,11 @@ textarea:focus {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(201, 169, 110, 0.4);
+  background: var(--xs-line-gold);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(201, 169, 110, 0.7);
+  background: var(--xs-gold);
 }
 
 /* ============ 通用动画 ============ */
