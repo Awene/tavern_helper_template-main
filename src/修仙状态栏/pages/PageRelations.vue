@@ -5,8 +5,72 @@
       <p>尚未结识任何人</p>
     </div>
     <div v-else class="xy-npc-list">
+      <!-- 无主 傀儡/灵兽 卡片 (类型='傀儡'|'灵兽') -->
       <article
-        v-for="{ name, npc } in sortedRelations"
+        v-for="{ name, npc } in wildUnits"
+        :key="'wu-' + name"
+        class="xy-npc xy-wild-unit"
+        :class="{ 'xy-npc-open': state.openedNPC === name }"
+        @click="state.openedNPC = state.openedNPC === name ? null : name"
+      >
+        <div class="xy-wild-head">
+          <span class="xy-wild-icon" :title="npc.类型">{{ npc.类型 === '灵兽' ? '兽' : '傀' }}</span>
+          <div class="xy-wild-meta">
+            <div class="xy-wild-line1">
+              <span class="xy-wild-name">{{ name }}</span>
+              <span v-if="npc.境界" class="xy-npc-realm">{{ npc.境界 }}</span>
+              <span v-if="npc.在场" class="xy-npc-online">在场</span>
+            </div>
+            <div class="xy-wild-line2">
+              <span class="xy-wild-type-tag">{{ npc.类型 }}</span>
+              <span v-if="npc.品质" class="xy-wild-q-tag" :class="'xy-q-' + npc.品质">{{ npc.品质 }}品</span>
+              <span v-if="npc.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(npc.五行) }">{{ npc.五行 === '混沌' ? '混' : npc.五行 }}</span>
+            </div>
+          </div>
+          <div class="xy-favor" :class="favorClass(npc.好感度)" @click.stop>
+            <div class="xy-favor-num">
+              <EditableValue v-model.number="npc.好感度" type="number" label="好感度" :min="-100" :max="100" />
+            </div>
+            <div class="xy-favor-label">{{ favorLabel(npc.好感度) }}</div>
+          </div>
+          <button
+            type="button"
+            class="xy-trash xy-trash-npc"
+            title="删除此条目"
+            @click.stop="requestDelete('npc', name, name)"
+          >
+            <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true">
+              <path d="M9 3v1H4v2h16V4h-5V3H9zM6 8l1 13h10l1-13H6zm3 2h2v9H9v-9zm4 0h2v9h-2v-9z" />
+            </svg>
+          </button>
+        </div>
+        <div v-if="state.openedNPC === name" class="xy-wild-body" @click.stop>
+          <CombatUnit :unit="npc" :name="String(name)" compact />
+          <div v-if="!_.isEmpty(npc.状态效果)" class="xy-mini-block">
+            <h4>状态效果</h4>
+            <div class="xy-buff-list">
+              <div
+                v-for="(eff, ename) in npc.状态效果"
+                :key="ename"
+                class="xy-buff-item"
+                :class="['xy-buff-' + (eff.类型 || '特殊')]"
+              >
+                <div class="xy-buff-head">
+                  <span class="xy-buff-name">{{ ename }}</span>
+                  <span class="xy-buff-tag">{{ eff.类型 }}</span>
+                  <span v-if="eff.层数 > 1" class="xy-buff-stack">x{{ eff.层数 }}</span>
+                  <span class="xy-buff-time">{{ eff.剩余时间 }}</span>
+                </div>
+                <EffectList v-if="!_.isEmpty(eff.效果)" v-model="eff.效果" line-class="xy-buff-effect" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 人物 (NPC) 卡片 (类型='人物' 或未指定) -->
+      <article
+        v-for="{ name, npc } in characterRelations"
         :key="name"
         class="xy-npc"
         :class="{ 'xy-npc-open': state.openedNPC === name }"
@@ -150,13 +214,13 @@
                   <EditableValue v-model.number="npc.资源池.气血.现值" type="number" label="气血现值" :min="0" />/<EditableValue v-model.number="npc.资源池.气血.上限" type="number" label="气血上限" :min="1" />
                 </span>
               </div>
-              <div v-if="npc.资源池.灵力" class="xy-unit-bar">
-                <span class="xy-unit-bar-label">灵力</span>
+              <div v-if="npc.资源池.灵气" class="xy-unit-bar">
+                <span class="xy-unit-bar-label">灵气</span>
                 <span class="xy-unit-bar-track">
-                  <span class="xy-unit-bar-fill spirit" :style="{ width: npcBarPct(npc.资源池.灵力) + '%' }" />
+                  <span class="xy-unit-bar-fill spirit" :style="{ width: npcBarPct(npc.资源池.灵气) + '%' }" />
                 </span>
                 <span class="xy-unit-bar-num">
-                  <EditableValue v-model.number="npc.资源池.灵力.现值" type="number" label="灵力现值" :min="0" />/<EditableValue v-model.number="npc.资源池.灵力.上限" type="number" label="灵力上限" :min="1" />
+                  <EditableValue v-model.number="npc.资源池.灵气.现值" type="number" label="灵气现值" :min="0" />/<EditableValue v-model.number="npc.资源池.灵气.上限" type="number" label="灵气上限" :min="1" />
                 </span>
               </div>
               <div class="xy-unit-bar">
@@ -295,7 +359,7 @@
                 <div class="xy-art-meta">
                   <span class="xy-pill">{{ art.类型 }}</span>
                   <span v-if="art.境界" class="xy-pill xy-pill-soft">{{ art.境界 }}</span>
-                  <span v-if="art.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(art.五行) }">{{ art.五行 }}</span>
+                  <span v-if="art.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(art.五行) }">{{ art.五行 === '混沌' ? '混' : art.五行 }}</span>
                   <span v-if="art.消耗 || state.editMode" class="xy-pill xy-pill-cost">耗 <EditableValue v-model="art.消耗" label="消耗" /></span>
                 </div>
                 <div v-if="art.描述 || state.editMode" class="xy-art-desc"><EditableValue v-model="art.描述" label="描述" multiline /></div>
@@ -314,19 +378,19 @@
                 <span class="xy-npc-stone-label">灵石</span>
                 <span class="xy-npc-stone-value">
                   <EditableValue
-                    v-if="npc.储物空间"
-                    :model-value="npc.储物空间.灵石 || 0"
+                    v-if="npc"
+                    :model-value="npc.灵石 || 0"
                     type="number"
                     label="灵石"
                     :min="0"
                     :format="(v) => Number(v ?? 0).toLocaleString()"
-                    @update:model-value="npc.储物空间.灵石 = Number($event)"
+                    @update:model-value="npc.灵石 = Number($event)"
                   />
-                  <template v-else>{{ (npc.储物空间?.灵石 || 0).toLocaleString() }}</template>
+                  <template v-else>{{ (npc.灵石 || 0).toLocaleString() }}</template>
                 </span>
               </div>
 
-              <div v-if="!_.isEmpty(npc.储物空间?.物品)" class="xy-npc-sub">
+              <div v-if="!_.isEmpty(npc.物品)" class="xy-npc-sub">
                 <button
                   type="button"
                   class="xy-collapse-head xy-collapse-sub"
@@ -334,12 +398,12 @@
                   @click.stop="toggleSection(name, '物品')"
                 >
                   <span class="xy-collapse-title">物品</span>
-                  <span class="xy-collapse-count">{{ Object.keys(npc.储物空间.物品).length }}</span>
+                  <span class="xy-collapse-count">{{ Object.keys(npc.物品).length }}</span>
                   <span class="xy-collapse-caret">▾</span>
                 </button>
                 <div v-show="isSectionOpen(name, '物品')" class="xy-item-grid xy-item-grid-mini xy-collapse-body">
                   <article
-                    v-for="(it, iname) in npc.储物空间.物品"
+                    v-for="(it, iname) in npc.物品"
                     :key="iname"
                     class="xy-item"
                     :class="['xy-q-bg-' + it.品质]"
@@ -361,7 +425,7 @@
                     <div class="xy-item-meta">
                       <span :class="['xy-quality', 'xy-q-' + it.品质]">{{ it.品质 }}</span>
                       <span class="xy-pill">{{ it.类型 }}</span>
-                      <span v-if="it.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(it.五行) }">{{ it.五行 }}</span>
+                      <span v-if="it.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(it.五行) }">{{ it.五行 === '混沌' ? '混' : it.五行 }}</span>
                     </div>
                     <div v-if="it.描述 || state.editMode" class="xy-item-desc"><EditableValue v-model="it.描述" label="描述" multiline /></div>
                     <div v-if="!_.isEmpty(it.效果) || state.editMode" class="xy-effect-list">
@@ -371,7 +435,7 @@
                 </div>
               </div>
 
-              <div v-if="!_.isEmpty(npc.储物空间?.装备)" class="xy-npc-sub">
+              <div v-if="!_.isEmpty(npc.装备)" class="xy-npc-sub">
                 <button
                   type="button"
                   class="xy-collapse-head xy-collapse-sub"
@@ -379,12 +443,12 @@
                   @click.stop="toggleSection(name, '装备')"
                 >
                   <span class="xy-collapse-title">装备</span>
-                  <span class="xy-collapse-count">{{ Object.keys(npc.储物空间.装备).length }}</span>
+                  <span class="xy-collapse-count">{{ Object.keys(npc.装备).length }}</span>
                   <span class="xy-collapse-caret">▾</span>
                 </button>
                 <div v-show="isSectionOpen(name, '装备')" class="xy-item-grid xy-item-grid-mini xy-collapse-body">
                   <article
-                    v-for="(eq, ename2) in npc.储物空间.装备"
+                    v-for="(eq, ename2) in npc.装备"
                     :key="ename2"
                     class="xy-item xy-equipment"
                     :class="['xy-q-bg-' + eq.品质]"
@@ -406,7 +470,7 @@
                     <div class="xy-item-meta">
                       <span :class="['xy-quality', 'xy-q-' + eq.品质]">{{ eq.品质 }}</span>
                       <span class="xy-pill">{{ eq.类型 }}</span>
-                      <span v-if="eq.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(eq.五行) }">{{ eq.五行 }}</span>
+                      <span v-if="eq.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(eq.五行) }">{{ eq.五行 === '混沌' ? '混' : eq.五行 }}</span>
                     </div>
                     <div class="xy-eq-stats">
                       <span v-if="eq.攻击力 != null" class="xy-eq-stat xy-stat-atk">攻 <EditableValue v-model.number="eq.攻击力" type="number" label="攻击力" :min="0" /></span>
@@ -420,7 +484,7 @@
                 </div>
               </div>
 
-              <div v-if="!_.isEmpty(npc.储物空间?.傀儡)" class="xy-npc-sub">
+              <div v-if="!_.isEmpty(npc.傀儡)" class="xy-npc-sub">
                 <button
                   type="button"
                   class="xy-collapse-head xy-collapse-sub"
@@ -428,12 +492,12 @@
                   @click.stop="toggleSection(name, '傀儡')"
                 >
                   <span class="xy-collapse-title">傀儡</span>
-                  <span class="xy-collapse-count">{{ Object.keys(npc.储物空间.傀儡).length }}</span>
+                  <span class="xy-collapse-count">{{ Object.keys(npc.傀儡).length }}</span>
                   <span class="xy-collapse-caret">▾</span>
                 </button>
                 <div v-show="isSectionOpen(name, '傀儡')" class="xy-item-grid xy-item-grid-mini xy-collapse-body">
                   <CombatUnit
-                    v-for="(u, uname) in npc.储物空间.傀儡"
+                    v-for="(u, uname) in npc.傀儡"
                     :key="uname"
                     :unit="u"
                     :name="String(uname)"
@@ -444,7 +508,7 @@
                 </div>
               </div>
 
-              <div v-if="!_.isEmpty(npc.储物空间?.灵兽)" class="xy-npc-sub">
+              <div v-if="!_.isEmpty(npc.灵兽)" class="xy-npc-sub">
                 <button
                   type="button"
                   class="xy-collapse-head xy-collapse-sub"
@@ -452,12 +516,12 @@
                   @click.stop="toggleSection(name, '灵兽')"
                 >
                   <span class="xy-collapse-title">灵兽</span>
-                  <span class="xy-collapse-count">{{ Object.keys(npc.储物空间.灵兽).length }}</span>
+                  <span class="xy-collapse-count">{{ Object.keys(npc.灵兽).length }}</span>
                   <span class="xy-collapse-caret">▾</span>
                 </button>
                 <div v-show="isSectionOpen(name, '灵兽')" class="xy-item-grid xy-item-grid-mini xy-collapse-body">
                   <CombatUnit
-                    v-for="(u, uname) in npc.储物空间.灵兽"
+                    v-for="(u, uname) in npc.灵兽"
                     :key="uname"
                     :unit="u"
                     :name="String(uname)"
@@ -490,6 +554,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
+import { computed } from 'vue';
 import { useDataStore } from '../store';
 import CombatUnit from './CombatUnit.vue';
 import EditableValue from './EditableValue.vue';
@@ -519,4 +584,108 @@ import {
 } from '../composables';
 
 const store = useDataStore();
+
+// 区分人物条目与无主战斗单位条目
+const characterRelations = computed(() =>
+  sortedRelations.value.filter(({ npc }) => !npc?.类型 || npc.类型 === '人物'),
+);
+const wildUnits = computed(() =>
+  sortedRelations.value.filter(({ npc }) => npc?.类型 === '傀儡' || npc?.类型 === '灵兽'),
+);
 </script>
+
+<style scoped>
+.xy-wild-unit {
+  border-left: 3px solid var(--xy-cinnabar, #a07f48);
+  padding: 0;
+  margin-bottom: 8px;
+  cursor: pointer;
+  overflow: hidden;
+}
+.xy-wild-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 36px 8px 12px;  /* 右侧留出 trash + caret 的空间 */
+}
+/* 垃圾桶: 默认隐藏,hover wild 卡片时显示(对齐 NPC) */
+.xy-wild-unit:hover > .xy-wild-head > .xy-trash,
+.xy-wild-unit > .xy-wild-head > .xy-trash:focus-visible {
+  opacity: 1;
+}
+/* 让 trash 与 caret 不重叠: trash 置于右上角(类型 NPC),caret 置于行内 flex */
+.xy-wild-head > .xy-trash-npc {
+  top: 6px;
+  right: 6px;
+}
+.xy-wild-icon {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--xy-font-display);
+  font-size: 13px;
+  background: var(--xy-tint-cinnabar-mid, rgba(160, 127, 72, 0.18));
+  color: var(--xy-cinnabar-deep, #6e4f1d);
+  border: 1px solid var(--xy-tint-cinnabar-border, rgba(160, 127, 72, 0.5));
+}
+.xy-wild-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.xy-wild-line1 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.xy-wild-line2 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.xy-wild-name {
+  font-family: var(--xy-font-display);
+  font-size: 14px;
+  letter-spacing: 1px;
+  color: var(--xy-ink);
+}
+.xy-wild-type-tag {
+  font-size: 10.5px;
+  padding: 1px 7px;
+  border-radius: 8px;
+  background: rgba(160, 127, 72, 0.14);
+  color: var(--xy-cinnabar-deep, #6e4f1d);
+  border: 1px solid rgba(160, 127, 72, 0.30);
+  letter-spacing: 0.5px;
+}
+.xy-wild-q-tag {
+  font-size: 10.5px;
+  padding: 1px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+.xy-wild-q-tag.xy-q-凡 { background: #d4cfc4; color: #5a5249; }
+.xy-wild-q-tag.xy-q-黄 { background: linear-gradient(135deg, #d4b06a, #b58938); color: #fff; }
+.xy-wild-q-tag.xy-q-玄 { background: linear-gradient(135deg, #6b6f7a, #4a4d56); color: #fff; }
+.xy-wild-q-tag.xy-q-地 { background: linear-gradient(135deg, #a06439, #6b3c1a); color: #fff; }
+.xy-wild-q-tag.xy-q-天 {
+  background: linear-gradient(135deg, #d4af37, #8b6914);
+  color: #fff;
+  box-shadow: 0 0 6px rgba(212, 175, 55, 0.32);
+}
+
+.xy-wild-body {
+  padding: 6px 12px 10px;
+  border-top: 1px dashed rgba(160, 127, 72, 0.18);
+  background: rgba(160, 127, 72, 0.04);
+}
+</style>

@@ -2,6 +2,10 @@
   <div>
     <h2 class="xs-step-title">择 · 初始资材</h2>
     <p class="xs-step-subtitle">取舍之间见性情；可同时携带数件，所选条目独立计费。可按境界、品质、类型筛选；亦可自创资材。</p>
+    <p class="xs-realm-cap-hint">
+      <span class="xs-pill xs-pill-jade">境界上限</span>
+      仅可选择 <b>{{ realmCapLabel }}</b> 及以下境界的资材（由开局故事决定）。
+    </p>
 
     <!-- 自创资材 -->
     <section class="xs-custom-section">
@@ -75,7 +79,7 @@
           </select>
           <label>境界</label>
           <select v-model="draft.境界">
-            <option v-for="r in ITEM_REALMS" :key="r" :value="r">{{ r }}</option>
+            <option v-for="r in allowedRealms" :key="r" :value="r">{{ r }}</option>
           </select>
           <label>五行</label>
           <select v-model="draft.五行">
@@ -114,7 +118,7 @@
           <span class="xs-inv-filter-label">境界</span>
           <select v-model="realmFilter">
             <option value="">全部</option>
-            <option v-for="r in ITEM_REALMS" :key="r" :value="r">{{ r }}</option>
+            <option v-for="r in allowedRealms" :key="r" :value="r">{{ r }}</option>
           </select>
         </div>
         <div class="xs-inv-filter">
@@ -161,11 +165,55 @@
             :index="i"
             @pick="store.toggleItem(it.id)"
           >
+            <!-- 顶级元数据 pill -->
             <div class="xs-inv-meta">
               <span v-if="it.品质" class="xs-pill xs-pill-gold">{{ it.品质 }}品</span>
               <span v-if="it.境界" class="xs-pill">{{ it.境界 }}</span>
               <span class="xs-pill xs-pill-jade">{{ it.类型 }}</span>
               <span v-if="it.五行" class="xs-pill xs-pill-cinnabar">{{ it.五行 }}</span>
+            </div>
+            <!-- 数值标签:按规则公式计算 -->
+            <div class="xs-inv-stats" v-if="hasNumericStats(it)">
+              <span v-if="display(it).攻击力" class="xs-stat-chip xs-stat-attack">攻 {{ display(it).攻击力 }}</span>
+              <span v-if="display(it).防御力" class="xs-stat-chip xs-stat-defense">防 {{ display(it).防御力 }}</span>
+              <span v-if="display(it).气血" class="xs-stat-chip xs-stat-hp">血 {{ display(it).气血 }}</span>
+              <span v-if="display(it).资源池?.灵气?.上限" class="xs-stat-chip xs-stat-mana">气 {{ display(it).资源池.灵气.上限 }}</span>
+              <span v-if="display(it).遁速" class="xs-stat-chip xs-stat-speed">遁 {{ display(it).遁速 }}</span>
+              <span v-if="display(it).修行速度" class="xs-stat-chip xs-stat-cult">修 {{ display(it).修行速度 }}</span>
+              <span v-if="display(it).恢复" class="xs-stat-chip xs-stat-heal">回 {{ display(it).恢复 }}</span>
+              <span v-if="display(it).加成" class="xs-stat-chip xs-stat-bonus">加 {{ display(it).加成 }}</span>
+              <span v-if="display(it).数量 && display(it).数量 > 1" class="xs-stat-chip xs-stat-qty">×{{ display(it).数量 }}</span>
+              <span v-if="display(it).使用中 === true" class="xs-stat-chip xs-stat-active">✓使用中</span>
+              <span v-if="display(it).完整度" class="xs-stat-chip">{{ display(it).完整度 }}</span>
+            </div>
+            <!-- 效果块 -->
+            <div v-if="display(it).效果 && Object.keys(display(it).效果 || {}).length" class="xs-inv-effects">
+              <div v-for="(v, k) in display(it).效果" :key="String(k)" class="xs-inv-effect-row">
+                <span class="xs-inv-effect-name">{{ k }}:</span>
+                <span class="xs-inv-effect-val">{{ v }}</span>
+              </div>
+            </div>
+            <!-- 技能块(仅 傀儡/灵兽) -->
+            <div v-if="display(it).技能 && Object.keys(display(it).技能 || {}).length" class="xs-inv-skills">
+              <div class="xs-inv-skills-head">技能</div>
+              <div v-for="(sk, name) in display(it).技能" :key="String(name)" class="xs-inv-skill-row">
+                <span class="xs-inv-skill-name">{{ name }}</span>
+                <span v-if="sk.攻击力" class="xs-stat-chip xs-stat-attack">攻 {{ sk.攻击力 }}</span>
+                <span v-if="sk.消耗" class="xs-inv-skill-cost">耗 {{ sk.消耗 }}</span>
+                <span v-if="sk.效果" class="xs-inv-skill-eff">
+                  <span v-for="(v, k) in sk.效果" :key="String(k)">{{ k }}: {{ v }}</span>
+                </span>
+              </div>
+            </div>
+            <!-- 描述性标签(items.ts 自带的:基础/剑修/魔修等) -->
+            <div v-if="display(it).描述标签.length" class="xs-inv-tagrow">
+              <span v-for="t in display(it).描述标签" :key="t" class="xs-inv-tag">{{ t }}</span>
+            </div>
+            <!-- 消耗 / 位置 / 阅读进度 -->
+            <div v-if="display(it).消耗 || display(it).位置 || display(it).阅读进度" class="xs-inv-foot">
+              <span v-if="display(it).消耗" class="xs-inv-foot-item">耗 {{ display(it).消耗 }}</span>
+              <span v-if="display(it).阅读进度" class="xs-inv-foot-item">进度 {{ display(it).阅读进度 }}</span>
+              <span v-if="display(it).位置" class="xs-inv-foot-item xs-inv-loc">📍 {{ display(it).位置 }}</span>
             </div>
           </OptionCard>
         </div>
@@ -216,7 +264,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import type {
   CustomItem,
   ItemCategory,
@@ -232,14 +280,99 @@ import {
   ITEM_QUALITIES,
   ITEM_REALMS,
   computeCustomItemCost,
+  customStoryToOption,
+  findStory,
   items,
 } from '../config';
+import { toDisplay } from '../itemNormalizer';
 import { useStartStore } from '../store';
 import OptionCard from '../components/OptionCard.vue';
 
 const FIVE_ELEMENTS = ['金', '木', '水', '火', '土', '阴', '阳'] as const;
 
 const store = useStartStore();
+
+// —— 当前开局故事决定的大境界(决定了资材境界上限) ——
+const REALM_RANK_MAP: Record<string, number> = {
+  炼气: 1, 练气: 1, 筑基: 2, 金丹: 3, 元婴: 4, 化神: 5,
+};
+const playerRealmRank = computed<number>(() => {
+  const id = store.selection.storyId;
+  if (!id) return 1; // 未选剧本时默认炼气,允许低阶资材
+  const custom = store.selection.customStory;
+  const story = (custom && custom.id === id) ? customStoryToOption(custom) : findStory(id);
+  const big = story?.settings?.初始境界?.大境界 ?? '炼气';
+  return REALM_RANK_MAP[big] ?? 1;
+});
+function realmRankOf(realm: ItemRealm | undefined): number {
+  if (!realm) return 0; // 无境界(灵石/通用工具)恒不超
+  return REALM_RANK_MAP[realm] ?? 1;
+}
+function realmAllowed(it: ItemOption): boolean {
+  return realmRankOf(it.境界) <= playerRealmRank.value;
+}
+function realmAllowedCustom(c: CustomItem): boolean {
+  return realmRankOf(c.境界) <= playerRealmRank.value;
+}
+const realmCapLabel = computed<string>(() => {
+  const r = playerRealmRank.value;
+  return ITEM_REALMS[Math.max(0, Math.min(ITEM_REALMS.length - 1, r - 1))] ?? '炼气';
+});
+const allowedRealms = computed<ItemRealm[]>(() =>
+  ITEM_REALMS.filter(r => realmRankOf(r) <= playerRealmRank.value),
+);
+
+// —— 进入本步骤时,清理已选/自创但超出当前境界上限的资材 ——
+function pruneOverCapSelections() {
+  const removed: string[] = [];
+  // 预设资材
+  const keepIds = store.selection.itemIds.filter(id => {
+    const it = items.find(x => x.id === id);
+    if (!it) return false;
+    if (realmAllowed(it)) return true;
+    removed.push(it.name);
+    return false;
+  });
+  store.selection.itemIds = keepIds;
+  // 自创资材
+  const overCustom = store.selection.customItems.filter(c => !realmAllowedCustom(c));
+  for (const c of overCustom) {
+    store.removeCustomItem(c.id);
+    removed.push(c.name);
+  }
+  if (removed.length) {
+    store.showToast(`已移除超出境界上限的资材: ${removed.slice(0, 3).join('、')}${removed.length > 3 ? '…' : ''}`);
+  }
+  // 同步重置筛选(若当前境界筛选已超上限)
+  if (realmFilter.value && !allowedRealms.value.includes(realmFilter.value as ItemRealm)) {
+    realmFilter.value = '';
+  }
+}
+onMounted(pruneOverCapSelections);
+watch(playerRealmRank, pruneOverCapSelections);
+
+// 卡片显示用:按规则规范化每件物品(品质/境界/类型/五行 → 攻击力/防御力/etc)
+// 缓存避免 v-for 重复计算
+const _displayCache = new Map<string, ReturnType<typeof toDisplay>>();
+function display(it: ItemOption) {
+  const key = it.id;
+  let v = _displayCache.get(key);
+  if (!v) {
+    v = toDisplay(it);
+    _displayCache.set(key, v);
+  }
+  return v;
+}
+function hasNumericStats(it: ItemOption): boolean {
+  const d = display(it);
+  return !!(
+    d.攻击力 || d.防御力 || d.气血 || d.遁速 ||
+    d.修行速度 || d.恢复 || d.加成 ||
+    d.资源池?.灵气?.上限 ||
+    (d.数量 && d.数量 > 1) ||
+    d.使用中 === true || d.完整度
+  );
+}
 
 // —— 筛选状态 ——
 const realmFilter = ref<'' | ItemRealm>('');
@@ -254,6 +387,7 @@ const availableKinds = computed<ItemKind[]>(() => {
 
 const filteredItems = computed(() =>
   items.filter(it => {
+    if (!realmAllowed(it)) return false; // 高于角色境界的资材直接隐藏
     if (realmFilter.value && it.境界 !== realmFilter.value) return false;
     if (qualityFilter.value && it.品质 !== qualityFilter.value) return false;
     if (categoryFilter.value && it.category !== categoryFilter.value) return false;
@@ -413,6 +547,24 @@ function customCost(c: CustomItem): number {
   color: var(--xs-ink);
   border-left: 3px solid var(--xs-cinnabar);
   padding-left: 8px;
+}
+
+.xs-realm-cap-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 14px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  letter-spacing: 1px;
+  color: var(--xs-ink-soft);
+  background: var(--xs-tint-cinnabar-faint, rgba(168, 153, 104, 0.08));
+  border-left: 2px solid var(--xs-cinnabar, #a07f48);
+  border-radius: 0 4px 4px 0;
+}
+.xs-realm-cap-hint b {
+  color: var(--xs-cinnabar-deep, #a07f48);
+  letter-spacing: 2px;
 }
 
 .xs-custom-section {
@@ -606,6 +758,171 @@ function customCost(c: CustomItem): number {
   gap: 4px;
   flex-wrap: wrap;
   margin-top: 4px;
+}
+
+/* —— 卡片扩展区:数值/效果/标签/位置 —— */
+.xs-inv-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+.xs-stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 8px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  background: var(--xs-paper-warm);
+  border: 1px solid var(--xs-line-gold);
+  color: var(--xs-ink);
+}
+.xs-stat-chip.xs-stat-attack {
+  background: linear-gradient(135deg, rgba(229, 62, 62, 0.10), rgba(197, 48, 48, 0.06));
+  border-color: rgba(197, 48, 48, 0.30);
+  color: #b03030;
+}
+.xs-stat-chip.xs-stat-defense {
+  background: linear-gradient(135deg, rgba(66, 153, 225, 0.10), rgba(44, 82, 130, 0.06));
+  border-color: rgba(44, 82, 130, 0.30);
+  color: #2c5282;
+}
+.xs-stat-chip.xs-stat-hp {
+  background: linear-gradient(135deg, rgba(245, 101, 101, 0.10), rgba(155, 44, 44, 0.06));
+  border-color: rgba(155, 44, 44, 0.28);
+  color: #9b2c2c;
+}
+.xs-stat-chip.xs-stat-speed {
+  background: linear-gradient(135deg, rgba(56, 161, 105, 0.10), rgba(47, 133, 90, 0.06));
+  border-color: rgba(47, 133, 90, 0.28);
+  color: #2f855a;
+}
+.xs-stat-chip.xs-stat-cult {
+  background: linear-gradient(135deg, rgba(214, 158, 46, 0.12), rgba(183, 121, 31, 0.08));
+  border-color: rgba(183, 121, 31, 0.32);
+  color: #b7791f;
+}
+.xs-stat-chip.xs-stat-mana {
+  background: linear-gradient(135deg, rgba(99, 179, 237, 0.10), rgba(43, 108, 176, 0.06));
+  border-color: rgba(43, 108, 176, 0.30);
+  color: #2b6cb0;
+}
+.xs-stat-chip.xs-stat-heal {
+  background: linear-gradient(135deg, rgba(159, 122, 234, 0.10), rgba(85, 60, 154, 0.06));
+  border-color: rgba(85, 60, 154, 0.28);
+  color: #6b46c1;
+}
+.xs-stat-chip.xs-stat-bonus {
+  background: linear-gradient(135deg, rgba(72, 187, 120, 0.10), rgba(38, 132, 70, 0.06));
+  border-color: rgba(38, 132, 70, 0.28);
+  color: #276749;
+}
+.xs-stat-chip.xs-stat-qty {
+  font-family: var(--xs-font-display, 'Cinzel', serif);
+}
+.xs-stat-chip.xs-stat-active {
+  background: linear-gradient(135deg, #38a169, #2f855a);
+  color: #fff;
+  border-color: #2f855a;
+}
+
+.xs-inv-effects {
+  margin-top: 6px;
+  padding: 5px 8px;
+  background: rgba(168, 153, 104, 0.08);
+  border-left: 2px solid var(--xs-cinnabar, #a07f48);
+  border-radius: 0 4px 4px 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  text-align: left;
+}
+.xs-inv-effect-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.xs-inv-effect-name {
+  color: var(--xs-cinnabar-deep, #a07f48);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.xs-inv-effect-val {
+  color: var(--xs-ink, #3a2f24);
+}
+
+.xs-inv-skills {
+  margin-top: 6px;
+  padding: 5px 8px;
+  background: rgba(160, 127, 72, 0.06);
+  border-left: 2px solid var(--xs-cinnabar-deep, #a07f48);
+  border-radius: 0 4px 4px 0;
+  font-size: 11.5px;
+  text-align: left;
+}
+.xs-inv-skills-head {
+  font-family: var(--xs-font-display);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--xs-cinnabar-deep, #a07f48);
+  margin-bottom: 3px;
+}
+.xs-inv-skill-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 2px;
+  line-height: 1.5;
+}
+.xs-inv-skill-name {
+  font-weight: 700;
+  color: var(--xs-ink, #3a2f24);
+}
+.xs-inv-skill-cost {
+  font-size: 11px;
+  color: var(--xs-ink-mute, #5a4a36);
+}
+.xs-inv-skill-eff {
+  font-size: 11px;
+  color: var(--xs-ink-soft, #4a3d2c);
+}
+.xs-inv-skill-eff > span {
+  margin-right: 4px;
+}
+
+.xs-inv-tagrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 5px;
+}
+.xs-inv-tag {
+  padding: 1px 7px;
+  border-radius: 4px;
+  background: rgba(168, 153, 104, 0.12);
+  border: 1px dashed rgba(160, 127, 72, 0.35);
+  color: var(--xs-ink-mute, #5a4a36);
+  font-size: 11px;
+  letter-spacing: 0.4px;
+}
+
+.xs-inv-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 5px;
+  font-size: 11px;
+  color: var(--xs-ink-mute, #5a4a36);
+}
+.xs-inv-foot-item {
+  opacity: 0.85;
+}
+.xs-inv-foot-item.xs-inv-loc {
+  color: var(--xs-cinnabar-deep, #a07f48);
+  font-weight: 600;
 }
 
 /* —— 分页 —— */

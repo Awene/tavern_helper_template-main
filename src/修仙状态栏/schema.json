@@ -2,190 +2,134 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "properties": {
-    "基本信息": {
+    "姓名": {
+      "default": "User",
+      "type": "string"
+    },
+    "寿元": {
+      "$ref": "#/$defs/__schema0"
+    },
+    "种族": {
+      "default": "人族",
+      "type": "string"
+    },
+    "灵根": {
+      "$ref": "#/$defs/__schema1"
+    },
+    "体质": {
+      "$ref": "#/$defs/__schema2"
+    },
+    "修炼进度": {
+      "$ref": "#/$defs/__schema3"
+    },
+    "技艺": {
+      "$ref": "#/$defs/__schema4"
+    },
+    "资源池": {
+      "$ref": "#/$defs/__schema5"
+    },
+    "地点": {
       "default": {
-        "姓名": "User",
-        "种族": "人族",
-        "寿元": {
-          "年龄": 0,
-          "寿命": 100,
-          "外观年龄": 18
-        },
-        "灵根": {
-          "名称": "未检测",
-          "五行": [
-            "未知"
-          ],
-          "品阶": "未检测"
-        },
-        "体质": {
-          "名称": "凡体",
-          "悟性": 0,
-          "根骨": 0,
-          "气感": 0
-        },
-        "修炼进度": {
-          "境界": "凡人",
-          "当前进度": 0,
-          "进度上限": 100,
-          "天谴": 0
-        },
-        "技艺": {
-          "生产类": {},
-          "战斗类": {}
-        },
-        "资源池": {
-          "气血": {
-            "现值": 100,
-            "上限": 100
-          },
-          "灵力": {
-            "现值": 100,
-            "上限": 100
-          },
-          "遁速": 10
-        },
-        "地点": {
-          "世界": "凡界",
-          "地域": "中原",
-          "具体地点": "荒野"
-        },
-        "时间": {
-          "年": 1,
-          "月": 1,
-          "日": 1,
-          "时辰": "午时"
-        },
-        "状态效果": {}
+        "世界": "凡界",
+        "地域": "中原",
+        "具体地点": "荒野"
       },
       "type": "object",
       "properties": {
-        "姓名": {
-          "default": "User",
+        "世界": {
+          "default": "凡界",
+          "type": "string",
+          "enum": [
+            "凡界",
+            "灵界",
+            "仙界"
+          ]
+        },
+        "地域": {
+          "default": "中原",
           "type": "string"
         },
-        "寿元": {
-          "$ref": "#/$defs/__schema0"
-        },
-        "种族": {
-          "default": "人族",
+        "具体地点": {
+          "default": "荒野",
           "type": "string"
-        },
-        "灵根": {
-          "$ref": "#/$defs/__schema1"
-        },
-        "体质": {
-          "$ref": "#/$defs/__schema2"
-        },
-        "修炼进度": {
-          "$ref": "#/$defs/__schema3"
-        },
-        "技艺": {
-          "$ref": "#/$defs/__schema4"
-        },
-        "资源池": {
-          "$ref": "#/$defs/__schema5"
-        },
-        "地点": {
-          "default": {
-            "世界": "凡界",
-            "地域": "中原",
-            "具体地点": "荒野"
-          },
-          "type": "object",
-          "properties": {
-            "世界": {
-              "default": "凡界",
-              "type": "string",
-              "enum": [
-                "凡界",
-                "灵界",
-                "仙界"
-              ]
-            },
-            "地域": {
-              "default": "中原",
-              "type": "string"
-            },
-            "具体地点": {
-              "default": "荒野",
-              "type": "string"
-            }
-          }
-        },
-        "时间": {
-          "default": {
-            "年": 1,
-            "月": 1,
-            "日": 1,
-            "时辰": "午时"
-          },
-          "type": "object",
-          "properties": {
-            "年": {
-              "default": 1,
-              "type": "number"
-            },
-            "月": {
-              "default": 1,
-              "type": "number"
-            },
-            "日": {
-              "default": 1,
-              "type": "number"
-            },
-            "时辰": {
-              "default": "午时",
-              "type": "string",
-              "enum": [
-                "子时",
-                "丑时",
-                "寅时",
-                "卯时",
-                "辰时",
-                "巳时",
-                "午时",
-                "未时",
-                "申时",
-                "酉时",
-                "戌时",
-                "亥时"
-              ]
-            }
-          }
-        },
-        "状态效果": {
-          "default": {},
-          "type": "object",
-          "propertyNames": {
-            "type": "string"
-          },
-          "additionalProperties": {
-            "$ref": "#/$defs/__schema7"
-          }
         }
       }
     },
-    "修炼功法": {
+    "时间": {
       "default": {
-        "功法": {}
+        "年": 1,
+        "月": 1,
+        "日": 1,
+        "时辰": "午时"
       },
       "type": "object",
       "properties": {
-        "功法": {
-          "default": {},
-          "type": "object",
-          "propertyNames": {
-            "type": "string"
-          },
-          "additionalProperties": {
-            "$ref": "#/$defs/__schema8"
-          }
+        "年": {
+          "default": 1,
+          "type": "number"
+        },
+        "月": {
+          "default": 1,
+          "type": "number"
+        },
+        "日": {
+          "default": 1,
+          "type": "number"
+        },
+        "时辰": {
+          "default": "午时",
+          "type": "string",
+          "enum": [
+            "子时",
+            "丑时",
+            "寅时",
+            "卯时",
+            "辰时",
+            "巳时",
+            "午时",
+            "未时",
+            "申时",
+            "酉时",
+            "戌时",
+            "亥时"
+          ]
         }
       }
     },
-    "储物空间": {
+    "状态效果": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/__schema7"
+      }
+    },
+    "功法": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/__schema8"
+      }
+    },
+    "灵石": {
       "$ref": "#/$defs/__schema11"
+    },
+    "物品": {
+      "$ref": "#/$defs/__schema13"
+    },
+    "装备": {
+      "$ref": "#/$defs/__schema14"
+    },
+    "傀儡": {
+      "$ref": "#/$defs/__schema15"
+    },
+    "灵兽": {
+      "$ref": "#/$defs/__schema18"
     },
     "关系列表": {
       "default": {},
@@ -194,85 +138,196 @@
         "type": "string"
       },
       "additionalProperties": {
-        "type": "object",
-        "properties": {
-          "在场": {
-            "type": "boolean"
-          },
-          "种族": {
-            "default": "人族",
-            "type": "string"
-          },
-          "身份": {
-            "default": [],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "修炼进度": {
-            "$ref": "#/$defs/__schema3"
-          },
-          "寿元": {
-            "$ref": "#/$defs/__schema0"
-          },
-          "灵根": {
-            "$ref": "#/$defs/__schema1"
-          },
-          "体质": {
-            "$ref": "#/$defs/__schema2"
-          },
-          "元阴": {
-            "type": "boolean"
-          },
-          "元阳": {
-            "type": "boolean"
-          },
-          "技艺": {
-            "$ref": "#/$defs/__schema4"
-          },
-          "资源池": {
-            "$ref": "#/$defs/__schema5"
-          },
-          "状态效果": {
-            "default": {},
+        "oneOf": [
+          {
             "type": "object",
-            "propertyNames": {
-              "type": "string"
-            },
-            "additionalProperties": {
-              "$ref": "#/$defs/__schema7"
+            "properties": {
+              "类型": {
+                "default": "人物",
+                "type": "string",
+                "const": "人物"
+              },
+              "在场": {
+                "type": "boolean"
+              },
+              "种族": {
+                "default": "人族",
+                "type": "string"
+              },
+              "身份": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "修炼进度": {
+                "$ref": "#/$defs/__schema3"
+              },
+              "寿元": {
+                "$ref": "#/$defs/__schema0"
+              },
+              "灵根": {
+                "$ref": "#/$defs/__schema1"
+              },
+              "体质": {
+                "$ref": "#/$defs/__schema2"
+              },
+              "元阴": {
+                "type": "boolean"
+              },
+              "元阳": {
+                "type": "boolean"
+              },
+              "技艺": {
+                "$ref": "#/$defs/__schema4"
+              },
+              "资源池": {
+                "$ref": "#/$defs/__schema5"
+              },
+              "状态效果": {
+                "default": {},
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "$ref": "#/$defs/__schema7"
+                }
+              },
+              "功法": {
+                "default": {},
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "$ref": "#/$defs/__schema8"
+                }
+              },
+              "灵石": {
+                "$ref": "#/$defs/__schema11"
+              },
+              "物品": {
+                "$ref": "#/$defs/__schema13"
+              },
+              "装备": {
+                "$ref": "#/$defs/__schema14"
+              },
+              "傀儡": {
+                "$ref": "#/$defs/__schema15"
+              },
+              "灵兽": {
+                "$ref": "#/$defs/__schema18"
+              },
+              "性格": {
+                "type": "string"
+              },
+              "外貌": {
+                "type": "string"
+              },
+              "着装": {
+                "type": "string"
+              },
+              "道侣": {
+                "type": "boolean"
+              },
+              "好感度": {
+                "type": "number"
+              }
             }
           },
-          "功法": {
-            "default": {},
+          {
             "type": "object",
-            "propertyNames": {
-              "type": "string"
+            "properties": {
+              "类型": {
+                "type": "string",
+                "const": "傀儡"
+              },
+              "在场": {
+                "$ref": "#/$defs/__schema19"
+              },
+              "品质": {
+                "$ref": "#/$defs/__schema20"
+              },
+              "境界": {
+                "$ref": "#/$defs/__schema21"
+              },
+              "五行": {
+                "$ref": "#/$defs/__schema22"
+              },
+              "标签": {
+                "$ref": "#/$defs/__schema23"
+              },
+              "描述": {
+                "$ref": "#/$defs/__schema24"
+              },
+              "资源池": {
+                "$ref": "#/$defs/__schema5"
+              },
+              "防御力": {
+                "$ref": "#/$defs/__schema25"
+              },
+              "技能": {
+                "$ref": "#/$defs/__schema26"
+              },
+              "状态效果": {
+                "$ref": "#/$defs/__schema27"
+              },
+              "好感度": {
+                "$ref": "#/$defs/__schema28"
+              }
             },
-            "additionalProperties": {
-              "$ref": "#/$defs/__schema8"
-            }
+            "required": [
+              "类型"
+            ]
           },
-          "储物空间": {
-            "$ref": "#/$defs/__schema11"
-          },
-          "性格": {
-            "type": "string"
-          },
-          "外貌": {
-            "type": "string"
-          },
-          "着装": {
-            "type": "string"
-          },
-          "道侣": {
-            "type": "boolean"
-          },
-          "好感度": {
-            "type": "number"
+          {
+            "type": "object",
+            "properties": {
+              "类型": {
+                "type": "string",
+                "const": "灵兽"
+              },
+              "在场": {
+                "$ref": "#/$defs/__schema19"
+              },
+              "品质": {
+                "$ref": "#/$defs/__schema20"
+              },
+              "境界": {
+                "$ref": "#/$defs/__schema21"
+              },
+              "五行": {
+                "$ref": "#/$defs/__schema22"
+              },
+              "标签": {
+                "$ref": "#/$defs/__schema23"
+              },
+              "描述": {
+                "$ref": "#/$defs/__schema24"
+              },
+              "资源池": {
+                "$ref": "#/$defs/__schema5"
+              },
+              "防御力": {
+                "$ref": "#/$defs/__schema25"
+              },
+              "技能": {
+                "$ref": "#/$defs/__schema26"
+              },
+              "状态效果": {
+                "$ref": "#/$defs/__schema27"
+              },
+              "好感度": {
+                "$ref": "#/$defs/__schema28"
+              }
+            },
+            "required": [
+              "类型"
+            ]
           }
-        }
+        ]
       }
     },
     "传闻": {
@@ -512,7 +567,7 @@
           "现值": 100,
           "上限": 100
         },
-        "灵力": {
+        "灵气": {
           "现值": 100,
           "上限": 100
         },
@@ -537,7 +592,7 @@
             }
           }
         },
-        "灵力": {
+        "灵气": {
           "default": {
             "现值": 100,
             "上限": 100
@@ -626,7 +681,7 @@
             "咒法",
             "身法",
             "护体",
-            "其他"
+            "阵法"
           ]
         },
         "消耗": {
@@ -677,168 +732,139 @@
       ]
     },
     "__schema11": {
-      "default": {
-        "灵石": 0,
-        "物品": {},
-        "装备": {},
-        "傀儡": {},
-        "灵兽": {}
-      },
-      "type": "object",
-      "properties": {
-        "灵石": {
-          "description": "默认单位为下品灵石",
-          "$ref": "#/$defs/__schema12"
-        },
-        "物品": {
-          "default": {},
-          "type": "object",
-          "propertyNames": {
-            "type": "string"
-          },
-          "additionalProperties": {
-            "type": "object",
-            "properties": {
-              "品质": {
-                "default": "凡",
-                "$ref": "#/$defs/__schema9"
-              },
-              "境界": {
-                "type": "string"
-              },
-              "类型": {
-                "default": "其他",
-                "type": "string",
-                "enum": [
-                  "秘籍",
-                  "配方",
-                  "符箓",
-                  "丹药",
-                  "素材",
-                  "工具",
-                  "其他"
-                ]
-              },
-              "消耗": {
-                "type": "string"
-              },
-              "五行": {
-                "$ref": "#/$defs/__schema10"
-              },
-              "标签": {
-                "default": [],
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "数量": {
-                "type": "number"
-              },
-              "效果": {
-                "type": "object",
-                "propertyNames": {
-                  "type": "string"
-                },
-                "additionalProperties": {
-                  "type": "string"
-                }
-              },
-              "描述": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "装备": {
-          "default": {},
-          "type": "object",
-          "propertyNames": {
-            "type": "string"
-          },
-          "additionalProperties": {
-            "type": "object",
-            "properties": {
-              "品质": {
-                "default": "凡",
-                "$ref": "#/$defs/__schema9"
-              },
-              "境界": {
-                "type": "string"
-              },
-              "类型": {
-                "default": "法宝",
-                "type": "string",
-                "enum": [
-                  "法宝",
-                  "护甲",
-                  "饰品"
-                ]
-              },
-              "消耗": {
-                "type": "string"
-              },
-              "五行": {
-                "$ref": "#/$defs/__schema10"
-              },
-              "标签": {
-                "default": [],
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "攻击力": {
-                "type": "number"
-              },
-              "防御力": {
-                "type": "number"
-              },
-              "效果": {
-                "type": "object",
-                "propertyNames": {
-                  "type": "string"
-                },
-                "additionalProperties": {
-                  "type": "string"
-                }
-              },
-              "描述": {
-                "type": "string"
-              },
-              "位置": {
-                "default": "储物袋",
-                "type": "string"
-              }
-            }
-          }
-        },
-        "傀儡": {
-          "default": {},
-          "type": "object",
-          "propertyNames": {
-            "type": "string"
-          },
-          "additionalProperties": {
-            "$ref": "#/$defs/__schema13"
-          }
-        },
-        "灵兽": {
-          "default": {},
-          "type": "object",
-          "propertyNames": {
-            "type": "string"
-          },
-          "additionalProperties": {
-            "$ref": "#/$defs/__schema13"
-          }
-        }
-      }
+      "description": "默认单位为下品灵石",
+      "$ref": "#/$defs/__schema12"
     },
     "__schema12": {
       "type": "number"
     },
     "__schema13": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "品质": {
+            "default": "凡",
+            "$ref": "#/$defs/__schema9"
+          },
+          "境界": {
+            "type": "string"
+          },
+          "类型": {
+            "default": "素材",
+            "type": "string",
+            "enum": [
+              "秘籍",
+              "配方",
+              "符箓",
+              "丹药",
+              "素材",
+              "工具"
+            ]
+          },
+          "消耗": {
+            "type": "string"
+          },
+          "五行": {
+            "$ref": "#/$defs/__schema10"
+          },
+          "标签": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "数量": {
+            "type": "number"
+          },
+          "效果": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "描述": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "__schema14": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "品质": {
+            "default": "凡",
+            "$ref": "#/$defs/__schema9"
+          },
+          "境界": {
+            "type": "string"
+          },
+          "类型": {
+            "default": "法宝",
+            "type": "string",
+            "enum": [
+              "法宝",
+              "护甲",
+              "饰品"
+            ]
+          },
+          "消耗": {
+            "type": "string"
+          },
+          "五行": {
+            "$ref": "#/$defs/__schema10"
+          },
+          "标签": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "效果": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "描述": {
+            "type": "string"
+          },
+          "位置": {
+            "default": "储物袋",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "__schema15": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/__schema16"
+      }
+    },
+    "__schema16": {
       "type": "object",
       "properties": {
         "使用中": {
@@ -878,27 +904,92 @@
             "type": "string"
           },
           "additionalProperties": {
-            "type": "object",
-            "properties": {
-              "攻击力": {
-                "type": "number"
-              },
-              "消耗": {
-                "type": "string"
-              },
-              "效果": {
-                "type": "object",
-                "propertyNames": {
-                  "type": "string"
-                },
-                "additionalProperties": {
-                  "type": "string"
-                }
-              }
-            }
+            "$ref": "#/$defs/__schema17"
           }
         }
       }
+    },
+    "__schema17": {
+      "type": "object",
+      "properties": {
+        "攻击力": {
+          "type": "number"
+        },
+        "消耗": {
+          "type": "string"
+        },
+        "效果": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "__schema18": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/__schema16"
+      }
+    },
+    "__schema19": {
+      "default": true,
+      "type": "boolean"
+    },
+    "__schema20": {
+      "default": "凡",
+      "$ref": "#/$defs/__schema9"
+    },
+    "__schema21": {
+      "default": "凡人",
+      "type": "string"
+    },
+    "__schema22": {
+      "$ref": "#/$defs/__schema10"
+    },
+    "__schema23": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "__schema24": {
+      "type": "string"
+    },
+    "__schema25": {
+      "type": "number"
+    },
+    "__schema26": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/__schema17"
+      }
+    },
+    "__schema27": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/__schema7"
+      }
+    },
+    "__schema28": {
+      "default": -50,
+      "type": "number"
     }
   }
 }

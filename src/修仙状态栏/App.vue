@@ -50,7 +50,7 @@
           <span>{{ state.editMode ? '编辑中' : '编辑' }}</span>
         </button>
         <span v-if="state.appCollapsed" class="xy-app-collapse-tag">
-          {{ store.data.基本信息.姓名 }} · {{ store.data.基本信息.修炼进度.境界 }}
+          {{ store.data.姓名 }} · {{ store.data.修炼进度.境界 }}
         </span>
         <button
           type="button"
@@ -76,10 +76,10 @@
               <img
                 v-if="getNpcAvatar(USER_AVATAR_KEY)"
                 :src="getNpcAvatar(USER_AVATAR_KEY)"
-                :alt="store.data.基本信息.姓名"
+                :alt="store.data.姓名"
                 class="xy-user-avatar-img"
               />
-              <span v-else class="xy-user-avatar-char">{{ avatarChar(store.data.基本信息.姓名) }}</span>
+              <span v-else class="xy-user-avatar-char">{{ avatarChar(store.data.姓名) }}</span>
               <button
                 type="button"
                 class="xy-user-avatar-cam"
@@ -93,36 +93,36 @@
               </button>
             </div>
             <div class="xy-name-meta">
-              <h1 class="xy-name">{{ store.data.基本信息.姓名 }}</h1>
+              <h1 class="xy-name">{{ store.data.姓名 }}</h1>
               <div class="xy-realm">
                 <span class="xy-realm-label">境界</span>
-                <span class="xy-realm-value">{{ store.data.基本信息.修炼进度.境界 }}</span>
-                <span v-if="store.data.基本信息.修炼进度.天谴 > 0 || state.editMode" class="xy-tianqian">
-                  天谴 <EditableValue v-model.number="store.data.基本信息.修炼进度.天谴" type="number" label="天谴" :min="0" />
+                <span class="xy-realm-value">{{ store.data.修炼进度.境界 }}</span>
+                <span v-if="store.data.修炼进度.天谴 > 0 || state.editMode" class="xy-tianqian">
+                  天谴 <EditableValue v-model.number="store.data.修炼进度.天谴" type="number" label="天谴" :min="0" />
                 </span>
               </div>
             </div>
           </div>
           <div class="xy-meta-line">
-            <span class="xy-meta-item"><i>种</i><EditableValue v-model="store.data.基本信息.种族" label="种族" /></span>
+            <span class="xy-meta-item"><i>种</i><EditableValue v-model="store.data.种族" label="种族" /></span>
             <span class="xy-meta-item">
-              <i>寿</i><EditableValue v-model.number="store.data.基本信息.寿元.年龄" type="number" label="年龄" :min="0" />
-              / <EditableValue v-model.number="store.data.基本信息.寿元.寿命" type="number" label="寿命" :min="1" />
+              <i>寿</i><EditableValue v-model.number="store.data.寿元.年龄" type="number" label="年龄" :min="0" />
+              / <EditableValue v-model.number="store.data.寿元.寿命" type="number" label="寿命" :min="1" />
             </span>
             <span class="xy-meta-item">
-              <i>貌</i><EditableValue v-model.number="store.data.基本信息.寿元.外观年龄" type="number" label="外观年龄" :min="0" />
+              <i>貌</i><EditableValue v-model.number="store.data.寿元.外观年龄" type="number" label="外观年龄" :min="0" />
             </span>
             <span class="xy-meta-item xy-time">
               <i>时</i>
-              <EditableValue v-model.number="store.data.基本信息.时间.年" type="number" label="年" /> 年
-              <EditableValue v-model.number="store.data.基本信息.时间.月" type="number" label="月" :min="1" :max="12" /> 月
-              <EditableValue v-model.number="store.data.基本信息.时间.日" type="number" label="日" :min="1" :max="31" /> 日 ·
-              <EditableValue v-model="store.data.基本信息.时间.时辰" label="时辰" />
+              <EditableValue v-model.number="store.data.时间.年" type="number" label="年" /> 年
+              <EditableValue v-model.number="store.data.时间.月" type="number" label="月" :min="1" :max="12" /> 月
+              <EditableValue v-model.number="store.data.时间.日" type="number" label="日" :min="1" :max="31" /> 日 ·
+              <EditableValue v-model="store.data.时间.时辰" label="时辰" />
             </span>
           </div>
           <div class="xy-meta-line">
             <span class="xy-meta-item xy-loc">
-              <i>地</i>{{ store.data.基本信息.地点.世界 }} · {{ store.data.基本信息.地点.地域 }} · {{ store.data.基本信息.地点.具体地点 }}
+              <i>地</i>{{ store.data.地点.世界 }} · {{ store.data.地点.地域 }} · {{ store.data.地点.具体地点 }}
             </span>
           </div>
         </div>
@@ -133,53 +133,53 @@
             <div class="xy-bar-head">
               <span class="xy-bar-label">修为</span>
               <span class="xy-bar-num">
-                <EditableValue v-model.number="store.data.基本信息.修炼进度.当前进度" type="number" label="当前修为" :min="0" />
+                <EditableValue v-model.number="store.data.修炼进度.当前进度" type="number" label="当前修为" :min="0" />
                 /
-                <EditableValue v-model.number="store.data.基本信息.修炼进度.进度上限" type="number" label="修为上限" :min="1" />
+                <EditableValue v-model.number="store.data.修炼进度.进度上限" type="number" label="修为上限" :min="1" />
               </span>
             </div>
             <div class="xy-bar-track">
-              <div class="xy-bar-fill" :style="{ width: barPct(store.data.基本信息.修炼进度.当前进度, store.data.基本信息.修炼进度.进度上限) + '%' }" />
-              <div class="xy-bar-shimmer" :style="{ width: barPct(store.data.基本信息.修炼进度.当前进度, store.data.基本信息.修炼进度.进度上限) + '%' }" />
+              <div class="xy-bar-fill" :style="{ width: barPct(store.data.修炼进度.当前进度, store.data.修炼进度.进度上限) + '%' }" />
+              <div class="xy-bar-shimmer" :style="{ width: barPct(store.data.修炼进度.当前进度, store.data.修炼进度.进度上限) + '%' }" />
             </div>
           </div>
           <div class="xy-bar xy-bar-blood">
             <div class="xy-bar-head">
               <span class="xy-bar-label">气血</span>
               <span class="xy-bar-num">
-                <EditableValue v-model.number="store.data.基本信息.资源池.气血.现值" type="number" label="气血现值" :min="0" />
+                <EditableValue v-model.number="store.data.资源池.气血.现值" type="number" label="气血现值" :min="0" />
                 /
-                <EditableValue v-model.number="store.data.基本信息.资源池.气血.上限" type="number" label="气血上限" :min="1" />
+                <EditableValue v-model.number="store.data.资源池.气血.上限" type="number" label="气血上限" :min="1" />
               </span>
             </div>
             <div class="xy-bar-track">
-              <div class="xy-bar-fill" :style="{ width: barPct(store.data.基本信息.资源池.气血.现值, store.data.基本信息.资源池.气血.上限) + '%' }" />
-              <div class="xy-bar-shimmer" :style="{ width: barPct(store.data.基本信息.资源池.气血.现值, store.data.基本信息.资源池.气血.上限) + '%' }" />
+              <div class="xy-bar-fill" :style="{ width: barPct(store.data.资源池.气血.现值, store.data.资源池.气血.上限) + '%' }" />
+              <div class="xy-bar-shimmer" :style="{ width: barPct(store.data.资源池.气血.现值, store.data.资源池.气血.上限) + '%' }" />
             </div>
           </div>
           <div class="xy-bar xy-bar-spirit">
             <div class="xy-bar-head">
-              <span class="xy-bar-label">灵力</span>
+              <span class="xy-bar-label">灵气</span>
               <span class="xy-bar-num">
-                <EditableValue v-model.number="store.data.基本信息.资源池.灵力.现值" type="number" label="灵力现值" :min="0" />
+                <EditableValue v-model.number="store.data.资源池.灵气.现值" type="number" label="灵气现值" :min="0" />
                 /
-                <EditableValue v-model.number="store.data.基本信息.资源池.灵力.上限" type="number" label="灵力上限" :min="1" />
+                <EditableValue v-model.number="store.data.资源池.灵气.上限" type="number" label="灵气上限" :min="1" />
               </span>
             </div>
             <div class="xy-bar-track">
-              <div class="xy-bar-fill" :style="{ width: barPct(store.data.基本信息.资源池.灵力.现值, store.data.基本信息.资源池.灵力.上限) + '%' }" />
-              <div class="xy-bar-shimmer" :style="{ width: barPct(store.data.基本信息.资源池.灵力.现值, store.data.基本信息.资源池.灵力.上限) + '%' }" />
+              <div class="xy-bar-fill" :style="{ width: barPct(store.data.资源池.灵气.现值, store.data.资源池.灵气.上限) + '%' }" />
+              <div class="xy-bar-shimmer" :style="{ width: barPct(store.data.资源池.灵气.现值, store.data.资源池.灵气.上限) + '%' }" />
             </div>
           </div>
           <div class="xy-resource-extra">
-            <span class="xy-extra-item"><i>遁速</i><EditableValue v-model.number="store.data.基本信息.资源池.遁速" type="number" label="遁速" :min="0" /> m/s</span>
+            <span class="xy-extra-item"><i>遁速</i><EditableValue v-model.number="store.data.资源池.遁速" type="number" label="遁速" :min="0" /> m/s</span>
           </div>
         </div>
 
         <!-- 状态效果横条 -->
-        <div v-if="!_.isEmpty(store.data.基本信息.状态效果)" class="xy-buff-strip">
+        <div v-if="!_.isEmpty(store.data.状态效果)" class="xy-buff-strip">
           <button
-            v-for="(eff, name) in store.data.基本信息.状态效果"
+            v-for="(eff, name) in store.data.状态效果"
             :key="name"
             type="button"
             class="xy-buff-chip"
@@ -238,19 +238,19 @@
               >
                 <span class="xy-card-name">灵根</span>
                 <span class="xy-card-summary">
-                  <span class="xy-card-summary-tag">{{ store.data.基本信息.灵根.品阶 }}</span>
-                  <span>{{ store.data.基本信息.灵根.名称 }}</span>
+                  <span class="xy-card-summary-tag">{{ store.data.灵根.品阶 }}</span>
+                  <span>{{ store.data.灵根.名称 }}</span>
                 </span>
                 <span class="xy-collapse-caret">▾</span>
               </button>
               <div v-show="state.userRootOpen" class="xy-card-body">
                 <div class="xy-root-name">
-                  <span class="xy-root-rank"><EditableValue v-model="store.data.基本信息.灵根.品阶" label="灵根品阶" /></span>
-                  <span class="xy-root-fullname"><EditableValue v-model="store.data.基本信息.灵根.名称" label="灵根名称" /></span>
+                  <span class="xy-root-rank"><EditableValue v-model="store.data.灵根.品阶" label="灵根品阶" /></span>
+                  <span class="xy-root-fullname"><EditableValue v-model="store.data.灵根.名称" label="灵根名称" /></span>
                 </div>
                 <div class="xy-root-elements">
                   <span
-                    v-for="el in store.data.基本信息.灵根.五行"
+                    v-for="el in store.data.灵根.五行"
                     :key="el"
                     class="xy-element"
                     :style="{ '--el': elColor(el) }"
@@ -271,28 +271,28 @@
               >
                 <span class="xy-card-name">体质</span>
                 <span class="xy-card-summary">
-                  <span>{{ store.data.基本信息.体质.名称 }}</span>
+                  <span>{{ store.data.体质.名称 }}</span>
                 </span>
                 <span class="xy-collapse-caret">▾</span>
               </button>
               <div v-show="state.userBodyOpen" class="xy-card-body">
-                <div class="xy-body-name"><EditableValue v-model="store.data.基本信息.体质.名称" label="体质名称" /></div>
+                <div class="xy-body-name"><EditableValue v-model="store.data.体质.名称" label="体质名称" /></div>
                 <div class="xy-attr-grid">
                   <div class="xy-attr">
                     <span class="xy-attr-label">悟性</span>
-                    <span class="xy-attr-value"><EditableValue v-model.number="store.data.基本信息.体质.悟性" type="number" label="悟性" :min="0" /></span>
+                    <span class="xy-attr-value"><EditableValue v-model.number="store.data.体质.悟性" type="number" label="悟性" :min="0" /></span>
                   </div>
                   <div class="xy-attr">
                     <span class="xy-attr-label">根骨</span>
-                    <span class="xy-attr-value"><EditableValue v-model.number="store.data.基本信息.体质.根骨" type="number" label="根骨" :min="0" /></span>
+                    <span class="xy-attr-value"><EditableValue v-model.number="store.data.体质.根骨" type="number" label="根骨" :min="0" /></span>
                   </div>
                   <div class="xy-attr">
                     <span class="xy-attr-label">气感</span>
-                    <span class="xy-attr-value"><EditableValue v-model.number="store.data.基本信息.体质.气感" type="number" label="气感" :min="0" /></span>
+                    <span class="xy-attr-value"><EditableValue v-model.number="store.data.体质.气感" type="number" label="气感" :min="0" /></span>
                   </div>
                 </div>
-                <div v-if="!_.isEmpty(store.data.基本信息.体质.效果) || state.editMode" class="xy-body-effects">
-                  <EffectList v-model="store.data.基本信息.体质.效果" line-class="xy-body-effect" />
+                <div v-if="!_.isEmpty(store.data.体质.效果) || state.editMode" class="xy-body-effects">
+                  <EffectList v-model="store.data.体质.效果" line-class="xy-body-effect" />
                 </div>
               </div>
             </div>
@@ -313,10 +313,10 @@
                 <div class="xy-skill-group">
                   <div class="xy-skill-group-title">生产</div>
                   <div class="xy-skill-grid">
-                    <div v-for="(v, n) in store.data.基本信息.技艺.生产类" :key="'p-'+n" class="xy-skill">
+                    <div v-for="(v, n) in store.data.技艺.生产类" :key="'p-'+n" class="xy-skill">
                       <span class="xy-skill-name">{{ n }}</span>
                       <span class="xy-skill-bar">
-                        <span class="xy-skill-fill" :style="{ width: skillPct(v, store.data.基本信息.修炼进度.境界) + '%' }" />
+                        <span class="xy-skill-fill" :style="{ width: skillPct(v, store.data.修炼进度.境界) + '%' }" />
                       </span>
                       <span class="xy-skill-num">
                         <EditableValue
@@ -325,7 +325,7 @@
                           :label="String(n)"
                           :min="0"
                           :format="formatSkillNum"
-                          @update:model-value="store.data.基本信息.技艺.生产类[n] = Number($event)"
+                          @update:model-value="store.data.技艺.生产类[n] = Number($event)"
                         />
                       </span>
                     </div>
@@ -334,10 +334,10 @@
                 <div class="xy-skill-group">
                   <div class="xy-skill-group-title">战斗</div>
                   <div class="xy-skill-grid">
-                    <div v-for="(v, n) in store.data.基本信息.技艺.战斗类" :key="'c-'+n" class="xy-skill">
+                    <div v-for="(v, n) in store.data.技艺.战斗类" :key="'c-'+n" class="xy-skill">
                       <span class="xy-skill-name">{{ n }}</span>
                       <span class="xy-skill-bar">
-                        <span class="xy-skill-fill" :style="{ width: skillPct(v, store.data.基本信息.修炼进度.境界) + '%' }" />
+                        <span class="xy-skill-fill" :style="{ width: skillPct(v, store.data.修炼进度.境界) + '%' }" />
                       </span>
                       <span class="xy-skill-num">
                         <EditableValue
@@ -346,7 +346,7 @@
                           :label="String(n)"
                           :min="0"
                           :format="formatSkillNum"
-                          @update:model-value="store.data.基本信息.技艺.战斗类[n] = Number($event)"
+                          @update:model-value="store.data.技艺.战斗类[n] = Number($event)"
                         />
                       </span>
                     </div>
@@ -356,7 +356,7 @@
             </div>
 
             <!-- 状态（默认折叠） -->
-            <div v-if="!_.isEmpty(store.data.基本信息.状态效果)" class="xy-card xy-card-buff">
+            <div v-if="!_.isEmpty(store.data.状态效果)" class="xy-card xy-card-buff">
               <button
                 type="button"
                 class="xy-card-title xy-card-title-clickable"
@@ -365,13 +365,13 @@
               >
                 <span class="xy-card-name">状态</span>
                 <span class="xy-card-summary">
-                  <span>共 {{ Object.keys(store.data.基本信息.状态效果).length }} 项</span>
+                  <span>共 {{ Object.keys(store.data.状态效果).length }} 项</span>
                 </span>
                 <span class="xy-collapse-caret">▾</span>
               </button>
               <div v-show="state.userBuffOpen" class="xy-buff-list xy-card-body">
                 <div
-                  v-for="(eff, name) in store.data.基本信息.状态效果"
+                  v-for="(eff, name) in store.data.状态效果"
                   :key="name"
                   class="xy-buff-item"
                   :class="['xy-buff-' + (eff.类型 || '特殊')]"

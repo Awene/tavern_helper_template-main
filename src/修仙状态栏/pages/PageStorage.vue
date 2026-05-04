@@ -4,12 +4,12 @@
       <div class="xy-stone-label">灵石</div>
       <div class="xy-stone-value">
         <EditableValue
-          :model-value="store.data.储物空间.灵石"
+          :model-value="store.data.灵石"
           type="number"
           label="灵石"
           :min="0"
           :format="(v) => Number(v).toLocaleString()"
-          @update:model-value="store.data.储物空间.灵石 = Number($event)"
+          @update:model-value="store.data.灵石 = Number($event)"
         />
       </div>
     </div>
@@ -28,7 +28,7 @@
 
     <!-- 物品 -->
     <div v-if="state.storageTab === 0">
-      <div v-if="_.isEmpty(store.data.储物空间.物品)" class="xy-empty">
+      <div v-if="_.isEmpty(store.data.物品)" class="xy-empty">
         <div class="xy-empty-mark">无</div>
         <p>储物空间空空如也</p>
       </div>
@@ -39,16 +39,16 @@
             :class="['xy-chip', { active: state.itemFilter === 'all' }]"
             @click="state.itemFilter = 'all'"
           >
-            全部 <em>{{ Object.keys(store.data.储物空间.物品).length }}</em>
+            全部 <em>{{ Object.keys(store.data.物品).length }}</em>
           </button>
           <template v-for="t in itemTypes" :key="t">
             <button
-              v-if="countField(store.data.储物空间.物品, '类型', t)"
+              v-if="countField(store.data.物品, '类型', t)"
               type="button"
               :class="['xy-chip', { active: state.itemFilter === t }]"
               @click="state.itemFilter = t"
             >
-              {{ t }} <em>{{ countField(store.data.储物空间.物品, '类型', t) }}</em>
+              {{ t }} <em>{{ countField(store.data.物品, '类型', t) }}</em>
             </button>
           </template>
         </div>
@@ -81,7 +81,7 @@
               <span :class="['xy-quality', 'xy-q-' + it.品质]">{{ it.品质 }}</span>
               <span class="xy-pill">{{ it.类型 }}</span>
               <span v-if="it.境界" class="xy-pill xy-pill-soft">{{ it.境界 }}</span>
-              <span v-if="it.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(it.五行) }">{{ it.五行 }}</span>
+              <span v-if="it.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(it.五行) }">{{ it.五行 === '混沌' ? '混' : it.五行 }}</span>
             </div>
             <div v-if="it.描述 || state.editMode" class="xy-item-desc"><EditableValue v-model="it.描述" label="描述" multiline /></div>
             <div v-if="!_.isEmpty(it.效果) || state.editMode" class="xy-effect-list">
@@ -94,7 +94,7 @@
 
     <!-- 装备 -->
     <div v-else-if="state.storageTab === 1">
-      <div v-if="_.isEmpty(store.data.储物空间.装备)" class="xy-empty">
+      <div v-if="_.isEmpty(store.data.装备)" class="xy-empty">
         <div class="xy-empty-mark">无</div>
         <p>未持任何装备</p>
       </div>
@@ -105,16 +105,16 @@
             :class="['xy-chip', { active: state.equipFilter === 'all' }]"
             @click="state.equipFilter = 'all'"
           >
-            全部 <em>{{ Object.keys(store.data.储物空间.装备).length }}</em>
+            全部 <em>{{ Object.keys(store.data.装备).length }}</em>
           </button>
           <template v-for="t in equipTypes" :key="t">
             <button
-              v-if="countField(store.data.储物空间.装备, '类型', t)"
+              v-if="countField(store.data.装备, '类型', t)"
               type="button"
               :class="['xy-chip', { active: state.equipFilter === t }]"
               @click="state.equipFilter = t"
             >
-              {{ t }} <em>{{ countField(store.data.储物空间.装备, '类型', t) }}</em>
+              {{ t }} <em>{{ countField(store.data.装备, '类型', t) }}</em>
             </button>
           </template>
         </div>
@@ -147,7 +147,7 @@
               <span :class="['xy-quality', 'xy-q-' + eq.品质]">{{ eq.品质 }}</span>
               <span class="xy-pill">{{ eq.类型 }}</span>
               <span v-if="eq.境界" class="xy-pill xy-pill-soft">{{ eq.境界 }}</span>
-              <span v-if="eq.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(eq.五行) }">{{ eq.五行 }}</span>
+              <span v-if="eq.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(eq.五行) }">{{ eq.五行 === '混沌' ? '混' : eq.五行 }}</span>
             </div>
             <div class="xy-eq-stats">
               <span v-if="eq.攻击力 != null" class="xy-eq-stat xy-stat-atk">攻 <EditableValue v-model.number="eq.攻击力" type="number" label="攻击力" :min="0" /></span>
@@ -164,7 +164,7 @@
 
     <!-- 傀儡 -->
     <div v-else-if="state.storageTab === 2">
-      <div v-if="_.isEmpty(store.data.储物空间.傀儡)" class="xy-empty">
+      <div v-if="_.isEmpty(store.data.傀儡)" class="xy-empty">
         <div class="xy-empty-mark">无</div>
         <p>暂无傀儡</p>
       </div>
@@ -175,16 +175,16 @@
             :class="['xy-chip', { active: state.puppetFilter === 'all' }]"
             @click="state.puppetFilter = 'all'"
           >
-            全部 <em>{{ Object.keys(store.data.储物空间.傀儡).length }}</em>
+            全部 <em>{{ Object.keys(store.data.傀儡).length }}</em>
           </button>
           <template v-for="q in qualityRanks" :key="q">
             <button
-              v-if="countField(store.data.储物空间.傀儡, '品质', q)"
+              v-if="countField(store.data.傀儡, '品质', q)"
               type="button"
               :class="['xy-chip', { active: state.puppetFilter === q }]"
               @click="state.puppetFilter = q"
             >
-              {{ q }}品 <em>{{ countField(store.data.储物空间.傀儡, '品质', q) }}</em>
+              {{ q }}品 <em>{{ countField(store.data.傀儡, '品质', q) }}</em>
             </button>
           </template>
         </div>
@@ -208,7 +208,7 @@
 
     <!-- 灵兽 -->
     <div v-else>
-      <div v-if="_.isEmpty(store.data.储物空间.灵兽)" class="xy-empty">
+      <div v-if="_.isEmpty(store.data.灵兽)" class="xy-empty">
         <div class="xy-empty-mark">无</div>
         <p>暂无灵兽</p>
       </div>
@@ -219,16 +219,16 @@
             :class="['xy-chip', { active: state.beastFilter === 'all' }]"
             @click="state.beastFilter = 'all'"
           >
-            全部 <em>{{ Object.keys(store.data.储物空间.灵兽).length }}</em>
+            全部 <em>{{ Object.keys(store.data.灵兽).length }}</em>
           </button>
           <template v-for="q in qualityRanks" :key="q">
             <button
-              v-if="countField(store.data.储物空间.灵兽, '品质', q)"
+              v-if="countField(store.data.灵兽, '品质', q)"
               type="button"
               :class="['xy-chip', { active: state.beastFilter === q }]"
               @click="state.beastFilter = q"
             >
-              {{ q }}品 <em>{{ countField(store.data.储物空间.灵兽, '品质', q) }}</em>
+              {{ q }}品 <em>{{ countField(store.data.灵兽, '品质', q) }}</em>
             </button>
           </template>
         </div>

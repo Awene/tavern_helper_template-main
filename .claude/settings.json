@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx webpack *)"
+      "Bash(npx webpack *)",
+      "Bash(python3 -c ' *)",
+      "Bash(py prompt.py)",
+      "PowerShell(python \"d:\\\\application\\\\Tavern\\\\settings\\\\git\\\\������\\\\Cultivation-Card-Game\\\\Doc\\\\sync_regex.py\")",
+      "Bash(python \"d:/application/Tavern/settings/git/世界书/Cultivation-Card-Game/Doc/sync_regex.py\")",
+      "mcp__chrome-devtools__new_page",
+      "Bash(python)",
+      "mcp__chrome-devtools__close_page"
     ]
   }
 }

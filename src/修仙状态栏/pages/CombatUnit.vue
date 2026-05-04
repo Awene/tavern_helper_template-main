@@ -57,13 +57,13 @@
         </span>
       </div>
       <div class="xy-unit-bar">
-        <span class="xy-unit-bar-label">灵力</span>
+        <span class="xy-unit-bar-label">灵气</span>
         <span class="xy-unit-bar-track">
           <span class="xy-unit-bar-fill spirit" :style="{ width: mpPct + '%' }" />
         </span>
         <span class="xy-unit-bar-num">
-          <template v-if="unit.资源池?.灵力">
-            <EditableValue v-model.number="unit.资源池.灵力.现值" type="number" label="灵力现值" :min="0" />/<EditableValue v-model.number="unit.资源池.灵力.上限" type="number" label="灵力上限" :min="0" />
+          <template v-if="unit.资源池?.灵气">
+            <EditableValue v-model.number="unit.资源池.灵气.现值" type="number" label="灵气现值" :min="0" />/<EditableValue v-model.number="unit.资源池.灵气.上限" type="number" label="灵气上限" :min="0" />
           </template>
           <template v-else>{{ mp.现值 }}/{{ mp.上限 }}</template>
         </span>
@@ -116,7 +116,7 @@ defineEmits<{
 const isEmpty = _.isEmpty;
 
 const hp = computed(() => props.unit?.资源池?.气血 || { 现值: 0, 上限: 1 });
-const mp = computed(() => props.unit?.资源池?.灵力 || { 现值: 0, 上限: 1 });
+const mp = computed(() => props.unit?.资源池?.灵气 || { 现值: 0, 上限: 1 });
 const hpPct = computed(() =>
   Math.max(0, Math.min(100, (hp.value.现值 / Math.max(hp.value.上限, 1)) * 100)),
 );

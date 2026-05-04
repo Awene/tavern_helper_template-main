@@ -14,6 +14,7 @@ import {
   rootDisplayName,
   rootTierCanonical,
 } from './config';
+import { normalizeItemForMvu } from './itemNormalizer';
 import type { Selection, StoryOption } from './types';
 
 function resolveStory(sel: Selection): StoryOption | undefined {
@@ -23,6 +24,8 @@ function resolveStory(sel: Selection): StoryOption | undefined {
   if (custom && custom.id === id) return customStoryToOption(custom);
   return findStory(id);
 }
+
+// 物品规范化逻辑已抽到 ./itemNormalizer.ts(UI 卡片与此处共用)
 
 export function buildInitialStatData(sel: Selection): Record<string, any> {
   const physique = physiqueResolved(sel.physique);
@@ -56,18 +59,16 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
   for (const id of sel.itemIds) {
     const it = findItem(id);
     if (!it || it.category === '灵石') continue;
-    bucket(it.name, it.category, it.data || {});
+    // 走规范化:数值按 [物品功法生成规则] 公式 floor(10^L × 系数 × (1+Q))
+    bucket(it.name, it.category, normalizeItemForMvu(it));
   }
-  // 自创资材
+  // 自创资材:同样规范化(把玩家选择的 品质/境界/类型/五行 走公式)
   for (const c of sel.customItems) {
-    bucket(c.name, c.category, {
-      品质: c.品质,
-      境界: c.境界,
-      类型: c.类型,
-      五行: c.五行,
-      自创: true,
-      描述: c.desc || '',
-    });
+    const synthetic = {
+      品质: c.品质, 境界: c.境界, 类型: c.类型, 五行: c.五行,
+      data: { 自创: true, 描述: c.desc || '', 标签: [] },
+    };
+    bucket(c.name, c.category, normalizeItemForMvu(synthetic));
   }
 
   // 体质三维
@@ -76,17 +77,45 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
   const 气感 = physique.气感;
   const 体质效果 = physique.效果 ? { [physique.效果.name]: physique.效果.value } : {};
 
-  // 起步资源池：基于 L=0 凡人，根骨/气感 各加 10%
-  const baseHp = Math.max(20, Math.floor(10 * (1 + 根骨 * 0.1)));
-  const baseMp = Math.max(10, Math.floor(10 * (1 + 气感 * 0.1)));
-  const baseDun = Math.max(2, Math.floor(10 * (1 + 根骨 * 0.02)));
-
   // 故事设定（如果有）
   const storySettings = story?.settings;
   const 大境界 = storySettings?.初始境界.大境界 || '炼气';
   const 小境界 = storySettings?.初始境界.小境界 || '初期';
   const 起始时间 = storySettings?.时间 || { 年: 7000, 月: 1, 日: 1, 时辰: '辰时' };
   const 宗门 = storySettings?.宗门 || '散修';
+
+  // —— 境界 → L 系数 (按 [核心系数总表]) —— //
+  const REALM_L_BASE: Record<string, number> = {
+    凡人: 0, 炼气: 1.0, 练气: 1.0, 筑基: 2.0, 金丹: 3.0,
+    元婴: 4.0, 化神: 5.0, 返虚: 6.0, 炼虚: 6.0,
+    合体: 7.0, 大乘: 8.0, 渡劫: 9.0, 飞升: 9.0,
+  };
+  const SUB_L_OFFSET: Record<string, number> = { 初期: 0, 中期: 0.2, 后期: 0.4 };
+  const baseL = REALM_L_BASE[大境界] ?? 1.0;
+  const L = baseL === 0 ? 0 : baseL + (SUB_L_OFFSET[小境界] ?? 0);
+
+  // —— 资源公式(均按 [突破规则] 第三阶段·重新计算资源) —— //
+  // 凡人 L=0 时基础值取 1(10^0=1),保留最低实用下限避免开局太羸弱
+  const tenPowL = Math.pow(10, L);
+  const baseHp = Math.max(L === 0 ? 20 : 1, Math.floor(tenPowL * (1 + 根骨 * 0.1)));
+  const baseMp = Math.max(L === 0 ? 10 : 1, Math.floor(tenPowL * (1 + 气感 * 0.1)));
+  // 遁速公式以 根骨 为准(与 [角色生成规则] / [突破规则] 一致)
+  const baseDun = Math.max(L === 0 ? 2 : 1, Math.floor(tenPowL * (1 + 根骨 * 0.02)));
+
+  // —— 修为进度上限 [Y] = 10^L × 100 (按 [修为获取规则] 参数声明) —— //
+  const 进度上限 = Math.floor(tenPowL * 100);
+
+  // —— 寿元.寿命:凡人 80 + 累积突破奖励 15×L^3 (跨大境界,小境界忽略) —— //
+  const realmIndex: Record<string, number> = {
+    凡人: 0, 炼气: 1, 练气: 1, 筑基: 2, 金丹: 3, 元婴: 4,
+    化神: 5, 返虚: 6, 炼虚: 6, 合体: 7, 大乘: 8, 渡劫: 9, 飞升: 9,
+  };
+  const realmIdx = realmIndex[大境界] ?? 0;
+  let 寿命 = 80; // 凡人基础寿命
+  for (let i = 1; i <= realmIdx; i++) 寿命 += 15 * Math.pow(i, 3);
+
+  // 起始年龄默认 16(青年),凡人保留默认上限;外观年龄=年龄(初始时尚未停止衰老)
+  const 起始年龄 = 16;
 
   // 性别 / 元阳元阴：按角色生成规则保留对应键
   // 其他性别：元阳与元阴均为 false（无概念）
@@ -99,68 +128,66 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
   }
 
   return {
-    基本信息: {
-      姓名: sel.道号 || '无名',
-      种族: '人族',
-      性别: sel.性别,
-      ...元阴元阳,
-      宗门,
-      寿元: { 年龄: 16, 寿命: 100, 外观年龄: 16 },
-      灵根: {
-        名称: rootName,
-        五行: rootElements,
-        品阶: rootTier,
-        变异: sel.root.mutation,
-        描述: rootDesc,
-      },
-      体质: {
-        名称: physique.name,
-        品阶: physique.tier,
-        悟性,
-        根骨,
-        气感,
-        效果: 体质效果,
-        描述: physique.desc,
-      },
-      修炼进度: {
-        境界: `${大境界}${小境界}`,
-        当前进度: 0,
-        进度上限: 100,
-        天谴: 0,
-      },
-      技艺: {
-        生产类: { 炼器: 0, 驯兽: 0, 培育: 0, 医术: 0, 炼丹: 0, 制符: 0 },
-        战斗类: { 御物: 0, 咒法: 0, 幻术: 0, 阵法: 0, 神识: 0, 炼体: 0 },
-      },
-      资源池: {
-        气血: { 现值: baseHp, 上限: baseHp },
-        灵力: { 现值: baseMp, 上限: baseMp },
-        遁速: baseDun,
-      },
-      地点: {
-        世界: location?.世界 || LOCATION_WORLD,
-        地域: location?.地域 || '中原',
-        子域: location?.子域 || '',
-        具体地点: location?.具体地点 || '某处村落',
-      },
-      时间: {
-        年: 起始时间.年,
-        月: 起始时间.月,
-        日: 起始时间.日,
-        时辰: 起始时间.时辰 || '辰时',
-      },
-      状态效果: {},
+    // —— 原 基本信息.* (扁平化:升至根级) ——
+    姓名: sel.道号 || '无名',
+    种族: '人族',
+    性别: sel.性别,
+    ...元阴元阳,
+    宗门,
+    寿元: { 年龄: 起始年龄, 寿命, 外观年龄: 起始年龄 },
+    灵根: {
+      名称: rootName,
+      五行: rootElements,
+      品阶: rootTier,
+      变异: sel.root.mutation,
+      描述: rootDesc,
     },
-    修炼功法: {
-      功法: arts,
+    体质: {
+      名称: physique.name,
+      品阶: physique.tier,
+      悟性,
+      根骨,
+      气感,
+      效果: 体质效果,
+      描述: physique.desc,
     },
-    储物空间: {
-      灵石: stones,
-      物品: items,
-      装备: equips,
-      傀儡: puppets,
-      灵兽: beasts,
+    修炼进度: {
+      境界: `${大境界}${小境界}`,
+      当前进度: 0,
+      进度上限,
+      天谴: 0,
     },
+    技艺: {
+      生产类: { 炼器: 0, 驯兽: 0, 培育: 0, 医术: 0, 炼丹: 0, 制符: 0 },
+      战斗类: { 御物: 0, 咒法: 0, 幻术: 0, 阵法: 0, 神识: 0, 炼体: 0 },
+    },
+    资源池: {
+      气血: { 现值: baseHp, 上限: baseHp },
+      灵气: { 现值: baseMp, 上限: baseMp },
+      遁速: baseDun,
+    },
+    地点: {
+      世界: location?.世界 || LOCATION_WORLD,
+      地域: location?.地域 || '中原',
+      子域: location?.子域 || '',
+      具体地点: location?.具体地点 || '某处村落',
+    },
+    时间: {
+      年: 起始时间.年,
+      月: 起始时间.月,
+      日: 起始时间.日,
+      时辰: 起始时间.时辰 || '辰时',
+    },
+    状态效果: {},
+    // —— 原 修炼功法.功法 ——
+    功法: arts,
+    // —— 原 储物空间.* ——
+    灵石: stones,
+    物品: items,
+    装备: equips,
+    傀儡: puppets,
+    灵兽: beasts,
+    // —— 不变 ——
     关系列表: {},
     传闻: [],
     // 附加信息：自定义开局元数据

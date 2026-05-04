@@ -112,8 +112,8 @@ const steps = [
   { title: '难度', comp: StepDifficulty },
   { title: '灵根 · 体质', comp: StepRoot },
   { title: '出生地', comp: StepLocation },
-  { title: '初始资材', comp: StepInventory },
   { title: '开局故事', comp: StepStory },
+  { title: '初始资材', comp: StepInventory },
   { title: '确认', comp: StepConfirm },
 ];
 

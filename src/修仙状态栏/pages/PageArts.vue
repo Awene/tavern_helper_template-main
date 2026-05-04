@@ -1,6 +1,6 @@
 <template>
   <section class="xy-page xy-page-arts">
-    <div v-if="_.isEmpty(store.data.修炼功法.功法)" class="xy-empty">
+    <div v-if="_.isEmpty(store.data.功法)" class="xy-empty">
       <div class="xy-empty-mark">空</div>
       <p>未修任何功法</p>
     </div>
@@ -11,16 +11,16 @@
           :class="['xy-chip', { active: state.artFilter === 'all' }]"
           @click="state.artFilter = 'all'"
         >
-          全部 <em>{{ Object.keys(store.data.修炼功法.功法).length }}</em>
+          全部 <em>{{ Object.keys(store.data.功法).length }}</em>
         </button>
         <template v-for="t in artTypes" :key="t">
           <button
-            v-if="countField(store.data.修炼功法.功法, '类型', t)"
+            v-if="countField(store.data.功法, '类型', t)"
             type="button"
             :class="['xy-chip', { active: state.artFilter === t }]"
             @click="state.artFilter = t"
           >
-            {{ t }} <em>{{ countField(store.data.修炼功法.功法, '类型', t) }}</em>
+            {{ t }} <em>{{ countField(store.data.功法, '类型', t) }}</em>
           </button>
         </template>
       </div>
@@ -61,7 +61,7 @@
           <div class="xy-art-meta">
             <span class="xy-pill">{{ art.类型 }}</span>
             <span v-if="art.境界" class="xy-pill xy-pill-soft">{{ art.境界 }}</span>
-            <span v-if="art.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(art.五行) }">{{ art.五行 }}</span>
+            <span v-if="art.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(art.五行) }">{{ art.五行 === '混沌' ? '混' : art.五行 }}</span>
             <span v-if="art.消耗 || state.editMode" class="xy-pill xy-pill-cost">耗 <EditableValue v-model="art.消耗" label="消耗" /></span>
           </div>
           <div v-if="art.描述 || state.editMode" class="xy-art-desc"><EditableValue v-model="art.描述" label="描述" multiline /></div>

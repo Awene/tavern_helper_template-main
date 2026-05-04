@@ -172,14 +172,13 @@ export const hasSkills = (npc: any) =>
   !_.isEmpty(npc?.技艺?.生产类) || !_.isEmpty(npc?.技艺?.战斗类);
 
 export const hasStorage = (npc: any) => {
-  const s = npc?.储物空间;
-  if (!s) return false;
+  if (!npc) return false;
   return (
-    (s.灵石 ?? 0) > 0 ||
-    !_.isEmpty(s.物品) ||
-    !_.isEmpty(s.装备) ||
-    !_.isEmpty(s.傀儡) ||
-    !_.isEmpty(s.灵兽)
+    (npc.灵石 ?? 0) > 0 ||
+    !_.isEmpty(npc.物品) ||
+    !_.isEmpty(npc.装备) ||
+    !_.isEmpty(npc.傀儡) ||
+    !_.isEmpty(npc.灵兽)
   );
 };
 
@@ -322,19 +321,19 @@ export const performDelete = () => {
   const data = store.data as any;
   switch (c.kind) {
     case 'art':
-      if (data.修炼功法?.功法) delete data.修炼功法.功法[c.key];
+      if (data.功法) delete data.功法[c.key];
       break;
     case 'item':
-      if (data.储物空间?.物品) delete data.储物空间.物品[c.key];
+      if (data.物品) delete data.物品[c.key];
       break;
     case 'equip':
-      if (data.储物空间?.装备) delete data.储物空间.装备[c.key];
+      if (data.装备) delete data.装备[c.key];
       break;
     case 'puppet':
-      if (data.储物空间?.傀儡) delete data.储物空间.傀儡[c.key];
+      if (data.傀儡) delete data.傀儡[c.key];
       break;
     case 'beast':
-      if (data.储物空间?.灵兽) delete data.储物空间.灵兽[c.key];
+      if (data.灵兽) delete data.灵兽[c.key];
       break;
     case 'npc':
       if (data.关系列表) delete data.关系列表[c.key];
@@ -370,7 +369,7 @@ export const isArtEffectivelyActive = (npc: any, artName: string, art: any): boo
 };
 
 export const toggleArt = (name: string, value: boolean) => {
-  const arts = store.data?.修炼功法?.功法 as Record<string, any> | undefined;
+  const arts = store.data?.功法 as Record<string, any> | undefined;
   if (!arts) return;
   const art = arts[name];
   if (!art) return;
@@ -402,25 +401,25 @@ export const toggleNpcArt = (npcName: string, artName: string, value: boolean) =
 };
 
 export const toggleUnit = (kind: '傀儡' | '灵兽', name: string, value: boolean) => {
-  const slot = (store.data?.储物空间 as any)?.[kind];
+  const slot = (store.data as any)?.[kind];
   if (slot && slot[name]) slot[name].使用中 = value;
 };
 
 // =============== 储物 / 关系 / 传闻 计算属性 ===============
 export const filteredArts = computed(() =>
-  filterRecord(store.data?.修炼功法?.功法, '类型', state.artFilter),
+  filterRecord(store.data?.功法, '类型', state.artFilter),
 );
 export const filteredItems = computed(() =>
-  filterRecord(store.data?.储物空间?.物品, '类型', state.itemFilter),
+  filterRecord(store.data?.物品, '类型', state.itemFilter),
 );
 export const filteredEquips = computed(() =>
-  filterRecord(store.data?.储物空间?.装备, '类型', state.equipFilter),
+  filterRecord(store.data?.装备, '类型', state.equipFilter),
 );
 export const filteredPuppets = computed(() =>
-  filterRecord(store.data?.储物空间?.傀儡, '品质', state.puppetFilter),
+  filterRecord(store.data?.傀儡, '品质', state.puppetFilter),
 );
 export const filteredBeasts = computed(() =>
-  filterRecord(store.data?.储物空间?.灵兽, '品质', state.beastFilter),
+  filterRecord(store.data?.灵兽, '品质', state.beastFilter),
 );
 
 export const sortedRelations = computed(() => {
@@ -438,12 +437,12 @@ export const sortedRelations = computed(() => {
 
 export const openedBuffData = computed(() => {
   if (!state.openedBuff) return null;
-  const buffs = store.data?.基本信息?.状态效果 as Record<string, any> | undefined;
+  const buffs = store.data?.状态效果 as Record<string, any> | undefined;
   return buffs?.[state.openedBuff] || null;
 });
 
 export const storageCount = (key: '物品' | '装备' | '傀儡' | '灵兽') =>
-  Object.keys((store.data?.储物空间 as any)?.[key] || {}).length;
+  Object.keys((store.data as any)?.[key] || {}).length;
 
 export const rumorGroup = (t: string) => {
   for (const g of rumorGroups) if ((g.types as readonly string[]).includes(t)) return g.key;
