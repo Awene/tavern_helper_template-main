@@ -31,38 +31,42 @@
         {{ currentRegion.description }}
       </p>
 
-      <!-- 子域 -->
-      <div v-if="currentRegion" class="xs-loc-row">
-        <span class="xs-loc-row-label">子域</span>
+      <!-- 生态卡 -->
+      <div v-if="currentRegion" class="xs-loc-leaf-grid">
         <button
-          v-for="s in currentRegion.children"
-          :key="s.id"
-          type="button"
-          class="xs-loc-chip"
-          :class="{ active: subId === s.id }"
-          @click="pickSub(s.id)"
-        >
-          {{ s.name }}
-        </button>
-      </div>
-
-      <!-- 具体地点 -->
-      <div v-if="currentSub" class="xs-loc-leaf-grid">
-        <button
-          v-for="leaf in currentSub.children"
-          :key="leaf.id"
+          v-for="eco in currentRegion.children"
+          :key="eco.id"
           type="button"
           class="xs-loc-leaf-card"
-          :class="{ active: store.selection.locationId === leaf.id }"
-          @click="store.selectLocation(leaf.id)"
+          :class="{ active: store.selection.locationId === eco.id }"
+          @click="store.selectLocation(eco.id)"
         >
           <div class="xs-loc-leaf-head">
-            <span class="xs-loc-leaf-name">{{ leaf.name }}</span>
-            <span v-if="leaf.kind" class="xs-pill xs-pill-gold">{{ leaf.kind }}</span>
+            <span class="xs-loc-leaf-name">{{ eco.name }}</span>
           </div>
-          <p v-if="leaf.description" class="xs-loc-leaf-desc">{{ leaf.description }}</p>
-          <div v-if="leaf.tags && leaf.tags.length" class="xs-loc-leaf-tags">
-            <span v-for="t in leaf.tags" :key="t" class="xs-pill">{{ t }}</span>
+          <p v-if="eco.description" class="xs-loc-leaf-desc">{{ eco.description }}</p>
+
+          <div v-if="eco.kingdoms && eco.kingdoms.length" class="xs-eco-section">
+            <span class="xs-eco-label">凡国</span>
+            <ul class="xs-eco-list">
+              <li v-for="k in eco.kingdoms" :key="k.name">
+                <strong>{{ k.name }}</strong>
+                <span class="xs-eco-brief">{{ k.brief }}</span>
+              </li>
+            </ul>
+          </div>
+          <div v-if="eco.sects && eco.sects.length" class="xs-eco-section">
+            <span class="xs-eco-label">宗门</span>
+            <ul class="xs-eco-list">
+              <li v-for="s in eco.sects" :key="s.name">
+                <strong>{{ s.name }}</strong>
+                <span class="xs-eco-brief">{{ s.brief }}</span>
+              </li>
+            </ul>
+          </div>
+
+          <div v-if="eco.tags && eco.tags.length" class="xs-loc-leaf-tags">
+            <span v-for="t in eco.tags" :key="t" class="xs-pill">{{ t }}</span>
           </div>
         </button>
       </div>
@@ -74,9 +78,7 @@
           <span class="sep">›</span>
           <span>{{ selectedLocation.地域 }}</span>
           <span class="sep">›</span>
-          <span>{{ selectedLocation.子域 }}</span>
-          <span class="sep">›</span>
-          <strong>{{ selectedLocation.具体地点 }}</strong>
+          <strong>{{ selectedLocation.生态 }}</strong>
         </div>
         <p v-if="selectedLocation.desc" class="xs-loc-preview-desc">{{ selectedLocation.desc }}</p>
       </div>
@@ -105,44 +107,30 @@ import {
   findLocation,
   findLocationPath,
   findRegionById,
-  findSubRegionById,
 } from '../config';
 import { useStartStore } from '../store';
 
 const store = useStartStore();
 
-// 根据当前选中的叶节点反推 region/sub，初始展开
+// 根据当前选中的生态反推 region，初始展开
 const initialPath = findLocationPath(store.selection.locationId || '');
 const regionId = ref<string>(initialPath.region?.id || LOCATION_REGIONS[0].id);
-const subId = ref<string>(
-  initialPath.sub?.id || LOCATION_REGIONS[0].children?.[0]?.id || '',
-);
 
 const currentRegion = computed(() => findRegionById(regionId.value));
-const currentSub = computed(() =>
-  regionId.value ? findSubRegionById(regionId.value, subId.value) : undefined,
-);
 
 const selectedLocation = computed(() => findLocation(store.selection.locationId));
 
 function pickRegion(id: string) {
   regionId.value = id;
-  // 切到该 region 默认第一个子域
-  const r = findRegionById(id);
-  subId.value = r?.children?.[0]?.id || '';
-}
-function pickSub(id: string) {
-  subId.value = id;
 }
 
-// 已选叶变化时同步展开路径，方便用户阅读上下文
+// 已选生态变化时同步展开地域
 watch(
   () => store.selection.locationId,
   newId => {
     const p = findLocationPath(newId || '');
-    if (p.region && p.sub) {
+    if (p.region) {
       regionId.value = p.region.id;
-      subId.value = p.sub.id;
     }
   },
 );
@@ -229,7 +217,7 @@ watch(
 .xs-loc-leaf-card {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   padding: 12px 14px;
   border: 1px solid var(--xs-line-gold);
   border-radius: 10px;
@@ -264,6 +252,43 @@ watch(
   font-size: 12px;
   line-height: 1.6;
   color: var(--xs-ink-soft);
+}
+.xs-eco-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 0 0;
+  border-top: 1px dashed var(--xs-line);
+}
+.xs-eco-label {
+  font-family: var(--xs-font-display);
+  font-size: 11.5px;
+  letter-spacing: 3px;
+  color: var(--xs-ink-mute);
+}
+.xs-eco-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.xs-eco-list li {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--xs-ink-soft);
+}
+.xs-eco-list strong {
+  font-family: var(--xs-font-display);
+  font-size: 12.5px;
+  letter-spacing: 1px;
+  color: var(--xs-ink);
+  margin-right: 6px;
+}
+.xs-eco-brief {
+  font-size: 11.5px;
+  color: var(--xs-ink-mute);
 }
 .xs-loc-leaf-tags {
   display: flex;

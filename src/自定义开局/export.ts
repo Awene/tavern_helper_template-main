@@ -169,7 +169,6 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
     地点: {
       世界: location?.世界 || LOCATION_WORLD,
       地域: location?.地域 || '中原',
-      子域: location?.子域 || '',
       具体地点: location?.具体地点 || '某处村落',
     },
     时间: {
@@ -265,9 +264,14 @@ export function generateAIPrompt(sel: Selection): string {
   if (location) {
     lines.push('');
     lines.push('【出生地】');
-    lines.push(`${location.世界} · ${location.地域} · ${location.子域} · ${location.具体地点}`);
-    if (location.kind) lines.push(`类型：${location.kind}`);
+    lines.push(`${location.世界} · ${location.地域} · ${location.生态}`);
     if (location.desc) lines.push(`说明：${location.desc}`);
+    if (location.kingdoms?.length) {
+      lines.push(`凡国：${location.kingdoms.map(k => `${k.name}（${k.brief}）`).join('；')}`);
+    }
+    if (location.sects?.length) {
+      lines.push(`宗门：${location.sects.map(s => `${s.name}（${s.brief}）`).join('；')}`);
+    }
   }
 
   // —— 开局设定（来自剧本 settings） ——

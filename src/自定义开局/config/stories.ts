@@ -114,7 +114,7 @@ export const stories: StoryOption[] = [
     recommend: '砺心问道',
     类型: '宗门',
     constraints: {
-      locationIds: ['loc-tianxuan'],
+      locationIds: ['eco-xy-wuyan'],
       灵根禁止: ['无'],
       physiqueTier: ['灵体', '道体', '仙体'],
     },
@@ -149,7 +149,7 @@ export const stories: StoryOption[] = [
     recommend: '小道悠游 / 寻常修行',
     类型: '宗门',
     constraints: {
-      locationIds: ['loc-lingfeng'],
+      locationIds: ['eco-bj-nanfeng'],
       灵根禁止: ['无'],
       physiqueTier: ['灵体', '道体', '仙体'],
     },
@@ -186,7 +186,7 @@ export const stories: StoryOption[] = [
     recommend: '寻常修行',
     类型: '宗门',
     constraints: {
-      locationIds: ['loc-liulidanzong'],
+      locationIds: ['eco-dt'],
       灵根禁止: ['无'],
       physiqueTier: ['灵体', '道体', '仙体'],
     },
@@ -253,7 +253,7 @@ export const stories: StoryOption[] = [
     recommend: '寻常修行',
     类型: '散修',
     constraints: {
-      locationIds: ['loc-linyuan'],
+      locationIds: ['eco-dt'],
       灵根禁止: ['无'],
       physiqueTier: ['灵体', '道体', '仙体'],
     },
@@ -288,7 +288,7 @@ export const stories: StoryOption[] = [
     recommend: '小道悠游 / 寻常修行',
     类型: '宗门',
     constraints: {
-      locationIds: ['loc-hehuan'],
+      locationIds: ['eco-dt'],
       灵根禁止: ['无'],
       physiqueTier: ['灵体', '道体', '仙体'],
     },

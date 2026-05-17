@@ -84,28 +84,28 @@ export interface PhysiqueChoice {
 }
 
 // =============== 出生地 ===============
-export type LocationKind =
-  | '宗门'
-  | '王朝'
-  | '学府'
-  | '组织'
-  | '聚落'
-  | '关隘'
-  | '势力'
-  | '其他';
+/** 生态卡上展示的凡国/宗门条目 */
+export interface EcoEntity {
+  /** 名称（如「沧澜王朝」「血莲密教」） */
+  name: string;
+  /** 一行简介 */
+  brief: string;
+  /** 标签（如「正道」「魔道」「商邦」） */
+  tags?: string[];
+}
 
-/** 树形地点节点：内部节点（世界/大地域/子域）或可选叶节点（具体地点） */
+/** 树形地点节点：内部节点（地域）或可选叶节点（生态） */
 export interface LocationNode {
   id: string;
   name: string;
   /** 简短描述 */
   description?: string;
-  /** 子节点；叶节点不写或为空 */
+  /** 子节点；叶节点（生态）不写或为空 */
   children?: LocationNode[];
-  /** 仅叶节点提供：地点类型 */
-  kind?: LocationKind;
-  /** 仅叶节点提供：所在子域名（可读路径，如「中原东部」） */
-  subRegionName?: string;
+  /** 仅生态叶节点：所属凡人国度/势力 */
+  kingdoms?: EcoEntity[];
+  /** 仅生态叶节点：境内宗门/组织 */
+  sects?: EcoEntity[];
   /** 标签（叶节点） */
   tags?: string[];
 }
@@ -116,9 +116,12 @@ export interface LocationOption {
   desc?: string;
   世界: string;
   地域: string;
-  子域: string;
+  /** 生态区块名（既用作 UI 展示，也写入 stat_data.地点.具体地点） */
+  生态: string;
+  /** 等同于 `生态`，保留以兼容旧持久化字段 */
   具体地点: string;
-  kind?: LocationKind;
+  kingdoms?: EcoEntity[];
+  sects?: EcoEntity[];
   tags?: string[];
 }
 

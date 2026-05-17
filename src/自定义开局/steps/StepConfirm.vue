@@ -51,7 +51,7 @@
         <span class="xs-summary-label">出生地</span>
         <span class="xs-summary-value">
           <strong>{{ location.name }}</strong>
-          <span style="color: var(--xs-ink-mute);">{{ location.世界 }} · {{ location.地域 }} · {{ location.子域 }}</span>
+          <span style="color: var(--xs-ink-mute);">{{ location.世界 }} · {{ location.地域 }} · {{ location.生态 }}</span>
         </span>
       </div>
       <div class="xs-summary-row">
