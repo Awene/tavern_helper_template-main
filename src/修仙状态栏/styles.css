@@ -909,11 +909,11 @@
   flex: 1 1 auto;
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-family: var(--xy-font-body);
-  font-size: 12px;
-  letter-spacing: 0;
-  color: var(--xy-ink-soft);
+  gap: 8px;
+  font-family: var(--xy-font-display);
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: var(--xy-ink);
   font-weight: normal;
   min-width: 0;
   overflow: hidden;
@@ -1144,6 +1144,89 @@ button.xy-card-title-clickable.open .xy-card-summary {
   margin-left: 4px;
   letter-spacing: 0;
   font-family: var(--xy-font-body);
+}
+
+/* 技艺行作为可展开的容器(跨越整个网格列宽,撑开下方配方列表) */
+.xy-skill-grid > .xy-skill-wrap {
+  grid-column: 1 / -1; /* 整行占满,避免配方列表挤到右半边 */
+}
+/* 但在闭合状态下保持双列布局: 把没展开的两行合并显示 */
+.xy-skill-grid {
+  /* 改用 flex 让 wrap 自由控制每行宽度 */
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px 14px;
+}
+.xy-skill-wrap {
+  display: contents; /* 让 wrap 透明化,内部 .xy-skill 直接参与 grid */
+}
+.xy-skill-wrap:has(.xy-skill.open) {
+  display: block;
+  grid-column: 1 / -1;
+}
+.xy-skill-toggle {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  min-width: 0;
+}
+.xy-skill-toggle:hover .xy-skill-name {
+  color: var(--xy-cinnabar);
+}
+.xy-skill-recipe-count {
+  flex: 0 0 auto;
+  font-size: 10px;
+  padding: 0 5px;
+  border-radius: 6px;
+  background: var(--xy-tint-cinnabar-strong);
+  color: var(--xy-cinnabar);
+  font-family: var(--xy-font-body);
+  letter-spacing: 0;
+}
+.xy-skill.open .xy-skill-name {
+  color: var(--xy-cinnabar);
+}
+
+/* 配方列表(挂在某个技艺下) */
+.xy-recipe-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 6px;
+  margin: 6px 0 4px;
+  padding: 6px 8px;
+  background: var(--xy-paper-warm);
+  border-radius: 4px;
+  border-left: 2px solid var(--xy-cinnabar);
+}
+.xy-recipe-card .xy-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.xy-craft-btn {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-family: var(--xy-font-display);
+  letter-spacing: 2px;
+  padding: 2px 10px;
+  border-radius: 2px;
+  border: 1px solid var(--xy-cinnabar);
+  background: var(--xy-tint-cinnabar-strong);
+  color: var(--xy-cinnabar);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.xy-craft-btn:hover {
+  background: var(--xy-cinnabar);
+  color: var(--xy-paper);
 }
 
 /* 状态详情 */
@@ -1544,6 +1627,32 @@ button.xy-card-title-clickable.open .xy-card-summary {
   background: var(--xy-tint-jade-mid);
 }
 
+/* 物品 K:V 标签行 (配方·所属技艺 / 符箓·攻击力 / 素材·炼制难度 等) */
+.xy-item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0;
+}
+.xy-item-tag {
+  font-size: 11px;
+  font-family: var(--xy-font-display);
+  letter-spacing: 1px;
+  padding: 1px 7px;
+  border-radius: 2px;
+  background: var(--xy-tint-ink-soft);
+  color: var(--xy-ink);
+}
+.xy-item-tag b {
+  font-weight: 600;
+  margin-left: 2px;
+}
+/* 配方的"所属技艺": 用青莲色突出, 提示玩家用哪种技艺做 */
+.xy-item-tag-所属技艺 {
+  color: var(--xy-jade-deep);
+  background: var(--xy-tint-jade-mid);
+}
+
 /* 傀儡/灵兽 */
 .xy-unit-active {
   background: linear-gradient(135deg, var(--xy-tint-gold-strong), var(--xy-glass));
@@ -1736,6 +1845,14 @@ button.xy-card-title-clickable.open .xy-card-summary {
   font-size: 16px;
   letter-spacing: 1px;
 }
+/* 按性别(由 元阴/元阳 字段存在与否判定)给 NPC 名字着色 */
+.xy-npc-name--female { color: #8b1a1a; }
+.xy-npc-name--male { color: #1e3a8a; }
+.xy-npc-name--other { color: var(--xy-ink); }
+:root[data-theme='dark'] .xy-npc-name--female,
+html[data-theme='dark'] .xy-npc-name--female { color: #e07878; }
+:root[data-theme='dark'] .xy-npc-name--male,
+html[data-theme='dark'] .xy-npc-name--male { color: #8aa8e0; }
 .xy-npc-realm {
   font-size: 12px;
   color: var(--xy-cinnabar);
@@ -1783,6 +1900,25 @@ button.xy-card-title-clickable.open .xy-card-summary {
   color: var(--xy-yin-color, #6b3c8a);
   border-color: var(--xy-yin-border, rgba(107, 60, 138, 0.4));
   background: var(--xy-yin-bg, rgba(107, 60, 138, 0.12));
+}
+/* 编辑模式: 缺失元阳/元阴字段时显示的"+添加"占位按钮(虚线边 + 半透明) */
+.xy-npc-yang.xy-add-key,
+.xy-npc-yin.xy-add-key {
+  cursor: pointer;
+  opacity: 0.55;
+  border-style: dashed;
+  background: transparent;
+  font: inherit;
+  font-size: 10.5px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  letter-spacing: 1px;
+  font-family: var(--xy-font-display);
+}
+.xy-npc-yang.xy-add-key:hover,
+.xy-npc-yin.xy-add-key:hover {
+  opacity: 1;
+  filter: brightness(1.05);
 }
 
 .xy-favor {

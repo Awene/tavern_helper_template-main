@@ -83,6 +83,11 @@
               <span v-if="it.境界" class="xy-pill xy-pill-soft">{{ it.境界 }}</span>
               <span v-if="it.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(it.五行) }">{{ it.五行 === '混沌' ? '混' : it.五行 }}</span>
             </div>
+            <div v-if="parseItemTags(it.标签).length" class="xy-item-tags">
+              <span v-for="(t, i) in parseItemTags(it.标签)" :key="i" class="xy-item-tag" :class="'xy-item-tag-' + t.label">
+                {{ t.label }} <b>{{ t.value }}</b>
+              </span>
+            </div>
             <div v-if="it.描述 || state.editMode" class="xy-item-desc"><EditableValue v-model="it.描述" label="描述" multiline /></div>
             <div v-if="!_.isEmpty(it.效果) || state.editMode" class="xy-effect-list">
               <EffectList v-model="it.效果" />
@@ -150,8 +155,20 @@
               <span v-if="eq.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(eq.五行) }">{{ eq.五行 === '混沌' ? '混' : eq.五行 }}</span>
             </div>
             <div class="xy-eq-stats">
-              <span v-if="eq.攻击力 != null" class="xy-eq-stat xy-stat-atk">攻 <EditableValue v-model.number="eq.攻击力" type="number" label="攻击力" :min="0" /></span>
-              <span v-if="eq.防御力 != null" class="xy-eq-stat xy-stat-def">防 <EditableValue v-model.number="eq.防御力" type="number" label="防御力" :min="0" /></span>
+              <span v-if="getEquipStat(eq, '攻击力') !== null || (state.editMode && eq.类型 === '法宝')" class="xy-eq-stat xy-stat-atk">
+                攻 <EditableValue
+                  :model-value="getEquipStat(eq, '攻击力') ?? 0"
+                  type="number" label="攻击力" :min="0"
+                  @update:model-value="setEquipStat(eq, '攻击力', Number($event))"
+                />
+              </span>
+              <span v-if="getEquipStat(eq, '防御力') !== null || (state.editMode && eq.类型 === '护甲')" class="xy-eq-stat xy-stat-def">
+                防 <EditableValue
+                  :model-value="getEquipStat(eq, '防御力') ?? 0"
+                  type="number" label="防御力" :min="0"
+                  @update:model-value="setEquipStat(eq, '防御力', Number($event))"
+                />
+              </span>
             </div>
             <div v-if="eq.描述 || state.editMode" class="xy-item-desc"><EditableValue v-model="eq.描述" label="描述" multiline /></div>
             <div v-if="!_.isEmpty(eq.效果) || state.editMode" class="xy-effect-list">
@@ -273,6 +290,9 @@ import {
   requestDelete,
   toggleUnit,
   elColor,
+  getEquipStat,
+  setEquipStat,
+  parseItemTags,
 } from '../composables';
 
 const store = useDataStore();

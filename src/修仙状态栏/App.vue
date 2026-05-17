@@ -313,42 +313,126 @@
                 <div class="xy-skill-group">
                   <div class="xy-skill-group-title">生产</div>
                   <div class="xy-skill-grid">
-                    <div v-for="(v, n) in store.data.技艺.生产类" :key="'p-'+n" class="xy-skill">
-                      <span class="xy-skill-name">{{ n }}</span>
-                      <span class="xy-skill-bar">
-                        <span class="xy-skill-fill" :style="{ width: skillPct(v, store.data.修炼进度.境界) + '%' }" />
-                      </span>
-                      <span class="xy-skill-num">
-                        <EditableValue
-                          :model-value="v"
-                          type="number"
-                          :label="String(n)"
-                          :min="0"
-                          :format="formatSkillNum"
-                          @update:model-value="store.data.技艺.生产类[n] = Number($event)"
-                        />
-                      </span>
+                    <div v-for="(v, n) in store.data.技艺.生产类" :key="'p-'+n" class="xy-skill-wrap">
+                      <div class="xy-skill" :class="{ open: state.skillRecipeOpen[String(n)] }">
+                        <button
+                          type="button"
+                          class="xy-skill-toggle"
+                          :title="recipesForSkill(store.data.物品, String(n)).length ? '点击展开 ' + n + ' 配方' : n + ' 暂无配方'"
+                          @click="toggleSkillRecipes(String(n))"
+                        >
+                          <span class="xy-skill-name">{{ n }}</span>
+                          <span class="xy-skill-bar">
+                            <span class="xy-skill-fill" :style="{ width: skillPct(v, store.data.修炼进度.境界) + '%' }" />
+                          </span>
+                          <span v-if="recipesForSkill(store.data.物品, String(n)).length" class="xy-skill-recipe-count">
+                            配方 {{ recipesForSkill(store.data.物品, String(n)).length }}
+                          </span>
+                        </button>
+                        <span class="xy-skill-num">
+                          <EditableValue
+                            :model-value="v"
+                            type="number"
+                            :label="String(n)"
+                            :min="0"
+                            :format="formatSkillNum"
+                            @update:model-value="store.data.技艺.生产类[n] = Number($event)"
+                          />
+                        </span>
+                      </div>
+                      <div v-if="state.skillRecipeOpen[String(n)] && recipesForSkill(store.data.物品, String(n)).length" class="xy-recipe-list">
+                        <article
+                          v-for="rec in recipesForSkill(store.data.物品, String(n))"
+                          :key="rec.name"
+                          class="xy-item xy-recipe-card"
+                          :class="['xy-q-bg-' + rec.it.品质]"
+                        >
+                          <div class="xy-item-head">
+                            <span class="xy-item-name">{{ rec.name }}</span>
+                            <button type="button" class="xy-craft-btn" :title="'追加 ' + craftVerbForSkill(String(n)) + '【' + rec.name + '】 到输入栏'" @click.stop="sendCraftCommand(String(rec.name))">
+                              {{ craftVerbForSkill(String(n)) }}
+                            </button>
+                          </div>
+                          <div class="xy-item-meta">
+                            <span :class="['xy-quality', 'xy-q-' + rec.it.品质]">{{ rec.it.品质 }}</span>
+                            <span class="xy-pill">{{ rec.it.类型 }}</span>
+                            <span v-if="rec.it.境界" class="xy-pill xy-pill-soft">{{ rec.it.境界 }}</span>
+                            <span v-if="rec.it.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(rec.it.五行) }">{{ rec.it.五行 === '混沌' ? '混' : rec.it.五行 }}</span>
+                          </div>
+                          <div v-if="parseItemTags(rec.it.标签).length" class="xy-item-tags">
+                            <span v-for="(t, i) in parseItemTags(rec.it.标签)" :key="i" class="xy-item-tag" :class="'xy-item-tag-' + t.label">
+                              {{ t.label }} <b>{{ t.value }}</b>
+                            </span>
+                          </div>
+                          <div v-if="rec.it.描述" class="xy-item-desc">{{ rec.it.描述 }}</div>
+                          <div v-if="!_.isEmpty(rec.it.效果)" class="xy-effect-list">
+                            <EffectList :model-value="rec.it.效果" />
+                          </div>
+                        </article>
+                      </div>
                     </div>
                   </div>
                 </div>
                 <div class="xy-skill-group">
                   <div class="xy-skill-group-title">战斗</div>
                   <div class="xy-skill-grid">
-                    <div v-for="(v, n) in store.data.技艺.战斗类" :key="'c-'+n" class="xy-skill">
-                      <span class="xy-skill-name">{{ n }}</span>
-                      <span class="xy-skill-bar">
-                        <span class="xy-skill-fill" :style="{ width: skillPct(v, store.data.修炼进度.境界) + '%' }" />
-                      </span>
-                      <span class="xy-skill-num">
-                        <EditableValue
-                          :model-value="v"
-                          type="number"
-                          :label="String(n)"
-                          :min="0"
-                          :format="formatSkillNum"
-                          @update:model-value="store.data.技艺.战斗类[n] = Number($event)"
-                        />
-                      </span>
+                    <div v-for="(v, n) in store.data.技艺.战斗类" :key="'c-'+n" class="xy-skill-wrap">
+                      <div class="xy-skill" :class="{ open: state.skillRecipeOpen[String(n)] }">
+                        <button
+                          type="button"
+                          class="xy-skill-toggle"
+                          :title="recipesForSkill(store.data.物品, String(n)).length ? '点击展开 ' + n + ' 配方' : n + ' 暂无配方'"
+                          @click="toggleSkillRecipes(String(n))"
+                        >
+                          <span class="xy-skill-name">{{ n }}</span>
+                          <span class="xy-skill-bar">
+                            <span class="xy-skill-fill" :style="{ width: skillPct(v, store.data.修炼进度.境界) + '%' }" />
+                          </span>
+                          <span v-if="recipesForSkill(store.data.物品, String(n)).length" class="xy-skill-recipe-count">
+                            配方 {{ recipesForSkill(store.data.物品, String(n)).length }}
+                          </span>
+                        </button>
+                        <span class="xy-skill-num">
+                          <EditableValue
+                            :model-value="v"
+                            type="number"
+                            :label="String(n)"
+                            :min="0"
+                            :format="formatSkillNum"
+                            @update:model-value="store.data.技艺.战斗类[n] = Number($event)"
+                          />
+                        </span>
+                      </div>
+                      <div v-if="state.skillRecipeOpen[String(n)] && recipesForSkill(store.data.物品, String(n)).length" class="xy-recipe-list">
+                        <article
+                          v-for="rec in recipesForSkill(store.data.物品, String(n))"
+                          :key="rec.name"
+                          class="xy-item xy-recipe-card"
+                          :class="['xy-q-bg-' + rec.it.品质]"
+                        >
+                          <div class="xy-item-head">
+                            <span class="xy-item-name">{{ rec.name }}</span>
+                            <button type="button" class="xy-craft-btn" :title="'追加 ' + craftVerbForSkill(String(n)) + '【' + rec.name + '】 到输入栏'" @click.stop="sendCraftCommand(String(rec.name))">
+                              {{ craftVerbForSkill(String(n)) }}
+                            </button>
+                          </div>
+                          <div class="xy-item-meta">
+                            <span :class="['xy-quality', 'xy-q-' + rec.it.品质]">{{ rec.it.品质 }}</span>
+                            <span class="xy-pill">{{ rec.it.类型 }}</span>
+                            <span v-if="rec.it.境界" class="xy-pill xy-pill-soft">{{ rec.it.境界 }}</span>
+                            <span v-if="rec.it.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(rec.it.五行) }">{{ rec.it.五行 === '混沌' ? '混' : rec.it.五行 }}</span>
+                          </div>
+                          <div v-if="parseItemTags(rec.it.标签).length" class="xy-item-tags">
+                            <span v-for="(t, i) in parseItemTags(rec.it.标签)" :key="i" class="xy-item-tag" :class="'xy-item-tag-' + t.label">
+                              {{ t.label }} <b>{{ t.value }}</b>
+                            </span>
+                          </div>
+                          <div v-if="rec.it.描述" class="xy-item-desc">{{ rec.it.描述 }}</div>
+                          <div v-if="!_.isEmpty(rec.it.效果)" class="xy-effect-list">
+                            <EffectList :model-value="rec.it.效果" />
+                          </div>
+                        </article>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -516,6 +600,11 @@ import {
   requestDelete,
   cancelDelete,
   performDelete,
+  recipesForSkill,
+  toggleSkillRecipes,
+  sendCraftCommand,
+  craftVerbForSkill,
+  parseItemTags,
 } from './composables';
 
 const store = useDataStore();

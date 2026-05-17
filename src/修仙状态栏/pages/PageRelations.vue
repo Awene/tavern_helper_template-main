@@ -103,7 +103,7 @@
           </div>
           <div class="xy-npc-info">
             <div class="xy-npc-line1">
-              <span class="xy-npc-name">{{ name }}</span>
+              <span class="xy-npc-name" :class="`xy-npc-name--${npcGender(npc)}`">{{ name }}</span>
               <span class="xy-npc-realm">{{ npc.修炼进度?.境界 || '凡人' }}</span>
               <span
                 v-if="npc.在场 || state.editMode"
@@ -118,19 +118,35 @@
               <span v-if="npc.身份 && npc.身份.length">·</span>
               <span v-for="id in npc.身份" :key="id" class="xy-npc-id">{{ id }}</span>
               <span
-                v-if="npc.元阳 || state.editMode"
+                v-if="'元阳' in npc"
                 class="xy-npc-yang"
                 :class="{ 'xy-bool-toggle': state.editMode, 'xy-bool-off': state.editMode && !npc.元阳 }"
-                :title="state.editMode ? '点击切换 元阳' : ''"
+                :title="state.editMode ? '左键切换值 · 右键删除元阳条目' : ''"
                 @click.stop="state.editMode && (npc.元阳 = !npc.元阳)"
+                @contextmenu.prevent.stop="state.editMode && deleteField(npc, '元阳')"
               >元阳</span>
+              <button
+                v-else-if="state.editMode"
+                type="button"
+                class="xy-npc-yang xy-add-key"
+                title="添加 元阳 条目"
+                @click.stop="npc.元阳 = true"
+              >+元阳</button>
               <span
-                v-if="npc.元阴 || state.editMode"
+                v-if="'元阴' in npc"
                 class="xy-npc-yin"
                 :class="{ 'xy-bool-toggle': state.editMode, 'xy-bool-off': state.editMode && !npc.元阴 }"
-                :title="state.editMode ? '点击切换 元阴' : ''"
+                :title="state.editMode ? '左键切换值 · 右键删除元阴条目' : ''"
                 @click.stop="state.editMode && (npc.元阴 = !npc.元阴)"
+                @contextmenu.prevent.stop="state.editMode && deleteField(npc, '元阴')"
               >元阴</span>
+              <button
+                v-else-if="state.editMode"
+                type="button"
+                class="xy-npc-yin xy-add-key"
+                title="添加 元阴 条目"
+                @click.stop="npc.元阴 = true"
+              >+元阴</button>
               <span
                 v-if="npc.道侣 || state.editMode"
                 class="xy-npc-couple"
@@ -427,6 +443,11 @@
                       <span class="xy-pill">{{ it.类型 }}</span>
                       <span v-if="it.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(it.五行) }">{{ it.五行 === '混沌' ? '混' : it.五行 }}</span>
                     </div>
+                    <div v-if="parseItemTags(it.标签).length" class="xy-item-tags">
+                      <span v-for="(t, i) in parseItemTags(it.标签)" :key="i" class="xy-item-tag" :class="'xy-item-tag-' + t.label">
+                        {{ t.label }} <b>{{ t.value }}</b>
+                      </span>
+                    </div>
                     <div v-if="it.描述 || state.editMode" class="xy-item-desc"><EditableValue v-model="it.描述" label="描述" multiline /></div>
                     <div v-if="!_.isEmpty(it.效果) || state.editMode" class="xy-effect-list">
                       <EffectList v-model="it.效果" />
@@ -473,8 +494,20 @@
                       <span v-if="eq.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(eq.五行) }">{{ eq.五行 === '混沌' ? '混' : eq.五行 }}</span>
                     </div>
                     <div class="xy-eq-stats">
-                      <span v-if="eq.攻击力 != null" class="xy-eq-stat xy-stat-atk">攻 <EditableValue v-model.number="eq.攻击力" type="number" label="攻击力" :min="0" /></span>
-                      <span v-if="eq.防御力 != null" class="xy-eq-stat xy-stat-def">防 <EditableValue v-model.number="eq.防御力" type="number" label="防御力" :min="0" /></span>
+                      <span v-if="getEquipStat(eq, '攻击力') !== null || (state.editMode && eq.类型 === '法宝')" class="xy-eq-stat xy-stat-atk">
+                        攻 <EditableValue
+                          :model-value="getEquipStat(eq, '攻击力') ?? 0"
+                          type="number" label="攻击力" :min="0"
+                          @update:model-value="setEquipStat(eq, '攻击力', Number($event))"
+                        />
+                      </span>
+                      <span v-if="getEquipStat(eq, '防御力') !== null || (state.editMode && eq.类型 === '护甲')" class="xy-eq-stat xy-stat-def">
+                        防 <EditableValue
+                          :model-value="getEquipStat(eq, '防御力') ?? 0"
+                          type="number" label="防御力" :min="0"
+                          @update:model-value="setEquipStat(eq, '防御力', Number($event))"
+                        />
+                      </span>
                     </div>
                     <div v-if="eq.描述 || state.editMode" class="xy-item-desc"><EditableValue v-model="eq.描述" label="描述" multiline /></div>
                     <div v-if="!_.isEmpty(eq.效果) || state.editMode" class="xy-effect-list">
@@ -574,6 +607,9 @@ import {
   toggleSection,
   hasSkills,
   hasStorage,
+  getEquipStat,
+  setEquipStat,
+  parseItemTags,
   canControlNpc,
   isArtEffectivelyActive,
   toggleNpcArt,
@@ -592,6 +628,24 @@ const characterRelations = computed(() =>
 const wildUnits = computed(() =>
   sortedRelations.value.filter(({ npc }) => npc?.类型 === '傀儡' || npc?.类型 === '灵兽'),
 );
+
+// 性别判别: 依据 元阴/元阳 字段是否存在(忽略其值真假)
+//   女性: 仅有 元阴 字段
+//   男性: 仅有 元阳 字段
+//   其他: 两者皆有 或 两者皆无
+function npcGender(npc: any): 'female' | 'male' | 'other' {
+  if (!npc || typeof npc !== 'object') return 'other';
+  const hasYin = '元阴' in npc;
+  const hasYang = '元阳' in npc;
+  if (hasYin && !hasYang) return 'female';
+  if (hasYang && !hasYin) return 'male';
+  return 'other';
+}
+
+// 编辑模式下从 NPC 对象删除指定字段(用于 元阴/元阳 整条删除)
+function deleteField(obj: any, key: string) {
+  if (obj && typeof obj === 'object') delete obj[key];
+}
 </script>
 
 <style scoped>

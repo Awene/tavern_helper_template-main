@@ -22,6 +22,8 @@ export const state = reactive({
   userBodyOpen: false,
   userSkillOpen: false,
   userBuffOpen: false,
+  // 道身 · 技艺下挂的配方面板展开状态(按技艺名 key)
+  skillRecipeOpen: {} as Record<string, boolean>,
   confirmDelete: null as null | { kind: string; key: string; label: string },
 });
 
@@ -238,6 +240,142 @@ export const hasStorage = (npc: any) => {
     !_.isEmpty(npc.傀儡) ||
     !_.isEmpty(npc.灵兽)
   );
+};
+
+// ============ 物品标签解析 (形如 "所属技艺:炼丹"、"炼制难度:5") ============
+// 仅取 K:V 形式的标签;纯描述性标签暂不渲染(避免堆叠噪声)
+export const parseItemTags = (tags: any): Array<{ label: string; value: string }> => {
+  if (!Array.isArray(tags)) return [];
+  const out: Array<{ label: string; value: string }> = [];
+  for (const tag of tags) {
+    if (typeof tag !== 'string') continue;
+    const m = tag.match(/^\s*([^:：]+?)\s*[:：]\s*(.+?)\s*$/);
+    if (m) out.push({ label: m[1].trim(), value: m[2].trim() });
+  }
+  return out;
+};
+
+// 从 标签数组中取出指定 label 的 value 字符串(找不到返回 null)
+export const getTagValue = (tags: any, label: string): string | null => {
+  const parsed = parseItemTags(tags);
+  return parsed.find((t) => t.label === label)?.value ?? null;
+};
+
+// ============ 道身 · 技艺 - 配方筛选 + 制造按钮 ============
+// 给定技艺名(如 '炼丹'), 返回 user.物品 里 类型='配方' 且 标签.所属技艺=该技艺 的所有条目
+export const recipesForSkill = (
+  items: Record<string, any> | undefined,
+  skillName: string,
+): Array<{ name: string; it: any }> => {
+  if (!items || typeof items !== 'object') return [];
+  const out: Array<{ name: string; it: any }> = [];
+  for (const [name, it] of Object.entries(items)) {
+    if (!it || typeof it !== 'object') continue;
+    if (it.类型 !== '配方') continue;
+    if (getTagValue(it.标签, '所属技艺') !== skillName) continue;
+    out.push({ name, it });
+  }
+  return out;
+};
+
+// 切换某个技艺的配方面板展开状态
+export const toggleSkillRecipes = (skillName: string) => {
+  state.skillRecipeOpen[skillName] = !state.skillRecipeOpen[skillName];
+};
+
+// 配方名末尾可能带的"非成品"后缀(按长度 DESC 排, 长后缀优先匹配避免误剥);
+// 仅做"尾部精确匹配"剥离, 因此中段含 残方 的名字(如"天残方圆丹")不会被误伤.
+const RECIPE_SUFFIXES = [
+  '完整丹方',
+  '完整配方',
+  '完整图纸',
+  '完整阵图',
+  '完整方',
+  '残丹方',
+  '残阵图',
+  '残符方',
+  '残图纸',
+  '残方',
+  '丹方',
+  '配方',
+  '图纸',
+  '蓝图',
+  '残页',
+  '残卷',
+  '残图',
+  '秘方',
+  '阵图',
+  '符方',
+  '法图',
+].sort((a, b) => b.length - a.length);
+
+// 把配方名规范成"成品名": 仅剥末尾配方关键词
+//   "玄魔回气散残方"   → "玄魔回气散"   (剥 残方)
+//   "回气散完整丹方"   → "回气散"      (优先剥 完整丹方 而非 丹方)
+//   "天残方圆丹"       → "天残方圆丹"  (残方 在中段, 不剥)
+//   "配方" / "丹方"    → 原样          (剥后为空, 拒绝)
+export const stripRecipeSuffix = (name: string): string => {
+  if (typeof name !== 'string') return name;
+  for (const suffix of RECIPE_SUFFIXES) {
+    if (name.endsWith(suffix) && name.length > suffix.length) {
+      return name.slice(0, -suffix.length);
+    }
+  }
+  return name;
+};
+
+// 依据"剥完后缀的成品名"决定动词:阵法 → 布阵, 其余 → 制造
+export const craftVerbForName = (itemName: string): '制造' | '布阵' => {
+  return stripRecipeSuffix(itemName).endsWith('阵') ? '布阵' : '制造';
+};
+
+// 依据技艺名决定 UI 按钮文案:阵法 → 布阵, 其余 → 制造
+export const craftVerbForSkill = (skillName: string): '制造' | '布阵' => {
+  return skillName === '阵法' ? '布阵' : '制造';
+};
+
+// 把 "制造【物品名】" 或 "布阵【阵法名】" 追加到 ST 输入栏(不直接发送,让玩家自行确认时机)
+export const sendCraftCommand = (itemName: string) => {
+  const cleanName = stripRecipeSuffix(itemName);
+  const verb = craftVerbForName(cleanName);
+  const text = `${verb}【${cleanName}】`;
+  // ST 输入框: 主页面顶层的 #send_textarea (iframe 内需冒泡到 window.top)
+  const doc = (window as any).top?.document || document;
+  const ta = doc.querySelector('#send_textarea') as HTMLTextAreaElement | null;
+  if (!ta) {
+    showToast('未找到 ST 输入栏');
+    return;
+  }
+  const cur = ta.value || '';
+  const sep = cur && !/\s$/.test(cur) ? ' ' : '';
+  ta.value = cur + sep + text;
+  ta.dispatchEvent(new Event('input', { bubbles: true }));
+  ta.focus();
+  showToast(`已追加: ${text}`);
+};
+
+// ============ 装备攻防 (存于 标签 数组里, 形如 "攻击力:2500") ============
+// schema 把 法宝/护甲 的攻防写在 标签 字符串数组内,这里负责读取与回写.
+const STAT_RE = (stat: '攻击力' | '防御力') => new RegExp(`^\\s*${stat}\\s*[:：]\\s*(-?\\d+(?:\\.\\d+)?)`);
+export const getEquipStat = (eq: any, stat: '攻击力' | '防御力'): number | null => {
+  const tags = eq?.标签;
+  if (!Array.isArray(tags)) return null;
+  const re = STAT_RE(stat);
+  for (const tag of tags) {
+    if (typeof tag !== 'string') continue;
+    const m = re.exec(tag);
+    if (m) return Number(m[1]);
+  }
+  return null;
+};
+export const setEquipStat = (eq: any, stat: '攻击力' | '防御力', value: number) => {
+  if (!eq) return;
+  if (!Array.isArray(eq.标签)) eq.标签 = [];
+  const re = STAT_RE(stat);
+  const idx = eq.标签.findIndex((t: any) => typeof t === 'string' && re.test(t));
+  const newTag = `${stat}:${Number(value) || 0}`;
+  if (idx >= 0) eq.标签[idx] = newTag;
+  else eq.标签.push(newTag);
 };
 
 // ============ NPC 详情区折叠 ============

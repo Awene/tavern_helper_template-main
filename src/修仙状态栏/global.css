@@ -4,7 +4,8 @@
  * =================================================== */
 
 /* 字体：优先使用网络字体，回落到系统字体 */
-@import url('https://fonts.font.im/css?family=Ma+Shan+Zheng|ZCOOL+XiaoWei|Noto+Serif+SC:400,500,700&display=swap');
+@import url('https://fonts.font.im/css?family=Ma+Shan+Zheng|Noto+Serif+SC:400,500,700&display=swap');
+@import url('https://testingcf.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/style.css');
 
 :root {
   /* 主色板 · 宣纸 / 墨 / 朱砂 / 淡金 / 山黛 */
@@ -87,8 +88,8 @@
   --xy-yin-bg: rgba(107, 60, 138, 0.10);
 
   /* 字体 */
-  --xy-font-title: 'Ma Shan Zheng', 'STKaiti', 'KaiTi', 'AR PL UKai CN', cursive;
-  --xy-font-display: 'ZCOOL XiaoWei', 'STKaiti', 'KaiTi', serif;
+  --xy-font-title: 'Ma Shan Zheng', 'LXGW WenKai', 'STKaiti', 'KaiTi', 'AR PL UKai CN', cursive;
+  --xy-font-display: 'LXGW WenKai', 'STKaiti', 'KaiTi', serif;
   --xy-font-body: 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', 'NSimSun', serif;
 
   /* 五行配色 */
