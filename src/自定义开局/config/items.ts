@@ -30,6 +30,18 @@ export const ITEM_KINDS_BY_CATEGORY: Record<ItemCategory, ItemKind[]> = {
   灵兽: ['灵兽'],
 };
 
+/**
+ * 在自创资材编辑器中支持「效果」key-value 编辑的子类型集合。
+ * 依据：[物品功法生成规则] 各分类的输出格式均含 `效果: [效果名: 效果]...`；
+ * 即所有 功法/装备/物品 类型理论上都可挂顶层 效果（自动数值标签如攻击力/修行速度走公式不冲突）。
+ * 排除：傀儡/灵兽（效果嵌套在「技能」字典内，由 SkillEditor 处理）、灵石（不进编辑器）。
+ */
+export const EFFECT_SUPPORTED_KINDS: ReadonlySet<ItemKind> = new Set<ItemKind>([
+  '心法', '攻击', '咒法', '身法', '护体', '阵法',  // 全部功法
+  '法宝', '护甲', '饰品', '工具',                 // 全部装备
+  '丹药', '符箓', '秘籍', '素材',                 // 全部物品
+]);
+
 export const ALL_ITEM_KINDS: ItemKind[] = [
   '心法',
   '攻击',

@@ -45,6 +45,16 @@ interface ItemLike {
 }
 
 /**
+ * 玩家覆盖值优先：若 data 上挂着 _override[key] 则使用之，否则走公式。
+ * 自创资材通过 data._override 注入用户填的数值，让 normalizer 跳过自动计算。
+ */
+function pickOverride(d: Record<string, any>, key: string, fallback: number): number {
+  const ov = d._override;
+  if (ov && typeof ov === 'object' && typeof ov[key] === 'number') return ov[key];
+  return fallback;
+}
+
+/**
  * 物品 子类型修饰位 (在 data 内显式给出):
  *   - 攻击型: 仅符箓使用,默认 true,false 时 攻击力=0
  *   - 加成型: 仅工具使用,默认 false,true 时入 [加成:N] 标签
@@ -81,14 +91,12 @@ export function normalizeItemForMvu(item: ItemLike): Record<string, any> {
 
   switch (rawType) {
     case '法宝': {
-      // 装备 法宝:攻击力 仅入标签;位置由 items.ts 显式指定(默认不设,即不展示位置)
-      const v = calc(0.25);
+      const v = pickOverride(d, '攻击力', calc(0.25));
       d.标签 = [...stripStatTag(d.标签, '攻击力'), `攻击力:${v}`];
       break;
     }
     case '护甲': {
-      // 装备 护甲:防御力 仅入标签
-      const v = calc(0.15);
+      const v = pickOverride(d, '防御力', calc(0.15));
       d.位置 = d.位置 || '上装';
       d.标签 = [...stripStatTag(d.标签, '防御力'), `防御力:${v}`];
       break;
@@ -108,51 +116,59 @@ export function normalizeItemForMvu(item: ItemLike): Record<string, any> {
       break;
     }
     case '心法': {
-      d.标签 = [...stripStatTag(d.标签, '修行速度'), `修行速度:${calc(0.3)}`];
+      const v = pickOverride(d, '修行速度', calc(0.3));
+      d.标签 = [...stripStatTag(d.标签, '修行速度'), `修行速度:${v}`];
       break;
     }
     case '攻击':
     case '咒法': {
-      // 功法 攻击/咒法 必含 [命中:X][穿透%:X][攻击力:X]
+      const hit = pickOverride(d, '命中', d20Stat(L, Q));
+      const pen = pickOverride(d, '穿透', pctStat(L, Q));
+      const atk = pickOverride(d, '攻击力', calc(0.4));
       d.标签 = [
         ...stripStatTag(d.标签, '命中'),
         ...stripStatTag(d.标签, '穿透%'),
         ...stripStatTag(d.标签, '攻击力'),
-        `命中:${d20Stat(L, Q)}`,
-        `穿透%:${pctStat(L, Q)}`,
-        `攻击力:${calc(0.4)}`,
+        `命中:${hit}`,
+        `穿透%:${pen}`,
+        `攻击力:${atk}`,
       ];
       break;
     }
     case '身法': {
-      // 功法 身法 必含 [闪避:X][遁速:X]
+      const dodge = pickOverride(d, '闪避', d20Stat(L, Q));
+      const dun = pickOverride(d, '遁速', calc(1.5));
       d.标签 = [
         ...stripStatTag(d.标签, '闪避'),
         ...stripStatTag(d.标签, '遁速'),
-        `闪避:${d20Stat(L, Q)}`,
-        `遁速:${calc(1.5)}`,
+        `闪避:${dodge}`,
+        `遁速:${dun}`,
       ];
       break;
     }
     case '护体': {
-      // 功法 护体 必含 [灵气受击|气血受击] [减免%:X] [防御力:X]
-      // 默认走 灵气受击(优先吸收伤害的护体功法,占多数);气血受击 由后续编辑覆盖
-      const hasTrigger = (d.标签 as any[]).some(
+      // 触发条件：data.护体触发 优先；否则保留已有 灵气受击/气血受击 标签；都没有则补 灵气受击
+      const userTrigger = typeof (d as any).护体触发 === 'string' ? (d as any).护体触发 : null;
+      const existingTrigger = (d.标签 as any[]).find(
         t => typeof t === 'string' && (t === '灵气受击' || t === '气血受击'),
       );
+      const trigger = userTrigger || existingTrigger || '灵气受击';
+      const reduce = pickOverride(d, '减免', pctStat(L, Q));
+      const defense = pickOverride(d, '防御力', calc(0.3));
       d.标签 = [
+        ...(d.标签 as any[]).filter(t => t !== '灵气受击' && t !== '气血受击'),
         ...stripStatTag(d.标签, '减免%'),
         ...stripStatTag(d.标签, '防御力'),
-        ...(hasTrigger ? [] : ['灵气受击']),
-        `减免%:${pctStat(L, Q)}`,
-        `防御力:${calc(0.3)}`,
+        trigger,
+        `减免%:${reduce}`,
+        `防御力:${defense}`,
       ];
+      delete (d as any).护体触发;
       break;
     }
     case '阵法': {
-      // 功法.阵法:消耗固定为无,标签必含 [灵气容量:N][攻击力:N]
-      const cap = calc(4);    // 灵气容量 系数 2~6, 中值 4
-      const atk = calc(0.15); // 攻击力 系数 0~0.3, 中值 0.15
+      const cap = pickOverride(d, '灵气容量', calc(4));
+      const atk = pickOverride(d, '攻击力', calc(0.15));
       d.消耗 = '无';
       d.标签 = [
         ...stripStatTag(d.标签, '灵气容量'),
@@ -169,11 +185,13 @@ export function normalizeItemForMvu(item: ItemLike): Record<string, any> {
     case '符箓': {
       // 物品 符箓 必含 [灵气消耗:X][攻击力:X] (非攻击型攻击力可=0,由 data.攻击型 显式标记)
       const offensive = (d as any).攻击型 !== false;
-      const atk = offensive ? calc(0.4) : 0;
+      const atkDefault = offensive ? calc(0.4) : 0;
+      const atk = pickOverride(d, '攻击力', atkDefault);
+      const mana = pickOverride(d, '灵气消耗', calc(0.2));
       d.标签 = [
         ...stripStatTag(d.标签, '灵气消耗'),
         ...stripStatTag(d.标签, '攻击力'),
-        `灵气消耗:${calc(0.2)}`,
+        `灵气消耗:${mana}`,
         `攻击力:${atk}`,
       ];
       delete (d as any).攻击型;
@@ -192,39 +210,41 @@ export function normalizeItemForMvu(item: ItemLike): Record<string, any> {
       break;
     }
     case '素材': {
-      // 物品 素材 必含 [炼制难度:X];以 10^L × 0.5(单材杂质难度) 为基准
+      const diff = pickOverride(d, '炼制难度', calc(0.5));
       d.标签 = [
         ...stripStatTag(d.标签, '炼制难度'),
-        `炼制难度:${calc(0.5)}`,
+        `炼制难度:${diff}`,
       ];
       break;
     }
     case '傀儡':
     case '灵兽': {
-      // 傀儡/灵兽 mvu 顶级:资源池(气血/灵气/遁速) + 防御力 + 技能字典;不再有顶级 攻击力/气血
+      // 傀儡/灵兽 mvu 顶级:资源池(气血/灵气/遁速) + 防御力 + 技能字典
       const hpCoef = rawType === '灵兽' ? 10 : 0.75;
-      const hp = calc(hpCoef);
-      const mp = calc(0.5);
-      const dun = calc(1.25);
+      const ovRP: any = (d._override && d._override.资源池) || {};
+      const hp = typeof ovRP.气血 === 'number' ? ovRP.气血 : calc(hpCoef);
+      const mp = typeof ovRP.灵气 === 'number' ? ovRP.灵气 : calc(0.5);
+      const dun = typeof ovRP.遁速 === 'number' ? ovRP.遁速 : calc(1.25);
       d.资源池 = {
         气血: { 现值: hp, 上限: hp },
         灵气: { 现值: mp, 上限: mp },
         遁速: dun,
       };
-      d.防御力 = calc(0.125);
-      // 删除可能残留的顶级数字字段(已迁入 资源池)
+      d.防御力 = pickOverride(d, '防御力', calc(0.125));
       delete (d as any).气血;
       delete (d as any).灵气;
       delete (d as any).遁速;
-      // 技能字典:留空由 AI 后续生成,初始空对象
+      // 技能字典：若 data.技能 已是对象则保留（自创可注入），否则给空对象
       if (!d.技能 || typeof d.技能 !== 'object') d.技能 = {};
-      // 旧标签里的 气血:N / 攻击力:N / 遁速:N 清掉(数据已在 资源池/技能 里)
       d.标签 = stripStatTag(d.标签, '气血');
       d.标签 = stripStatTag(d.标签, '攻击力');
       d.标签 = stripStatTag(d.标签, '遁速');
       break;
     }
   }
+
+  // 清理覆盖标记，避免污染最终 data
+  delete (d as any)._override;
 
   return d;
 }

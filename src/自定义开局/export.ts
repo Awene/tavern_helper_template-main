@@ -64,9 +64,56 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
   }
   // 自创资材:同样规范化(把玩家选择的 品质/境界/类型/五行 走公式)
   for (const c of sel.customItems) {
+    const data: Record<string, any> = { 自创: true, 描述: c.desc || '', 标签: [] };
+    if (c.效果 && Object.keys(c.效果).length) {
+      data.效果 = { ...c.效果 };
+    }
+    // —— 数值覆盖：通过 _override 注入，让 normalizer 跳过自动公式 —— //
+    const override: Record<string, any> = {};
+    if (c.数值) {
+      for (const [k, v] of Object.entries(c.数值)) {
+        if (typeof v === 'number') override[k] = v;
+      }
+    }
+    if (c.资源池) {
+      const rp: Record<string, number> = {};
+      if (typeof c.资源池.气血 === 'number') rp.气血 = c.资源池.气血;
+      if (typeof c.资源池.灵气 === 'number') rp.灵气 = c.资源池.灵气;
+      if (typeof c.资源池.遁速 === 'number') rp.遁速 = c.资源池.遁速;
+      if (Object.keys(rp).length) override.资源池 = rp;
+    }
+    if (Object.keys(override).length) data._override = override;
+    // —— 顶层覆盖字段 —— //
+    if (typeof c.消耗 === 'string' && c.消耗.trim()) data.消耗 = c.消耗.trim();
+    if (typeof c.位置 === 'string' && c.位置) data.位置 = c.位置;
+    if (typeof c.数量 === 'number') data.数量 = c.数量;
+    if (typeof c.攻击型 === 'boolean') data.攻击型 = c.攻击型;
+    if (typeof c.加成型 === 'boolean') data.加成型 = c.加成型;
+    if (typeof c.完整度 === 'string' && c.完整度) data.完整度 = c.完整度;
+    if (typeof c.护体触发 === 'string' && c.护体触发) data.护体触发 = c.护体触发;
+    // —— 傀儡/灵兽 技能字典 —— //
+    if (Array.isArray(c.技能) && c.技能.length) {
+      const skillMap: Record<string, any> = {};
+      for (const sk of c.技能) {
+        const skName = (sk.name || '').trim();
+        if (!skName) continue;
+        const entry: any = {};
+        if (typeof sk.攻击力 === 'number') entry.攻击力 = sk.攻击力;
+        if (typeof sk.消耗 === 'string' && sk.消耗.trim()) entry.消耗 = sk.消耗.trim();
+        if (sk.效果) {
+          const cleanEff: Record<string, string> = {};
+          for (const [k, v] of Object.entries(sk.效果)) {
+            if (!k.startsWith('__empty_')) cleanEff[k] = v;
+          }
+          if (Object.keys(cleanEff).length) entry.效果 = cleanEff;
+        }
+        skillMap[skName] = entry;
+      }
+      if (Object.keys(skillMap).length) data.技能 = skillMap;
+    }
     const synthetic = {
       品质: c.品质, 境界: c.境界, 类型: c.类型, 五行: c.五行,
-      data: { 自创: true, 描述: c.desc || '', 标签: [] },
+      data,
     };
     bucket(c.name, c.category, normalizeItemForMvu(synthetic));
   }
@@ -75,7 +122,11 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
   const 悟性 = physique.悟性;
   const 根骨 = physique.根骨;
   const 气感 = physique.气感;
-  const 体质效果 = physique.效果 ? { [physique.效果.name]: physique.效果.value } : {};
+  // physiqueResolved 现在返回 效果s: PhysiqueEffect[]，合并为 Record（同名后写覆盖前）
+  const 体质效果: Record<string, string> = {};
+  for (const e of physique.效果s) {
+    if (e.name) 体质效果[e.name] = e.value;
+  }
 
   // 故事设定（如果有）
   const storySettings = story?.settings;
@@ -257,7 +308,9 @@ export function generateAIPrompt(sel: Selection): string {
   lines.push(`名号：${physique.name}`);
   lines.push(`等级：${physique.tier}`);
   lines.push(`三维：悟性 ${physique.悟性} / 根骨 ${physique.根骨} / 气感 ${physique.气感}`);
-  if (physique.效果) lines.push(`效果：${physique.效果.name} ${physique.效果.value}`);
+  for (const e of physique.效果s) {
+    if (e.name) lines.push(`效果：${e.name} ${e.value}`);
+  }
   if (physique.desc) lines.push(`描述：${physique.desc}`);
 
   // —— 出生地 ——
@@ -314,6 +367,11 @@ export function generateAIPrompt(sel: Selection): string {
     sel.customItems.forEach(c => {
       const tags = [`${c.品质}品`, c.境界, c.类型, c.五行];
       lines.push(`- ${c.name}（${tags.join(' · ')}）`);
+      if (c.效果) {
+        for (const [k, v] of Object.entries(c.效果)) {
+          lines.push(`    ${k}：${v}`);
+        }
+      }
       if (c.desc) lines.push(`    ${c.desc}`);
     });
   }

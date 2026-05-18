@@ -74,9 +74,8 @@ export interface PhysiqueChoice {
   presetId: string | null;
   /** 自拟体质名称 */
   customName: string;
-  /** 自拟体质效果（凡体可空） */
-  customEffectName: string;
-  customEffectValue: string;
+  /** 自拟体质效果列表（凡体可空；非凡体至少 1 条且首条名号非空） */
+  customEffects: PhysiqueEffect[];
   /** 自拟三维分配（总和等于该等级 S） */
   custom悟性: number;
   custom根骨: number;
@@ -177,7 +176,24 @@ export interface ItemOption extends Option {
   data?: Record<string, any>;
 }
 
-/** 玩家自创资材：可携带多件，依品质 / 境界计费 */
+/** 傀儡/灵兽 的单条技能 */
+export interface CustomSkill {
+  /** 技能名 */
+  name: string;
+  /** 攻击力（数值）；可空 */
+  攻击力?: number;
+  /** 消耗描述（如 "气血:30" / "灵气:50" / "无"） */
+  消耗?: string;
+  /** 效果 key-value */
+  效果?: Record<string, string>;
+}
+
+/** 玩家自创资材：可携带多件，依品质 / 境界计费
+ *
+ * 所有 ?? 字段都是「玩家覆盖值」：
+ * - 已填则 normalizer 用此值
+ * - 未填则 normalizer 按公式自动算
+ */
 export interface CustomItem {
   /** 运行时 id，使用时间戳生成 */
   id: string;
@@ -189,6 +205,44 @@ export interface CustomItem {
   境界: ItemRealm;
   /** 五行属性必填 */
   五行: string;
+  /** 自创效果（key=效果名 / value=效果描述，可空） */
+  效果?: Record<string, string>;
+  /** 数值类覆盖（攻击力/防御力/命中/闪避/穿透%/减免%/修行速度/遁速/灵气消耗/灵气容量/炼制难度 等） */
+  数值?: {
+    攻击力?: number;
+    防御力?: number;
+    命中?: number;
+    闪避?: number;
+    遁速?: number;
+    修行速度?: number;
+    /** 百分比整数 */
+    穿透?: number;
+    /** 百分比整数 */
+    减免?: number;
+    灵气消耗?: number;
+    灵气容量?: number;
+    炼制难度?: number;
+  };
+  /** 资源池覆盖（傀儡/灵兽） */
+  资源池?: {
+    气血?: number;
+    灵气?: number;
+    遁速?: number;
+  };
+  /** 通用顶层覆盖 */
+  消耗?: string;
+  位置?: string;
+  数量?: number;
+  /** 符箓：攻击型；false 时攻击力=0 */
+  攻击型?: boolean;
+  /** 工具：是否为核心生产工具（启用加成数值） */
+  加成型?: boolean;
+  /** 秘籍：完整度 */
+  完整度?: string;
+  /** 护体功法：触发条件 */
+  护体触发?: string;
+  /** 技能列表（仅傀儡/灵兽） */
+  技能?: CustomSkill[];
 }
 
 // =============== 性别 / 元阳元阴 ===============

@@ -1,4 +1,4 @@
-import type { PhysiqueChoice, PhysiqueOption, PhysiqueTier } from '../types';
+import type { PhysiqueChoice, PhysiqueEffect, PhysiqueOption, PhysiqueTier } from '../types';
 
 export const PHYSIQUE_TIERS: PhysiqueTier[] = ['凡体', '灵体', '道体', '仙体'];
 
@@ -404,8 +404,7 @@ export function makeDefaultPhysiqueChoice(tier: PhysiqueTier): PhysiqueChoice {
     tier,
     presetId: null,
     customName: '',
-    customEffectName: '',
-    customEffectValue: '',
+    customEffects: tier === '凡体' ? [] : [{ name: '', value: '' }],
     custom悟性: a,
     custom根骨: b,
     custom气感: c,
@@ -419,12 +418,28 @@ export function normalizePhysiqueChoice(raw: any): PhysiqueChoice {
     ? (raw.tier as PhysiqueTier)
     : '凡体';
   const fallback = makeDefaultPhysiqueChoice(tier);
+  // —— 兼容旧持久化字段：customEffectName/customEffectValue → customEffects[] —— //
+  let customEffects: PhysiqueEffect[];
+  if (Array.isArray(raw.customEffects)) {
+    customEffects = raw.customEffects
+      .filter((e: any) => e && typeof e === 'object')
+      .map((e: any) => ({
+        name: typeof e.name === 'string' ? e.name : '',
+        value: typeof e.value === 'string' ? e.value : '',
+      }));
+  } else if (typeof raw.customEffectName === 'string' || typeof raw.customEffectValue === 'string') {
+    customEffects = [{
+      name: typeof raw.customEffectName === 'string' ? raw.customEffectName : '',
+      value: typeof raw.customEffectValue === 'string' ? raw.customEffectValue : '',
+    }];
+  } else {
+    customEffects = fallback.customEffects;
+  }
   return {
     tier,
     presetId: typeof raw.presetId === 'string' ? raw.presetId : null,
     customName: typeof raw.customName === 'string' ? raw.customName : '',
-    customEffectName: typeof raw.customEffectName === 'string' ? raw.customEffectName : '',
-    customEffectValue: typeof raw.customEffectValue === 'string' ? raw.customEffectValue : '',
+    customEffects,
     custom悟性: Number.isFinite(raw.custom悟性) ? raw.custom悟性 : fallback.custom悟性,
     custom根骨: Number.isFinite(raw.custom根骨) ? raw.custom根骨 : fallback.custom根骨,
     custom气感: Number.isFinite(raw.custom气感) ? raw.custom气感 : fallback.custom气感,
@@ -447,7 +462,8 @@ export interface ResolvedPhysique {
   悟性: number;
   根骨: number;
   气感: number;
-  效果?: { name: string; value: string };
+  /** 已规范化的效果数组（预设的单效果会被包装为一元数组） */
+  效果s: PhysiqueEffect[];
 }
 
 export function physiqueResolved(choice: PhysiqueChoice): ResolvedPhysique {
@@ -461,17 +477,16 @@ export function physiqueResolved(choice: PhysiqueChoice): ResolvedPhysique {
         悟性: p.悟性,
         根骨: p.根骨,
         气感: p.气感,
-        效果: p.效果,
+        效果s: p.效果 ? [p.效果] : [],
       };
     }
   }
   const name = choice.customName.trim() || `${choice.tier}（自拟）`;
-  let 效果: { name: string; value: string } | undefined;
-  if (choice.tier !== '凡体') {
-    const en = choice.customEffectName.trim();
-    const ev = choice.customEffectValue.trim();
-    if (en) 效果 = { name: en, value: ev };
-  }
+  const 效果s: PhysiqueEffect[] = choice.tier === '凡体'
+    ? []
+    : choice.customEffects
+        .map(e => ({ name: e.name.trim(), value: e.value.trim() }))
+        .filter(e => e.name);
   return {
     name,
     tier: choice.tier,
@@ -479,7 +494,7 @@ export function physiqueResolved(choice: PhysiqueChoice): ResolvedPhysique {
     悟性: choice.custom悟性,
     根骨: choice.custom根骨,
     气感: choice.custom气感,
-    效果,
+    效果s,
   };
 }
 
@@ -488,7 +503,10 @@ export function isPhysiqueChoiceValid(choice: PhysiqueChoice): boolean {
     return !!findPhysique(choice.presetId);
   }
   if (!choice.customName.trim()) return false;
-  if (choice.tier !== '凡体' && !choice.customEffectName.trim()) return false;
+  if (choice.tier !== '凡体') {
+    const hasNamedEffect = choice.customEffects.some(e => e.name.trim() !== '');
+    if (!hasNamedEffect) return false;
+  }
   if (customPhysiqueSum(choice) !== PHYSIQUE_TIER_S[choice.tier]) return false;
   if (choice.custom悟性 < 1 || choice.custom根骨 < 1 || choice.custom气感 < 1) return false;
   return true;

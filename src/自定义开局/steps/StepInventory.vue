@@ -36,6 +36,31 @@
             <span class="xs-pill">{{ c.境界 }}</span>
             <span class="xs-pill xs-pill-jade">{{ c.类型 }}</span>
             <span v-if="c.五行" class="xs-pill xs-pill-cinnabar">{{ c.五行 }}</span>
+            <span v-if="c.位置" class="xs-pill">📍 {{ c.位置 }}</span>
+            <span v-if="typeof c.数量 === 'number' && c.数量 > 1" class="xs-pill">×{{ c.数量 }}</span>
+          </div>
+          <!-- 数值类覆盖（玩家手填的） -->
+          <div v-if="customCardStats(c).length" class="xs-inv-stats">
+            <span
+              v-for="s in customCardStats(c)"
+              :key="s.key"
+              class="xs-stat-chip"
+            >{{ s.key }} {{ s.value }}</span>
+          </div>
+          <div v-if="c.效果 && Object.keys(c.效果).length" class="xs-inv-effects">
+            <div v-for="(v, k) in c.效果" :key="String(k)" class="xs-inv-effect-row">
+              <span class="xs-inv-effect-name">{{ k }}:</span>
+              <span class="xs-inv-effect-val">{{ v }}</span>
+            </div>
+          </div>
+          <!-- 技能（傀儡/灵兽） -->
+          <div v-if="c.技能 && c.技能.length" class="xs-inv-skills">
+            <div class="xs-inv-skills-head">技能</div>
+            <div v-for="sk in c.技能" :key="sk.name" class="xs-inv-skill-row">
+              <span class="xs-inv-skill-name">{{ sk.name }}</span>
+              <span v-if="typeof sk.攻击力 === 'number'" class="xs-stat-chip xs-stat-attack">攻 {{ sk.攻击力 }}</span>
+              <span v-if="sk.消耗" class="xs-inv-skill-cost">耗 {{ sk.消耗 }}</span>
+            </div>
           </div>
           <p v-if="c.desc" class="xs-custom-card-desc">{{ c.desc }}</p>
           <div class="xs-custom-card-actions">
@@ -52,17 +77,17 @@
           <input
             type="text"
             v-model="draft.name"
-            maxlength="14"
+            maxlength="30"
             placeholder="请为这件资材命名（如：紫电雷符）"
           />
         </div>
         <div class="xs-custom-edit-row">
           <label>大类</label>
-          <select v-model="draft.category" @change="onDraftCategoryChange">
+          <select v-model="draft.category" @change="onDraftCategoryChangeFull">
             <option v-for="c in ITEM_CATEGORIES.filter(c => c !== '灵石')" :key="c" :value="c">{{ c }}</option>
           </select>
           <label>类型</label>
-          <select v-model="draft.类型">
+          <select v-model="draft.类型" @change="onDraftKindChange">
             <option
               v-for="k in ITEM_KINDS_BY_CATEGORY[draft.category]"
               :key="k"
@@ -91,10 +116,142 @@
           <input
             type="text"
             v-model="draft.desc"
-            maxlength="60"
+            maxlength="200"
             placeholder="一句话描述其作用（可空）"
           />
         </div>
+
+        <!-- 按 schema 渲染的字段（数值/select/toggle/string，按类型变化） -->
+        <div v-if="draftFields.length" class="xs-custom-edit-schema">
+          <div
+            v-for="def in draftFields"
+            :key="def.key"
+            class="xs-custom-edit-row xs-schema-field"
+            :class="{ 'xs-schema-toggle': def.type === 'toggle' }"
+          >
+            <label>{{ def.label }}</label>
+
+            <!-- 数值 / 整数 -->
+            <template v-if="def.type === 'number' || def.type === 'integer'">
+              <input
+                type="number"
+                min="0"
+                step="1"
+                class="xs-schema-num-input"
+                :class="{ overflow: fieldOverflow(def) }"
+                :value="getFieldValue(def) ?? ''"
+                :placeholder="rangeFor(def)?.suggested?.toString() ?? ''"
+                @input="onFieldNumberInput(def, $event)"
+              />
+              <span v-if="fieldHintText(def)" class="xs-schema-hint" :class="{ warn: fieldOverflow(def) }">
+                {{ fieldOverflow(def) ? '⚠ 超出推荐上限：' + fieldHintText(def) : fieldHintText(def) }}
+              </span>
+            </template>
+
+            <!-- 百分比 -->
+            <template v-else-if="def.type === 'percent'">
+              <div class="xs-schema-percent-wrap" :class="{ overflow: fieldOverflow(def) }">
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  :value="getFieldValue(def) ?? ''"
+                  :placeholder="rangeFor(def)?.suggested?.toString() ?? ''"
+                  @input="onFieldNumberInput(def, $event)"
+                />
+                <span class="xs-schema-percent-suffix">%</span>
+              </div>
+              <span v-if="fieldHintText(def)" class="xs-schema-hint" :class="{ warn: fieldOverflow(def) }">
+                {{ fieldOverflow(def) ? '⚠ 超出推荐上限：' + fieldHintText(def) : fieldHintText(def) }}
+              </span>
+            </template>
+
+            <!-- 字符串 -->
+            <template v-else-if="def.type === 'string'">
+              <input
+                type="text"
+                :value="getFieldValue(def) ?? ''"
+                :placeholder="stringPlaceholder(def)"
+                maxlength="40"
+                @input="setFieldValue(def, ($event.target as HTMLInputElement).value)"
+              />
+              <span v-if="def.hint" class="xs-schema-hint">{{ def.hint }}</span>
+            </template>
+
+            <!-- 下拉 -->
+            <template v-else-if="def.type === 'select'">
+              <select
+                :value="getFieldValue(def) ?? def.default ?? ''"
+                @change="setFieldValue(def, ($event.target as HTMLSelectElement).value)"
+              >
+                <option v-for="opt in def.options" :key="opt" :value="opt">{{ opt }}</option>
+              </select>
+              <span v-if="def.hint" class="xs-schema-hint">{{ def.hint }}</span>
+            </template>
+
+            <!-- 开关 -->
+            <template v-else-if="def.type === 'toggle'">
+              <label class="xs-schema-toggle-label">
+                <input
+                  type="checkbox"
+                  :checked="getFieldValue(def) === true"
+                  @change="setFieldValue(def, ($event.target as HTMLInputElement).checked)"
+                />
+                <span>启用</span>
+              </label>
+              <span v-if="def.hint" class="xs-schema-hint">{{ def.hint }}</span>
+            </template>
+          </div>
+        </div>
+
+        <!-- 技能（仅傀儡/灵兽） -->
+        <div v-if="draftSupportsSkill" class="xs-custom-edit-row xs-custom-edit-skill-row">
+          <label>技能</label>
+          <div class="xs-custom-edit-skill-wrap">
+            <SkillEditor
+              v-model="draft.技能"
+              :quality="draft.品质"
+              :realm="draft.境界"
+            />
+          </div>
+        </div>
+
+        <!-- 效果（仅支持该结构的子类型才显示） -->
+        <div v-if="draftSupportsEffect" class="xs-custom-edit-effects">
+          <div
+            v-for="(eff, idx) in draft.effects"
+            :key="idx"
+            class="xs-custom-edit-row xs-custom-edit-effect"
+          >
+            <label>{{ idx === 0 ? '效果' : '' }}</label>
+            <input
+              type="text"
+              class="xs-effect-name-input"
+              v-model="eff.name"
+              maxlength="24"
+              placeholder="效果名"
+            />
+            <input
+              type="text"
+              class="xs-effect-desc-input"
+              v-model="eff.value"
+              maxlength="120"
+              placeholder="效果描述"
+            />
+            <button
+              type="button"
+              class="xs-effect-remove-btn"
+              :title="draft.effects.length === 1 ? '至少保留 1 条' : '删除此条效果'"
+              :disabled="draft.effects.length === 1"
+              @click="removeDraftEffect(idx)"
+            >×</button>
+          </div>
+          <div class="xs-custom-edit-row xs-custom-edit-effect-add">
+            <label></label>
+            <button type="button" class="xs-effect-add-btn" @click="addDraftEffect">+ 添加效果</button>
+          </div>
+        </div>
+
         <div class="xs-custom-edit-actions">
           <span class="xs-custom-cost-preview">将耗费 {{ draftCost }} 点</span>
           <button type="button" class="xs-btn xs-btn-ghost" @click="closeEditor">取消</button>
@@ -267,6 +424,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import type {
   CustomItem,
+  CustomSkill,
   ItemCategory,
   ItemKind,
   ItemOption,
@@ -275,18 +433,28 @@ import type {
 } from '../types';
 import {
   ALL_ITEM_KINDS,
+  EFFECT_SUPPORTED_KINDS,
+  FIELD_SCHEMAS,
   ITEM_CATEGORIES,
   ITEM_KINDS_BY_CATEGORY,
   ITEM_QUALITIES,
   ITEM_REALMS,
+  SKILL_SUPPORTED_KINDS,
   computeCustomItemCost,
+  computeSuggestedRange,
   customStoryToOption,
   findStory,
+  isOverRecommended,
   items,
+  qualityQ,
+  rangeHintText,
+  realmL,
 } from '../config';
+import type { FieldDef, SuggestedRange } from '../config/itemSchema';
 import { toDisplay } from '../itemNormalizer';
 import { useStartStore } from '../store';
 import OptionCard from '../components/OptionCard.vue';
+import SkillEditor from '../components/SkillEditor.vue';
 
 const FIVE_ELEMENTS = ['金', '木', '水', '火', '土', '阴', '阳'] as const;
 
@@ -444,6 +612,8 @@ function canAfford(it: ItemOption): boolean {
 const editorOpen = ref(false);
 const editingId = ref<string | null>(null);
 
+interface EffectPair { name: string; value: string }
+
 interface Draft {
   name: string;
   desc: string;
@@ -452,6 +622,16 @@ interface Draft {
   品质: ItemQuality;
   境界: ItemRealm;
   五行: string;
+  /** 效果列表（仅当 类型 在 EFFECT_SUPPORTED_KINDS 时生效） */
+  effects: EffectPair[];
+  /** 顶层覆盖：消耗/位置/数量/攻击型/加成型/完整度/护体触发 */
+  top: Record<string, any>;
+  /** 数值覆盖（攻击力/防御力/命中/闪避/穿透/减免/...） */
+  数值: Record<string, number | undefined>;
+  /** 资源池覆盖（傀儡/灵兽：气血/灵气/遁速） */
+  资源池: Record<string, number | undefined>;
+  /** 技能列表（傀儡/灵兽） */
+  技能: CustomSkill[];
 }
 
 const draft = reactive<Draft>({
@@ -462,7 +642,94 @@ const draft = reactive<Draft>({
   品质: '黄',
   境界: '炼气',
   五行: '金',
+  effects: [{ name: '', value: '' }],
+  top: {},
+  数值: {},
+  资源池: {},
+  技能: [],
 });
+
+const draftSupportsEffect = computed(() => EFFECT_SUPPORTED_KINDS.has(draft.类型));
+const draftSupportsSkill = computed(() => SKILL_SUPPORTED_KINDS.has(draft.类型));
+
+/** 当前类型的字段 schema */
+const draftFields = computed<FieldDef[]>(() => FIELD_SCHEMAS[draft.类型] || []);
+
+const draftL = computed(() => realmL(draft.境界));
+const draftQ = computed(() => qualityQ(draft.品质));
+
+/** 取字段值（按 group 路由到对应子对象） */
+function getFieldValue(def: FieldDef): any {
+  if (def.group === '数值') return draft.数值[def.key];
+  if (def.group === '资源池') return draft.资源池[def.key];
+  return draft.top[def.key];
+}
+
+/** 设字段值（按 group 路由） */
+function setFieldValue(def: FieldDef, value: any) {
+  if (def.group === '数值') {
+    if (value === undefined || value === null || value === '') {
+      delete draft.数值[def.key];
+    } else {
+      draft.数值[def.key] = value;
+    }
+  } else if (def.group === '资源池') {
+    if (value === undefined || value === null || value === '') {
+      delete draft.资源池[def.key];
+    } else {
+      draft.资源池[def.key] = value;
+    }
+  } else {
+    if (value === undefined || value === null || value === '') {
+      delete draft.top[def.key];
+    } else {
+      draft.top[def.key] = value;
+    }
+  }
+}
+
+/** 数值字段：input 事件处理 */
+function onFieldNumberInput(def: FieldDef, e: Event) {
+  const raw = (e.target as HTMLInputElement).value;
+  if (raw === '') {
+    setFieldValue(def, undefined);
+    return;
+  }
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return;
+  setFieldValue(def, def.type === 'integer' ? Math.floor(n) : Math.max(0, Math.floor(n)));
+}
+
+/** 推荐区间缓存 */
+function rangeFor(def: FieldDef): SuggestedRange | null {
+  return computeSuggestedRange(def, draftL.value, draftQ.value);
+}
+
+/** 当前字段值是否超出推荐上限 */
+function fieldOverflow(def: FieldDef): boolean {
+  const v = getFieldValue(def);
+  if (typeof v !== 'number') return false;
+  return isOverRecommended(v, rangeFor(def));
+}
+
+function fieldHintText(def: FieldDef): string {
+  const r = rangeFor(def);
+  if (!r) return def.hint || '';
+  const range = rangeHintText(r);
+  return def.hint ? `${range} · ${def.hint}` : range;
+}
+
+/** string 字段动态 placeholder：placeholderCoef 优先，否则用静态 placeholder */
+function stringPlaceholder(def: FieldDef): string {
+  if (typeof def.placeholderCoef === 'number') {
+    const n = Math.max(
+      1,
+      Math.floor(Math.pow(10, draftL.value) * def.placeholderCoef * (1 + draftQ.value)),
+    );
+    return `如:灵气${n}，留空则无消耗`;
+  }
+  return def.placeholder || '';
+}
 
 function resetDraft() {
   draft.name = '';
@@ -472,6 +739,21 @@ function resetDraft() {
   draft.品质 = '黄';
   draft.境界 = '炼气';
   draft.五行 = '金';
+  draft.effects = [{ name: '', value: '' }];
+  draft.top = {};
+  draft.数值 = {};
+  draft.资源池 = {};
+  draft.技能 = [];
+  seedDraftDefaults();
+}
+
+/** 按 schema 给未填字段填默认值 */
+function seedDraftDefaults() {
+  for (const def of draftFields.value) {
+    if (def.default !== undefined && getFieldValue(def) === undefined) {
+      setFieldValue(def, def.default);
+    }
+  }
 }
 
 function openCreate() {
@@ -488,6 +770,25 @@ function openEdit(c: CustomItem) {
   draft.品质 = c.品质;
   draft.境界 = c.境界;
   draft.五行 = c.五行 || '金';
+  draft.effects = c.效果
+    ? Object.entries(c.效果).map(([name, value]) => ({ name, value }))
+    : [{ name: '', value: '' }];
+  if (draft.effects.length === 0) draft.effects = [{ name: '', value: '' }];
+  // 数值 / 资源池
+  draft.数值 = c.数值 ? { ...c.数值 } : {};
+  draft.资源池 = c.资源池 ? { ...c.资源池 } : {};
+  // 顶层
+  draft.top = {};
+  if (c.消耗) draft.top.消耗 = c.消耗;
+  if (c.位置) draft.top.位置 = c.位置;
+  if (typeof c.数量 === 'number') draft.top.数量 = c.数量;
+  if (typeof c.攻击型 === 'boolean') draft.top.攻击型 = c.攻击型;
+  if (typeof c.加成型 === 'boolean') draft.top.加成型 = c.加成型;
+  if (c.完整度) draft.top.完整度 = c.完整度;
+  if (c.护体触发) draft.top.护体触发 = c.护体触发;
+  // 技能
+  draft.技能 = Array.isArray(c.技能) ? c.技能.map(s => ({ ...s, 效果: s.效果 ? { ...s.效果 } : {} })) : [];
+  seedDraftDefaults();
   editorOpen.value = true;
 }
 function closeEditor() {
@@ -496,11 +797,50 @@ function closeEditor() {
 }
 
 function onDraftCategoryChange() {
-  // 类型可能不在新大类下：取该大类首个类型
   const kinds = ITEM_KINDS_BY_CATEGORY[draft.category];
   if (!kinds.includes(draft.类型)) {
     draft.类型 = kinds[0];
   }
+}
+
+/** 大类切换：连带触发 类型 变更后的 schema 清理 */
+function onDraftCategoryChangeFull() {
+  onDraftCategoryChange();
+  onDraftKindChange();
+}
+
+/** 类型切换时：清空与新 schema 无关的数值字段，并填新 schema 的默认值 */
+function onDraftKindChange() {
+  // 删除不属于新 schema 的 数值/资源池/top 字段
+  const allowedNum = new Set<string>();
+  const allowedRp = new Set<string>();
+  const allowedTop = new Set<string>();
+  for (const def of draftFields.value) {
+    if (def.group === '数值') allowedNum.add(def.key);
+    else if (def.group === '资源池') allowedRp.add(def.key);
+    else allowedTop.add(def.key);
+  }
+  for (const k of Object.keys(draft.数值)) {
+    if (!allowedNum.has(k)) delete draft.数值[k];
+  }
+  for (const k of Object.keys(draft.资源池)) {
+    if (!allowedRp.has(k)) delete draft.资源池[k];
+  }
+  for (const k of Object.keys(draft.top)) {
+    if (!allowedTop.has(k)) delete draft.top[k];
+  }
+  // 不支持技能的类型清空 技能 列表
+  if (!draftSupportsSkill.value) draft.技能 = [];
+  seedDraftDefaults();
+}
+
+function addDraftEffect() {
+  draft.effects.push({ name: '', value: '' });
+}
+function removeDraftEffect(idx: number) {
+  if (idx < 0 || idx >= draft.effects.length) return;
+  draft.effects.splice(idx, 1);
+  if (draft.effects.length === 0) draft.effects.push({ name: '', value: '' });
 }
 
 const draftCost = computed(() =>
@@ -517,7 +857,34 @@ const canSave = computed(() => {
 });
 
 function onSave() {
-  const payload = {
+  // —— 效果 —— //
+  let 效果: Record<string, string> | undefined;
+  if (draftSupportsEffect.value) {
+    const valid = draft.effects
+      .map(e => ({ name: e.name.trim(), value: e.value.trim() }))
+      .filter(e => e.name);
+    if (valid.length) {
+      效果 = {};
+      for (const e of valid) 效果[e.name] = e.value;
+    }
+  }
+  // —— 数值 / 资源池：只保留有值的 —— //
+  const 数值: Record<string, number> = {};
+  for (const [k, v] of Object.entries(draft.数值)) {
+    if (typeof v === 'number') 数值[k] = v;
+  }
+  const 资源池: Record<string, number> = {};
+  for (const [k, v] of Object.entries(draft.资源池)) {
+    if (typeof v === 'number') 资源池[k] = v;
+  }
+  // —— 技能：过滤无名技能 —— //
+  const 技能 = draftSupportsSkill.value
+    ? draft.技能
+        .filter(s => s.name && s.name.trim())
+        .map(s => ({ ...s, name: s.name.trim() }))
+    : [];
+
+  const payload: Omit<CustomItem, 'id'> = {
     name: draft.name.trim(),
     desc: draft.desc.trim() || undefined,
     category: draft.category,
@@ -525,6 +892,17 @@ function onSave() {
     品质: draft.品质,
     境界: draft.境界,
     五行: draft.五行,
+    效果,
+    数值: Object.keys(数值).length ? 数值 : undefined,
+    资源池: Object.keys(资源池).length ? 资源池 : undefined,
+    消耗: draft.top.消耗 || undefined,
+    位置: draft.top.位置 || undefined,
+    数量: typeof draft.top.数量 === 'number' ? draft.top.数量 : undefined,
+    攻击型: typeof draft.top.攻击型 === 'boolean' ? draft.top.攻击型 : undefined,
+    加成型: typeof draft.top.加成型 === 'boolean' ? draft.top.加成型 : undefined,
+    完整度: draft.top.完整度 || undefined,
+    护体触发: draft.top.护体触发 || undefined,
+    技能: 技能.length ? 技能 : undefined,
   };
   if (editingId.value) {
     store.updateCustomItem(editingId.value, payload);
@@ -536,6 +914,28 @@ function onSave() {
 
 function customCost(c: CustomItem): number {
   return computeCustomItemCost({ 品质: c.品质, 境界: c.境界 });
+}
+
+/** 给卡片摘要展示的数值/资源池 chip 列表 */
+function customCardStats(c: CustomItem): { key: string; value: string }[] {
+  const out: { key: string; value: string }[] = [];
+  if (c.数值) {
+    const order = ['攻击力', '防御力', '命中', '闪避', '穿透', '减免', '修行速度', '遁速', '灵气消耗', '灵气容量', '炼制难度'];
+    for (const k of order) {
+      const v = (c.数值 as any)[k];
+      if (typeof v === 'number') {
+        const suffix = (k === '穿透' || k === '减免') ? '%' : '';
+        out.push({ key: k, value: `${v}${suffix}` });
+      }
+    }
+  }
+  if (c.资源池) {
+    if (typeof c.资源池.气血 === 'number') out.push({ key: '气血', value: String(c.资源池.气血) });
+    if (typeof c.资源池.灵气 === 'number') out.push({ key: '灵气', value: String(c.资源池.灵气) });
+    if (typeof c.资源池.遁速 === 'number') out.push({ key: '遁速', value: String(c.资源池.遁速) });
+  }
+  if (c.消耗) out.push({ key: '耗', value: c.消耗 });
+  return out;
 }
 </script>
 
@@ -686,6 +1086,169 @@ function customCost(c: CustomItem): number {
   padding: 4px 8px;
   color: var(--xs-ink);
 }
+/* —— schema 驱动字段 —— */
+.xs-custom-edit-schema {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  background: rgba(168, 153, 104, 0.05);
+  border-radius: 6px;
+  border: 1px dashed rgba(160, 127, 72, 0.25);
+}
+.xs-schema-field {
+  align-items: center;
+}
+.xs-schema-field input[type='number'] {
+  flex: 0 0 110px;
+  text-align: center;
+  font-family: var(--xs-font-title);
+  font-size: 14px;
+  background: var(--xs-paper);
+  border: 1px solid var(--xs-line-gold);
+  padding: 5px 6px;
+  border-radius: 4px;
+}
+.xs-schema-field input[type='number']:focus {
+  border-color: var(--xs-cinnabar);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--xs-tint-cinnabar-strong);
+}
+.xs-schema-num-input.overflow,
+.xs-schema-percent-wrap.overflow {
+  border-color: #d69e2e;
+  background: rgba(214, 158, 46, 0.08);
+}
+.xs-schema-percent-wrap {
+  display: inline-flex;
+  align-items: stretch;
+  flex: 0 0 130px;
+  border: 1px solid var(--xs-line-gold);
+  border-radius: 4px;
+  background: var(--xs-paper);
+  overflow: hidden;
+}
+.xs-schema-percent-wrap:focus-within {
+  border-color: var(--xs-cinnabar);
+  box-shadow: 0 0 0 3px var(--xs-tint-cinnabar-strong);
+}
+.xs-schema-percent-wrap input {
+  flex: 1 1 0;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  text-align: center;
+  font-family: var(--xs-font-title);
+  font-size: 14px;
+  padding: 5px 4px;
+  outline: none;
+}
+.xs-schema-percent-suffix {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  background: var(--xs-tint-gold-soft, rgba(168, 153, 104, 0.15));
+  font-family: var(--xs-font-display);
+  font-size: 12px;
+  color: var(--xs-ink-mute);
+  border-left: 1px solid var(--xs-line-gold);
+}
+.xs-schema-hint {
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: var(--xs-ink-mute);
+}
+.xs-schema-hint.warn {
+  color: #b7791f;
+  font-weight: 600;
+}
+.xs-schema-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--xs-font-display);
+  font-size: 12.5px;
+  letter-spacing: 1px;
+  color: var(--xs-ink);
+  cursor: pointer;
+}
+.xs-schema-toggle-label input {
+  width: auto;
+  margin: 0;
+  accent-color: var(--xs-cinnabar);
+}
+
+/* 技能编辑器外框：让 label 顶部对齐 */
+.xs-custom-edit-skill-row {
+  align-items: flex-start;
+}
+.xs-custom-edit-skill-row > label {
+  padding-top: 8px;
+}
+.xs-custom-edit-skill-wrap {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.xs-custom-edit-effects {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.xs-custom-edit-effect-add {
+  margin-top: 2px;
+}
+.xs-custom-edit-effect input.xs-effect-name-input {
+  flex: 1 1 0;
+  min-width: 120px;
+}
+.xs-custom-edit-effect input.xs-effect-desc-input {
+  flex: 1.4 1 0;
+  min-width: 160px;
+}
+.xs-effect-remove-btn {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--xs-line);
+  background: var(--xs-paper-warm);
+  color: var(--xs-ink-mute);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.xs-effect-remove-btn:hover:not(:disabled) {
+  border-color: var(--xs-cinnabar);
+  background: var(--xs-tint-cinnabar-soft);
+  color: var(--xs-cinnabar);
+}
+.xs-effect-remove-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.xs-effect-add-btn {
+  padding: 4px 14px;
+  border-radius: 14px;
+  border: 1px dashed var(--xs-cinnabar);
+  background: var(--xs-tint-cinnabar-faint);
+  font-family: var(--xs-font-display);
+  font-size: 12.5px;
+  letter-spacing: 2px;
+  color: var(--xs-cinnabar);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.xs-effect-add-btn:hover {
+  background: var(--xs-cinnabar);
+  color: #fff;
+  border-style: solid;
+}
+
 .xs-custom-edit-actions {
   display: flex;
   align-items: center;

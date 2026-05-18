@@ -253,29 +253,50 @@
           <input
             type="text"
             :value="physique.customName"
-            maxlength="12"
+            maxlength="30"
             placeholder="为这具体魄拟一个名字（如：玄霜玲珑体）"
             @input="store.setPhysiqueCustomName(($event.target as HTMLInputElement).value)"
           />
         </div>
-        <div v-if="physique.tier !== '凡体'" class="xs-physique-edit-row xs-physique-edit-effect">
-          <label>效果</label>
-          <input
-            type="text"
-            class="xs-effect-name-input"
-            :value="physique.customEffectName"
-            maxlength="12"
-            placeholder="效果名（如：火系威力）"
-            @input="onEffectNameInput"
-          />
-          <input
-            type="text"
-            class="xs-effect-value-input"
-            :value="physique.customEffectValue"
-            maxlength="16"
-            placeholder="效果值（如：+25%）"
-            @input="onEffectValueInput"
-          />
+        <div v-if="physique.tier !== '凡体'" class="xs-physique-edit-effects">
+          <div
+            v-for="(eff, idx) in physique.customEffects"
+            :key="idx"
+            class="xs-physique-edit-row xs-physique-edit-effect"
+          >
+            <label>{{ idx === 0 ? '效果' : '' }}</label>
+            <input
+              type="text"
+              class="xs-effect-name-input"
+              :value="eff.name"
+              maxlength="24"
+              placeholder="效果名"
+              @input="onEffectNameInput(idx, $event)"
+            />
+            <input
+              type="text"
+              class="xs-effect-desc-input"
+              :value="eff.value"
+              maxlength="80"
+              placeholder="效果描述"
+              @input="onEffectValueInput(idx, $event)"
+            />
+            <button
+              type="button"
+              class="xs-effect-remove-btn"
+              :title="physique.customEffects.length === 1 ? '至少保留 1 条' : '删除此条效果'"
+              :disabled="physique.customEffects.length === 1"
+              @click="store.removePhysiqueCustomEffect(idx)"
+            >×</button>
+          </div>
+          <div class="xs-physique-edit-row xs-physique-edit-effect-add">
+            <label></label>
+            <button
+              type="button"
+              class="xs-effect-add-btn"
+              @click="store.addPhysiqueCustomEffect"
+            >+ 添加效果</button>
+          </div>
         </div>
         <div class="xs-physique-edit-row xs-physique-edit-stats">
           <label>三维</label>
@@ -343,8 +364,12 @@
             <span class="xs-attr-cell-value">{{ resolvedPhysique.气感 }}</span>
           </div>
         </div>
-        <p v-if="resolvedPhysique.效果" class="xs-physique-card-effect">
-          <strong>{{ resolvedPhysique.效果.name }}</strong> {{ resolvedPhysique.效果.value }}
+        <p
+          v-for="(eff, idx) in resolvedPhysique.效果s"
+          :key="idx"
+          class="xs-physique-card-effect"
+        >
+          <strong>{{ eff.name }}</strong> {{ eff.value }}
         </p>
         <p class="xs-root-preview-desc">{{ resolvedPhysique.desc }}</p>
       </div>
@@ -457,13 +482,17 @@ function canAffordTier(tier: PhysiqueTier): boolean {
   return delta <= store.remainingPoints;
 }
 
-function onEffectNameInput(e: Event) {
+function onEffectNameInput(idx: number, e: Event) {
   const v = (e.target as HTMLInputElement).value;
-  store.setPhysiqueCustomEffect(v, physique.value.customEffectValue);
+  const current = physique.value.customEffects[idx];
+  if (!current) return;
+  store.setPhysiqueCustomEffectAt(idx, v, current.value);
 }
-function onEffectValueInput(e: Event) {
+function onEffectValueInput(idx: number, e: Event) {
   const v = (e.target as HTMLInputElement).value;
-  store.setPhysiqueCustomEffect(physique.value.customEffectName, v);
+  const current = physique.value.customEffects[idx];
+  if (!current) return;
+  store.setPhysiqueCustomEffectAt(idx, current.name, v);
 }
 function onStatInput(key: '悟性' | '根骨' | '气感', e: Event) {
   const v = Number((e.target as HTMLInputElement).value);
@@ -879,8 +908,59 @@ const virginHint = computed(() => {
   box-shadow: 0 0 0 3px var(--xs-tint-cinnabar-strong);
   outline: none;
 }
-.xs-effect-name-input { flex: 0 0 160px; }
-.xs-effect-value-input { flex: 0 0 140px; }
+.xs-physique-edit-effect input.xs-effect-name-input { flex: 1 1 0; min-width: 120px; }
+.xs-physique-edit-effect input.xs-effect-desc-input { flex: 1.4 1 0; min-width: 160px; }
+
+.xs-physique-edit-effects {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.xs-physique-edit-effect-add {
+  margin-top: 2px;
+}
+.xs-effect-remove-btn {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--xs-line);
+  background: var(--xs-paper-warm);
+  color: var(--xs-ink-mute);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.xs-effect-remove-btn:hover:not(:disabled) {
+  border-color: var(--xs-cinnabar);
+  background: var(--xs-tint-cinnabar-soft);
+  color: var(--xs-cinnabar);
+}
+.xs-effect-remove-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.xs-effect-add-btn {
+  padding: 4px 14px;
+  border-radius: 14px;
+  border: 1px dashed var(--xs-cinnabar);
+  background: var(--xs-tint-cinnabar-faint);
+  font-family: var(--xs-font-display);
+  font-size: 12.5px;
+  letter-spacing: 2px;
+  color: var(--xs-cinnabar);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.xs-effect-add-btn:hover {
+  background: var(--xs-cinnabar);
+  color: #fff;
+  border-style: solid;
+}
 
 .xs-stat-input-group {
   display: inline-flex;

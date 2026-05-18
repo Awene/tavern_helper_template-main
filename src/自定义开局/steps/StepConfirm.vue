@@ -34,7 +34,7 @@
           <strong>{{ physique.name }}</strong>
           <span style="color: var(--xs-ink-mute);">
             {{ physique.tier }} · 悟 {{ physique.悟性 }} · 骨 {{ physique.根骨 }} · 感 {{ physique.气感 }}
-            <template v-if="physique.效果"> · {{ physique.效果.name }} {{ physique.效果.value }}</template>
+            <template v-for="(eff, idx) in physique.效果s" :key="idx"> · {{ eff.name }} {{ eff.value }}</template>
           </span>
         </span>
       </div>

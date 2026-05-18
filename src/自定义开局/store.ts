@@ -246,14 +246,31 @@ export const useStartStore = defineStore('xs-start', () => {
       selection.value.physique.custom悟性 = fresh.custom悟性;
       selection.value.physique.custom根骨 = fresh.custom根骨;
       selection.value.physique.custom气感 = fresh.custom气感;
+      // 非凡体若无效果槽则补一个空槽，避免新手看不到编辑器入口
+      if (tier !== '凡体' && selection.value.physique.customEffects.length === 0) {
+        selection.value.physique.customEffects.push({ name: '', value: '' });
+      }
     }
   }
   function setPhysiqueCustomName(name: string) {
     selection.value.physique.customName = name;
   }
-  function setPhysiqueCustomEffect(name: string, value: string) {
-    selection.value.physique.customEffectName = name;
-    selection.value.physique.customEffectValue = value;
+  function addPhysiqueCustomEffect() {
+    selection.value.physique.customEffects.push({ name: '', value: '' });
+  }
+  function removePhysiqueCustomEffect(index: number) {
+    const arr = selection.value.physique.customEffects;
+    if (index < 0 || index >= arr.length) return;
+    arr.splice(index, 1);
+    // 非凡体至少保留 1 条空槽以便重新填写
+    if (selection.value.physique.tier !== '凡体' && arr.length === 0) {
+      arr.push({ name: '', value: '' });
+    }
+  }
+  function setPhysiqueCustomEffectAt(index: number, name: string, value: string) {
+    const arr = selection.value.physique.customEffects;
+    if (index < 0 || index >= arr.length) return;
+    arr[index] = { name, value };
   }
   function setPhysiqueCustomStat(key: '悟性' | '根骨' | '气感', value: number) {
     const v = Math.max(0, Math.floor(Number.isFinite(value) ? value : 0));
@@ -405,7 +422,9 @@ export const useStartStore = defineStore('xs-start', () => {
     selectPhysiqueTier,
     selectPhysiquePreset,
     setPhysiqueCustomName,
-    setPhysiqueCustomEffect,
+    addPhysiqueCustomEffect,
+    removePhysiqueCustomEffect,
+    setPhysiqueCustomEffectAt,
     setPhysiqueCustomStat,
     autoBalancePhysique,
     selectLocation,
