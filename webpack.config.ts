@@ -83,7 +83,11 @@ let io: Server;
 function watch_tavern_helper(compiler: webpack.Compiler) {
   if (compiler.options.watch) {
     if (!io) {
+<<<<<<< HEAD
       const port = config.port ?? 6624;
+=======
+      const port = config.port ?? 6621;
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
       io = new Server(port, { cors: { origin: '*' } });
       console.info(`\x1b[36m[tavern_helper]\x1b[0m 已启动酒馆监听服务`);
       io.on('connect', socket => {
@@ -452,6 +456,10 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
             { from: 'klona', imports: ['klona'] },
             { from: 'vue-final-modal', imports: ['useModal'] },
             { from: 'zod', imports: ['z'] },
+<<<<<<< HEAD
+=======
+            { from: 'type-fest', imports: [['*', 'TypeFest']], type: true },
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
           ],
         }),
         unpluginVueComponents({
