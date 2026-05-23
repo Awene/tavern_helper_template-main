@@ -456,7 +456,7 @@ import { useStartStore } from '../store';
 import OptionCard from '../components/OptionCard.vue';
 import SkillEditor from '../components/SkillEditor.vue';
 
-const FIVE_ELEMENTS = ['金', '木', '水', '火', '土', '阴', '阳'] as const;
+const FIVE_ELEMENTS = ['金', '木', '水', '火', '土', '阴', '阳', '混沌'] as const;
 
 const store = useStartStore();
 

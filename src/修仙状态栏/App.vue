@@ -255,7 +255,7 @@
                     class="xy-element"
                     :style="{ '--el': elColor(el) }"
                   >
-                    {{ el === '未知' ? '未' : el }}
+                    {{ el === '未知' ? '未' : el === '混沌' ? '混' : el }}
                   </span>
                 </div>
               </div>
@@ -293,6 +293,27 @@
                 </div>
                 <div v-if="!_.isEmpty(store.data.体质.效果) || state.editMode" class="xy-body-effects">
                   <EffectList v-model="store.data.体质.效果" line-class="xy-body-effect" />
+                </div>
+                <!-- 元阴/元阳(性征三态,并入体质;null≡不存在 → 查看态仅在成立时显示,编辑态恒显以便左键循环) -->
+                <div
+                  v-if="state.editMode || store.data.体质.元阳 != null || store.data.体质.元阴 != null"
+                  class="xy-body-essence"
+                >
+                  <span class="xy-attr-label">性征</span>
+                  <span
+                    v-if="state.editMode || store.data.体质.元阳 != null"
+                    class="xy-npc-yang"
+                    :class="{ 'xy-bool-toggle': state.editMode, 'xy-bool-off': state.editMode && store.data.体质.元阳 === false, 'xy-bool-null': state.editMode && store.data.体质.元阳 == null }"
+                    :title="state.editMode ? `元阳：${essenceState(store.data.体质.元阳)}（左键循环 尚存→已损→无）` : ''"
+                    @click="state.editMode && cycleEssence(store.data, '元阳')"
+                  >元阳<span class="xy-bool-mark">{{ essenceMark(store.data.体质.元阳) }}</span></span>
+                  <span
+                    v-if="state.editMode || store.data.体质.元阴 != null"
+                    class="xy-npc-yin"
+                    :class="{ 'xy-bool-toggle': state.editMode, 'xy-bool-off': state.editMode && store.data.体质.元阴 === false, 'xy-bool-null': state.editMode && store.data.体质.元阴 == null }"
+                    :title="state.editMode ? `元阴：${essenceState(store.data.体质.元阴)}（左键循环 尚存→已损→无）` : ''"
+                    @click="state.editMode && cycleEssence(store.data, '元阴')"
+                  >元阴<span class="xy-bool-mark">{{ essenceMark(store.data.体质.元阴) }}</span></span>
                 </div>
               </div>
             </div>
@@ -605,6 +626,9 @@ import {
   sendCraftCommand,
   craftVerbForSkill,
   parseItemTags,
+  cycleEssence,
+  essenceState,
+  essenceMark,
 } from './composables';
 
 const store = useDataStore();

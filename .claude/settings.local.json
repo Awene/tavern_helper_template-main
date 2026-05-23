@@ -12,7 +12,11 @@
       "Bash(grep -n -E \"\\\\\\\\\\\\$&|\\\\\\\\\\\\$'|\\\\\\\\\\\\$\\\\`|\\\\\\\\\\\\$<\" \"/d/application/Tavern/mod/世界书/Cultivation-Card-Game/正则/正文美化\\(测试\\).txt\")",
       "Bash(awk '/<script>/{p=1; next} /<\\\\/script>/{p=0} p' \"/d/application/Tavern/mod/世界书/tavern_helper_template-main/src/面板美化/正文美化.html\")",
       "Bash(awk '/<script>/{p=NR; next} /<\\\\/script>/{p=0} p {print NR\": \"$0}' \"/d/application/Tavern/mod/世界书/tavern_helper_template-main/src/面板美化/正文美化.html\")",
-      "Bash(grep -c \"<\\\\\\\\\\\\\\\\/script\" \"/d/application/Tavern/mod/世界书/tavern_helper_template-main/src/面板美化/正文美化.html\")"
+      "Bash(grep -c \"<\\\\\\\\\\\\\\\\/script\" \"/d/application/Tavern/mod/世界书/tavern_helper_template-main/src/面板美化/正文美化.html\")",
+      "Bash(node -e \"const fs=require\\('fs'\\);const s=fs.readFileSync\\('dist/自定义开局/index.html','utf8'\\);let i=-1;while\\(\\(i=s.indexOf\\('FIVE_ELEMENTS',i+1\\)\\)!==-1\\){console.log\\('...'+s.slice\\(i,i+90\\).replace\\(/\\\\n/g,' '\\)+'...'\\);}\")",
+      "Bash(git checkout *)",
+      "Bash(pnpm run *)",
+      "Bash(rm -rf \"dist/前端界面示例\" \"dist/流式楼层界面示例\" \"dist/脚本示例\" \"dist/角色卡示例\")"
     ],
     "additionalDirectories": [
       "\\tmp"

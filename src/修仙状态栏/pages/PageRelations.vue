@@ -117,36 +117,22 @@
               <span class="xy-npc-race">{{ npc.种族 }}</span>
               <span v-if="npc.身份 && npc.身份.length">·</span>
               <span v-for="id in npc.身份" :key="id" class="xy-npc-id">{{ id }}</span>
+              <!-- 元阳(并入体质): null≡不存在 → 查看态仅在成立(true/false)时显示;编辑态恒显以便左键循环 -->
               <span
-                v-if="'元阳' in npc"
+                v-if="state.editMode || npc.体质?.元阳 != null"
                 class="xy-npc-yang"
-                :class="{ 'xy-bool-toggle': state.editMode, 'xy-bool-off': state.editMode && !npc.元阳 }"
-                :title="state.editMode ? '左键切换值 · 右键删除元阳条目' : ''"
-                @click.stop="state.editMode && (npc.元阳 = !npc.元阳)"
-                @contextmenu.prevent.stop="state.editMode && deleteField(npc, '元阳')"
-              >元阳</span>
-              <button
-                v-else-if="state.editMode"
-                type="button"
-                class="xy-npc-yang xy-add-key"
-                title="添加 元阳 条目"
-                @click.stop="npc.元阳 = true"
-              >+元阳</button>
+                :class="{ 'xy-bool-toggle': state.editMode, 'xy-bool-off': state.editMode && npc.体质?.元阳 === false, 'xy-bool-null': state.editMode && npc.体质?.元阳 == null }"
+                :title="state.editMode ? `元阳：${essenceState(npc.体质?.元阳)}（左键循环 尚存→已损→无）` : ''"
+                @click.stop="state.editMode && cycleEssence(npc, '元阳')"
+              >元阳<span class="xy-bool-mark">{{ essenceMark(npc.体质?.元阳) }}</span></span>
+              <!-- 元阴: 同上 -->
               <span
-                v-if="'元阴' in npc"
+                v-if="state.editMode || npc.体质?.元阴 != null"
                 class="xy-npc-yin"
-                :class="{ 'xy-bool-toggle': state.editMode, 'xy-bool-off': state.editMode && !npc.元阴 }"
-                :title="state.editMode ? '左键切换值 · 右键删除元阴条目' : ''"
-                @click.stop="state.editMode && (npc.元阴 = !npc.元阴)"
-                @contextmenu.prevent.stop="state.editMode && deleteField(npc, '元阴')"
-              >元阴</span>
-              <button
-                v-else-if="state.editMode"
-                type="button"
-                class="xy-npc-yin xy-add-key"
-                title="添加 元阴 条目"
-                @click.stop="npc.元阴 = true"
-              >+元阴</button>
+                :class="{ 'xy-bool-toggle': state.editMode, 'xy-bool-off': state.editMode && npc.体质?.元阴 === false, 'xy-bool-null': state.editMode && npc.体质?.元阴 == null }"
+                :title="state.editMode ? `元阴：${essenceState(npc.体质?.元阴)}（左键循环 尚存→已损→无）` : ''"
+                @click.stop="state.editMode && cycleEssence(npc, '元阴')"
+              >元阴<span class="xy-bool-mark">{{ essenceMark(npc.体质?.元阴) }}</span></span>
               <span
                 v-if="npc.道侣 || state.editMode"
                 class="xy-npc-couple"
@@ -189,7 +175,7 @@
               <h4>灵根</h4>
               <p>
                 <span><EditableValue v-if="npc.灵根" v-model="npc.灵根.名称" label="灵根名称" :format="(v) => v || '未检测'" /></span>
-                <span v-for="el in npc.灵根?.五行 || []" :key="el" class="xy-element xy-element-mini" :style="{ '--el': elColor(el) }">{{ el === '未知' ? '未' : el }}</span>
+                <span v-for="el in npc.灵根?.五行 || []" :key="el" class="xy-element xy-element-mini" :style="{ '--el': elColor(el) }">{{ el === '未知' ? '未' : el === '混沌' ? '混' : el }}</span>
               </p>
             </div>
             <div class="xy-mini">
@@ -617,6 +603,10 @@ import {
   skillCap,
   formatSkillNum,
   elColor,
+  npcGender,
+  cycleEssence,
+  essenceState,
+  essenceMark,
 } from '../composables';
 
 const store = useDataStore();
@@ -629,23 +619,7 @@ const wildUnits = computed(() =>
   sortedRelations.value.filter(({ npc }) => npc?.类型 === '傀儡' || npc?.类型 === '灵兽'),
 );
 
-// 性别判别: 依据 元阴/元阳 字段是否存在(忽略其值真假)
-//   女性: 仅有 元阴 字段
-//   男性: 仅有 元阳 字段
-//   其他: 两者皆有 或 两者皆无
-function npcGender(npc: any): 'female' | 'male' | 'other' {
-  if (!npc || typeof npc !== 'object') return 'other';
-  const hasYin = '元阴' in npc;
-  const hasYang = '元阳' in npc;
-  if (hasYin && !hasYang) return 'female';
-  if (hasYang && !hasYin) return 'male';
-  return 'other';
-}
-
-// 编辑模式下从 NPC 对象删除指定字段(用于 元阴/元阳 整条删除)
-function deleteField(obj: any, key: string) {
-  if (obj && typeof obj === 'object') delete obj[key];
-}
+// 元阴/元阳 性征三态(并入 体质)的判定/循环/展示助手已移至 composables.ts,供 NPC 与玩家共用
 </script>
 
 <style scoped>

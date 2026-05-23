@@ -168,7 +168,7 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
   // 起始年龄默认 16(青年),凡人保留默认上限;外观年龄=年龄(初始时尚未停止衰老)
   const 起始年龄 = 16;
 
-  // 性别 / 元阳元阴：按角色生成规则保留对应键
+  // 性别 / 元阳元阴：按角色生成规则保留对应键（已并入 体质，见下方 体质 对象）
   // 其他性别：元阳与元阴均为 false（无概念）
   const 元阴元阳: Record<string, boolean> = {};
   if (sel.性别 === '男') 元阴元阳.元阳 = sel.元阳元阴;
@@ -178,12 +178,24 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
     元阴元阳.元阴 = false;
   }
 
+  // —— 具体地点：按新格式「生态-[宗门|秘境|城市]-具体位置」组装（地域为独立字段，不入此串）——
+  // 首段取所选生态；若开局即身处该生态的某真实宗门（剧本宗门去掉「（外门杂役）」之类后缀后能对上），
+  // 则追加为中段「生态-宗门」；散修 / 泛称起点（如「入山待考之外门」）仅保留生态。
+  const 生态名 = location?.生态 || location?.具体地点 || '';
+  const 宗门清 = 宗门.replace(/[（(].*$/, '').trim();
+  const 是本生态宗门 =
+    !!宗门清 && 宗门清 !== '散修' && !!location?.sects?.some(s => s.name === 宗门清);
+  const 具体地点 = 生态名
+    ? 是本生态宗门
+      ? `${生态名}-${宗门清}`
+      : 生态名
+    : '某处村落';
+
   return {
     // —— 原 基本信息.* (扁平化:升至根级) ——
     姓名: sel.道号 || '无名',
     种族: '人族',
     性别: sel.性别,
-    ...元阴元阳,
     宗门,
     寿元: { 年龄: 起始年龄, 寿命, 外观年龄: 起始年龄 },
     灵根: {
@@ -201,6 +213,7 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
       气感,
       效果: 体质效果,
       描述: physique.desc,
+      ...元阴元阳, // 元阴/元阳 并入 体质
     },
     修炼进度: {
       境界: `${大境界}${小境界}`,
@@ -220,7 +233,7 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
     地点: {
       世界: location?.世界 || LOCATION_WORLD,
       地域: location?.地域 || '中原',
-      具体地点: location?.具体地点 || '某处村落',
+      具体地点,
     },
     时间: {
       年: 起始时间.年,

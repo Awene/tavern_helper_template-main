@@ -242,6 +242,30 @@ export const hasStorage = (npc: any) => {
   );
 };
 
+// ============ 元阴/元阳 性征三态（已并入 体质）============
+// 值含义: true 处子(尚存) / false 已破(已损) / null|缺失 不存在(该性征不适用)。
+// 角色/NPC/玩家通用：均读写 obj.体质.元阴 / obj.体质.元阳。
+export const hasEssence = (v: any): boolean => v === true || v === false;
+// 性别判定: 据 (体质.元阴, 体质.元阳) 值组合 —— 单边成立=女/男, 其余=其他
+export const npcGender = (npc: any): 'female' | 'male' | 'other' => {
+  if (!npc || typeof npc !== 'object') return 'other';
+  const hasYin = hasEssence(npc.体质?.元阴);
+  const hasYang = hasEssence(npc.体质?.元阳);
+  if (hasYin && !hasYang) return 'female';
+  if (hasYang && !hasYin) return 'male';
+  return 'other';
+};
+// 仅左键循环切换: 尚存(true) → 已损(false) → 无/不存在(null) → …；写入 obj.体质[key]
+export const cycleEssence = (obj: any, key: '元阳' | '元阴') => {
+  if (!obj || typeof obj !== 'object') return;
+  if (!obj.体质 || typeof obj.体质 !== 'object') obj.体质 = {};
+  const v = obj.体质[key];
+  obj.体质[key] = v === true ? false : v === false ? null : true;
+};
+export const essenceState = (v: any): string =>
+  v === true ? '尚存' : v === false ? '已损' : '无（不存在）';
+export const essenceMark = (v: any): string => (v === true ? '✓' : v === false ? '✗' : '–');
+
 // ============ 物品标签解析 (形如 "所属技艺:炼丹"、"炼制难度:5") ============
 // 仅取 K:V 形式的标签;纯描述性标签暂不渲染(避免堆叠噪声)
 export const parseItemTags = (tags: any): Array<{ label: string; value: string }> => {

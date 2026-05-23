@@ -52,6 +52,10 @@ const PhysiqueSchema = z
       .number()
       .transform(n => clamp(n, 0, Infinity))
       .prefault(0),
+    // 元阴/元阳: 性征三态(true 处子 / false 已破 / null 不存在)。null≡该性征不适用;
+    //   性别由 (元阴,元阳) 值组合判定(单边成立=女/男, 其余=其他)。
+    元阴: z.boolean().nullable().optional(),
+    元阳: z.boolean().nullable().optional(),
   })
   .prefault({ 名称: '凡体', 悟性: 0, 根骨: 0, 气感: 0 });
 
@@ -273,9 +277,7 @@ const NPCSchema = z.object({
   修炼进度: CultivationProgressSchema,
   寿元: LifespanSchema,
   灵根: SpiritualRootSchema,
-  体质: PhysiqueSchema,
-  元阴: z.boolean().optional(),
-  元阳: z.boolean().optional(),
+  体质: PhysiqueSchema, // 元阴/元阳 已并入 体质
   技艺: SkillSchema,
   资源池: ResourcePoolSchema,
   状态效果: z.record(z.string(), StatusEffectSchema).prefault({}),
