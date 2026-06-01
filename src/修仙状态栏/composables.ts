@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { computed, reactive, ref } from 'vue';
 import { useDataStore } from './store';
+import timelineData from './timeline.yaml';
 
 // ============ 共享 UI 状态（模块级单例）============
 export const state = reactive({
@@ -8,7 +9,6 @@ export const state = reactive({
   storageTab: 0,
   openedNPC: null as string | null,
   openedBuff: null as string | null,
-  rumorFilter: 'all' as string,
   artFilter: 'all' as string,
   itemFilter: 'all' as string,
   equipFilter: 'all' as string,
@@ -37,6 +37,7 @@ export const tabs = [
   { label: '储物', icon: '囊' },
   { label: '关系', icon: '缘' },
   { label: '传闻', icon: '闻' },
+  { label: '地图', icon: '舆' },
 ];
 
 export const storageTabs = [
@@ -46,12 +47,21 @@ export const storageTabs = [
   { key: '灵兽', label: '灵兽' },
 ] as const;
 
-export const rumorGroups = [
-  { key: 'world', label: '修仙界要闻', types: ['大派动向', '仙人行迹', '宗门战事', '灵脉异变', '道庭法令'] },
-  { key: 'mystic', label: '秘境异闻', types: ['秘境传闻', '高额悬赏', '妖兽异动', '通缉魔修', '宝物现世'] },
-  { key: 'jiang', label: '江湖逸闻', types: ['风流韵事', '千里同心', '缘分将至', '邂逅预兆', '恩怨流转'] },
-  { key: 'sect', label: '宗门内务', types: ['同门轶事', '师长动向', '门内任务', '资源调配', '内部秘辛'] },
-] as const;
+// ============ 时间轴 ============
+export type TimelineDate = { 年: number; 月: number; 日: number };
+export type TimelineEvent = {
+  时间区间: { 起: TimelineDate; 止: TimelineDate };
+  地点: string;
+  类别: string;
+  内容: string;
+  难度: string;
+};
+export const timeline = (timelineData as TimelineEvent[]) ?? [];
+const dateNum = (d: TimelineDate) => d.年 * 10000 + (d.月 || 1) * 100 + (d.日 || 1);
+export const isEventActive = (ev: TimelineEvent, now: TimelineDate): boolean => {
+  const n = dateNum(now);
+  return dateNum(ev.时间区间.起) <= n && n <= dateNum(ev.时间区间.止);
+};
 
 export const artTypes = ['心法', '攻击', '咒法', '身法', '护体', '幻术', '神识', '其他'] as const;
 export const itemTypes = ['秘籍', '配方', '符箓', '丹药', '素材', '工具', '其他'] as const;
@@ -558,14 +568,6 @@ export const performDelete = () => {
       clearNpcAvatar(c.key);
       if (state.openedNPC === c.key) state.openedNPC = null;
       break;
-    case 'rumor':
-      if (Array.isArray(data.传闻)) {
-        const idx = Number(c.key);
-        if (Number.isInteger(idx) && idx >= 0 && idx < data.传闻.length) {
-          data.传闻.splice(idx, 1);
-        }
-      }
-      break;
     case 'user-buff':
       if (data.状态效果) delete data.状态效果[c.key];
       if (state.openedBuff === c.key) state.openedBuff = null;
@@ -650,12 +652,6 @@ export const toggleUnit = (kind: '傀儡' | '灵兽', name: string, value: boole
   if (slot && slot[name]) slot[name].使用中 = value;
 };
 
-// ============ 传闻分组辅助 ============
-export const rumorGroup = (t: string) => {
-  for (const g of rumorGroups) if ((g.types as readonly string[]).includes(t)) return g.key;
-  return 'world';
-};
-
 // ============ Computed（依赖 store；惰性求值，挂载后才使用）============
 export const filteredArts = computed(() => {
   const store = useDataStore();
@@ -699,21 +695,18 @@ export const openedBuffData = computed(() => {
   return buffs?.[state.openedBuff] || null;
 });
 
-export const filteredRumors = computed(() => {
+export const activeTimelineEvents = computed(() => {
   const store = useDataStore();
-  const list = store.data?.传闻 || [];
-  if (state.rumorFilter === 'all') return list;
-  const grp = rumorGroups.find(g => g.key === state.rumorFilter);
-  if (!grp) return list;
-  return list.filter(r => (grp.types as readonly string[]).includes(r.类型));
+  const t = store.data?.时间;
+  if (!t) return [] as TimelineEvent[];
+  const now: TimelineDate = { 年: t.年, 月: t.月, 日: t.日 };
+  return timeline
+    .filter(ev => isEventActive(ev, now))
+    .slice()
+    .sort((a, b) => dateNum(a.时间区间.起) - dateNum(b.时间区间.起));
 });
 
 export const storageCount = (key: '物品' | '装备' | '傀儡' | '灵兽') => {
   const store = useDataStore();
   return Object.keys((store.data as any)[key] || {}).length;
-};
-
-export const countByGroup = (types: readonly string[]) => {
-  const store = useDataStore();
-  return store.data.传闻.filter(r => types.includes(r.类型)).length;
 };

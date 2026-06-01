@@ -443,17 +443,3 @@ export const openedBuffData = computed(() => {
 
 export const storageCount = (key: '物品' | '装备' | '傀儡' | '灵兽') =>
   Object.keys((store.data as any)?.[key] || {}).length;
-
-export const rumorGroup = (t: string) => {
-  for (const g of rumorGroups) if ((g.types as readonly string[]).includes(t)) return g.key;
-  return 'world';
-};
-export const countByGroup = (types: readonly string[]) =>
-  (store.data?.传闻 || []).filter(r => types.includes(r.类型)).length;
-export const filteredRumors = computed(() => {
-  const list = store.data?.传闻 || [];
-  if (state.rumorFilter === 'all') return list;
-  const grp = rumorGroups.find(g => g.key === state.rumorFilter);
-  if (!grp) return list;
-  return list.filter(r => (grp.types as readonly string[]).includes(r.类型));
-});

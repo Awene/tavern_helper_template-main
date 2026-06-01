@@ -359,35 +359,6 @@ const TimeSchema = z
   })
   .prefault({ 年: 1, 月: 1, 日: 1, 时辰: '午时' });
 
-// ===== 传闻 Schema =====
-const RumorSchema = z.object({
-  类型: z.enum([
-    '大派动向',
-    '仙人行迹',
-    '宗门战事',
-    '灵脉异变',
-    '道庭法令',
-    '秘境传闻',
-    '高额悬赏',
-    '妖兽异动',
-    '通缉魔修',
-    '宝物现世',
-    '风流韵事',
-    '千里同心',
-    '缘分将至',
-    '邂逅预兆',
-    '恩怨流转',
-    '同门轶事',
-    '师长动向',
-    '门内任务',
-    '资源调配',
-    '内部秘辛',
-  ]),
-  时间: z.string().prefault(''),
-  来源: z.string().prefault(''),
-  内容: z.string().prefault(''),
-});
-
 // ===== 主 Schema (扁平化:三大类一级目录拆掉) =====
 export const CultivationStatusSchema = z.object({
   // —— 原 基本信息.* (现升至根级) ——
@@ -411,7 +382,6 @@ export const CultivationStatusSchema = z.object({
 
   // —— 关系列表 (NPC + 无主 傀儡/灵兽) ——
   关系列表: z.record(z.string(), RelationEntrySchema).prefault({}),
-  传闻: z.array(RumorSchema).prefault([]),
 });
 
 export type CultivationStatusData = z.infer<typeof CultivationStatusSchema>;

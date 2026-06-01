@@ -516,6 +516,9 @@
 
           <!-- ▼ 传闻 ▼ -->
           <PageRumors v-else-if="state.currentTab === 4" />
+
+          <!-- ▼ 地图 ▼ -->
+          <PageMap v-else-if="state.currentTab === 5" />
         </main>
       </transition>
       </div>
@@ -598,6 +601,7 @@ import PageArts from './pages/PageArts.vue';
 import PageStorage from './pages/PageStorage.vue';
 import PageRelations from './pages/PageRelations.vue';
 import PageRumors from './pages/PageRumors.vue';
+import PageMap from './pages/PageMap.vue';
 import EditableValue from './pages/EditableValue.vue';
 import EffectList from './pages/EffectList.vue';
 import {
