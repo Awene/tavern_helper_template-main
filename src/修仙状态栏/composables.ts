@@ -1,7 +1,13 @@
 import _ from 'lodash';
 import { computed, reactive, ref } from 'vue';
 import { useDataStore } from './store';
-import timelineData from './timeline.yaml';
+import {
+  displayableEvents,
+  timelineEventsRef,
+  type GeneratedEvent,
+  type TimelineDate,
+} from './timeline-engine';
+export type { TimelineDate } from './timeline-engine';
 
 // ============ 共享 UI 状态（模块级单例）============
 export const state = reactive({
@@ -46,22 +52,6 @@ export const storageTabs = [
   { key: '傀儡', label: '傀儡' },
   { key: '灵兽', label: '灵兽' },
 ] as const;
-
-// ============ 时间轴 ============
-export type TimelineDate = { 年: number; 月: number; 日: number };
-export type TimelineEvent = {
-  时间区间: { 起: TimelineDate; 止: TimelineDate };
-  地点: string;
-  类别: string;
-  内容: string;
-  难度: string;
-};
-export const timeline = (timelineData as TimelineEvent[]) ?? [];
-const dateNum = (d: TimelineDate) => d.年 * 10000 + (d.月 || 1) * 100 + (d.日 || 1);
-export const isEventActive = (ev: TimelineEvent, now: TimelineDate): boolean => {
-  const n = dateNum(now);
-  return dateNum(ev.时间区间.起) <= n && n <= dateNum(ev.时间区间.止);
-};
 
 export const artTypes = ['心法', '攻击', '咒法', '身法', '护体', '幻术', '神识', '其他'] as const;
 export const itemTypes = ['秘籍', '配方', '符箓', '丹药', '素材', '工具', '其他'] as const;
@@ -695,15 +685,16 @@ export const openedBuffData = computed(() => {
   return buffs?.[state.openedBuff] || null;
 });
 
-export const activeTimelineEvents = computed(() => {
+export const activeTimelineEvents = computed<GeneratedEvent[]>(() => {
   const store = useDataStore();
   const t = store.data?.时间;
-  if (!t) return [] as TimelineEvent[];
+  const loc = store.data?.地点;
+  const realm = store.data?.修炼进度?.境界 || '';
+  if (!t || !loc) return [];
+  // 触发响应式依赖：引擎在 ensureTimeline 中 mutate 此 ref
+  void timelineEventsRef().value;
   const now: TimelineDate = { 年: t.年, 月: t.月, 日: t.日 };
-  return timeline
-    .filter(ev => isEventActive(ev, now))
-    .slice()
-    .sort((a, b) => dateNum(a.时间区间.起) - dateNum(b.时间区间.起));
+  return displayableEvents(now, loc.世界, loc.地域, realm);
 });
 
 export const storageCount = (key: '物品' | '装备' | '傀儡' | '灵兽') => {

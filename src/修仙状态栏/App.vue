@@ -595,8 +595,9 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useDataStore } from './store';
+import { ensureTimeline } from './timeline-engine';
 import PageArts from './pages/PageArts.vue';
 import PageStorage from './pages/PageStorage.vue';
 import PageRelations from './pages/PageRelations.vue';
@@ -664,4 +665,31 @@ onMounted(() => {
   }
   applyTheme(saved);
 });
+
+// 时间轴引擎：玩家时间/地点/境界变化时校准事件缓存
+watch(
+  () => {
+    const t = store.data?.时间;
+    const loc = store.data?.地点;
+    const realm = store.data?.修炼进度?.境界;
+    return {
+      年: t?.年,
+      月: t?.月,
+      日: t?.日,
+      世界: loc?.世界,
+      地域: loc?.地域,
+      境界: realm,
+    };
+  },
+  v => {
+    if (v.年 == null || !v.世界 || !v.地域 || !v.境界) return;
+    ensureTimeline(
+      { 年: v.年, 月: v.月 ?? 1, 日: v.日 ?? 1 },
+      v.世界,
+      v.地域,
+      v.境界,
+    );
+  },
+  { immediate: true },
+);
 </script>
