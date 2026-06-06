@@ -80,20 +80,21 @@ import { computed, reactive, ref, watch } from 'vue';
 import { useDataStore } from '../store';
 import { openLightbox } from '../composables';
 
-// ============ 打包进来的世界地图 ============
-import 凡界_东土 from '../maps/凡界/东土地图.png?url';
-import 凡界_中原 from '../maps/凡界/中原地图.png?url';
-import 凡界_北境 from '../maps/凡界/北境地图.png?url';
-import 凡界_南疆 from '../maps/凡界/南疆地图.png?url';
-import 凡界_西域 from '../maps/凡界/西域地图.png?url';
+// ============ 世界地图 ============
+// 注意：不要用 `import ...png?url` 内联（webpack 会转 base64 塞进 index.html，
+// 5 张约 3.5MB 的地图会把 index.html 撑到 ~24MB，超过 jsDelivr 20MB 单文件上限导致整页加载失败）。
+// 改为以仓库自身为图床，经 jsDelivr 逐张加载（每张 <20MB 可正常服务）。
+// `@latest` 会自动跟随最新发布 tag，发新版无需改这里。
+const MAP_CDN_BASE =
+  'https://testingcf.jsdelivr.net/gh/Awene/tavern_helper_template-main@latest/src/修仙状态栏/maps';
 
 const MAPS: Record<string, Record<string, string>> = {
   凡界: {
-    东土: 凡界_东土,
-    中原: 凡界_中原,
-    北境: 凡界_北境,
-    南疆: 凡界_南疆,
-    西域: 凡界_西域,
+    东土: `${MAP_CDN_BASE}/凡界/东土地图.png`,
+    中原: `${MAP_CDN_BASE}/凡界/中原地图.png`,
+    北境: `${MAP_CDN_BASE}/凡界/北境地图.png`,
+    南疆: `${MAP_CDN_BASE}/凡界/南疆地图.png`,
+    西域: `${MAP_CDN_BASE}/凡界/西域地图.png`,
   },
   灵界: {},
   仙界: {},
