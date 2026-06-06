@@ -265,6 +265,24 @@ function isTierVisible(evTier: Tier, playerT: Tier): boolean {
   return Math.abs(TIER_INDEX[evTier] - TIER_INDEX[playerT]) <= 1;
 }
 
+// ============ 生态感知槽 ============
+// 引擎按 槽位名_<地域> + 槽位名_通用 合并为候选池抽取，避免"凡界·西域 + 老林深处"这种穿模。
+// 适用 槽位：地点限定 / 兽群 / 灵植
+function pickEcoAware(
+  slotName: string,
+  region: string,
+  dicts: Record<string, string[]>,
+  rng: () => number,
+): string {
+  const regional = dicts[`${slotName}_${region}`] ?? [];
+  const universal = dicts[`${slotName}_通用`] ?? [];
+  const pool = regional.concat(universal);
+  if (pool.length > 0) return pick(pool, rng);
+  // 最后回退：旧的扁平字典（向后兼容）
+  const flat = dicts[slotName] ?? [];
+  return flat.length > 0 ? pick(flat, rng) : '';
+}
+
 // ============ 事件生成 ============
 function generateOneEvent(
   now: TimelineDate,
@@ -304,13 +322,20 @@ function generateOneEvent(
   // 灵石数额（规则 1：按悬赏公式 floor(10^L × 难度乘数)）
   const stoneAmount = rewardStone(difficulty, category, rng);
 
-  // 注入固定槽
+  // 注入固定槽：生态相关槽（地点限定 / 兽群 / 灵植）按地域预先抽，避免穿模。
+  // 同一事件内多次引用 → 同一个值，保证叙事一致。
+  const 地点限定 = pickEcoAware('地点限定', region, lib.字典, rng);
+  const 兽群 = pickEcoAware('兽群', region, lib.字典, rng);
+  const 灵植 = pickEcoAware('灵植', region, lib.字典, rng);
   const fixedSlots: Record<string, string> = {
     世界: world,
     地域: region,
     地点: `${world}·${region}`,
     境界档,
     灵石数额: formatSpiritStone(stoneAmount),
+    地点限定,
+    兽群,
+    灵植,
   };
 
   const content = fillTemplate(template, lib.字典, fixedSlots, rng);

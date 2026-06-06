@@ -252,7 +252,8 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
     灵兽: beasts,
     // —— 不变 ——
     关系列表: {},
-    传闻: [],
+    // 传闻已彻底移出 MVU 变量，由 src/修仙状态栏/timeline-engine.ts 在前端动态生成并缓存到
+    // localStorage，AI 不再持有也不应更新。详见 [mvu_update]变量更新规则.yaml 中的说明。
     // 附加信息：自定义开局元数据
     __custom_start__: {
       difficulty: difficulty?.id,
