@@ -329,6 +329,61 @@
           }
         ]
       }
+    },
+    "传闻": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "时间区间": {
+            "type": "object",
+            "properties": {
+              "起": {
+                "$ref": "#/$defs/__schema29"
+              },
+              "止": {
+                "$ref": "#/$defs/__schema29"
+              }
+            },
+            "required": [
+              "起",
+              "止"
+            ]
+          },
+          "世界": {
+            "type": "string"
+          },
+          "地域": {
+            "type": "string"
+          },
+          "地点": {
+            "type": "string"
+          },
+          "类别": {
+            "type": "string"
+          },
+          "内容": {
+            "type": "string"
+          },
+          "难度": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "时间区间",
+          "世界",
+          "地域",
+          "地点",
+          "类别",
+          "内容",
+          "难度"
+        ]
+      }
     }
   },
   "$defs": {
@@ -995,6 +1050,25 @@
     "__schema28": {
       "default": -50,
       "type": "number"
+    },
+    "__schema29": {
+      "type": "object",
+      "properties": {
+        "年": {
+          "type": "number"
+        },
+        "月": {
+          "type": "number"
+        },
+        "日": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "年",
+        "月",
+        "日"
+      ]
     }
   }
 }

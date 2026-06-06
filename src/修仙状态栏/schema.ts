@@ -359,6 +359,28 @@ const TimeSchema = z
   })
   .prefault({ 年: 1, 月: 1, 日: 1, 时辰: '午时' });
 
+// ===== 传闻 Schema =====
+// 内容由前端引擎 src/修仙状态栏/timeline-engine.ts 生成并写回此字段,
+// AI 仅读、不写。详见 [mvu_update]变量更新规则.yaml。
+const TimelineDateSchema = z.object({
+  年: z.coerce.number(),
+  月: z.coerce.number(),
+  日: z.coerce.number(),
+});
+const RumorEntrySchema = z.object({
+  id: z.string(),
+  时间区间: z.object({
+    起: TimelineDateSchema,
+    止: TimelineDateSchema,
+  }),
+  世界: z.string(),
+  地域: z.string(),
+  地点: z.string(),
+  类别: z.string(),
+  内容: z.string(),
+  难度: z.string(),
+});
+
 // ===== 主 Schema (扁平化:三大类一级目录拆掉) =====
 export const CultivationStatusSchema = z.object({
   // —— 原 基本信息.* (现升至根级) ——
@@ -382,6 +404,9 @@ export const CultivationStatusSchema = z.object({
 
   // —— 关系列表 (NPC + 无主 傀儡/灵兽) ——
   关系列表: z.record(z.string(), RelationEntrySchema).prefault({}),
+
+  // —— 传闻 (前端引擎写,AI 仅读) ——
+  传闻: z.array(RumorEntrySchema).prefault([]),
 });
 
 export type CultivationStatusData = z.infer<typeof CultivationStatusSchema>;
