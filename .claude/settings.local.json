@@ -16,7 +16,15 @@
       "Bash(node -e \"const fs=require\\('fs'\\);const s=fs.readFileSync\\('dist/自定义开局/index.html','utf8'\\);let i=-1;while\\(\\(i=s.indexOf\\('FIVE_ELEMENTS',i+1\\)\\)!==-1\\){console.log\\('...'+s.slice\\(i,i+90\\).replace\\(/\\\\n/g,' '\\)+'...'\\);}\")",
       "Bash(git checkout *)",
       "Bash(pnpm run *)",
-      "Bash(rm -rf \"dist/前端界面示例\" \"dist/流式楼层界面示例\" \"dist/脚本示例\" \"dist/角色卡示例\")"
+      "Bash(rm -rf \"dist/前端界面示例\" \"dist/流式楼层界面示例\" \"dist/脚本示例\" \"dist/角色卡示例\")",
+      "Bash(PYTHONIOENCODING=utf-8 python -c ' *)",
+      "Bash(grep -rn \"🛑真实世界审核\" 预设/本格修仙/index.yaml 预设/本格修仙/条目/)",
+      "Bash(grep -rn \"二选一.*真实\\\\|真实世界审核\\\\|真实世界审核\\(二选一\\)\\\\|平然难度\\(二选一\\)\" 预设/本格修仙/index.yaml 预设/本格修仙/条目/)",
+      "Bash(python -c ' *)",
+      "Bash(grep -rln \"📜丹修叙述\" 预设/本格修仙/)",
+      "Bash(PYTHONIOENCODING=utf-8 python _cot_step9.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python _cot_step11.py)",
+      "Bash(grep -nA1 \"setvar::书籍参考c::\" index.yaml)"
     ],
     "additionalDirectories": [
       "\\tmp"
