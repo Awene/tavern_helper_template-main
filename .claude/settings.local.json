@@ -17,17 +17,24 @@
       "Bash(git checkout *)",
       "Bash(pnpm run *)",
       "Bash(rm -rf \"dist/前端界面示例\" \"dist/流式楼层界面示例\" \"dist/脚本示例\" \"dist/角色卡示例\")",
-      "Bash(PYTHONIOENCODING=utf-8 python -c ' *)",
-      "Bash(grep -rn \"🛑真实世界审核\" 预设/本格修仙/index.yaml 预设/本格修仙/条目/)",
-      "Bash(grep -rn \"二选一.*真实\\\\|真实世界审核\\\\|真实世界审核\\(二选一\\)\\\\|平然难度\\(二选一\\)\" 预设/本格修仙/index.yaml 预设/本格修仙/条目/)",
-      "Bash(python -c ' *)",
-      "Bash(grep -rln \"📜丹修叙述\" 预设/本格修仙/)",
-      "Bash(PYTHONIOENCODING=utf-8 python _cot_step9.py)",
-      "Bash(PYTHONIOENCODING=utf-8 python _cot_step11.py)",
-      "Bash(grep -nA1 \"setvar::书籍参考c::\" index.yaml)"
+      "mcp__chrome-devtools__navigate_page",
+      "PowerShell($chrome = @\\(\"$env:ProgramFiles\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe\", \"${env:ProgramFiles\\(x86\\)}\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe\", \"$env:LOCALAPPDATA\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe\"\\) | Where-Object { Test-Path $_ } | Select-Object -First 1; if \\($chrome\\) { Write-Output \"found: $chrome\"; Start-Process $chrome -ArgumentList '--remote-debugging-port=9222','--user-data-dir=C:\\\\Temp\\\\chrome-debug-profile','http://localhost:5174/' ; Write-Output 'launched' } else { Write-Output 'CHROME NOT FOUND' })",
+      "PowerShell(Start-Sleep -Seconds 2; try { \\(Invoke-WebRequest -Uri 'http://127.0.0.1:9222/json/version' -UseBasicParsing -TimeoutSec 5\\).Content } catch { \"9222 not reachable: $_\" }; Get-Process chrome -ErrorAction SilentlyContinue | Measure-Object | Select-Object -ExpandProperty Count)",
+      "PowerShell(try { \\(Invoke-WebRequest -Uri 'http://localhost:9222/json/version' -UseBasicParsing -TimeoutSec 5\\).Content } catch { \"localhost:9222 err: $_\" }; Write-Output '---netstat---'; netstat -ano | Select-String ':9222' | Select-Object -First 5)",
+      "PowerShell($key='sk-folqhetadotsbwbbcueabcxxxmlovmoxdzvdkncdevxknnsb'; $h=@{Authorization=\"Bearer $key\"}; try { $r=Invoke-RestMethod -Uri 'https://api.siliconflow.cn/v1/models' -Headers $h -TimeoutSec 30; $ids=$r.data | ForEach-Object { $_.id }; Write-Output \"total: $\\($ids.Count\\)\"; $ids | Where-Object { $_ -match 'eepSeek|eepseek' } } catch { \"ERR: $_\" })",
+      "Bash(echo \"--- cwd .mcp.json ---\"; cat \".mcp.json\" 2>/dev/null *)",
+      "Read(//c/Users/Admin/**)",
+      "Bash(node /c/Temp/cdp-proxy.mjs)",
+      "mcp__chrome-devtools__fill",
+      "mcp__chrome-devtools__take_snapshot",
+      "mcp__chrome-devtools__list_network_requests",
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__get_network_request",
+      "Bash(python -c \"import json;d=json.load\\(open\\('_r.network-response',encoding='utf-8'\\)\\);m=d['choices'][0]['message'];print\\('FINISH:',d['choices'][0]['finish_reason']\\);print\\('HAS_TOOLCALLS:',bool\\(m.get\\('tool_calls'\\)\\)\\);print\\('CONTENT_LEN:',len\\(m.get\\('content'\\) or ''\\)\\);print\\('CONTENT_HEAD:',repr\\(\\(m.get\\('content'\\) or ''\\)[:400]\\)\\);print\\('REASONING_TAIL:',repr\\(\\(m.get\\('reasoning_content'\\) or ''\\)[-300:]\\)\\)\")"
     ],
     "additionalDirectories": [
-      "\\tmp"
+      "\\tmp",
+      "C:\\Temp"
     ]
   }
 }
