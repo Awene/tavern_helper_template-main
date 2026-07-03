@@ -27,7 +27,13 @@ export function defineMvuDataStore<T extends z.ZodObject>(
       }
 
       useIntervalFn(() => {
-        const stat_data = _.get(getVariables(variable_option), 'stat_data', {});
+        const variables = getVariables(variable_option);
+        // 楼层还没有真实 stat_data 时（如聊天刚加载、变量尚未就位）跳过：既不同步也不写回，
+        // 避免用 schema 默认值覆盖尚未加载/位于别处的真存档。
+        if (!_.has(variables, 'stat_data')) {
+          return;
+        }
+        const stat_data = _.get(variables, 'stat_data', {});
         const result = schema.safeParse(stat_data);
         if (result.error) {
           return;
@@ -53,6 +59,13 @@ export function defineMvuDataStore<T extends z.ZodObject>(
             ignoreUpdates(() => {
               data.value = result.data;
             });
+          }
+          // 关键护栏：楼层当前没有 stat_data 时绝不写回。
+          // 前端只应“修改已有存档”，绝不该用 schema 默认值去“初始化”一个楼层的变量——
+          // 否则在聊天加载竞态下（读到空/残缺 → 被 prefault 补成默认）会把默认值写回、覆盖真存档
+          // （灵根/体质/物品被清成默认的“状态栏清空”根因）。
+          if (!_.has(getVariables(variable_option), 'stat_data')) {
+            return;
           }
           updateVariablesWith(variables => _.set(variables, 'stat_data', result.data), variable_option);
         },
