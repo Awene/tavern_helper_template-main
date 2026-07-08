@@ -387,6 +387,7 @@ export const CultivationStatusSchema = z.object({
   姓名: z.string().prefault('User'),
   寿元: LifespanSchema,
   种族: z.string().prefault('人族'),
+  身份: z.array(z.string()).prefault([]),
   灵根: SpiritualRootSchema,
   体质: PhysiqueSchema,
   修炼进度: CultivationProgressSchema,

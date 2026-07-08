@@ -124,6 +124,9 @@
             <span class="xy-meta-item xy-loc">
               <i>地</i>{{ store.data.地点.世界 }} · {{ store.data.地点.地域 }} · {{ store.data.地点.具体地点 }}
             </span>
+            <span class="xy-meta-item" v-if="(store.data.身份 && store.data.身份.length) || state.editMode">
+              <i>份</i><IdentityTags v-model="store.data.身份" label="身份" />
+            </span>
           </div>
         </div>
 
@@ -604,6 +607,7 @@ import PageRumors from './pages/PageRumors.vue';
 import PageMap from './pages/PageMap.vue';
 import EditableValue from './pages/EditableValue.vue';
 import EffectList from './pages/EffectList.vue';
+import IdentityTags from './pages/IdentityTags.vue';
 import {
   state,
   tabs,

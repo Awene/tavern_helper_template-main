@@ -1895,6 +1895,42 @@ html[data-theme='dark'] .xy-npc-name--male { color: #8aa8e0; }
   padding: 0 5px;
   border-radius: 2px;
 }
+
+/* 身份标签编辑器(主角/NPC 通用) */
+.xy-idtags {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.xy-idtag {
+  background: var(--xy-tint-ink-soft);
+  padding: 0 5px;
+  border-radius: 2px;
+}
+.xy-idtag-edit {
+  border: 1px dashed var(--xy-line-gold);
+  padding: 0 2px 0 5px;
+  border-radius: 2px;
+}
+.xy-idtag-add {
+  border: 1px solid var(--xy-line-gold);
+  background: var(--xy-paper-warm);
+  color: var(--xy-gold-deep);
+  border-radius: 2px;
+  width: 18px;
+  height: 18px;
+  line-height: 15px;
+  font-size: 13px;
+  padding: 0;
+  cursor: pointer;
+}
+.xy-idtag-add:hover {
+  background: var(--xy-tint-ink-soft);
+}
+.xy-idtag-new {
+  width: 7em;
+}
 .xy-npc-couple {
   color: var(--xy-cinnabar);
   font-family: var(--xy-font-display);

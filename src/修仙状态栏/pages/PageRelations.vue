@@ -115,8 +115,8 @@
             </div>
             <div class="xy-npc-line2">
               <span class="xy-npc-race">{{ npc.种族 }}</span>
-              <span v-if="npc.身份 && npc.身份.length">·</span>
-              <span v-for="id in npc.身份" :key="id" class="xy-npc-id">{{ id }}</span>
+              <span v-if="(npc.身份 && npc.身份.length) || state.editMode">·</span>
+              <IdentityTags v-model="npc.身份" label="身份" />
               <!-- 元阳(并入体质): null≡不存在 → 查看态仅在成立(true/false)时显示;编辑态恒显以便左键循环 -->
               <span
                 v-if="state.editMode || npc.体质?.元阳 != null"
@@ -578,6 +578,7 @@ import { useDataStore } from '../store';
 import CombatUnit from './CombatUnit.vue';
 import EditableValue from './EditableValue.vue';
 import EffectList from './EffectList.vue';
+import IdentityTags from './IdentityTags.vue';
 import {
   state,
   sortedRelations,
