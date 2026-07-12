@@ -428,38 +428,138 @@ export const openLightbox = (url: string) => {
 export const closeLightbox = () => {
   state.lightboxImage = null;
 };
-export const onAvatarClick = (key: string, ev: MouseEvent) => {
-  const thumb = getNpcAvatar(key);
-  if (thumb) {
-    ev.stopPropagation();
-    openLightbox(getNpcAvatarHi(key) || thumb);
-  }
-};
-
 // ============ NPC 头像（玩家本地上传）============
+// 存储改用 IndexedDB：localStorage 配额只有几 MB，2048px 高清图 base64 常常存不下，
+// 会被剪成 192px 缩略图导致点开只有一丁点大。IndexedDB 配额大得多，能稳定保存高清图。
 export const avatarFileInput = ref<HTMLInputElement | null>(null);
 const pendingAvatarFor = ref<string | null>(null);
 
-export const getNpcAvatar = (name: string): string => {
-  if (name in npcAvatars) return npcAvatars[name];
-  let v = '';
-  try {
-    v = localStorage.getItem(NPC_AVATAR_KEY(name)) || '';
-  } catch {
-    /* localStorage 不可用 */
-  }
-  npcAvatars[name] = v;
-  return v;
+// —— 内存缓存（响应式）——
+// npcAvatars（文件顶部已声明）缓存缩略图；npcAvatarsHi 缓存高清图。
+const npcAvatarsHi = reactive<Record<string, string>>({});
+// 已发起过异步加载的 key，避免在模板渲染中重复触发加载。
+const avatarLoadStarted = new Set<string>();
+
+// —— IndexedDB 封装 —— 任何失败都静默回退到 localStorage，绝不抛错影响渲染。
+const AVATAR_DB = 'xy-avatar-db';
+const AVATAR_STORE = 'avatars';
+type AvatarRecord = { thumb: string; hi: string };
+let avatarDbPromise: Promise<IDBDatabase | null> | null = null;
+
+const openAvatarDb = (): Promise<IDBDatabase | null> => {
+  if (avatarDbPromise) return avatarDbPromise;
+  avatarDbPromise = new Promise(resolve => {
+    try {
+      const req = indexedDB.open(AVATAR_DB, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(AVATAR_STORE)) db.createObjectStore(AVATAR_STORE);
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => {
+        console.warn('[修仙状态栏] IndexedDB 打开失败，回退 localStorage', req.error);
+        resolve(null);
+      };
+    } catch (e) {
+      console.warn('[修仙状态栏] IndexedDB 不可用，回退 localStorage', e);
+      resolve(null);
+    }
+  });
+  return avatarDbPromise;
 };
 
-export const getNpcAvatarHi = (name: string): string => {
-  try {
-    const hi = localStorage.getItem(NPC_AVATAR_HI_KEY(name));
-    if (hi) return hi;
-  } catch {
-    /* ignore */
+const idbGetAvatar = async (name: string): Promise<AvatarRecord | null> => {
+  const db = await openAvatarDb();
+  if (!db) return null;
+  return new Promise(resolve => {
+    try {
+      const req = db.transaction(AVATAR_STORE, 'readonly').objectStore(AVATAR_STORE).get(name);
+      req.onsuccess = () => resolve((req.result as AvatarRecord) || null);
+      req.onerror = () => resolve(null);
+    } catch {
+      resolve(null);
+    }
+  });
+};
+
+const idbPutAvatar = async (name: string, rec: AvatarRecord): Promise<boolean> => {
+  const db = await openAvatarDb();
+  if (!db) return false;
+  return new Promise(resolve => {
+    try {
+      const tx = db.transaction(AVATAR_STORE, 'readwrite');
+      tx.objectStore(AVATAR_STORE).put(rec, name);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => resolve(false);
+      tx.onabort = () => resolve(false);
+    } catch {
+      resolve(false);
+    }
+  });
+};
+
+const idbDeleteAvatar = async (name: string): Promise<void> => {
+  const db = await openAvatarDb();
+  if (!db) return;
+  await new Promise<void>(resolve => {
+    try {
+      const tx = db.transaction(AVATAR_STORE, 'readwrite');
+      tx.objectStore(AVATAR_STORE).delete(name);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+      tx.onabort = () => resolve();
+    } catch {
+      resolve();
+    }
+  });
+};
+
+// 旧版数据一次性迁移：把 localStorage 里的头像搬进 IndexedDB 并清掉旧键释放配额。
+const migrateAvatarFromLocalStorage = async (name: string): Promise<AvatarRecord | null> => {
+  let thumb = '';
+  let hi = '';
+  try { thumb = localStorage.getItem(NPC_AVATAR_KEY(name)) || ''; } catch { /* */ }
+  try { hi = localStorage.getItem(NPC_AVATAR_HI_KEY(name)) || ''; } catch { /* */ }
+  if (!thumb && !hi) return null;
+  const rec: AvatarRecord = { thumb: thumb || hi, hi: hi || thumb };
+  if (await idbPutAvatar(name, rec)) {
+    try { localStorage.removeItem(NPC_AVATAR_KEY(name)); } catch { /* */ }
+    try { localStorage.removeItem(NPC_AVATAR_HI_KEY(name)); } catch { /* */ }
   }
-  return getNpcAvatar(name);
+  return rec;
+};
+
+// 异步把某个头像读入内存缓存（缩略图 + 高清图），响应式更新触发模板重渲染。
+const loadNpcAvatarInto = async (name: string): Promise<AvatarRecord | null> => {
+  const rec = (await idbGetAvatar(name)) || (await migrateAvatarFromLocalStorage(name));
+  npcAvatars[name] = rec?.thumb || '';
+  npcAvatarsHi[name] = rec?.hi || rec?.thumb || '';
+  return rec;
+};
+
+// 同步返回缩略图（供模板直接调用）；首次调用时后台异步加载，加载完成后响应式刷新。
+export const getNpcAvatar = (name: string): string => {
+  if (!avatarLoadStarted.has(name)) {
+    avatarLoadStarted.add(name);
+    void loadNpcAvatarInto(name);
+  }
+  return npcAvatars[name] || '';
+};
+
+// 异步返回高清图（lightbox 用）；缓存命中直接返回，否则从 IndexedDB 读取。
+export const getNpcAvatarHi = async (name: string): Promise<string> => {
+  if (npcAvatarsHi[name]) return npcAvatarsHi[name];
+  const rec = await loadNpcAvatarInto(name);
+  return rec?.hi || rec?.thumb || '';
+};
+
+// 点击头像放大：缩略图存在才响应；高清图异步取，取不到回退缩略图。
+export const onAvatarClick = async (key: string, ev: MouseEvent) => {
+  const thumb = getNpcAvatar(key);
+  if (!thumb) return;
+  ev.stopPropagation();
+  const hi = await getNpcAvatarHi(key);
+  openLightbox(hi || thumb);
 };
 
 export const triggerAvatarUpload = (name: string) => {
@@ -503,27 +603,36 @@ export const onAvatarFileChange = async (e: Event) => {
       resizeImageToDataUrl(file, 192, 0.85),
       resizeImageToDataUrl(file, 2048, 0.92),
     ]);
-    localStorage.setItem(NPC_AVATAR_KEY(name), thumb);
-    try {
-      localStorage.setItem(NPC_AVATAR_HI_KEY(name), hi);
-    } catch (quotaErr) {
-      try { localStorage.removeItem(NPC_AVATAR_HI_KEY(name)); } catch { /* */ }
-      console.warn('[修仙状态栏] 高清头像存储失败（容量不足），仅保留缩略图', quotaErr);
+    const ok = await idbPutAvatar(name, { thumb, hi });
+    if (!ok) {
+      // IndexedDB 不可用时才回退 localStorage：尽量保住缩略图，高清图存不下就丢弃。
+      try {
+        localStorage.setItem(NPC_AVATAR_KEY(name), thumb);
+        try {
+          localStorage.setItem(NPC_AVATAR_HI_KEY(name), hi);
+        } catch (quotaErr) {
+          try { localStorage.removeItem(NPC_AVATAR_HI_KEY(name)); } catch { /* */ }
+          console.warn('[修仙状态栏] 高清头像存储失败（容量不足），仅保留缩略图', quotaErr);
+        }
+      } catch (err) {
+        console.warn('[修仙状态栏] 头像存储失败', err);
+      }
     }
+    avatarLoadStarted.add(name);
     npcAvatars[name] = thumb;
+    npcAvatarsHi[name] = hi;
   } catch (err) {
     console.error('[修仙状态栏] 头像上传失败', err);
   }
 };
 
 export const clearNpcAvatar = (name: string) => {
-  try {
-    localStorage.removeItem(NPC_AVATAR_KEY(name));
-    localStorage.removeItem(NPC_AVATAR_HI_KEY(name));
-  } catch {
-    /* ignore */
-  }
+  void idbDeleteAvatar(name);
+  // 一并清理可能残留的旧版 localStorage 数据。
+  try { localStorage.removeItem(NPC_AVATAR_KEY(name)); } catch { /* */ }
+  try { localStorage.removeItem(NPC_AVATAR_HI_KEY(name)); } catch { /* */ }
   npcAvatars[name] = '';
+  npcAvatarsHi[name] = '';
 };
 
 // ============ 删除确认 ============
