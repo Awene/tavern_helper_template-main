@@ -75,8 +75,12 @@ const CultivationProgressSchema = z
       .number()
       .transform(n => clamp(n, 0, Infinity))
       .prefault(0),
+    丹毒: z.coerce
+      .number()
+      .transform(n => clamp(n, 0, Infinity))
+      .prefault(0),
   })
-  .prefault({ 境界: '凡人', 当前进度: 0, 进度上限: 100, 天谴: 0 });
+  .prefault({ 境界: '凡人', 当前进度: 0, 进度上限: 100, 天谴: 0, 丹毒: 0 });
 
 // ===== 技艺 Schema =====
 const SkillSchema = z

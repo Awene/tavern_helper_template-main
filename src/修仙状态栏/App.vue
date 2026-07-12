@@ -100,6 +100,9 @@
                 <span v-if="store.data.修炼进度.天谴 > 0 || state.editMode" class="xy-tianqian">
                   天谴 <EditableValue v-model.number="store.data.修炼进度.天谴" type="number" label="天谴" :min="0" />
                 </span>
+                <span v-if="store.data.修炼进度.丹毒 > 0 || state.editMode" class="xy-dandu">
+                  丹毒 <EditableValue v-model.number="store.data.修炼进度.丹毒" type="number" label="丹毒" :min="0" />
+                </span>
               </div>
             </div>
           </div>

@@ -220,6 +220,7 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
       当前进度: 0,
       进度上限,
       天谴: 0,
+      丹毒: 0,
     },
     技艺: {
       生产类: { 炼器: 0, 驯兽: 0, 培育: 0, 医术: 0, 炼丹: 0, 制符: 0 },

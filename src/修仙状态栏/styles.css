@@ -489,6 +489,15 @@
   letter-spacing: 1px;
   background: var(--xy-tint-cinnabar-mid);
 }
+.xy-dandu {
+  font-size: 11px;
+  color: #b794f4;
+  border: 1px solid #9f7aea;
+  padding: 1px 6px;
+  border-radius: 2px;
+  letter-spacing: 1px;
+  background: rgba(159, 122, 234, 0.12);
+}
 
 .xy-meta-line {
   display: flex;
