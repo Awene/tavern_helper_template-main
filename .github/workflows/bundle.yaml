@@ -59,5 +59,12 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           with-v: true
-      - if: ${{ github.repository != 'StageDog/tavern_helper_template' && steps.autotag.outputs.tag != '0.0.0' && steps.autotag.outputs.new-tag != steps.autotag.outputs.tag }}
-        run: git push --delete origin ${{ steps.autotag.outputs.tag }}
+
+      # 上游模板原本在这里有一步 `git push --delete origin <上一个 tag>`, 已移除。
+      #
+      # 删旧 tag 会直接打死已经发出去的角色卡: 玩家导入的正则里钉死的是发布当时的 tag
+      # (如 @v1.0.26 的 dist/修仙状态栏/index.html), 一旦该 tag 被删, jsdelivr 立刻 404,
+      # 那些没有及时重新导入新版卡的玩家, 状态栏和自定义开局会当场变成空白。
+      #
+      # 保留历史 tag 的成本只是 refs 多几个, 换来的是老版本卡永远能继续跑。
+      # jsdelivr 的缓存目的靠"每次发版都有新 tag"就已经达成, 不需要删旧的。
