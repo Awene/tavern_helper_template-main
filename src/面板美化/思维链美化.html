@@ -232,15 +232,33 @@
       }
     }
     syncCotTheme();
-    // 仅注册一次的轮询,捕捉用户在 正文美化 上的切换
-    if (!window.__cotThemeSyncRegistered) {
-      window.__cotThemeSyncRegistered = true;
-      setInterval(syncCotTheme, 1500);
-      // 跨标签页变更时也响应
-      window.addEventListener('storage', function (e) {
-        if (e && e.key === 'rb-theme') syncCotTheme();
-      });
+
+    // 改为纯事件驱动。原先这里是 setInterval(syncCotTheme, 1500) 且从不 clearInterval,
+    // 而 window.__cotThemeSyncRegistered 这个去重守卫是 per-realm 的 —— 每条消息的 iframe
+    // 都是独立 realm, 守卫形同虚设, 于是每层楼各自留下一个永不停止的 querySelectorAll 轮询。
+    //
+    // 两路信号覆盖所有场景, 且都能随 iframe 一起被回收:
+    //   1. 'rb-theme-change' (window.top): 正文美化 在同一页面内切主题时广播 —— 主路径
+    //   2. 'storage'                     : 另一个标签页改了主题 —— 跨标签页兜底
+    var onThemeChange = function () {
+      syncCotTheme();
+    };
+    var top = null;
+    try {
+      top = window.top || null;
+    } catch (e) {
+      /* 跨源时拿不到 top, 只靠 storage 兜底 */
     }
+    if (top) top.addEventListener('rb-theme-change', onThemeChange);
+    window.addEventListener('storage', function (e) {
+      if (e && e.key === 'rb-theme') syncCotTheme();
+    });
+
+    // window.top 是本 iframe 之外的对象, 监听器不会随 iframe 销毁而自动回收, 必须手动摘掉,
+    // 否则每个被销毁的 iframe 都会在 top 上留下一个指向死 realm 的闭包。
+    window.addEventListener('pagehide', function () {
+      if (top) top.removeEventListener('rb-theme-change', onThemeChange);
+    });
   })();
 </script>
 </body>

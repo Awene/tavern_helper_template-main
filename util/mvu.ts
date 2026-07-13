@@ -26,6 +26,9 @@ export function defineMvuDataStore<T extends z.ZodObject>(
         additional_setup(data);
       }
 
+      // 上一次处理过的原始 stat_data 快照，用作轮询的廉价挡板（见下）。
+      let last_seen_stat_data: unknown = undefined;
+
       useIntervalFn(() => {
         const variables = getVariables(variable_option);
         // 楼层还没有真实 stat_data 时（如聊天刚加载、变量尚未就位）跳过：既不同步也不写回，
@@ -34,6 +37,15 @@ export function defineMvuDataStore<T extends z.ZodObject>(
           return;
         }
         const stat_data = _.get(variables, 'stat_data', {});
+        // 廉价挡板：原始 stat_data 和上次一模一样就直接返回。
+        // 绝大多数 tick 都走这条路径（变量只在 AI 回复/玩家改动时才变，其余时间恒定不变）。
+        // 挡板之后的 schema.safeParse() 会把整棵 stat_data 深拷贝一份新对象出来
+        // （schema 里大量 .transform() / .prefault()），空转时每 2 秒扔一份垃圾给 GC；
+        // 而 isEqual 只读不分配。这一行把空转开销从"持续制造垃圾"降到零。
+        if (_.isEqual(last_seen_stat_data, stat_data)) {
+          return;
+        }
+        last_seen_stat_data = _.cloneDeep(stat_data);
         const result = schema.safeParse(stat_data);
         if (result.error) {
           return;

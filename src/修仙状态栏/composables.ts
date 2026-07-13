@@ -435,8 +435,11 @@ export const avatarFileInput = ref<HTMLInputElement | null>(null);
 const pendingAvatarFor = ref<string | null>(null);
 
 // —— 内存缓存（响应式）——
-// npcAvatars（文件顶部已声明）缓存缩略图；npcAvatarsHi 缓存高清图。
-const npcAvatarsHi = reactive<Record<string, string>>({});
+// npcAvatars（文件顶部已声明）只缓存 192px 缩略图。
+// 高清图(2048px, 单张 base64 常达数百 KB~1MB)绝不常驻内存: 它只在灯箱打开的那一刻才需要,
+// 由 getNpcAvatarHi() 按需从 IndexedDB 读出、存进 state.lightboxImage, 关灯箱即释放。
+// (旧实现把高清图一并塞进模块级 map 且从不淘汰, 而模板里 v-for 的每个 NPC 都会调
+//  getNpcAvatar(), 于是打开关系页就把所有 NPC 的高清图拉进内存, 是 OOM 的主因。)
 // 已发起过异步加载的 key，避免在模板渲染中重复触发加载。
 const avatarLoadStarted = new Set<string>();
 
@@ -529,12 +532,11 @@ const migrateAvatarFromLocalStorage = async (name: string): Promise<AvatarRecord
   return rec;
 };
 
-// 异步把某个头像读入内存缓存（缩略图 + 高清图），响应式更新触发模板重渲染。
-const loadNpcAvatarInto = async (name: string): Promise<AvatarRecord | null> => {
+// 异步把某个头像的【缩略图】读入内存缓存，响应式更新触发模板重渲染。
+// 注意: 只取 thumb, 高清图留在 IndexedDB 里不加载。
+const loadNpcAvatarInto = async (name: string): Promise<void> => {
   const rec = (await idbGetAvatar(name)) || (await migrateAvatarFromLocalStorage(name));
   npcAvatars[name] = rec?.thumb || '';
-  npcAvatarsHi[name] = rec?.hi || rec?.thumb || '';
-  return rec;
 };
 
 // 同步返回缩略图（供模板直接调用）；首次调用时后台异步加载，加载完成后响应式刷新。
@@ -546,10 +548,9 @@ export const getNpcAvatar = (name: string): string => {
   return npcAvatars[name] || '';
 };
 
-// 异步返回高清图（lightbox 用）；缓存命中直接返回，否则从 IndexedDB 读取。
+// 异步返回高清图（仅灯箱用）：每次都直接从 IndexedDB 现取，用完即弃，不进任何常驻缓存。
 export const getNpcAvatarHi = async (name: string): Promise<string> => {
-  if (npcAvatarsHi[name]) return npcAvatarsHi[name];
-  const rec = await loadNpcAvatarInto(name);
+  const rec = (await idbGetAvatar(name)) || (await migrateAvatarFromLocalStorage(name));
   return rec?.hi || rec?.thumb || '';
 };
 
@@ -619,8 +620,8 @@ export const onAvatarFileChange = async (e: Event) => {
       }
     }
     avatarLoadStarted.add(name);
+    // 只把缩略图放进内存；高清图已落 IndexedDB，等灯箱要用时再现取。
     npcAvatars[name] = thumb;
-    npcAvatarsHi[name] = hi;
   } catch (err) {
     console.error('[修仙状态栏] 头像上传失败', err);
   }
@@ -632,7 +633,6 @@ export const clearNpcAvatar = (name: string) => {
   try { localStorage.removeItem(NPC_AVATAR_KEY(name)); } catch { /* */ }
   try { localStorage.removeItem(NPC_AVATAR_HI_KEY(name)); } catch { /* */ }
   npcAvatars[name] = '';
-  npcAvatarsHi[name] = '';
 };
 
 // ============ 删除确认 ============
