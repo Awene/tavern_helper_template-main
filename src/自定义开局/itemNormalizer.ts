@@ -341,3 +341,153 @@ function pickNumFromTags(tags: string[], key: string): number | undefined {
   }
   return undefined;
 }
+
+// ============================================================
+// CardView：初始资材「类型特化卡」统一数据结构
+// 预设 / 自创 / 剧情 三种来源都归一到此，交给 ItemCard.vue 渲染。
+// ============================================================
+export interface CardStat {
+  label: string;
+  value: string;
+  /** 着色类：atk/def/hit/spd/mana/buff/'' */
+  cls: string;
+}
+export interface CardSkill {
+  name: string;
+  攻击力?: string;
+  消耗?: string;
+  效果?: Record<string, string>;
+}
+export interface CardView {
+  name: string;
+  category: string;
+  类型: string;
+  品质?: string;
+  境界?: string;
+  五行?: string;
+  数量?: number;
+  完整度?: string;
+  阅读进度?: string;
+  /** 仅 灵石：一份多少下品灵石 */
+  灵石?: number;
+  stats: CardStat[];
+  resources: { name: string; cur: number; max?: number }[];
+  descTags: string[];
+  effects: { name: string; val: string }[];
+  skills: CardSkill[];
+  desc?: string;
+  消耗?: string;
+  位置?: string;
+}
+
+const STAT_CLS: Record<string, string> = {
+  攻击力: 'atk', 防御力: 'def', 防御: 'def',
+  命中: 'hit', 闪避: 'hit',
+  修行速度: 'spd', 恢复: 'spd', 遁速: 'spd', 遁: 'spd',
+  灵气消耗: 'mana', 灵气受击: 'mana', 灵气容量: 'mana',
+  加成: 'buff', '减免%': 'buff', '穿透%': 'buff', 减免: 'buff', 穿透: 'buff',
+};
+const statCls = (label: string): string => STAT_CLS[label] || '';
+const _num = (v: any): number => (Number.isFinite(+v) ? +v : 0);
+
+/**
+ * 把「已规范化的 data（normalizeItemForMvu 输出，或剧情物品的最终 data）」+ 元信息
+ * 解析为 CardView。标签中的 `名:值` → 数值 chip；纯文本 → 描述标签；完整度/阅读进度 归 meta。
+ */
+export function dataToCardView(
+  name: string,
+  category: string,
+  meta: { 品质?: string; 境界?: string; 类型?: string; 五行?: string },
+  data: Record<string, any>,
+): CardView {
+  const 标签: any[] = Array.isArray(data.标签) ? data.标签 : [];
+  const stats: CardStat[] = [];
+  const descTags: string[] = [];
+  let 完整度: string | undefined;
+  let 阅读进度: string | undefined;
+  for (const t of 标签) {
+    if (typeof t !== 'string') continue;
+    const m = t.match(/^([^:：]+)\s*[:：]\s*(.+)$/);
+    if (m) {
+      const label = m[1].trim();
+      const value = m[2].trim();
+      if (label === '完整度') { 完整度 = value; continue; }
+      if (label === '阅读进度') { 阅读进度 = value; continue; }
+      stats.push({ label, value, cls: statCls(label) });
+    } else {
+      descTags.push(t);
+    }
+  }
+  // 傀儡/灵兽 顶层 防御力
+  if (typeof data.防御力 === 'number') {
+    stats.push({ label: '防御', value: String(data.防御力), cls: 'def' });
+  }
+  // 资源池
+  const resources: { name: string; cur: number; max?: number }[] = [];
+  const rp = data.资源池;
+  if (rp && typeof rp === 'object') {
+    if (rp.气血 && typeof rp.气血 === 'object') {
+      resources.push({ name: '气血', cur: _num(rp.气血.现值 ?? rp.气血.上限), max: _num(rp.气血.上限) });
+    }
+    if (rp.灵气 && typeof rp.灵气 === 'object') {
+      resources.push({ name: '灵气', cur: _num(rp.灵气.现值 ?? rp.灵气.上限), max: _num(rp.灵气.上限) });
+    }
+    if (typeof rp.遁速 === 'number') stats.push({ label: '遁', value: String(rp.遁速), cls: 'spd' });
+  }
+  // 效果
+  const effects: { name: string; val: string }[] = [];
+  if (data.效果 && typeof data.效果 === 'object' && !Array.isArray(data.效果)) {
+    for (const [k, v] of Object.entries(data.效果)) effects.push({ name: k, val: String(v) });
+  }
+  // 技能
+  const skills: CardSkill[] = [];
+  if (data.技能 && typeof data.技能 === 'object' && !Array.isArray(data.技能)) {
+    for (const [k, v] of Object.entries(data.技能 as Record<string, any>)) {
+      skills.push({
+        name: k,
+        攻击力: v && v.攻击力 != null ? String(v.攻击力) : undefined,
+        消耗: v && typeof v.消耗 === 'string' ? v.消耗 : undefined,
+        效果: v && v.效果 && typeof v.效果 === 'object' ? v.效果 : undefined,
+      });
+    }
+  }
+  return {
+    name,
+    category,
+    类型: meta.类型 || data.类型 || '',
+    品质: meta.品质 || data.品质,
+    境界: meta.境界 || data.境界,
+    五行: meta.五行 || data.五行,
+    数量: typeof data.数量 === 'number' && data.数量 > 1 ? data.数量 : undefined,
+    完整度: 完整度 || (typeof data.完整度 === 'string' ? data.完整度 : undefined),
+    阅读进度: 阅读进度 || (typeof data.阅读进度 === 'string' ? data.阅读进度 : undefined),
+    stats,
+    resources,
+    descTags,
+    effects,
+    skills,
+    desc: typeof data.描述 === 'string' && data.描述 ? data.描述 : undefined,
+    消耗: typeof data.消耗 === 'string' && data.消耗 && data.消耗 !== '无' ? data.消耗 : undefined,
+    位置: typeof data.位置 === 'string' && data.位置 && data.位置 !== '储物袋' ? data.位置 : undefined,
+  };
+}
+
+/** 预设资材 ItemOption → CardView（灵石特殊处理，其余走规范化再解析） */
+export function itemToCardView(it: ItemLike & {
+  name: string; category: string; desc?: string; 灵石?: number;
+}): CardView {
+  if (it.category === '灵石') {
+    return {
+      name: it.name, category: '灵石', 类型: '灵石',
+      灵石: typeof it.灵石 === 'number' ? it.灵石 : undefined,
+      stats: [], resources: [], descTags: [], effects: [], skills: [],
+      desc: it.desc,
+    };
+  }
+  const data = normalizeItemForMvu(it);
+  const cv = dataToCardView(it.name, it.category, {
+    品质: it.品质, 境界: it.境界, 类型: it.类型, 五行: it.五行,
+  }, data);
+  if (!cv.desc && it.desc) cv.desc = it.desc;
+  return cv;
+}

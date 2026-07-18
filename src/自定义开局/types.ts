@@ -245,6 +245,35 @@ export interface CustomItem {
   技能?: CustomSkill[];
 }
 
+// =============== 剧情物品（随剧本解锁的固定携带物） ===============
+/**
+ * 剧情物品：与某个开局剧本绑定，仅当选中该剧本时才出现在「初始资材」步骤中。
+ * - 固定携带（锁定选中，无法取消）、固定 0 点。
+ * - `data` 为完整的 MVU 面板数据（直接注入，不再走 itemNormalizer 公式），
+ *   以便精确控制这类"剧情/独特"物品的面板，避免自动战斗数值污染。
+ */
+export interface PlotItem {
+  id: string;
+  /** 绑定的剧本 id：仅当 Selection.storyId === 此值时显示并携带 */
+  storyId: string;
+  name: string;
+  /** 归入的储物大类（决定注入到 功法/物品/装备 哪个桶） */
+  category: ItemCategory;
+  /** 子类型：直接采用 MVU schema 的枚举（如 神识/秘籍/工具），故为自由字符串 */
+  类型: string;
+  品质?: ItemQuality;
+  境界?: ItemRealm;
+  五行?: string;
+  /** 卡片描述 */
+  desc?: string;
+  /** 卡片装饰字 */
+  glyph?: string;
+  /** 卡片展示用标签 */
+  tags?: string[];
+  /** 完整 MVU 面板数据（直接注入 stat_data.<桶>[name]） */
+  data: Record<string, any>;
+}
+
 // =============== 性别 / 元阳元阴 ===============
 /** 其他性别无元阳/元阴概念，统计输出时两者均为 false */
 export type Gender = '男' | '女' | '其他';
@@ -271,6 +300,8 @@ export interface StoryConstraints {
   灵根禁止?: string[];
   /** 体质等级须为以下任一；不设则任意 */
   physiqueTier?: PhysiqueTier[];
+  /** 门派归属须为以下任一（值同 Selection.门派归属：''=无 / '散修' / 宗门名）；不设则任意 */
+  门派归属?: string[];
 }
 
 /** 故事开局设定：年份必须 ≥ 7000 */
@@ -289,6 +320,8 @@ export interface StoryOption extends Option {
   recommend?: string;
   /** 故事大类 */
   类型?: StoryKind;
+  /** 是否为「剧情剧本」（特殊开局：绑定剧情物品、专属 UI、列表置顶） */
+  剧情?: boolean;
   /** 选取条件 */
   constraints?: StoryConstraints;
   /** 开局设定（必填） */
@@ -317,6 +350,8 @@ export interface Selection {
   /** 元阳（男）/元阴（女）是否尚存（处子之身） */
   元阳元阴: boolean;
   locationId: string | null;
+  /** 门派归属（决定生成时的「身份」标签）：''=无(不加身份) / '散修'(身份=散修) / 宗门名(身份=「XX弟子」) */
+  门派归属: string;
   itemIds: string[];
   /** 玩家自创的资材（可多件） */
   customItems: CustomItem[];

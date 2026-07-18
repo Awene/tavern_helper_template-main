@@ -55,10 +55,16 @@
         </span>
       </div>
       <div class="xs-summary-row">
+        <span class="xs-summary-label">身份</span>
+        <span class="xs-summary-value">
+          <strong>{{ 身份文本 }}</strong>
+        </span>
+      </div>
+      <div class="xs-summary-row">
         <span class="xs-summary-label">资材</span>
         <span class="xs-summary-value">
           <span
-            v-if="store.selection.itemIds.length === 0 && store.selection.customItems.length === 0"
+            v-if="store.selection.itemIds.length === 0 && store.selection.customItems.length === 0 && plotItems.length === 0"
             style="color: var(--xs-ink-mute);"
           >未择资材</span>
           <template v-else>
@@ -72,6 +78,14 @@
               :title="`${c.品质}品 · ${c.境界} · ${c.类型}（自创）`"
             >
               <strong style="color: var(--xs-cinnabar-deep);">{{ c.name }}</strong>
+            </span>
+            <span
+              v-for="p in plotItems"
+              :key="p.id"
+              style="margin-right: 8px;"
+              :title="`${p.类型}（剧情物品 · 固定携带）`"
+            >
+              <strong style="color: #7c3a8f;">{{ p.name }}</strong>
             </span>
           </template>
         </span>
@@ -123,6 +137,7 @@ import {
   findLocation,
   findStory,
   physiqueResolved,
+  plotItemsForStory,
   rootDisplayName,
   rootTierLabel,
 } from '../config';
@@ -147,6 +162,13 @@ const story = computed(() => {
 const selectedItems = computed(() =>
   store.selection.itemIds.map(id => findItem(id)).filter(Boolean) as NonNullable<ReturnType<typeof findItem>>[],
 );
+const plotItems = computed(() => plotItemsForStory(store.selection.storyId));
+const 身份文本 = computed(() => {
+  const mp = (store.selection.门派归属 || '').trim();
+  if (mp === '散修') return '散修';
+  if (mp) return `${mp}弟子`;
+  return '无';
+});
 
 const canConfirm = computed(() => {
   return (

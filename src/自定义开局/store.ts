@@ -37,6 +37,7 @@ const emptySelection = (): Selection => ({
   性别: '男',
   元阳元阴: true,
   locationId: null,
+  门派归属: '',
   itemIds: [],
   customItems: [],
   storyId: null,
@@ -61,6 +62,7 @@ const normalizeSelection = (raw: any): Selection => {
     physique: normalizePhysiqueChoice(raw.physique),
     性别: raw.性别 === '女' || raw.性别 === '其他' ? raw.性别 : '男',
     元阳元阴: raw.性别 === '其他' ? false : (typeof raw.元阳元阴 === 'boolean' ? raw.元阳元阴 : true),
+    门派归属: typeof raw.门派归属 === 'string' ? raw.门派归属 : '',
     itemIds: Array.isArray(raw.itemIds) ? raw.itemIds : [],
     customItems: Array.isArray(raw.customItems) ? raw.customItems : [],
     customStory,
@@ -292,6 +294,10 @@ export const useStartStore = defineStore('xs-start', () => {
   function selectLocation(id: string) {
     selection.value.locationId = id;
   }
+  /** 选择门派归属：''=无 / '散修' / 宗门名（不限出生地，可自由选择全域门派） */
+  function selectMenpai(v: string) {
+    selection.value.门派归属 = v;
+  }
   function toggleItem(id: string) {
     const arr = selection.value.itemIds;
     const idx = arr.indexOf(id);
@@ -428,6 +434,7 @@ export const useStartStore = defineStore('xs-start', () => {
     setPhysiqueCustomStat,
     autoBalancePhysique,
     selectLocation,
+    selectMenpai,
     toggleItem,
     isItemSelected,
     addCustomItem,

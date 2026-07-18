@@ -237,6 +237,46 @@ export const stories: StoryOption[] = [
       '"采药人……"她低声重复，随即起身，笨拙地回了一礼，"小女子苏凝香，这厢有礼了。"',
   },
 
+  // ==================== 五毒教 · 入门奇遇（万毒祖窟） ====================
+  {
+    id: 'story-wudu-init',
+    name: '走出瘴林 · 万毒祖窟',
+    subtitle: '入门测验中的一场豪赌',
+    desc:
+      '于雨瘴林中参加五毒教入门测验，饥寒交迫、四下皆毒；走投无路吞下一枚《百毒经》未载的五彩怪果，醒来识海凭空多了一门神识蛊法，与一句唤你前往"万毒祖窟"的低语。',
+    cost: 0,
+    glyph: '蛊',
+    recommend: '砺心问道 / 逆天改命',
+    类型: '特殊',
+    剧情: true,
+    constraints: {
+      // 可选前提：出生于南疆雨瘴林、非无灵根、且门派归属为 无 / 散修 / 五毒教弟子
+      locationIds: ['eco-nj-yuzhang'],
+      灵根禁止: ['无'],
+      门派归属: ['', '散修', '五毒教'],
+    },
+    settings: {
+      时间: { 年: 7231, 月: 4, 日: 9, 时辰: '巳时' },
+      宗门: '五毒教（入门试炼）',
+      初始境界: { 大境界: '炼气', 小境界: '初期' },
+    },
+    body:
+      '雨瘴林深处，湿热的瘴气黏在皮肤上，久久不散。\n' +
+      '这是五毒教入门测验的最后一关——独自走出这片吃人的林子。已是第三日，你炼气初期那点微薄的灵气早被瘴毒磨得所剩无几，饥火与寒意一齐啃着五脏六腑。\n' +
+      '偏偏这林中"食物"并不算少：紫红的浆果、肥厚的菌伞、爬满藤蔓的甜藕……你翻开随身那卷《百毒经》一一比对，翻到最后，指尖发凉——无一例外，全是剧毒。原来这一关考的从不是"能不能找到吃的"，而是"明知有毒，你敢不敢碰"。\n' +
+      '就在你几乎要倒下去的时候，一丛腐叶间露出一枚拳头大的果子，五彩斑斓、流转着近乎妖异的光泽。你翻遍《百毒经》，从头到尾——竟没有半个字提到它。\n' +
+      '未载于经，便是未知；未知，便是不知死活。可你也确实，再没有别的路了。\n' +
+      '你盯着那枚怪果看了很久，终于闭上眼，一口咬了下去——赌这一把。\n' +
+      '意识坠入无边的黑。\n' +
+      '……\n' +
+      '再睁眼时，天光已亮。饥寒尽退，那点被磨尽的灵气竟也悄然复原，四肢百骸说不出的通泰，仿佛什么东西在体内被彻底洗过一遍。\n' +
+      '只是——你的识海里，凭空多了一门功法。它的名字自己浮上心头：《噬心蛊经》。神识为针，种蛊噬心，诡异得与《百毒经》里任何一页都不相干。\n' +
+      '而在识海深处，一段沙哑而遥远的低语，正贴着神魂反复回响，挥之不去——\n' +
+      '"来……万毒祖窟……找我……"\n' +
+      '你摸了摸怀里那块入门时宗门发下的司南之石——它一如往常，只认得南北，却半点指不出那"万毒祖窟"在何方。',
+    tags: ['五毒教', '奇遇'],
+  },
+
   // ==================== 合欢宗 · 鸳鸯池入门 ====================
   {
     id: 'story-hehuan-yuanyang',
@@ -369,7 +409,19 @@ export function isStoryAvailable(story: StoryOption, sel: Selection): boolean {
     if (!c.physiqueTier.includes(sel.physique.tier)) return false;
   }
 
+  // 门派归属
+  if (c.门派归属?.length) {
+    if (!c.门派归属.includes(sel.门派归属 ?? '')) return false;
+  }
+
   return true;
+}
+
+/** 门派归属值 → 展示文本（''=无） */
+function menpaiLabel(v: string): string {
+  if (v === '') return '无';
+  if (v === '散修') return '散修';
+  return `${v}弟子`;
 }
 
 /** 列出当前选择下，故事约束未满足的具体原因；满足时返回空数组 */
@@ -423,6 +475,13 @@ export function whyStoryUnavailable(story: StoryOption, sel: Selection): string[
       reasons.push(`体质须为：${c.physiqueTier.join(' / ')}（当前 ${sel.physique.tier}）`);
     }
   }
+  if (c.门派归属?.length) {
+    if (!c.门派归属.includes(sel.门派归属 ?? '')) {
+      reasons.push(
+        `门派归属须为：${c.门派归属.map(menpaiLabel).join(' / ')}（当前 ${menpaiLabel(sel.门派归属 ?? '')}）`,
+      );
+    }
+  }
   return reasons;
 }
 
@@ -442,6 +501,7 @@ export function describeConstraints(c?: StoryConstraints): string[] {
   if (c.灵根五行任意?.length) lines.push(`灵根含：${c.灵根五行任意.join(' / ')}`);
   if (c.灵根品阶?.length) lines.push(`品阶：${c.灵根品阶.join(' / ')}`);
   if (c.灵根禁止?.length) lines.push(`不可：${c.灵根禁止.join(' / ')}`);
+  if (c.门派归属?.length) lines.push(`门派：${c.门派归属.map(menpaiLabel).join(' / ')}`);
   return lines;
 }
 

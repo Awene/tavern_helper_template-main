@@ -84,6 +84,50 @@
       </div>
     </div>
 
+    <!-- 门派归属（地域 → 二级宗门；可自由选择全域门派，不限出生地） -->
+    <section v-if="selectedLocation" class="xs-menpai">
+      <div class="xs-menpai-head">
+        <h3 class="xs-menpai-title">门派归属</h3>
+        <span class="xs-menpai-hint">
+          决定生成时的「身份」标签；不耗点数。当前身份：<strong>{{ currentMenpaiLabel }}</strong>
+        </span>
+      </div>
+
+      <!-- 一级：无 / 散修 / 地域 -->
+      <div class="xs-menpai-row">
+        <button
+          v-for="opt in baseMenpai"
+          :key="opt.value || '__none__'"
+          type="button"
+          class="xs-menpai-chip xs-menpai-base-chip"
+          :class="{ active: store.selection.门派归属 === opt.value }"
+          @click="store.selectMenpai(opt.value)"
+        >{{ opt.label }}</button>
+        <span class="xs-menpai-divider" />
+        <button
+          v-for="grp in sectGroups"
+          :key="grp.region"
+          type="button"
+          class="xs-menpai-chip xs-menpai-region-chip"
+          :class="{ active: menpaiRegion === grp.region, 'has-pick': grp.region === pickedSectRegion }"
+          @click="menpaiRegion = grp.region"
+        >{{ grp.region }}</button>
+      </div>
+
+      <!-- 二级：当前地域的宗门 -->
+      <div v-if="currentRegionSects.length" class="xs-menpai-sects">
+        <button
+          v-for="s in currentRegionSects"
+          :key="s.name"
+          type="button"
+          class="xs-menpai-chip xs-menpai-sect"
+          :class="{ active: store.selection.门派归属 === s.name }"
+          :title="`${s.eco} · ${s.brief}`"
+          @click="store.selectMenpai(s.name)"
+        >{{ s.name }}<span class="xs-menpai-弟子">弟子</span></button>
+      </div>
+    </section>
+
     <div class="xs-actions">
       <button type="button" class="xs-btn" @click="store.prev">返回</button>
       <button
@@ -107,6 +151,7 @@ import {
   findLocation,
   findLocationPath,
   findRegionById,
+  sectsByRegion,
 } from '../config';
 import { useStartStore } from '../store';
 
@@ -119,6 +164,35 @@ const regionId = ref<string>(initialPath.region?.id || LOCATION_REGIONS[0].id);
 const currentRegion = computed(() => findRegionById(regionId.value));
 
 const selectedLocation = computed(() => findLocation(store.selection.locationId));
+
+// —— 门派归属：地域 → 二级宗门（可选全域门派，不限出生地）——
+const baseMenpai = [
+  { value: '', label: '无' },
+  { value: '散修', label: '散修' },
+];
+const sectGroups = sectsByRegion;
+// 当前选中门派所属的地域（用于一级 chip 高亮 & 初始展开）
+const pickedSectRegion = computed(() => {
+  const mp = store.selection.门派归属;
+  if (!mp || mp === '散修') return '';
+  return sectGroups.find(g => g.sects.some(s => s.name === mp))?.region || '';
+});
+// 二级展开的地域：默认落在已选门派所属地域，否则出生地地域，再否则第一项
+const menpaiRegion = ref<string>(
+  pickedSectRegion.value ||
+    (selectedLocation.value?.地域 && sectGroups.some(g => g.region === selectedLocation.value!.地域)
+      ? selectedLocation.value!.地域
+      : sectGroups[0]?.region || ''),
+);
+const currentRegionSects = computed(
+  () => sectGroups.find(g => g.region === menpaiRegion.value)?.sects || [],
+);
+const currentMenpaiLabel = computed(() => {
+  const mp = store.selection.门派归属;
+  if (mp === '') return '无（不添加身份）';
+  if (mp === '散修') return '散修';
+  return `${mp}弟子`;
+});
 
 function pickRegion(id: string) {
   regionId.value = id;
@@ -323,5 +397,111 @@ watch(
   line-height: 1.7;
   color: var(--xs-ink-soft);
   margin-top: 4px;
+}
+
+/* —— 门派归属 —— */
+.xs-menpai {
+  margin-bottom: 18px;
+  padding: 12px 16px;
+  border: 1px solid var(--xs-line-gold);
+  border-radius: 10px;
+  background: var(--xs-glass);
+}
+.xs-menpai-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.xs-menpai-title {
+  font-family: var(--xs-font-display);
+  font-size: 15px;
+  letter-spacing: 4px;
+  color: var(--xs-ink);
+  border-left: 3px solid var(--xs-cinnabar);
+  padding-left: 8px;
+}
+.xs-menpai-hint {
+  font-size: 11.5px;
+  letter-spacing: 0.5px;
+  color: var(--xs-ink-mute);
+}
+.xs-menpai-hint strong {
+  color: var(--xs-cinnabar-deep);
+  letter-spacing: 1.5px;
+}
+/* 一级行：无/散修 + 地域 */
+.xs-menpai-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.xs-menpai-divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 4px;
+  background: var(--xs-line);
+}
+/* 二级行：宗门 */
+.xs-menpai-sects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px dashed var(--xs-line-gold);
+  border-radius: 8px;
+  background: var(--xs-paper-warm);
+}
+.xs-menpai-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  padding: 4px 13px;
+  border-radius: 14px;
+  border: 1px solid var(--xs-line);
+  background: var(--xs-paper-warm);
+  font-family: var(--xs-font-display);
+  font-size: 12.5px;
+  letter-spacing: 1.5px;
+  color: var(--xs-ink);
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+.xs-menpai-chip:hover:not(.active) {
+  border-color: var(--xs-cinnabar);
+  color: var(--xs-cinnabar);
+}
+.xs-menpai-chip.active {
+  background: var(--xs-cinnabar);
+  border-color: var(--xs-cinnabar-deep);
+  color: #fff;
+  box-shadow: 0 4px 12px -4px var(--xs-cinnabar-glow);
+}
+/* 地域 chip：作为二级容器的"标签页"，激活态用描边而非填充，和最终门派选中区分 */
+.xs-menpai-region-chip {
+  background: var(--xs-paper);
+  letter-spacing: 2px;
+}
+.xs-menpai-region-chip.active {
+  background: var(--xs-glass-strong);
+  border-color: var(--xs-cinnabar);
+  color: var(--xs-cinnabar-deep);
+  box-shadow: 0 0 0 1px var(--xs-cinnabar) inset;
+}
+/* 该地域内含已选门派时，给一个小标记 */
+.xs-menpai-region-chip.has-pick::after {
+  content: '●';
+  margin-left: 4px;
+  font-size: 8px;
+  color: var(--xs-cinnabar);
+  vertical-align: middle;
+}
+.xs-menpai-弟子 {
+  font-size: 10px;
+  letter-spacing: 0;
+  opacity: 0.6;
 }
 </style>

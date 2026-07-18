@@ -688,6 +688,45 @@ export const locations: LocationOption[] = (() => {
 export const findLocation = (id: string | null): LocationOption | undefined =>
   id ? locations.find(l => l.id === id) : undefined;
 
+// ============ 全域宗门（供门派归属选择：不限出生地） ============
+export interface SectRef {
+  name: string;
+  brief: string;
+  /** 所属大地域名 */
+  region: string;
+  /** 所属生态名 */
+  eco: string;
+  tags?: string[];
+}
+
+/** 展开凡界全部宗门（按地域→生态顺序），用于门派归属的自由选择。 */
+export const allSects: SectRef[] = (() => {
+  const out: SectRef[] = [];
+  for (const region of LOCATION_REGIONS) {
+    for (const eco of region.children || []) {
+      for (const s of eco.sects || []) {
+        out.push({ name: s.name, brief: s.brief, region: region.name, eco: eco.name, tags: s.tags });
+      }
+    }
+  }
+  return out;
+})();
+
+/** 按地域分组的宗门列表，用于门派归属 UI 的分组展示。 */
+export const sectsByRegion: Array<{ region: string; sects: SectRef[] }> = (() => {
+  const out: Array<{ region: string; sects: SectRef[] }> = [];
+  for (const region of LOCATION_REGIONS) {
+    const sects: SectRef[] = [];
+    for (const eco of region.children || []) {
+      for (const s of eco.sects || []) {
+        sects.push({ name: s.name, brief: s.brief, region: region.name, eco: eco.name, tags: s.tags });
+      }
+    }
+    if (sects.length) out.push({ region: region.name, sects });
+  }
+  return out;
+})();
+
 export const findRegionById = (id: string): LocationNode | undefined =>
   LOCATION_REGIONS.find(r => r.id === id);
 

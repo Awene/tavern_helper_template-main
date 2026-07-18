@@ -10,6 +10,7 @@ import {
   findLocation,
   findStory,
   physiqueResolved,
+  plotItemsForStory,
   rootDescription,
   rootDisplayName,
   rootTierCanonical,
@@ -118,6 +119,11 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
     bucket(c.name, c.category, normalizeItemForMvu(synthetic));
   }
 
+  // 剧情物品：随所选剧本固定注入（data 已是最终 MVU 面板，不再走规范化公式）
+  for (const p of plotItemsForStory(sel.storyId)) {
+    bucket(p.name, p.category, JSON.parse(JSON.stringify(p.data)));
+  }
+
   // 体质三维
   const 悟性 = physique.悟性;
   const 根骨 = physique.根骨;
@@ -191,10 +197,17 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
       : 生态名
     : '某处村落';
 
+  // —— 身份：由门派归属决定（''=无身份 / '散修'=散修 / 宗门名=「XX弟子」）——
+  const 身份: string[] = [];
+  const mp = (sel.门派归属 || '').trim();
+  if (mp === '散修') 身份.push('散修');
+  else if (mp) 身份.push(`${mp}弟子`);
+
   return {
     // —— 原 基本信息.* (扁平化:升至根级) ——
     姓名: sel.道号 || '无名',
     种族: '人族',
+    身份,
     性别: sel.性别,
     宗门,
     寿元: { 年龄: 起始年龄, 寿命, 外观年龄: 起始年龄 },
@@ -305,6 +318,9 @@ export function generateAIPrompt(sel: Selection): string {
   // —— 角色信息 ——
   lines.push('【角色信息】');
   lines.push(`道号：${sel.道号 || '无名'}`);
+  const mp = (sel.门派归属 || '').trim();
+  const 身份文本 = mp === '散修' ? '散修' : mp ? `${mp}弟子` : '（无）';
+  lines.push(`身份：${身份文本}`);
   lines.push(`性别：${sel.性别}`);
   if (sel.性别 === '男') lines.push(`元阳：${sel.元阳元阴 ? '尚存' : '已损'}`);
   else if (sel.性别 === '女') lines.push(`元阴：${sel.元阳元阴 ? '尚存' : '已损'}`);
@@ -388,6 +404,26 @@ export function generateAIPrompt(sel: Selection): string {
         }
       }
       if (c.desc) lines.push(`    ${c.desc}`);
+    });
+  }
+
+  // —— 剧情物品（随剧本固定携带） ——
+  const plotItems = plotItemsForStory(sel.storyId);
+  if (plotItems.length) {
+    lines.push('');
+    lines.push('【剧情物品 · 固定携带】');
+    plotItems.forEach(p => {
+      const tags: string[] = [];
+      if (p.品质) tags.push(`${p.品质}品`);
+      if (p.境界) tags.push(p.境界);
+      tags.push(p.类型);
+      if (p.五行) tags.push(p.五行);
+      lines.push(`- ${p.name}（${tags.join(' · ')}）`);
+      const eff = p.data?.效果;
+      if (eff && typeof eff === 'object') {
+        for (const [k, v] of Object.entries(eff)) lines.push(`    ${k}：${v}`);
+      }
+      if (p.desc) lines.push(`    ${p.desc}`);
     });
   }
 

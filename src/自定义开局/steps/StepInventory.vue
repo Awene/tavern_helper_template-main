@@ -7,6 +7,25 @@
       仅可选择 <b>{{ realmCapLabel }}</b> 及以下境界的资材（由开局故事决定）。
     </p>
 
+    <!-- 剧情物品（随剧本解锁·固定携带） -->
+    <section v-if="activePlotItems.length" class="xs-inv-section">
+      <div class="xs-custom-head">
+        <h3 class="xs-section-title">剧情物品</h3>
+        <span class="xs-custom-count">由所选开局剧本赋予 · 固定携带 · 不耗点数</span>
+      </div>
+      <div class="xs-card-grid cols-3">
+        <ItemCard
+          v-for="p in activePlotItems"
+          :key="p.id"
+          :view="plotView(p)"
+          locked
+          badge="剧情"
+          badge-type="plot"
+          cost-text="固定 · 0 点"
+        />
+      </div>
+    </section>
+
     <!-- 自创资材 -->
     <section class="xs-custom-section">
       <div class="xs-custom-head">
@@ -25,49 +44,20 @@
       </div>
 
       <!-- 自创条目卡片 -->
-      <div v-if="store.selection.customItems.length" class="xs-custom-list">
-        <div v-for="c in store.selection.customItems" :key="c.id" class="xs-custom-card">
-          <div class="xs-custom-card-head">
-            <span class="xs-custom-card-name">{{ c.name }}</span>
-            <span class="xs-custom-card-cost">{{ customCost(c) }} 点</span>
-          </div>
-          <div class="xs-inv-meta">
-            <span class="xs-pill xs-pill-gold">{{ c.品质 }}品</span>
-            <span class="xs-pill">{{ c.境界 }}</span>
-            <span class="xs-pill xs-pill-jade">{{ c.类型 }}</span>
-            <span v-if="c.五行" class="xs-pill xs-pill-cinnabar">{{ c.五行 }}</span>
-            <span v-if="c.位置" class="xs-pill">📍 {{ c.位置 }}</span>
-            <span v-if="typeof c.数量 === 'number' && c.数量 > 1" class="xs-pill">×{{ c.数量 }}</span>
-          </div>
-          <!-- 数值类覆盖（玩家手填的） -->
-          <div v-if="customCardStats(c).length" class="xs-inv-stats">
-            <span
-              v-for="s in customCardStats(c)"
-              :key="s.key"
-              class="xs-stat-chip"
-            >{{ s.key }} {{ s.value }}</span>
-          </div>
-          <div v-if="c.效果 && Object.keys(c.效果).length" class="xs-inv-effects">
-            <div v-for="(v, k) in c.效果" :key="String(k)" class="xs-inv-effect-row">
-              <span class="xs-inv-effect-name">{{ k }}:</span>
-              <span class="xs-inv-effect-val">{{ v }}</span>
-            </div>
-          </div>
-          <!-- 技能（傀儡/灵兽） -->
-          <div v-if="c.技能 && c.技能.length" class="xs-inv-skills">
-            <div class="xs-inv-skills-head">技能</div>
-            <div v-for="sk in c.技能" :key="sk.name" class="xs-inv-skill-row">
-              <span class="xs-inv-skill-name">{{ sk.name }}</span>
-              <span v-if="typeof sk.攻击力 === 'number'" class="xs-stat-chip xs-stat-attack">攻 {{ sk.攻击力 }}</span>
-              <span v-if="sk.消耗" class="xs-inv-skill-cost">耗 {{ sk.消耗 }}</span>
-            </div>
-          </div>
-          <p v-if="c.desc" class="xs-custom-card-desc">{{ c.desc }}</p>
-          <div class="xs-custom-card-actions">
-            <button type="button" class="xs-btn xs-btn-ghost" @click="openEdit(c)">编辑</button>
-            <button type="button" class="xs-btn xs-btn-ghost" @click="store.removeCustomItem(c.id)">删除</button>
-          </div>
-        </div>
+      <div v-if="store.selection.customItems.length" class="xs-card-grid cols-3">
+        <ItemCard
+          v-for="c in store.selection.customItems"
+          :key="c.id"
+          :view="customView(c)"
+          badge="自创"
+          badge-type="custom"
+          :cost-text="`${customCost(c)} 点`"
+        >
+          <template #actions>
+            <button type="button" class="xs-btn xs-btn-ghost xs-mini-btn" @click="openEdit(c)">编辑</button>
+            <button type="button" class="xs-btn xs-btn-ghost xs-mini-btn" @click="store.removeCustomItem(c.id)">删除</button>
+          </template>
+        </ItemCard>
       </div>
 
       <!-- 编辑器 -->
@@ -308,71 +298,16 @@
       <div v-if="filteredItems.length === 0" class="xs-empty">未匹配到任何资材</div>
       <div v-else>
         <div class="xs-card-grid cols-3">
-          <OptionCard
-            v-for="(it, i) in pageItems"
+          <ItemCard
+            v-for="it in pageItems"
             :key="it.id"
-            :title="it.name"
-            :subtitle="it.subtitle"
-            :desc="it.desc"
-            :glyph="it.glyph"
-            :cost="it.cost"
-            :tags="it.tags"
+            :view="presetView(it)"
+            clickable
             :selected="store.isItemSelected(it.id)"
             :disabled="!canAfford(it)"
-            :index="i"
+            :cost-text="costText(it)"
             @pick="store.toggleItem(it.id)"
-          >
-            <!-- 顶级元数据 pill -->
-            <div class="xs-inv-meta">
-              <span v-if="it.品质" class="xs-pill xs-pill-gold">{{ it.品质 }}品</span>
-              <span v-if="it.境界" class="xs-pill">{{ it.境界 }}</span>
-              <span class="xs-pill xs-pill-jade">{{ it.类型 }}</span>
-              <span v-if="it.五行" class="xs-pill xs-pill-cinnabar">{{ it.五行 }}</span>
-            </div>
-            <!-- 数值标签:按规则公式计算 -->
-            <div class="xs-inv-stats" v-if="hasNumericStats(it)">
-              <span v-if="display(it).攻击力" class="xs-stat-chip xs-stat-attack">攻 {{ display(it).攻击力 }}</span>
-              <span v-if="display(it).防御力" class="xs-stat-chip xs-stat-defense">防 {{ display(it).防御力 }}</span>
-              <span v-if="display(it).气血" class="xs-stat-chip xs-stat-hp">血 {{ display(it).气血 }}</span>
-              <span v-if="display(it).资源池?.灵气?.上限" class="xs-stat-chip xs-stat-mana">气 {{ display(it).资源池.灵气.上限 }}</span>
-              <span v-if="display(it).遁速" class="xs-stat-chip xs-stat-speed">遁 {{ display(it).遁速 }}</span>
-              <span v-if="display(it).修行速度" class="xs-stat-chip xs-stat-cult">修 {{ display(it).修行速度 }}</span>
-              <span v-if="display(it).恢复" class="xs-stat-chip xs-stat-heal">回 {{ display(it).恢复 }}</span>
-              <span v-if="display(it).加成" class="xs-stat-chip xs-stat-bonus">加 {{ display(it).加成 }}</span>
-              <span v-if="display(it).数量 && display(it).数量 > 1" class="xs-stat-chip xs-stat-qty">×{{ display(it).数量 }}</span>
-              <span v-if="display(it).使用中 === true" class="xs-stat-chip xs-stat-active">✓使用中</span>
-              <span v-if="display(it).完整度" class="xs-stat-chip">{{ display(it).完整度 }}</span>
-            </div>
-            <!-- 效果块 -->
-            <div v-if="display(it).效果 && Object.keys(display(it).效果 || {}).length" class="xs-inv-effects">
-              <div v-for="(v, k) in display(it).效果" :key="String(k)" class="xs-inv-effect-row">
-                <span class="xs-inv-effect-name">{{ k }}:</span>
-                <span class="xs-inv-effect-val">{{ v }}</span>
-              </div>
-            </div>
-            <!-- 技能块(仅 傀儡/灵兽) -->
-            <div v-if="display(it).技能 && Object.keys(display(it).技能 || {}).length" class="xs-inv-skills">
-              <div class="xs-inv-skills-head">技能</div>
-              <div v-for="(sk, name) in display(it).技能" :key="String(name)" class="xs-inv-skill-row">
-                <span class="xs-inv-skill-name">{{ name }}</span>
-                <span v-if="sk.攻击力" class="xs-stat-chip xs-stat-attack">攻 {{ sk.攻击力 }}</span>
-                <span v-if="sk.消耗" class="xs-inv-skill-cost">耗 {{ sk.消耗 }}</span>
-                <span v-if="sk.效果" class="xs-inv-skill-eff">
-                  <span v-for="(v, k) in sk.效果" :key="String(k)">{{ k }}: {{ v }}</span>
-                </span>
-              </div>
-            </div>
-            <!-- 描述性标签(items.ts 自带的:基础/剑修/魔修等) -->
-            <div v-if="display(it).描述标签.length" class="xs-inv-tagrow">
-              <span v-for="t in display(it).描述标签" :key="t" class="xs-inv-tag">{{ t }}</span>
-            </div>
-            <!-- 消耗 / 位置 / 阅读进度 -->
-            <div v-if="display(it).消耗 || display(it).位置 || display(it).阅读进度" class="xs-inv-foot">
-              <span v-if="display(it).消耗" class="xs-inv-foot-item">耗 {{ display(it).消耗 }}</span>
-              <span v-if="display(it).阅读进度" class="xs-inv-foot-item">进度 {{ display(it).阅读进度 }}</span>
-              <span v-if="display(it).位置" class="xs-inv-foot-item xs-inv-loc">📍 {{ display(it).位置 }}</span>
-            </div>
-          </OptionCard>
+          />
         </div>
 
         <!-- 分页 -->
@@ -446,19 +381,93 @@ import {
   findStory,
   isOverRecommended,
   items,
+  plotItemsForStory,
   qualityQ,
   rangeHintText,
   realmL,
 } from '../config';
+import type { PlotItem } from '../types';
 import type { FieldDef, SuggestedRange } from '../config/itemSchema';
-import { toDisplay } from '../itemNormalizer';
+import type { CardStat, CardView } from '../itemNormalizer';
+import { dataToCardView, itemToCardView } from '../itemNormalizer';
 import { useStartStore } from '../store';
-import OptionCard from '../components/OptionCard.vue';
+import ItemCard from '../components/ItemCard.vue';
 import SkillEditor from '../components/SkillEditor.vue';
 
 const FIVE_ELEMENTS = ['金', '木', '水', '火', '土', '阴', '阳', '混沌'] as const;
 
 const store = useStartStore();
+
+// —— 剧情物品（随所选剧本解锁，固定携带、0 点、锁定） ——
+const activePlotItems = computed<PlotItem[]>(() =>
+  plotItemsForStory(store.selection.storyId),
+);
+
+// —— CardView 构建（预设 / 剧情 / 自创，统一交给 ItemCard 渲染） ——
+function presetView(it: ItemOption): CardView {
+  return itemToCardView(it);
+}
+function plotView(p: PlotItem): CardView {
+  return dataToCardView(
+    p.name,
+    p.category,
+    { 品质: p.品质, 境界: p.境界, 类型: p.类型, 五行: p.五行 },
+    p.data,
+  );
+}
+const STAT_SUFFIX: Record<string, string> = { 穿透: '%', 减免: '%' };
+function customView(c: CustomItem): CardView {
+  const stats: CardStat[] = [];
+  const clsMap: Record<string, string> = {
+    攻击力: 'atk', 防御力: 'def', 命中: 'hit', 闪避: 'hit',
+    修行速度: 'spd', 遁速: 'spd', 灵气消耗: 'mana', 灵气容量: 'mana',
+    穿透: 'buff', 减免: 'buff',
+  };
+  if (c.数值) {
+    const order = ['攻击力', '防御力', '命中', '闪避', '穿透', '减免', '修行速度', '遁速', '灵气消耗', '灵气容量', '炼制难度'];
+    for (const k of order) {
+      const v = (c.数值 as any)[k];
+      if (typeof v === 'number') stats.push({ label: k, value: `${v}${STAT_SUFFIX[k] || ''}`, cls: clsMap[k] || '' });
+    }
+  }
+  const resources: { name: string; cur: number; max?: number }[] = [];
+  if (c.资源池) {
+    if (typeof c.资源池.气血 === 'number') resources.push({ name: '气血', cur: c.资源池.气血, max: c.资源池.气血 });
+    if (typeof c.资源池.灵气 === 'number') resources.push({ name: '灵气', cur: c.资源池.灵气, max: c.资源池.灵气 });
+    if (typeof c.资源池.遁速 === 'number') stats.push({ label: '遁', value: String(c.资源池.遁速), cls: 'spd' });
+  }
+  const effects = c.效果
+    ? Object.entries(c.效果).map(([name, val]) => ({ name, val: String(val) }))
+    : [];
+  const skills = (c.技能 || []).map(s => ({
+    name: s.name,
+    攻击力: typeof s.攻击力 === 'number' ? String(s.攻击力) : undefined,
+    消耗: s.消耗,
+    效果: s.效果,
+  }));
+  return {
+    name: c.name,
+    category: c.category,
+    类型: c.类型,
+    品质: c.品质,
+    境界: c.境界,
+    五行: c.五行,
+    数量: typeof c.数量 === 'number' && c.数量 > 1 ? c.数量 : undefined,
+    stats,
+    resources,
+    descTags: [],
+    effects,
+    skills,
+    desc: c.desc,
+    消耗: c.消耗 && c.消耗 !== '无' ? c.消耗 : undefined,
+    位置: c.位置 && c.位置 !== '储物袋' ? c.位置 : undefined,
+  };
+}
+function costText(it: ItemOption): string {
+  if (it.cost === 0) return '免费';
+  if (it.cost < 0) return `+${-it.cost} 点`;
+  return `${it.cost} 点`;
+}
 
 // —— 当前开局故事决定的大境界(决定了资材境界上限) ——
 const REALM_RANK_MAP: Record<string, number> = {
@@ -518,29 +527,6 @@ function pruneOverCapSelections() {
 }
 onMounted(pruneOverCapSelections);
 watch(playerRealmRank, pruneOverCapSelections);
-
-// 卡片显示用:按规则规范化每件物品(品质/境界/类型/五行 → 攻击力/防御力/etc)
-// 缓存避免 v-for 重复计算
-const _displayCache = new Map<string, ReturnType<typeof toDisplay>>();
-function display(it: ItemOption) {
-  const key = it.id;
-  let v = _displayCache.get(key);
-  if (!v) {
-    v = toDisplay(it);
-    _displayCache.set(key, v);
-  }
-  return v;
-}
-function hasNumericStats(it: ItemOption): boolean {
-  const d = display(it);
-  return !!(
-    d.攻击力 || d.防御力 || d.气血 || d.遁速 ||
-    d.修行速度 || d.恢复 || d.加成 ||
-    d.资源池?.灵气?.上限 ||
-    (d.数量 && d.数量 > 1) ||
-    d.使用中 === true || d.完整度
-  );
-}
 
 // —— 筛选状态 ——
 const realmFilter = ref<'' | ItemRealm>('');
@@ -915,28 +901,6 @@ function onSave() {
 function customCost(c: CustomItem): number {
   return computeCustomItemCost({ 品质: c.品质, 境界: c.境界 });
 }
-
-/** 给卡片摘要展示的数值/资源池 chip 列表 */
-function customCardStats(c: CustomItem): { key: string; value: string }[] {
-  const out: { key: string; value: string }[] = [];
-  if (c.数值) {
-    const order = ['攻击力', '防御力', '命中', '闪避', '穿透', '减免', '修行速度', '遁速', '灵气消耗', '灵气容量', '炼制难度'];
-    for (const k of order) {
-      const v = (c.数值 as any)[k];
-      if (typeof v === 'number') {
-        const suffix = (k === '穿透' || k === '减免') ? '%' : '';
-        out.push({ key: k, value: `${v}${suffix}` });
-      }
-    }
-  }
-  if (c.资源池) {
-    if (typeof c.资源池.气血 === 'number') out.push({ key: '气血', value: String(c.资源池.气血) });
-    if (typeof c.资源池.灵气 === 'number') out.push({ key: '灵气', value: String(c.资源池.灵气) });
-    if (typeof c.资源池.遁速 === 'number') out.push({ key: '遁速', value: String(c.资源池.遁速) });
-  }
-  if (c.消耗) out.push({ key: '耗', value: c.消耗 });
-  return out;
-}
 </script>
 
 <style scoped>
@@ -947,6 +911,14 @@ function customCardStats(c: CustomItem): { key: string; value: string }[] {
   color: var(--xs-ink);
   border-left: 3px solid var(--xs-cinnabar);
   padding-left: 8px;
+}
+
+.xs-inv-section { margin-bottom: 22px; }
+/* 卡片操作插槽（自创：编辑/删除） */
+.xs-mini-btn {
+  padding: 2px 10px;
+  font-size: 11px;
+  letter-spacing: 1px;
 }
 
 .xs-realm-cap-hint {
@@ -1523,5 +1495,90 @@ function customCardStats(c: CustomItem): { key: string; value: string }[] {
   letter-spacing: 2px;
   color: var(--xs-ink-mute);
   margin: 0 8px;
+}
+
+/* —— 剧情物品：独立配色（毒紫），与普通资材明显区分 —— */
+.xs-plot-section {
+  margin-bottom: 22px;
+  padding: 12px 14px 14px;
+  border: 1px solid rgba(124, 58, 143, 0.45);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(124, 58, 143, 0.10), rgba(124, 58, 143, 0.03));
+}
+.xs-plot-title {
+  border-left-color: #7c3a8f;
+}
+.xs-plot-note {
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #7c3a8f;
+}
+.xs-plot-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+@media (min-width: 600px) {
+  .xs-plot-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 880px) {
+  .xs-plot-grid { grid-template-columns: repeat(3, 1fr); }
+}
+.xs-plot-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px 14px;
+  border: 1px solid rgba(124, 58, 143, 0.5);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(124, 58, 143, 0.14), rgba(124, 58, 143, 0.05));
+  box-shadow: 0 0 0 1px rgba(124, 58, 143, 0.25) inset, 0 6px 18px -10px rgba(124, 58, 143, 0.5);
+  overflow: hidden;
+}
+.xs-plot-glyph {
+  position: absolute;
+  right: 8px;
+  bottom: 2px;
+  font-family: var(--xs-font-display);
+  font-size: 42px;
+  line-height: 1;
+  color: rgba(124, 58, 143, 0.14);
+  pointer-events: none;
+  user-select: none;
+}
+.xs-plot-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.xs-plot-name {
+  font-family: var(--xs-font-display);
+  font-size: 15px;
+  letter-spacing: 2px;
+  color: var(--xs-ink);
+}
+.xs-plot-lock {
+  flex: 0 0 auto;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: #7c3a8f;
+  font-weight: 700;
+}
+.xs-plot-pill {
+  background: #7c3a8f;
+  border-color: #6a2f7c;
+  color: #fff;
+}
+.xs-plot-desc {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--xs-ink-soft);
+  position: relative;
+  z-index: 1;
 }
 </style>

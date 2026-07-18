@@ -160,11 +160,13 @@
             :class="{
               active: store.selection.storyId === s.id,
               disabled: !storyAvailable(s),
+              'xs-story-card-plot': s.剧情,
             }"
             :disabled="!storyAvailable(s)"
             @click="storyAvailable(s) && store.selectStory(s.id)"
           >
             <div class="xs-story-head">
+              <span v-if="s.剧情" class="xs-pill xs-pill-plot">★ 剧情</span>
               <span class="xs-story-name">{{ s.name }}</span>
               <span v-if="s.类型" class="xs-pill xs-pill-jade">{{ s.类型 }}</span>
               <span v-if="s.recommend" class="xs-pill xs-pill-cinnabar">推荐：{{ s.recommend }}</span>
@@ -256,13 +258,26 @@ const store = useStartStore();
 const kindFilter = ref<'' | StoryKind>('');
 const onlyAvailable = ref(false);
 
-const filteredStories = computed(() =>
-  stories.filter(s => {
+const _storyOrder = new Map(stories.map((s, i) => [s.id, i]));
+const filteredStories = computed(() => {
+  const list = stories.filter(s => {
     if (kindFilter.value && s.类型 !== kindFilter.value) return false;
     if (onlyAvailable.value && !isStoryAvailable(s, store.selection)) return false;
     return true;
-  }),
-);
+  });
+  // 排序：可选剧本置顶；可选剧本内，剧情剧本再置顶；其余保持原序
+  return list.slice().sort((a, b) => {
+    const aAvail = isStoryAvailable(a, store.selection);
+    const bAvail = isStoryAvailable(b, store.selection);
+    if (aAvail !== bAvail) return aAvail ? -1 : 1;
+    if (aAvail) {
+      const aPlot = !!a.剧情;
+      const bPlot = !!b.剧情;
+      if (aPlot !== bPlot) return aPlot ? -1 : 1;
+    }
+    return (_storyOrder.get(a.id) ?? 0) - (_storyOrder.get(b.id) ?? 0);
+  });
+});
 
 const hasFilters = computed(() => !!kindFilter.value || onlyAvailable.value);
 
@@ -613,6 +628,28 @@ function selectCustom() {
 }
 .xs-story-card-custom {
   border-style: dashed;
+}
+/* —— 剧情剧本：毒紫特殊样式（与剧情物品呼应） —— */
+.xs-story-card-plot {
+  border-color: rgba(124, 58, 143, 0.55);
+  background:
+    linear-gradient(180deg, rgba(124, 58, 143, 0.10), var(--xs-glass));
+  box-shadow: 0 0 0 1px rgba(124, 58, 143, 0.2) inset;
+}
+.xs-story-card-plot:hover:not(.active):not(.disabled) {
+  border-color: #7c3a8f;
+  box-shadow: 0 8px 22px -12px rgba(124, 58, 143, 0.6);
+}
+.xs-story-card-plot.active {
+  border-color: #7c3a8f;
+  background: linear-gradient(180deg, rgba(124, 58, 143, 0.18), var(--xs-glass-strong));
+  box-shadow: 0 0 0 1px #7c3a8f inset, 0 8px 24px -10px rgba(124, 58, 143, 0.6);
+}
+.xs-pill-plot {
+  background: #7c3a8f;
+  border-color: #6a2f7c;
+  color: #fff;
+  letter-spacing: 1px;
 }
 .xs-story-head {
   display: flex;
