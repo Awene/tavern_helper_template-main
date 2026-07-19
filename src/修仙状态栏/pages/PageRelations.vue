@@ -582,6 +582,20 @@
             <h4>着装</h4>
             <p><EditableValue v-model="npc.着装" label="着装" multiline :rows="3" /></p>
           </div>
+          <!-- 性器（名器）：外部脚本按五行随机填充；仅有内容或编辑态显示，默认折叠，可编辑 -->
+          <div v-if="!_.isEmpty(npc.性器) || state.editMode" class="xy-mini-block">
+            <h4
+              class="xy-genital-toggle"
+              @click="state.genitalOpen[String(name)] = !state.genitalOpen[String(name)]"
+            >
+              性器
+              <span v-if="!_.isEmpty(npc.性器)" class="xy-genital-count">{{ Object.keys(npc.性器).length }}</span>
+              <span class="xy-collapse-caret">{{ state.genitalOpen[String(name)] ? '▾' : '▸' }}</span>
+            </h4>
+            <div v-show="state.genitalOpen[String(name)]" class="xy-genital-list">
+              <EffectList v-model="npc.性器" line-class="xy-genital-line" label-name="性器" />
+            </div>
+          </div>
         </div>
       </article>
     </div>

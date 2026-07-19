@@ -25,12 +25,15 @@ export const state = reactive({
   toast: '' as string,
   appCollapsed: false,
   editMode: false,
+  settingsOpen: false,
   userRootOpen: false,
   userBodyOpen: false,
   userSkillOpen: false,
   userBuffOpen: false,
   // 道身 · 技艺下挂的配方面板展开状态(按技艺名 key)
   skillRecipeOpen: {} as Record<string, boolean>,
+  // 性器折叠状态(按角色 key：'user'=主角 / NPC名=对应NPC；默认 false=折叠)
+  genitalOpen: {} as Record<string, boolean>,
   confirmDelete: null as null | { kind: string; key: string; label: string },
 });
 

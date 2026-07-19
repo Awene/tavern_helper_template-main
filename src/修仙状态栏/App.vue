@@ -61,6 +61,18 @@
           </svg>
           <span>总结</span>
         </button>
+        <button
+          v-if="!state.appCollapsed"
+          type="button"
+          class="xy-settings-btn"
+          title="打开设置"
+          @click="state.settingsOpen = true"
+        >
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true">
+            <path d="M19.14 12.94a7.5 7.5 0 0 0 .05-.94 7.5 7.5 0 0 0-.05-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96a7 7 0 0 0-1.62-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54a7 7 0 0 0-1.62.94l-2.39-.96a.5.5 0 0 0-.61.22L2.29 8.2a.5.5 0 0 0 .12.64l2.03 1.58a7.5 7.5 0 0 0 0 1.88l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .61.22l2.39-.96a7 7 0 0 0 1.62.94l.36 2.54a.5.5 0 0 0 .5.42h3.84a.5.5 0 0 0 .5-.42l.36-2.54a7 7 0 0 0 1.62-.94l2.39.96a.5.5 0 0 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/>
+          </svg>
+          <span>设置</span>
+        </button>
         <span v-if="state.appCollapsed" class="xy-app-collapse-tag">
           {{ store.data.姓名 }} · {{ store.data.修炼进度.境界 }}
         </span>
@@ -333,6 +345,21 @@
                     @click="state.editMode && cycleEssence(store.data, '元阴')"
                   >元阴<span class="xy-bool-mark">{{ essenceMark(store.data.体质.元阴) }}</span></span>
                 </div>
+                <!-- 性器（名器）：外部脚本按五行随机填充；仅有内容或编辑态显示，默认折叠，可编辑 -->
+                <div v-if="!_.isEmpty(store.data.性器) || state.editMode" class="xy-body-genital">
+                  <button
+                    type="button"
+                    class="xy-genital-toggle"
+                    @click="state.genitalOpen['user'] = !state.genitalOpen['user']"
+                  >
+                    <span class="xy-attr-label">性器</span>
+                    <span v-if="!_.isEmpty(store.data.性器)" class="xy-genital-count">{{ Object.keys(store.data.性器).length }}</span>
+                    <span class="xy-collapse-caret">{{ state.genitalOpen['user'] ? '▾' : '▸' }}</span>
+                  </button>
+                  <div v-show="state.genitalOpen['user']" class="xy-genital-list">
+                    <EffectList v-model="store.data.性器" line-class="xy-genital-line" label-name="性器" />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -592,6 +619,9 @@
       </div>
     </transition>
 
+    <!-- ============ 设置面板 ============ -->
+    <SettingsPanel v-if="state.settingsOpen" />
+
     <!-- ============ Toast 提示 ============ -->
     <transition name="xy-toast">
       <div v-if="state.toast" class="xy-toast" @click="state.toast = ''">
@@ -623,6 +653,7 @@ import PageMap from './pages/PageMap.vue';
 import EditableValue from './pages/EditableValue.vue';
 import EffectList from './pages/EffectList.vue';
 import IdentityTags from './pages/IdentityTags.vue';
+import SettingsPanel from './pages/SettingsPanel.vue';
 import {
   state,
   tabs,

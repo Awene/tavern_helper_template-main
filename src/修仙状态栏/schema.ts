@@ -298,6 +298,9 @@ const NPCSchema = z.object({
   // 细节可见（前端偏好）：默认 true；为 false 时，变量输出 EJS 会把该 NPC 的
   // 物品/功法/装备/傀儡/灵兽 从发送给 AI 的 <status_current_variable> 中隐去。
   细节可见: z.boolean().prefault(true),
+  // 性器（外部脚本按五行随机填充，AI 只读不更新；仅 NSFW 基础指导开启时经专属条目发给 AI）。
+  // key = 口腔/屄穴/肛门/乳房（或玩家自填）；value = 名器"描述"（不含名器名）。
+  性器: z.record(z.string(), z.string()).prefault({}),
 });
 
 // ===== 无主战斗单位 (关系列表条目, 类型='傀儡'|'灵兽') =====
@@ -397,6 +400,9 @@ export const CultivationStatusSchema = z.object({
   身份: z.array(z.string()).prefault([]),
   灵根: SpiritualRootSchema,
   体质: PhysiqueSchema,
+  // 性器（外部脚本按五行随机填充，AI 只读不更新；仅 NSFW 基础指导开启时经专属条目发给 AI）。
+  // key = 口腔/屄穴/肛门/乳房（或玩家自填）；value = 名器"描述"（不含名器名）。
+  性器: z.record(z.string(), z.string()).prefault({}),
   修炼进度: CultivationProgressSchema,
   技艺: SkillSchema,
   资源池: ResourcePoolSchema,

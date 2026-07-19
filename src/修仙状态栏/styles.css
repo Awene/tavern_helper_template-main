@@ -148,6 +148,31 @@
   flex: 0 0 auto;
 }
 
+/* 设置入口按钮（复用编辑/总结按钮观感） */
+.xy-settings-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  padding: 3px 8px;
+  border: 1px solid var(--xy-line-gold);
+  border-radius: 12px;
+  background: var(--xy-paper-warm);
+  color: var(--xy-ink-mute);
+  font-family: var(--xy-font-display);
+  font-size: 11px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.xy-settings-btn:hover {
+  background: var(--xy-tint-gold-strong);
+  color: var(--xy-ink);
+}
+.xy-settings-btn svg {
+  flex: 0 0 auto;
+}
+
 /* ============ 行内编辑组件 ============ */
 .xy-editable {
   display: inline-flex;
@@ -434,6 +459,91 @@
   border-color: var(--xy-cinnabar-deep);
   color: var(--xy-paper);
 }
+/* ============ 设置面板 ============ */
+.xy-settings-box {
+  background: var(--xy-paper);
+  border: 1px solid var(--xy-line-gold);
+  border-radius: 8px;
+  padding: 18px 20px 14px;
+  width: min(360px, 92vw);
+  max-height: 84vh;
+  overflow: auto;
+  box-shadow: 0 12px 40px -10px rgba(0, 0, 0, 0.45);
+}
+.xy-set-section {
+  margin-bottom: 14px;
+}
+.xy-set-label {
+  font-family: var(--xy-font-display);
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: var(--xy-ink);
+  margin-bottom: 5px;
+}
+.xy-set-hint {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--xy-ink-mute);
+  margin-bottom: 10px;
+}
+.xy-set-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.xy-set-options.busy {
+  opacity: 0.7;
+  pointer-events: none;
+}
+.xy-set-opt {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 9px 12px;
+  border: 1px solid var(--xy-line);
+  border-radius: 6px;
+  background: var(--xy-paper-warm);
+  color: var(--xy-ink-soft);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.18s ease;
+}
+.xy-set-opt:hover {
+  border-color: var(--xy-line-gold);
+  color: var(--xy-ink);
+}
+.xy-set-opt.active {
+  border-color: var(--xy-cinnabar);
+  background: var(--xy-tint-cinnabar-edge);
+  color: var(--xy-ink);
+}
+.xy-set-opt-name {
+  font-family: var(--xy-font-display);
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+.xy-set-opt-tag {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--xy-ink-mute);
+}
+.xy-set-opt-check {
+  position: absolute;
+  top: 9px;
+  right: 12px;
+  color: var(--xy-cinnabar-deep);
+  font-weight: 700;
+}
+.xy-set-state {
+  margin-top: 8px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--xy-ink-mute);
+  text-align: right;
+}
+
 .xy-btn-danger:hover {
   background: var(--xy-cinnabar-deep);
   color: var(--xy-paper);
@@ -1136,6 +1246,59 @@ button.xy-card-title-clickable.open .xy-card-summary {
 }
 .xy-effect-desc {
   color: var(--xy-ink-soft);
+}
+
+/* 性器（名器）：主角体质区 / NPC 卡（默认折叠） */
+.xy-body-genital {
+  margin-top: 10px;
+}
+/* 折叠头（主角用 button、NPC 用 h4，均可点） */
+.xy-genital-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  user-select: none;
+}
+.xy-genital-toggle .xy-collapse-caret {
+  font-size: 10px;
+  color: var(--xy-cinnabar);
+}
+.xy-genital-count {
+  font-size: 11px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--xy-tint-cinnabar-mid, rgba(177, 58, 58, 0.12));
+  color: var(--xy-cinnabar-deep);
+}
+.xy-genital-list {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.xy-genital-line {
+  display: block;
+  font-size: 12.5px;
+  line-height: 1.55;
+  padding: 4px 8px;
+  border-left: 2px solid var(--xy-cinnabar);
+  background: var(--xy-paper-warm);
+  border-radius: 0 4px 4px 0;
+  color: var(--xy-ink-soft);
+}
+.xy-genital-line .xy-effect-name-edit {
+  color: var(--xy-cinnabar);
+  font-family: var(--xy-font-display);
+  font-weight: 600;
 }
 
 /* 技艺 */
