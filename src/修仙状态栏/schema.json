@@ -26,6 +26,16 @@
     "体质": {
       "$ref": "#/$defs/__schema2"
     },
+    "性器": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
     "修炼进度": {
       "$ref": "#/$defs/__schema3"
     },
@@ -245,6 +255,16 @@
               "细节可见": {
                 "default": true,
                 "type": "boolean"
+              },
+              "性器": {
+                "default": {},
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "string"
+                }
               }
             }
           },
