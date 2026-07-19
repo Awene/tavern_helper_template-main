@@ -83,7 +83,11 @@ let io: Server;
 function watch_tavern_helper(compiler: webpack.Compiler) {
   if (compiler.options.watch) {
     if (!io) {
+<<<<<<< HEAD
       const port = config.port ?? 6624;
+=======
+      const port = config.port ?? 6621;
+>>>>>>> a4d60f52b8b1b0f872a80088ba7e339b0933eeb2
       io = new Server(port, { cors: { origin: '*' } });
       console.info(`\x1b[36m[tavern_helper]\x1b[0m 已启动酒馆监听服务`);
       io.on('connect', socket => {
@@ -452,6 +456,10 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
             { from: 'klona', imports: ['klona'] },
             { from: 'vue-final-modal', imports: ['useModal'] },
             { from: 'zod', imports: ['z'] },
+<<<<<<< HEAD
+=======
+            { from: 'type-fest', imports: [['*', 'TypeFest']], type: true },
+>>>>>>> a4d60f52b8b1b0f872a80088ba7e339b0933eeb2
           ],
         }),
         unpluginVueComponents({
@@ -560,9 +568,23 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       const cdn = {
         sass: 'https://jspm.dev/sass',
       };
+<<<<<<< HEAD
       return callback(
         null,
         'module-import ' + (cdn[request as keyof typeof cdn] ?? `https://testingcf.jsdelivr.net/npm/${request}/+esm`),
+=======
+      const package_json = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, 'package.json'), 'utf-8')) as {
+        dependencies?: Record<string, string>;
+        devDependencies?: Record<string, string>;
+      };
+      const package_versions = { ...package_json.devDependencies, ...package_json.dependencies };
+      const version = package_versions[request]?.replace(/^[~^]/, '');
+      const versioned_request = /^[.\d]+$/.test(version) ? `${request}@${version}` : request;
+      return callback(
+        null,
+        'module-import ' +
+          (cdn[request as keyof typeof cdn] ?? `https://testingcf.jsdelivr.net/npm/${versioned_request}/+esm`),
+>>>>>>> a4d60f52b8b1b0f872a80088ba7e339b0933eeb2
       );
     },
   });
