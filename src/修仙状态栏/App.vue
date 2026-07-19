@@ -49,6 +49,18 @@
           </svg>
           <span>{{ state.editMode ? '编辑中' : '编辑' }}</span>
         </button>
+        <button
+          v-if="!state.appCollapsed"
+          type="button"
+          class="xy-summary-btn"
+          title="打开总结助手"
+          @click="openSummary"
+        >
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true">
+            <path d="M4 5h16v2H4V5zm0 4h16v2H4V9zm0 4h10v2H4v-2zm0 4h16v2H4v-2z"/>
+          </svg>
+          <span>总结</span>
+        </button>
         <span v-if="state.appCollapsed" class="xy-app-collapse-tag">
           {{ store.data.姓名 }} · {{ store.data.修炼进度.境界 }}
         </span>
@@ -661,6 +673,21 @@ function applyTheme(theme: 'light' | 'dark') {
 }
 function toggleTheme() {
   applyTheme(isDark.value ? 'light' : 'dark');
+}
+
+// 打开「总结助手」面板：向总结脚本(主页面)广播事件。
+// eventEmit 是酒馆助手的全局事件总线，跨消息 iframe ↔ 预设脚本送达；
+// 总结.js 里 eventOn('本格修仙:打开总结', showSettingsPopup) 接收并弹出面板。
+function openSummary() {
+  try {
+    if (typeof eventEmit === 'function') {
+      eventEmit('本格修仙:打开总结');
+    } else {
+      console.warn('[状态栏] eventEmit 不可用，无法打开总结');
+    }
+  } catch (e) {
+    console.error('[状态栏] 打开总结失败：', e);
+  }
 }
 onMounted(() => {
   let saved: 'light' | 'dark' = 'light';

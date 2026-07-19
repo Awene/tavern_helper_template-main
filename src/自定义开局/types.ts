@@ -338,6 +338,15 @@ export interface CustomStory {
   settings: StorySettings;
 }
 
+// =============== 变量更新模式 ===============
+/**
+ * 变量更新方式：
+ * - `'额外API'`：由独立的额外模型在「变量更新轮」输出 UpdateVariable（推荐，正文不受污染）
+ * - `'随主API'`：主模型在讲故事的同一轮里顺带输出变量更新
+ * 该选择会开关世界书 / 预设中对应的「二选一」条目，详见 ./apiMode.ts
+ */
+export type ApiMode = '额外API' | '随主API';
+
 // =============== 玩家选择快照 ===============
 export interface Selection {
   difficultyId: string | null;
@@ -360,6 +369,8 @@ export interface Selection {
   customStory: CustomStory | null;
   /** 道号（玩家自行输入） */
   道号: string;
+  /** 变量更新方式（开关对应世界书/预设条目）；默认推荐「额外API」 */
+  变量更新模式: ApiMode;
 }
 
 // =============== 持久化预设 ===============

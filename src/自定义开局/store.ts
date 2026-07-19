@@ -19,6 +19,7 @@ import {
   physiqueCost,
 } from './config';
 import type {
+  ApiMode,
   CustomItem,
   CustomStory,
   Gender,
@@ -43,6 +44,7 @@ const emptySelection = (): Selection => ({
   storyId: null,
   customStory: null,
   道号: '',
+  变量更新模式: '额外API',
 });
 
 const normalizeSelection = (raw: any): Selection => {
@@ -67,6 +69,7 @@ const normalizeSelection = (raw: any): Selection => {
     customItems: Array.isArray(raw.customItems) ? raw.customItems : [],
     customStory,
     道号: typeof raw.道号 === 'string' ? raw.道号 : '',
+    变量更新模式: raw.变量更新模式 === '随主API' ? '随主API' : '额外API',
   };
 };
 
@@ -358,6 +361,11 @@ export const useStartStore = defineStore('xs-start', () => {
     selection.value.storyId = id;
   }
 
+  // ============ 变量更新模式 ============
+  function setApiMode(mode: ApiMode) {
+    selection.value.变量更新模式 = mode;
+  }
+
   function resetAll() {
     selection.value = emptySelection();
     stepIndex.value = 0;
@@ -446,6 +454,7 @@ export const useStartStore = defineStore('xs-start', () => {
     setCustomStory,
     clearCustomStory,
     selectStory,
+    setApiMode,
     resetAll,
     ensureDefaultDifficulty,
     savePreset,

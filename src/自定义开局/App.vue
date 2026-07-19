@@ -97,6 +97,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useStartStore } from './store';
 import StepCover from './steps/StepCover.vue';
+import StepApiMode from './steps/StepApiMode.vue';
 import StepDifficulty from './steps/StepDifficulty.vue';
 import StepRoot from './steps/StepRoot.vue';
 import StepLocation from './steps/StepLocation.vue';
@@ -109,6 +110,7 @@ const store = useStartStore();
 
 const steps = [
   { title: '封面', comp: StepCover },
+  { title: '配置', comp: StepApiMode },
   { title: '难度', comp: StepDifficulty },
   { title: '灵根 · 体质', comp: StepRoot },
   { title: '出生地', comp: StepLocation },

@@ -15,6 +15,7 @@ import {
   rootDisplayName,
   rootTierCanonical,
 } from './config';
+import { applyApiMode } from './apiMode';
 import { normalizeItemForMvu } from './itemNormalizer';
 import type { Selection, StoryOption } from './types';
 
@@ -461,6 +462,9 @@ export function generateAIPrompt(sel: Selection): string {
 export async function commitJourney(
   sel: Selection,
 ): Promise<{ ok: boolean; reason?: string }> {
+  // 0) 按玩家选择的变量更新模式，确保世界书/预设条目为最终状态（幂等）
+  await applyApiMode(sel.变量更新模式);
+
   // 1) 写 MVU 变量
   const data = buildInitialStatData(sel);
   const mvuOk = await writeInitialStatData(data);

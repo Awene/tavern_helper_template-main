@@ -123,6 +123,31 @@
   flex: 0 0 auto;
 }
 
+/* 总结助手入口按钮（复用编辑按钮观感） */
+.xy-summary-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  padding: 3px 8px;
+  border: 1px solid var(--xy-line-gold);
+  border-radius: 12px;
+  background: var(--xy-paper-warm);
+  color: var(--xy-ink-mute);
+  font-family: var(--xy-font-display);
+  font-size: 11px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.xy-summary-btn:hover {
+  background: var(--xy-tint-gold-strong);
+  color: var(--xy-ink);
+}
+.xy-summary-btn svg {
+  flex: 0 0 auto;
+}
+
 /* ============ 行内编辑组件 ============ */
 .xy-editable {
   display: inline-flex;

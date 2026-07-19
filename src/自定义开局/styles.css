@@ -770,3 +770,81 @@
   font-size: 13px;
   letter-spacing: 2px;
 }
+
+/* ============ 配置页 · 变量更新方式 ============ */
+.xs-apimode-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.xs-apimode-cell > .xs-card {
+  flex: 1 1 auto;
+}
+.xs-apimode-tut {
+  align-self: stretch;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+/* ============ 额外API 教程弹窗 ============ */
+.xs-tut-modal {
+  width: min(94vw, 620px);
+}
+.xs-tut-lead {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--xs-ink);
+  margin-bottom: 12px;
+}
+.xs-tut-steps {
+  margin: 0 0 14px;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--xs-ink);
+}
+.xs-tut-steps li::marker {
+  color: var(--xs-jade, #4a7c59);
+  font-weight: 700;
+}
+.xs-tut-figure {
+  margin: 0 0 12px;
+  padding: 8px;
+  background: var(--xs-paper-warm);
+  border: 1px solid var(--xs-line-gold);
+  border-radius: 8px;
+}
+.xs-tut-img {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  border-radius: 6px;
+  border: 1px solid var(--xs-line);
+}
+.xs-tut-img-fallback {
+  padding: 20px 12px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--xs-ink-mute);
+}
+.xs-tut-figure figcaption {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--xs-ink-mute);
+}
+.xs-tut-note {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--xs-ink-mute);
+  padding: 10px 12px;
+  background: var(--xs-paper-warm);
+  border-left: 3px solid var(--xs-line-gold);
+  border-radius: 4px;
+}

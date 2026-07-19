@@ -295,6 +295,9 @@ const NPCSchema = z.object({
     .number()
     .transform(n => clamp(n, -100, 100))
     .prefault(0),
+  // 细节可见（前端偏好）：默认 true；为 false 时，变量输出 EJS 会把该 NPC 的
+  // 物品/功法/装备/傀儡/灵兽 从发送给 AI 的 <status_current_variable> 中隐去。
+  细节可见: z.boolean().prefault(true),
 });
 
 // ===== 无主战斗单位 (关系列表条目, 类型='傀儡'|'灵兽') =====

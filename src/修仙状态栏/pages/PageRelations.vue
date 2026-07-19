@@ -158,6 +158,23 @@
               <path d="M9 3v1H4v2h16V4h-5V3H9zM6 8l1 13h10l1-13H6zm3 2h2v9H9v-9zm4 0h2v9h-2v-9z" />
             </svg>
           </button>
+          <!-- 细节可见开关：右侧、垃圾桶正下方的小圆；悬停即显功能说明 -->
+          <button
+            type="button"
+            class="xy-vis-eye"
+            :class="{ 'xy-vis-off': npc.细节可见 === false }"
+            :title="npc.细节可见 === false
+              ? '细节已隐藏：该人物的物品/功法/装备/傀儡/灵兽不发送给 AI（前端此处仍可查看）· 点击恢复'
+              : '细节可见：该人物的物品/功法/装备/傀儡/灵兽会发送给 AI · 点击隐藏（关闭后 AI 收不到这些细节，可省篇幅/避免过早暴露）'"
+            @click.stop="toggleDetail(npc)"
+          >
+            <svg v-if="npc.细节可见 !== false" viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true">
+              <path d="M12 5c-5 0-9 4.5-10 7 1 2.5 5 7 10 7s9-4.5 10-7c-1-2.5-5-7-10-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" />
+            </svg>
+            <svg v-else viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true">
+              <path d="M2 4.27L3.28 3l17.72 17.72-1.27 1.28-3.11-3.11A11.9 11.9 0 0 1 12 19c-5 0-9-4.5-10-7a13.2 13.2 0 0 1 3.62-4.35L2 4.27zM12 8a4 4 0 0 1 4 4c0 .5-.1.97-.27 1.4l-5.13-5.13A3.9 3.9 0 0 1 12 8zm0-3c5 0 9 4.5 10 7a13.3 13.3 0 0 1-2.16 2.98l-2.9-2.9A4 4 0 0 0 12 8c-.4 0-.79.06-1.15.17L8.6 5.92C9.66 5.32 10.8 5 12 5z" />
+            </svg>
+          </button>
         </div>
 
         <div v-if="state.openedNPC === name" class="xy-npc-body" @click.stop>
@@ -620,10 +637,51 @@ const wildUnits = computed(() =>
   sortedRelations.value.filter(({ npc }) => npc?.类型 === '傀儡' || npc?.类型 === '灵兽'),
 );
 
+// 切换某 NPC 的「细节可见」（默认视为可见；关闭后 EJS 会从发给 AI 的变量里隐去其 物品/功法/装备/傀儡/灵兽）
+function toggleDetail(npc: any) {
+  npc.细节可见 = npc.细节可见 === false ? true : false;
+}
+
 // 元阴/元阳 性征三态(并入 体质)的判定/循环/展示助手已移至 composables.ts,供 NPC 与玩家共用
 </script>
 
 <style scoped>
+/* 保证垃圾桶/眼睛这两个绝对定位小圆锚定在人物头栏右上（与 padding-right 预留列一致） */
+.xy-npc-head {
+  position: relative;
+}
+/* 细节可见开关：右侧、垃圾桶正下方的小圆（常驻可见，指示当前状态） */
+.xy-vis-eye {
+  position: absolute;
+  top: 26px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--xy-line);
+  border-radius: 50%;
+  background: var(--xy-paper);
+  color: var(--xy-jade-deep, #3d6b54);
+  cursor: pointer;
+  transition: all 0.16s ease;
+  z-index: 4;
+}
+.xy-vis-eye:hover {
+  border-color: var(--xy-jade, #5b8a72);
+  background: var(--xy-tint-jade-mid, rgba(91, 138, 114, 0.14));
+}
+.xy-vis-eye.xy-vis-off {
+  color: var(--xy-ink-faint, #b9b0a0);
+}
+.xy-vis-eye.xy-vis-off:hover {
+  color: var(--xy-cinnabar, #b13a3a);
+  border-color: var(--xy-cinnabar, #b13a3a);
+  background: var(--xy-tint-cinnabar-faint, rgba(177, 58, 58, 0.06));
+}
+
 .xy-wild-unit {
   border-left: 3px solid var(--xy-cinnabar, #a07f48);
   padding: 0;
