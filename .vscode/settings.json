@@ -49,6 +49,7 @@
   "[vue]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+<<<<<<< HEAD
   "typescript.tsdk": "node_modules/typescript/lib",
   "python-envs.pythonProjects": [
     {
@@ -57,4 +58,7 @@
       "packageManager": "ms-python.python:pip"
     }
   ]
+=======
+  "typescript.tsdk": "node_modules/typescript/lib"
+>>>>>>> ff2bba6705f6e8d4882c9919916e7111f4f71dea
 }
