@@ -35,6 +35,8 @@ export const state = reactive({
   // 性器折叠状态(按角色 key：'user'=主角 / NPC名=对应NPC；默认 false=折叠)
   genitalOpen: {} as Record<string, boolean>,
   confirmDelete: null as null | { kind: string; key: string; label: string },
+  // 人物细化弹窗当前对应的 NPC 名；null 表示关闭。
+  characterRefinement: null as string | null,
 });
 
 const npcSectionOpen = reactive<Record<string, Record<string, boolean>>>({});
@@ -422,6 +424,14 @@ export const showToast = (msg: string) => {
   toastTimer = setTimeout(() => {
     if (state.toast === msg) state.toast = '';
   }, 2800);
+};
+
+// ============ 人物细化弹窗 ============
+export const openCharacterRefinement = (name: string) => {
+  state.characterRefinement = name;
+};
+export const closeCharacterRefinement = () => {
+  state.characterRefinement = null;
 };
 
 // ============ 灯箱 ============

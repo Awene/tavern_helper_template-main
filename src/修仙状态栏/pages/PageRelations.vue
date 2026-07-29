@@ -175,6 +175,16 @@
               <path d="M2 4.27L3.28 3l17.72 17.72-1.27 1.28-3.11-3.11A11.9 11.9 0 0 1 12 19c-5 0-9-4.5-10-7a13.2 13.2 0 0 1 3.62-4.35L2 4.27zM12 8a4 4 0 0 1 4 4c0 .5-.1.97-.27 1.4l-5.13-5.13A3.9 3.9 0 0 1 12 8zm0-3c5 0 9 4.5 10 7a13.3 13.3 0 0 1-2.16 2.98l-2.9-2.9A4 4 0 0 0 12 8c-.4 0-.79.06-1.15.17L8.6 5.92C9.66 5.32 10.8 5 12 5z" />
             </svg>
           </button>
+          <button
+            type="button"
+            class="xy-character-refine"
+            title="人物细化：用当前世界书和人物变量生成细化信息或独立世界书条目"
+            @click.stop="openCharacterRefinement(String(name))"
+          >
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true">
+              <path d="m15.5 2 .95 2.55L19 5.5l-2.55.95L15.5 9l-.95-2.55L12 5.5l2.55-.95L15.5 2ZM6.9 7.1l1.45 3.9 3.9 1.45-3.9 1.45-1.45 3.9L5.45 13.9l-3.9-1.45 3.9-1.45L6.9 7.1Zm10.47 5.4 1.02 2.73 2.73 1.02-2.73 1.02-1.02 2.73-1.02-2.73-2.73-1.02 2.73-1.02 1.02-2.73Z" />
+            </svg>
+          </button>
         </div>
 
         <div v-if="state.openedNPC === name" class="xy-npc-body" @click.stop>
@@ -621,6 +631,7 @@ import {
   favorClass,
   favorLabel,
   requestDelete,
+  openCharacterRefinement,
   isSectionOpen,
   toggleSection,
   hasSkills,
@@ -694,6 +705,30 @@ function toggleDetail(npc: any) {
   color: var(--xy-cinnabar, #b13a3a);
   border-color: var(--xy-cinnabar, #b13a3a);
   background: var(--xy-tint-cinnabar-faint, rgba(177, 58, 58, 0.06));
+}
+/* 人物细化：位于详情可见开关下方，始终可见以便快速调用。 */
+.xy-character-refine {
+  position: absolute;
+  top: 48px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--xy-line);
+  border-radius: 50%;
+  background: var(--xy-paper);
+  color: var(--xy-gold-deep, #8a682b);
+  cursor: pointer;
+  transition: all 0.16s ease;
+  z-index: 4;
+}
+.xy-character-refine:hover {
+  color: var(--xy-cinnabar, #b13a3a);
+  border-color: var(--xy-gold, #b18a42);
+  background: var(--xy-tint-gold-mid, rgba(177, 138, 66, 0.14));
 }
 
 .xy-wild-unit {

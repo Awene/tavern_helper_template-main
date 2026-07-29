@@ -622,6 +622,9 @@
     <!-- ============ 设置面板 ============ -->
     <SettingsPanel v-if="state.settingsOpen" />
 
+    <!-- ============ 人物细化 ============ -->
+    <CharacterRefinementModal v-if="state.characterRefinement" />
+
     <!-- ============ Toast 提示 ============ -->
     <transition name="xy-toast">
       <div v-if="state.toast" class="xy-toast" @click="state.toast = ''">
@@ -654,6 +657,7 @@ import EditableValue from './pages/EditableValue.vue';
 import EffectList from './pages/EffectList.vue';
 import IdentityTags from './pages/IdentityTags.vue';
 import SettingsPanel from './pages/SettingsPanel.vue';
+import CharacterRefinementModal from './pages/CharacterRefinementModal.vue';
 import {
   state,
   tabs,
