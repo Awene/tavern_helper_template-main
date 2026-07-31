@@ -26,6 +26,7 @@ export function defineMvuDataStore<T extends z.ZodObject>(
         additional_setup(data);
       }
 
+<<<<<<< HEAD
       // 上一次处理过的原始 stat_data 快照，用作轮询的廉价挡板（见下）。
       let last_seen_stat_data: unknown = undefined;
 
@@ -46,6 +47,10 @@ export function defineMvuDataStore<T extends z.ZodObject>(
           return;
         }
         last_seen_stat_data = _.cloneDeep(stat_data);
+=======
+      useIntervalFn(() => {
+        const stat_data = _.get(getVariables(variable_option), 'stat_data', {});
+>>>>>>> d3edc570be82dfef999b800e6b45a51d0863a025
         const result = schema.safeParse(stat_data);
         if (result.error) {
           return;
@@ -72,6 +77,7 @@ export function defineMvuDataStore<T extends z.ZodObject>(
               data.value = result.data;
             });
           }
+<<<<<<< HEAD
           // 关键护栏：楼层当前没有 stat_data 时绝不写回。
           // 前端只应“修改已有存档”，绝不该用 schema 默认值去“初始化”一个楼层的变量——
           // 否则在聊天加载竞态下（读到空/残缺 → 被 prefault 补成默认）会把默认值写回、覆盖真存档
@@ -79,6 +85,8 @@ export function defineMvuDataStore<T extends z.ZodObject>(
           if (!_.has(getVariables(variable_option), 'stat_data')) {
             return;
           }
+=======
+>>>>>>> d3edc570be82dfef999b800e6b45a51d0863a025
           updateVariablesWith(variables => _.set(variables, 'stat_data', result.data), variable_option);
         },
         { deep: true },
