@@ -785,6 +785,30 @@ function refinementPrompts(systemPrompt: string) {
   return [{ role: 'system' as const, content: systemPrompt }, 'user_input' as const];
 }
 
+function requestRuleRouterControl(mode: 'bypass' | 'forceRoute', reason: string): (() => void) | undefined {
+  const router = (window.top as any)?.CultivationRuleRouter || (window as any).CultivationRuleRouter;
+  const request =
+    typeof router?.requestRoute === 'function'
+      ? () => router.requestRoute(mode, reason)
+      : mode === 'bypass' && typeof router?.requestBypass === 'function'
+        ? () => router.requestBypass(reason)
+        : mode === 'forceRoute' && typeof router?.requestForceRoute === 'function'
+          ? () => router.requestForceRoute(reason)
+          : undefined;
+  const cancel = router?.cancelRequest || router?.cancelBypass || router?.cancelForceRoute;
+  if (!request || typeof cancel !== 'function') return undefined;
+  const id = request();
+  return () => cancel(id);
+}
+
+function requestRuleRouterBypass(reason: string): (() => void) | undefined {
+  return requestRuleRouterControl('bypass', reason);
+}
+
+function requestRuleRouterForceRoute(reason: string): (() => void) | undefined {
+  return requestRuleRouterControl('forceRoute', reason);
+}
+
 function assertTextResult(result: string | GenerateToolCallResult): string {
   if (typeof result !== 'string') throw new Error('主 API 返回了工具调用而非所需的结构化结果。');
   return result;
@@ -915,16 +939,23 @@ async function refineCharacter() {
   try {
     const current = _.cloneDeep(npc.value);
     if (!current) throw new Error(`未找到「${characterName.value}」的人物变量。`);
-    const systemPrompt = `你是修仙人物变量细化器。此请求是独立任务：只能使用下方列出的规则条目与变量格式样例；不发送也不得假定任何背景设定、世界书上下文、角色卡、聊天历史或酒馆预设。\n\n${refinementReferences()}\n\n任务：细化用户给出的一个 NPC 变量。只返回 JSON 对象中的 npc；不得输出推理、Markdown、EJS、剧情正文或代码。\n\n允许读取和更新的字段仅限：名称、寿元、体质、灵根、修炼进度（其中包含境界）、物品、功法、装备、傀儡、灵兽、资源池、技艺、性格、外貌、着装。名称只用于识别人物；境界只能写入修炼进度.境界，不能另建境界字段。\n\n硬性要求：\n1. 不得返回或改动其他字段。\n2. 物品、功法、装备、傀儡、灵兽必须是以名称为键的对象，不能是数组；根据规则补足合理的新条目。\n3. 输入中已有的物品、功法、装备、傀儡、灵兽必须完整保留：不得删除、改名、改数量或改字段。仅可新增不重名的条目。\n4. 输出严格遵循上方 MVU 变量格式样例；资源池不得超过上限，物品数量为合理非负数。\n5. 输出前必须自行验算所有数值：境界与进度上限、资源池当前值与上限、寿元、技艺数值、物品数量及新增条目数量均须符合所给规则与系数表；发现不一致时修正后再输出。\n6. 只输出一个可被 JSON.parse 直接解析的对象，形如 {"npc":{"寿元":{...},"修炼进度":{"境界":"..."},...}}，禁止代码块。`;
-    const result = assertTextResult(
-      await generateRaw({
-        user_input: `请细化以下人物变量：\n${refinementCharacterInput()}`,
-        ordered_prompts: refinementPrompts(systemPrompt),
-        should_silence: false,
-        max_chat_history: 0,
-        json_schema: characterVariableSchema,
-      }),
-    );
+    const systemPrompt = `你是修仙人物变量细化器。遵循下方列出的规则条目与变量格式样例。\n\n${refinementReferences()}\n\n任务：细化用户给出的一个 NPC 变量。只返回 JSON 对象中的 npc；不得输出推理、Markdown、EJS、剧情正文或代码。\n\n允许读取和更新的字段仅限：名称、寿元、体质、灵根、修炼进度（其中包含境界）、物品、功法、装备、傀儡、灵兽、资源池、技艺、性格、外貌、着装。名称只用于识别人物；境界只能写入修炼进度.境界，不能另建境界字段。\n\n硬性要求：\n1. 不得返回或改动其他字段。\n2. 物品、功法、装备、傀儡、灵兽必须是以名称为键的对象，不能是数组；根据规则补足合理的新条目。\n3. 输入中已有的物品、功法、装备、傀儡、灵兽必须完整保留：不得删除、改名、改数量或改字段。仅可新增不重名的条目。\n4. 输出严格遵循上方 MVU 变量格式样例；资源池不得超过上限，物品数量为合理非负数。\n5. 输出前必须自行验算所有数值：境界与进度上限、资源池当前值与上限、寿元、技艺数值、物品数量及新增条目数量均须符合所给规则与系数表；发现不一致时修正后再输出。\n6. 必须核验体质.效果：它必须是以效果名为键、数值化加成为值的对象，且至少有一条合规效果。每个值只能是明确的数值修正词条，如 "+25%"、"-10%"、"+3"、"+500 年"；禁止“恢复更快”“体魄强健”等无量化的自然语言描述。若效果缺失、为空、不是对象、含任一不合规值，或与体质不相称，则结合体质名称、三维、灵根及规则中的既有词条，为该体质确定并输出合规效果；不得重复悟性、根骨、气感本身已经表达的加成，也不得凭空编造规则外的机制。\n7. 只输出一个可被 JSON.parse 直接解析的对象，形如 {"npc":{"寿元":{...},"修炼进度":{"境界":"..."},...}}，禁止代码块。`;
+    const cancelRouteBypass = requestRuleRouterBypass('人物细化');
+    let result: string;
+    try {
+      result = assertTextResult(
+        await generateRaw({
+          user_input: `请细化以下人物变量：\n${refinementCharacterInput()}`,
+          ordered_prompts: refinementPrompts(systemPrompt),
+          // 保持酒馆停止按钮可中断；路由跳过由上方的一次性桥接标记处理。
+          should_silence: false,
+          max_chat_history: 0,
+          json_schema: characterVariableSchema,
+        }),
+      );
+    } finally {
+      cancelRouteBypass?.();
+    }
     const generated = parseGeneratedJson(result).npc;
     if (!generated || typeof generated !== 'object' || Array.isArray(generated))
       throw new Error('主 API 没有返回 npc 对象。');
@@ -1021,7 +1052,7 @@ function acceptAllPreview() {
 
 const worldbookSchema = {
   name: 'cultivation_greenlight_entry',
-  description: '一段可直接写入酒馆世界书的绿灯人物设定。',
+  description: '一段按人物提示词模板写成、可直接写入酒馆世界书的绿灯人物设定。',
   strict: false,
   value: {
     type: 'object',
@@ -1034,20 +1065,24 @@ const worldbookSchema = {
   },
 };
 
-// === 可手动修改：世界书生成的范例、格式与输出协议 ===
-function worldbookExampleInstructions(): string {
+// === 可手动修改：世界书生成的人物模板、字段长度与 JSON 输出协议 ===
+function worldbookTemplateInstructions(): string {
   return `
 
-<人物提示词示例>
+<人物模板>
 ${characterPromptExample}
-</人物提示词示例>
+</人物模板>
 
-上面的范例仅用于学习人物信息的细致程度、字段组织和修仙文风；不得照搬其中的人名、势力或具体设定。
+上方《人物模板》是 content 的唯一排版模板，必须完整保留其标题、字段、方括号性格小节及编号层级，并以当前人物的实际名称和设定替换全部占位符。不得照搬模板中的占位符、人名、势力或任何示例内容。
 
-补充格式要求：content 除标题外应以“身份：”“外貌：”“女性魅力：”（适用时）“着装（外）：”“着装（内）：”“法宝/物品：”“底色：”“性格/关系钩子：”等字段组织。
+填写规范：
+1. 标题固定为“### 人物名 (体型或年龄气质)”。“角色魅力”“着装(外)”“着装(内)”“法宝”“底色”五项逐项填写，字数遵守模板要求。
+2. 将两个性格特征替换为最能表现该人物的具体短语；每个性格小节均保留①②③三条不同的生活细节，道侣相处保留①至④四条。各细节须与人物身份、境界、性格、势力和已知经历一致，不能重复。
+3. “表白”“道侣相处”写该人物会如何主动表达爱意、如何经营亲密关系；没有既定道侣时也写其假设进入亲密关系后的稳定行为模式，不得把未出现的具体人物写成既定事实。
+4. 不要额外添加模板外的字段，也不要删减模板已有字段；性别、体型、修为、灵根、法宝等事实应自然融入对应模板内容。
 
 严格输出协议：只输出一个可被 JSON.parse 直接解析的 JSON 对象，禁止 Markdown 代码块、解释、前后缀或推理文字。输出形状必须严格如下：
-{"keywords":["人物名","所属势力"],"content":"### 人物名 (身份)\\n身份：……\\n外貌：……\\n性格/关系钩子：……"}`;
+{"keywords":["人物名","所属势力"],"content":"### 人物名 (少女)\\n角色魅力: ……\\n着装(外): ……\\n着装(内): ……\\n法宝: ……\\n底色: ……\\n\\n[性格特征A]\\n① ……\\n② ……\\n③ ……\\n\\n[性格特征B]\\n① ……\\n② ……\\n③ ……\\n\\n[表白]\\n……\\n\\n[道侣相处]\\n① ……\\n② ……\\n③ ……\\n④ ……"}`;
 }
 
 function uniqueKeywords(value: unknown): string[] {
@@ -1139,16 +1174,22 @@ async function generateWorldbook() {
   try {
     const rule = await getCharacterRule();
     // === 可手动修改：世界书生成的主提示词 ===
-    const systemPrompt = `你是修仙世界书条目生成器。当前激活的世界书会随本请求提供；仅以它、当前人物变量与下列《角色生成规则》为依据。\n\n<角色生成规则>\n${rule}\n</角色生成规则>\n\n任务：为用户给出的 NPC 生成一段“人物绿灯条目”的纯设定文字。\n\n硬性要求：\n1. content 必须以“### 人物名 (体型或身份)”开头，写人物身份、外貌、女性魅力（适用时）、着装(外/内)、法宝/物品、底色、性格或关系钩子等；内容要与变量及世界书一致。\n2. keywords 返回 2~10 个应触发该人物的名称、道号、组织、地点等纯关键词，必须包含人物名。\n3. content 绝不含 EJS、JavaScript、模板标签（如 <% %>、{{ }}）、YAML 字段、关键字标题或任何代码。不要编写动态分支；只写可直接作为绿灯内容插入的自然语言设定。\n4. 可保留修仙背景的成人表达，但不要写未成年人，也不要出现疤痕、脏污或大规模纹身。`;
-    const result = assertTextResult(
-      await generateRaw({
-        user_input: `请生成世界书人物条目：\n${worldbookCharacterInput()}`,
-        ordered_prompts: basePrompts(`${systemPrompt}${worldbookExampleInstructions()}`),
-        should_silence: false,
-        max_chat_history: 0,
-        json_schema: worldbookSchema,
-      }),
-    );
+    const systemPrompt = `你是修仙世界书条目生成器。当前激活的世界书会随本请求提供；以世界观、上下文、当前人物变量、《角色生成规则》共同确定人物设定。\n\n<角色生成规则>\n${rule}\n</角色生成规则>\n\n任务：为尚未拥有绿灯条目的 NPC 补全一段可长期复用的人物设定。content 必须严格采用后附《人物模板》的完整结构；人物变量和当前世界书中已有的事实优先，不得相互矛盾。变量未给出的生活细节、性格表现、关系模式可依身份、修为、势力和修仙世界观合理创作，但不能写成会改变主线的既定事件。\n\n硬性要求：\n1. content 是可直接写入世界书的纯设定，不是剧情续写、人物卡 YAML 或变量面板；不得包含 EJS、JavaScript、模板标签（如 <% %>、{{ }}）、YAML 字段、关键字标题或代码，也不要编写动态分支。\n2. 必须完整填满人物模板的所有栏目、性格小节和编号条目；保持模板规定的字数范围、段落顺序和中文标点。\n3. keywords 返回 2~5 个应触发该人物的纯关键词，必须包含人物名；可补充道号、所属势力、稳定身份、常驻地点等，但不能使用泛词或整句。\n4. 允许情色表达(修仙世界的外貌与年龄无关，常有童颜修仙者)；不得出现疤痕、脏污或大规模纹身。`;
+    const cancelForceRoute = requestRuleRouterForceRoute('人物世界书生成');
+    let result: string;
+    try {
+      result = assertTextResult(
+        await generateRaw({
+          user_input: `请生成世界书人物条目：\n${worldbookCharacterInput()}`,
+          ordered_prompts: basePrompts(`${systemPrompt}${worldbookTemplateInstructions()}`),
+          should_silence: false,
+          max_chat_history: 0,
+          json_schema: worldbookSchema,
+        }),
+      );
+    } finally {
+      cancelForceRoute?.();
+    }
     const generated = parseGeneratedJson(result);
     const content = typeof generated.content === 'string' ? generated.content.trim() : '';
     const keywords = uniqueKeywords(generated.keywords);

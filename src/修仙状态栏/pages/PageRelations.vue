@@ -675,7 +675,7 @@ function toggleDetail(npc: any) {
 .xy-npc-head {
   position: relative;
 }
-/* 细节可见开关：右侧、垃圾桶正下方的小圆（常驻可见，指示当前状态） */
+/* 细节可见开关：右侧、垃圾桶正下方的小圆，悬停人物条目时显示。 */
 .xy-vis-eye {
   position: absolute;
   top: 26px;
@@ -691,8 +691,13 @@ function toggleDetail(npc: any) {
   background: var(--xy-paper);
   color: var(--xy-jade-deep, #3d6b54);
   cursor: pointer;
+  opacity: 0;
   transition: all 0.16s ease;
   z-index: 4;
+}
+.xy-npc:hover > .xy-npc-head > .xy-vis-eye,
+.xy-vis-eye:focus-visible {
+  opacity: 1;
 }
 .xy-vis-eye:hover {
   border-color: var(--xy-jade, #5b8a72);
@@ -706,7 +711,7 @@ function toggleDetail(npc: any) {
   border-color: var(--xy-cinnabar, #b13a3a);
   background: var(--xy-tint-cinnabar-faint, rgba(177, 58, 58, 0.06));
 }
-/* 人物细化：位于详情可见开关下方，始终可见以便快速调用。 */
+/* 人物细化 / 世界书生成入口：位于详情可见开关下方，与删除按钮一样仅在人物条目悬停时显示。 */
 .xy-character-refine {
   position: absolute;
   top: 48px;
@@ -722,8 +727,13 @@ function toggleDetail(npc: any) {
   background: var(--xy-paper);
   color: var(--xy-gold-deep, #8a682b);
   cursor: pointer;
+  opacity: 0;
   transition: all 0.16s ease;
   z-index: 4;
+}
+.xy-npc:hover > .xy-npc-head > .xy-character-refine,
+.xy-character-refine:focus-visible {
+  opacity: 1;
 }
 .xy-character-refine:hover {
   color: var(--xy-cinnabar, #b13a3a);
