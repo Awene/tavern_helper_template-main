@@ -257,6 +257,12 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
       时辰: 起始时间.时辰 || '辰时',
     },
     状态效果: {},
+    事件: {
+      开启: false,
+      标题: '',
+      阶段: '',
+      已完成事件: [],
+    },
     // —— 原 修炼功法.功法 ——
     功法: arts,
     // —— 原 储物空间.* ——
@@ -276,6 +282,8 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
       story_body: story?.body,
       points_total: difficulty?.points ?? 0,
       created_at: new Date().toISOString(),
+      // 供世界书 EJS 做开局专属分支；与剧本 id 分开，便于一个开局挂载多个语义标记。
+      flags: story?.flags ? [...story.flags] : [],
     },
   };
 }

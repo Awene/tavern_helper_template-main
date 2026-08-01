@@ -128,13 +128,7 @@ export interface LocationOption {
 export type ItemQuality = '凡' | '黄' | '玄' | '地' | '天';
 /** 境界范围限定到化神；本游戏中"凡人"指非修仙者，故不作为物品境界 */
 export type ItemRealm = '炼气' | '筑基' | '金丹' | '元婴' | '化神';
-export type ItemCategory =
-  | '功法'
-  | '物品'
-  | '装备'
-  | '灵石'
-  | '傀儡'
-  | '灵兽';
+export type ItemCategory = '功法' | '物品' | '装备' | '灵石' | '傀儡' | '灵兽';
 export type ItemKind =
   // 功法
   | '心法'
@@ -290,6 +284,8 @@ export interface StoryConstraints {
   regionIds?: string[];
   /** 必须为该性别 */
   性别?: Gender;
+  /** 不可为这些性别（用于“非女性”等复合条件） */
+  性别禁止?: Gender[];
   /** 元阳/元阴必须尚存 */
   元阳元阴必须?: boolean;
   /** 灵根至少含以下任一五行 */
@@ -322,6 +318,8 @@ export interface StoryOption extends Option {
   类型?: StoryKind;
   /** 是否为「剧情剧本」（特殊开局：绑定剧情物品、专属 UI、列表置顶） */
   剧情?: boolean;
+  /** 注入 stat_data.__custom_start__.flags，供世界书 EJS 切换专属设定。 */
+  flags?: string[];
   /** 选取条件 */
   constraints?: StoryConstraints;
   /** 开局设定（必填） */
