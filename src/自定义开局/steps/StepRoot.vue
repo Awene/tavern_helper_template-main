@@ -13,19 +13,25 @@
           class="xs-yy-chip"
           :class="{ active: store.selection.性别 === '男' }"
           @click="store.setGender('男')"
-        >男</button>
+        >
+          男
+        </button>
         <button
           type="button"
           class="xs-yy-chip"
           :class="{ active: store.selection.性别 === '女' }"
           @click="store.setGender('女')"
-        >女</button>
+        >
+          女
+        </button>
         <button
           type="button"
           class="xs-yy-chip"
           :class="{ active: store.selection.性别 === '其他' }"
           @click="store.setGender('其他')"
-        >其他</button>
+        >
+          其他
+        </button>
       </div>
       <div v-if="store.selection.性别 !== '其他'" class="xs-yy-row">
         <span class="xs-yy-label">{{ store.selection.性别 === '男' ? '元阳' : '元阴' }}</span>
@@ -46,7 +52,7 @@
     </div>
 
     <!-- 灵根 -->
-    <h3 class="xs-section-title" style="margin-top: 22px;">灵根</h3>
+    <h3 class="xs-section-title" style="margin-top: 22px">灵根</h3>
     <div class="xs-root-builder">
       <!-- 属性多选 -->
       <div class="xs-root-pickers">
@@ -158,13 +164,8 @@
           </div>
           <div class="xs-root-preview-cost" :class="costClass">{{ costText }}</div>
         </div>
-        <div class="xs-root-preview-elements" v-if="effectiveElements.length">
-          <span
-            v-for="el in effectiveElements"
-            :key="el"
-            class="xs-element"
-            :style="{ '--el': elColor(el) }"
-          >
+        <div v-if="effectiveElements.length" class="xs-root-preview-elements">
+          <span v-for="el in effectiveElements" :key="el" class="xs-element" :style="{ '--el': elColor(el) }">
             {{ glyph(el) }}
           </span>
         </div>
@@ -173,81 +174,122 @@
     </div>
 
     <!-- 体质 -->
-    <h3 class="xs-section-title" style="margin-top: 22px;">体质</h3>
+    <h3 class="xs-section-title" style="margin-top: 22px">体质</h3>
     <div class="xs-root-builder">
-      <!-- 等级选择 -->
+      <!-- 预设品阶 / 自创体质同级入口 -->
       <div class="xs-root-pickers">
         <div class="xs-root-picker-row">
-          <span class="xs-root-picker-label">等级</span>
+          <span class="xs-root-picker-label">选择</span>
           <button
             v-for="t in PHYSIQUE_TIERS"
             :key="t"
             type="button"
             class="xs-tier-chip"
-            :class="{ active: physique.tier === t, disabled: !canAffordTier(t) }"
+            :class="{ active: !isCustomPhysique && physique.tier === t, disabled: !canAffordTier(t) }"
             :disabled="!canAffordTier(t)"
-            @click="store.selectPhysiqueTier(t)"
+            @click="selectPresetTier(t)"
           >
             <span class="xs-tier-chip-name">{{ t }}</span>
             <span class="xs-tier-chip-meta">
               S {{ PHYSIQUE_TIER_S[t] }} · {{ PHYSIQUE_TIER_COST[t] === 0 ? '免费' : PHYSIQUE_TIER_COST[t] + ' 点' }}
             </span>
           </button>
+          <button
+            type="button"
+            class="xs-tier-chip xs-tier-chip-custom"
+            :class="{ active: isCustomPhysique }"
+            @click="openCustomPhysique"
+          >
+            <span class="xs-tier-chip-name">自创体质</span>
+            <span class="xs-tier-chip-meta">自选品阶 · 名称 · 效果</span>
+          </button>
         </div>
-        <p class="xs-tier-intro">{{ PHYSIQUE_TIER_INTRO[physique.tier] }}</p>
+        <p v-if="!isCustomPhysique" class="xs-tier-intro">{{ PHYSIQUE_TIER_INTRO[physique.tier] }}</p>
       </div>
 
-      <!-- 该等级的预设 + 自定义 -->
-      <div class="xs-physique-grid">
-        <button
-          v-for="p in tierPresets"
-          :key="p.id"
-          type="button"
-          class="xs-physique-card"
-          :class="{ active: physique.presetId === p.id }"
-          @click="store.selectPhysiquePreset(p.id)"
-        >
-          <div class="xs-physique-card-head">
-            <span class="xs-physique-card-name">{{ p.name }}</span>
-            <span class="xs-physique-card-sub">{{ p.subtitle }}</span>
-          </div>
-          <div class="xs-attr-row">
-            <div class="xs-attr-cell">
-              <span class="xs-attr-cell-label">悟</span>
-              <span class="xs-attr-cell-value">{{ p.悟性 }}</span>
+      <!-- 预设体质：分类标签 + 分页卡片 -->
+      <div v-if="!isCustomPhysique" class="xs-physique-presets">
+        <div class="xs-physique-category-bar" aria-label="体质分类">
+          <button
+            type="button"
+            class="xs-category-chip"
+            :class="{ active: selectedCategory === null }"
+            @click="selectCategory(null)"
+          >
+            全部 <span>{{ tierPresetCount }}</span>
+          </button>
+          <button
+            v-for="category in tierCategories"
+            :key="category"
+            type="button"
+            class="xs-category-chip"
+            :class="{ active: selectedCategory === category }"
+            @click="selectCategory(category)"
+          >
+            {{ category }} <span>{{ categoryCount(category) }}</span>
+          </button>
+        </div>
+
+        <div class="xs-physique-grid">
+          <button
+            v-for="p in pagedPresets"
+            :key="p.id"
+            type="button"
+            class="xs-physique-card"
+            :class="{ active: physique.presetId === p.id }"
+            @click="store.selectPhysiquePreset(p.id)"
+          >
+            <div class="xs-physique-card-head">
+              <span class="xs-physique-card-name">{{ p.name }}</span>
             </div>
-            <div class="xs-attr-cell">
-              <span class="xs-attr-cell-label">骨</span>
-              <span class="xs-attr-cell-value">{{ p.根骨 }}</span>
+            <div class="xs-attr-row">
+              <div class="xs-attr-cell">
+                <span class="xs-attr-cell-label">悟</span>
+                <span class="xs-attr-cell-value">{{ p.悟性 }}</span>
+              </div>
+              <div class="xs-attr-cell">
+                <span class="xs-attr-cell-label">骨</span>
+                <span class="xs-attr-cell-value">{{ p.根骨 }}</span>
+              </div>
+              <div class="xs-attr-cell">
+                <span class="xs-attr-cell-label">感</span>
+                <span class="xs-attr-cell-value">{{ p.气感 }}</span>
+              </div>
             </div>
-            <div class="xs-attr-cell">
-              <span class="xs-attr-cell-label">感</span>
-              <span class="xs-attr-cell-value">{{ p.气感 }}</span>
-            </div>
-          </div>
-          <p v-if="p.效果" class="xs-physique-card-effect">
-            <strong>{{ p.效果.name }}</strong> {{ p.效果.value }}
-          </p>
-          <p class="xs-physique-card-desc">{{ p.desc }}</p>
-        </button>
-        <button
-          type="button"
-          class="xs-physique-card xs-physique-card-custom"
-          :class="{ active: physique.presetId === null }"
-          @click="store.selectPhysiquePreset(null)"
-        >
-          <div class="xs-physique-card-head">
-            <span class="xs-physique-card-name">自拟体质</span>
-            <span class="xs-physique-card-sub">命名 / 效果 / 三维由你决定</span>
-          </div>
-          <p class="xs-physique-card-desc">
-            可自由命名、撰写效果、按 S = {{ PHYSIQUE_TIER_S[physique.tier] }} 自由分配三维。
-          </p>
-        </button>
+            <p v-for="(effect, index) in p.效果 || []" :key="`${p.id}-effect-${index}`" class="xs-physique-card-effect">
+              <strong>{{ effect.name }}</strong>
+              <span>{{ effect.value }}</span>
+            </p>
+            <p v-if="p.desc" class="xs-physique-card-desc">{{ p.desc }}</p>
+          </button>
+        </div>
+
+        <nav v-if="pageCount > 1" class="xs-physique-pager" aria-label="体质分页">
+          <button type="button" :disabled="currentPage <= 1" @click="currentPage--">‹ 上一页</button>
+          <span>第 {{ currentPage }} / {{ pageCount }} 页</span>
+          <button type="button" :disabled="currentPage >= pageCount" @click="currentPage++">下一页 ›</button>
+        </nav>
       </div>
 
-      <!-- 自拟体质编辑器 -->
-      <div v-if="physique.presetId === null" class="xs-physique-editor">
+      <!-- 自创体质编辑器：先在页面内选择品阶 -->
+      <div v-else class="xs-physique-editor">
+        <div class="xs-custom-tier-picker">
+          <span class="xs-root-picker-label">品阶</span>
+          <button
+            v-for="t in PHYSIQUE_TIERS"
+            :key="`custom-${t}`"
+            type="button"
+            class="xs-category-chip"
+            :class="{ active: physique.tier === t, disabled: !canAffordTier(t) }"
+            :disabled="!canAffordTier(t)"
+            @click="store.selectPhysiqueTier(t)"
+          >
+            {{ t }} · {{ PHYSIQUE_TIER_COST[t] === 0 ? '免费' : PHYSIQUE_TIER_COST[t] + '点' }}
+          </button>
+        </div>
+        <p class="xs-custom-tier-intro">
+          {{ PHYSIQUE_TIER_INTRO[physique.tier] }} 按 S = {{ PHYSIQUE_TIER_S[physique.tier] }} 分配三维。
+        </p>
         <div class="xs-physique-edit-row">
           <label>名号</label>
           <input
@@ -287,45 +329,28 @@
               :title="physique.customEffects.length === 1 ? '至少保留 1 条' : '删除此条效果'"
               :disabled="physique.customEffects.length === 1"
               @click="store.removePhysiqueCustomEffect(idx)"
-            >×</button>
+            >
+              ×
+            </button>
           </div>
           <div class="xs-physique-edit-row xs-physique-edit-effect-add">
             <label></label>
-            <button
-              type="button"
-              class="xs-effect-add-btn"
-              @click="store.addPhysiqueCustomEffect"
-            >+ 添加效果</button>
+            <button type="button" class="xs-effect-add-btn" @click="store.addPhysiqueCustomEffect">+ 添加效果</button>
           </div>
         </div>
         <div class="xs-physique-edit-row xs-physique-edit-stats">
           <label>三维</label>
           <div class="xs-stat-input-group">
             <span>悟性</span>
-            <input
-              type="number"
-              min="1"
-              :value="physique.custom悟性"
-              @input="onStatInput('悟性', $event)"
-            />
+            <input type="number" min="1" :value="physique.custom悟性" @input="onStatInput('悟性', $event)" />
           </div>
           <div class="xs-stat-input-group">
             <span>根骨</span>
-            <input
-              type="number"
-              min="1"
-              :value="physique.custom根骨"
-              @input="onStatInput('根骨', $event)"
-            />
+            <input type="number" min="1" :value="physique.custom根骨" @input="onStatInput('根骨', $event)" />
           </div>
           <div class="xs-stat-input-group">
             <span>气感</span>
-            <input
-              type="number"
-              min="1"
-              :value="physique.custom气感"
-              @input="onStatInput('气感', $event)"
-            />
+            <input type="number" min="1" :value="physique.custom气感" @input="onStatInput('气感', $event)" />
           </div>
           <span class="xs-stat-sum" :class="{ ok: statSumOk, bad: !statSumOk }">
             合 {{ statSum }} / {{ targetS }}
@@ -339,39 +364,6 @@
             余补气感
           </button>
         </div>
-      </div>
-
-      <!-- 体质实时预览 -->
-      <div class="xs-root-preview" :class="{ empty: !store.physiqueChosen }">
-        <div class="xs-root-preview-head">
-          <div class="xs-root-preview-title">
-            <span class="xs-root-preview-name">{{ resolvedPhysique.name }}</span>
-            <span class="xs-root-preview-tier">{{ resolvedPhysique.tier }}</span>
-          </div>
-          <div class="xs-root-preview-cost" :class="physiqueCostClass">{{ physiqueCostText }}</div>
-        </div>
-        <div class="xs-attr-row" style="max-width: 360px;">
-          <div class="xs-attr-cell">
-            <span class="xs-attr-cell-label">悟性</span>
-            <span class="xs-attr-cell-value">{{ resolvedPhysique.悟性 }}</span>
-          </div>
-          <div class="xs-attr-cell">
-            <span class="xs-attr-cell-label">根骨</span>
-            <span class="xs-attr-cell-value">{{ resolvedPhysique.根骨 }}</span>
-          </div>
-          <div class="xs-attr-cell">
-            <span class="xs-attr-cell-label">气感</span>
-            <span class="xs-attr-cell-value">{{ resolvedPhysique.气感 }}</span>
-          </div>
-        </div>
-        <p
-          v-for="(eff, idx) in resolvedPhysique.效果s"
-          :key="idx"
-          class="xs-physique-card-effect"
-        >
-          <strong>{{ eff.name }}</strong> {{ eff.value }}
-        </p>
-        <p class="xs-root-preview-desc">{{ resolvedPhysique.desc }}</p>
       </div>
     </div>
 
@@ -390,7 +382,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import {
   ELEMENT_EXCLUSIVE,
   ELEMENT_NORMAL,
@@ -404,13 +396,14 @@ import {
   customPhysiqueSum,
   elementGlyph,
   mutationsByElement,
-  physiqueResolved,
+  physiqueCategoriesByTier,
   physiquesByTier,
+  physiquesByTierAndCategory,
   rootDescription,
   rootDisplayName,
   rootTierLabel,
 } from '../config';
-import type { PhysiqueTier } from '../types';
+import type { PhysiqueCategory, PhysiqueTier } from '../types';
 import { useStartStore } from '../store';
 
 const store = useStartStore();
@@ -463,17 +456,67 @@ function chipStyle(el: string) {
 }
 
 // —— 体质 ——
+const PHYSIQUE_PAGE_SIZE = 9;
+const isCustomPhysique = computed(() => physique.value.presetId === null);
+const selectedCategory = ref<PhysiqueCategory | null>(null);
+const currentPage = ref(1);
+
 const tierPresets = computed(() => physiquesByTier(physique.value.tier));
-const resolvedPhysique = computed(() => physiqueResolved(physique.value));
+const tierPresetCount = computed(() => tierPresets.value.length);
+const tierCategories = computed(() => physiqueCategoriesByTier(physique.value.tier));
+const filteredPresets = computed(() => physiquesByTierAndCategory(physique.value.tier, selectedCategory.value));
+const pageCount = computed(() => Math.max(1, Math.ceil(filteredPresets.value.length / PHYSIQUE_PAGE_SIZE)));
+const pagedPresets = computed(() => {
+  const start = (currentPage.value - 1) * PHYSIQUE_PAGE_SIZE;
+  return filteredPresets.value.slice(start, start + PHYSIQUE_PAGE_SIZE);
+});
+watch(
+  () => physique.value.tier,
+  () => {
+    selectedCategory.value = null;
+    currentPage.value = 1;
+  },
+);
+watch(selectedCategory, () => {
+  currentPage.value = 1;
+});
+watch(pageCount, total => {
+  if (currentPage.value > total) currentPage.value = total;
+});
+watch(
+  () => physique.value.presetId,
+  presetId => {
+    if (!presetId || selectedCategory.value !== null) return;
+    const index = filteredPresets.value.findIndex(preset => preset.id === presetId);
+    if (index >= 0) currentPage.value = Math.floor(index / PHYSIQUE_PAGE_SIZE) + 1;
+  },
+  { immediate: true },
+);
+
+function selectPresetTier(tier: PhysiqueTier) {
+  if (!canAffordTier(tier)) return;
+  if (physique.value.tier !== tier) store.selectPhysiqueTier(tier);
+  const firstPreset = physiquesByTier(tier)[0];
+  if (firstPreset) store.selectPhysiquePreset(firstPreset.id);
+  selectedCategory.value = null;
+  currentPage.value = 1;
+}
+
+function openCustomPhysique() {
+  store.selectPhysiquePreset(null);
+}
+
+function selectCategory(category: PhysiqueCategory | null) {
+  selectedCategory.value = category;
+}
+
+function categoryCount(category: PhysiqueCategory): number {
+  return tierPresets.value.filter(preset => preset.category === category).length;
+}
 
 const targetS = computed(() => PHYSIQUE_TIER_S[physique.value.tier]);
 const statSum = computed(() => customPhysiqueSum(physique.value));
 const statSumOk = computed(() => statSum.value === targetS.value);
-
-const physiqueCostText = computed(() =>
-  store.physiqueCost === 0 ? '免费' : `${store.physiqueCost} 点`,
-);
-const physiqueCostClass = computed(() => (store.physiqueCost === 0 ? 'free' : ''));
 
 /** 切到该等级是否在预算内（考虑当前体质退还） */
 function canAffordTier(tier: PhysiqueTier): boolean {
@@ -503,8 +546,12 @@ const virginHint = computed(() => {
   const g = store.selection.性别;
   if (g === '其他') return '不涉元阳/元阴双修法门';
   return store.selection.元阳元阴
-    ? g === '男' ? '元阳未泄，可凝乾元真气' : '元阴未损，可炼坤德神髓'
-    : g === '男' ? '元阳已泄，需别图他途' : '元阴已损，可改习他法';
+    ? g === '男'
+      ? '元阳未泄，可凝乾元真气'
+      : '元阴未损，可炼坤德神髓'
+    : g === '男'
+      ? '元阳已泄，需别图他途'
+      : '元阴已损，可改习他法';
 });
 </script>
 
@@ -583,7 +630,9 @@ const virginHint = computed(() => {
   border-color: var(--el);
   background: linear-gradient(180deg, color-mix(in srgb, var(--el) 12%, transparent), var(--xs-paper-warm));
   color: var(--xs-ink);
-  box-shadow: 0 0 0 1px var(--el) inset, 0 6px 18px -10px var(--el);
+  box-shadow:
+    0 0 0 1px var(--el) inset,
+    0 6px 18px -10px var(--el);
 }
 .xs-element-chip:disabled,
 .xs-element-chip.disabled {
@@ -606,7 +655,9 @@ const virginHint = computed(() => {
   font-size: 11px;
   color: #fff;
   background: var(--el);
-  box-shadow: 0 0 0 2px var(--xs-element-halo), 0 0 0 3px var(--el);
+  box-shadow:
+    0 0 0 2px var(--xs-element-halo),
+    0 0 0 3px var(--el);
 }
 .xs-element-chip-name {
   font-family: var(--xs-font-display);
@@ -790,12 +841,108 @@ const virginHint = computed(() => {
   letter-spacing: 1px;
   opacity: 0.85;
 }
+.xs-tier-chip-custom {
+  border-style: dashed;
+  background: var(--xs-tint-gold-soft);
+}
 .xs-tier-intro {
   font-size: 12px;
   color: var(--xs-ink-mute);
   letter-spacing: 1px;
   margin-top: 2px;
   padding-left: 52px;
+}
+
+/* —— 体质分类与分页 —— */
+.xs-physique-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.xs-physique-category-bar,
+.xs-custom-tier-picker {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.xs-category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border: 1px solid var(--xs-line);
+  border-radius: 16px;
+  background: var(--xs-paper-warm);
+  color: var(--xs-ink-soft);
+  font-family: var(--xs-font-display);
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  transition: all 0.18s ease;
+}
+.xs-category-chip span {
+  min-width: 17px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--xs-tint-gold-soft);
+  color: var(--xs-ink-mute);
+  font-family: var(--xs-font-body);
+  font-size: 10px;
+  letter-spacing: 0;
+  text-align: center;
+}
+.xs-category-chip:hover:not(:disabled):not(.active) {
+  border-color: var(--xs-gold);
+  color: var(--xs-ink);
+}
+.xs-category-chip.active {
+  border-color: var(--xs-cinnabar);
+  background: var(--xs-tint-cinnabar-soft);
+  color: var(--xs-cinnabar);
+  box-shadow: 0 0 0 1px var(--xs-tint-cinnabar-mid) inset;
+}
+.xs-category-chip.active span {
+  background: var(--xs-cinnabar);
+  color: #fff;
+}
+.xs-category-chip:disabled,
+.xs-category-chip.disabled {
+  opacity: 0.32;
+  cursor: not-allowed;
+}
+.xs-physique-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding-top: 2px;
+  color: var(--xs-ink-mute);
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+.xs-physique-pager button {
+  min-width: 76px;
+  padding: 5px 12px;
+  border: 1px solid var(--xs-line-gold);
+  border-radius: 16px;
+  background: var(--xs-paper-warm);
+  color: var(--xs-ink-soft);
+  transition: all 0.18s ease;
+}
+.xs-physique-pager button:hover:not(:disabled) {
+  border-color: var(--xs-cinnabar);
+  color: var(--xs-cinnabar);
+}
+.xs-physique-pager button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.xs-custom-tier-intro {
+  margin: -2px 0 2px 52px;
+  color: var(--xs-ink-mute);
+  font-size: 12px;
+  line-height: 1.6;
+  letter-spacing: 0.5px;
 }
 
 /* —— 体质卡片网格 —— */
@@ -805,10 +952,14 @@ const virginHint = computed(() => {
   gap: 10px;
 }
 @media (min-width: 600px) {
-  .xs-physique-grid { grid-template-columns: repeat(2, 1fr); }
+  .xs-physique-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 @media (min-width: 880px) {
-  .xs-physique-grid { grid-template-columns: repeat(3, 1fr); }
+  .xs-physique-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .xs-physique-card {
@@ -831,11 +982,9 @@ const virginHint = computed(() => {
 .xs-physique-card.active {
   border-color: var(--xs-cinnabar);
   background: linear-gradient(180deg, var(--xs-tint-cinnabar-soft), var(--xs-glass-strong));
-  box-shadow: 0 0 0 1px var(--xs-cinnabar) inset, 0 8px 24px -10px var(--xs-cinnabar-glow);
-}
-.xs-physique-card-custom {
-  border-style: dashed;
-  background: var(--xs-tint-gold-soft);
+  box-shadow:
+    0 0 0 1px var(--xs-cinnabar) inset,
+    0 8px 24px -10px var(--xs-cinnabar-glow);
 }
 .xs-physique-card-head {
   display: flex;
@@ -849,19 +998,16 @@ const virginHint = computed(() => {
   letter-spacing: 3px;
   color: var(--xs-ink);
 }
-.xs-physique-card-sub {
-  font-size: 11.5px;
-  color: var(--xs-ink-mute);
-  letter-spacing: 1px;
-}
 .xs-physique-card-effect {
   font-size: 12px;
-  color: var(--xs-cinnabar);
+  line-height: 1.65;
+  color: var(--xs-ink-soft);
   letter-spacing: 0.5px;
 }
 .xs-physique-card-effect strong {
   font-family: var(--xs-font-display);
   margin-right: 4px;
+  color: var(--xs-cinnabar);
   letter-spacing: 2px;
 }
 .xs-physique-card-desc {
@@ -908,8 +1054,14 @@ const virginHint = computed(() => {
   box-shadow: 0 0 0 3px var(--xs-tint-cinnabar-strong);
   outline: none;
 }
-.xs-physique-edit-effect input.xs-effect-name-input { flex: 1 1 0; min-width: 120px; }
-.xs-physique-edit-effect input.xs-effect-desc-input { flex: 1.4 1 0; min-width: 160px; }
+.xs-physique-edit-effect input.xs-effect-name-input {
+  flex: 1 1 0;
+  min-width: 120px;
+}
+.xs-physique-edit-effect input.xs-effect-desc-input {
+  flex: 1.4 1 0;
+  min-width: 160px;
+}
 
 .xs-physique-edit-effects {
   display: flex;

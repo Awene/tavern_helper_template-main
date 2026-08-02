@@ -50,6 +50,9 @@ export interface RootChoice {
 /** 体质等级：参考世界设定 凡 / 灵 / 道 / 仙(神)四阶 */
 export type PhysiqueTier = '凡体' | '灵体' | '道体' | '仙体';
 
+/** 预设体质的用途分类；仅用于自定义开局中的筛选与管理。 */
+export type PhysiqueCategory = '无特效' | '战斗' | '生产' | '修炼' | '突破' | '领悟' | '综合' | '叙述' | 'NSFW';
+
 export interface PhysiqueEffect {
   name: string;
   value: string;
@@ -58,12 +61,16 @@ export interface PhysiqueEffect {
 export interface PhysiqueOption extends Option {
   /** 体质等级，决定 S 与点数消耗 */
   tier: PhysiqueTier;
+  /** 用途分类，只参与界面筛选，不改变规则效果 */
+  category: PhysiqueCategory;
+  /** 清单中的单一五行分类，不代表体质效果必然与该五行挂钩 */
+  五行: string;
   /** 三维基准（悟性/根骨/气感） */
   悟性: number;
   根骨: number;
   气感: number;
-  /** 单条效果；凡体可缺省 */
-  效果?: PhysiqueEffect;
+  /** 效果列表；无特效体质可缺省 */
+  效果?: PhysiqueEffect[];
 }
 
 /** 体质选择（预设或玩家自拟） */
