@@ -12,7 +12,7 @@
               {{ auth.user.globalName || auth.user.username }}
             </button>
             <button v-else class="cw-btn cw-btn-primary" type="button" :disabled="busy" @click="login">
-              Discord 登录
+              {{ loginPending ? '等待登录…' : 'Discord 登录' }}
             </button>
             <button class="cw-close" type="button" aria-label="关闭" @click="closeWorkshop">×</button>
           </div>
@@ -28,14 +28,6 @@
           <button :class="{ active: activeTab === 'mine' }" type="button" @click="switchTab('mine')">我的图包</button>
           <button :class="{ active: activeTab === 'settings' }" type="button" @click="switchTab('settings')">
             设置
-          </button>
-          <button
-            v-if="auth?.user.isAdmin"
-            :class="{ active: activeTab === 'reports' }"
-            type="button"
-            @click="switchTab('reports')"
-          >
-            举报管理
           </button>
         </nav>
 
@@ -140,7 +132,9 @@
             <div v-if="!auth" class="cw-login-prompt">
               <h2>用 Discord 管理自己的图包</h2>
               <p>任何 Discord 用户都可以创建、修改、发布和下架多个图包。</p>
-              <button class="cw-btn cw-btn-primary" type="button" :disabled="busy" @click="login">Discord 登录</button>
+              <button class="cw-btn cw-btn-primary" type="button" :disabled="busy" @click="login">
+                {{ loginPending ? '等待登录…' : 'Discord 登录' }}
+              </button>
             </div>
             <template v-else>
               <div class="cw-section-head">
@@ -225,11 +219,23 @@
                     <h3>添加图片</h3>
                     <input
                       ref="uploadInput"
+                      class="cw-native-file"
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
                       required
                       @change="pickUploadFile"
                     />
+                    <div class="cw-file-picker wide" :class="{ selected: uploadFile }">
+                      <div class="cw-file-copy">
+                        <span>图片文件</span>
+                        <strong>{{ uploadFile?.name || '尚未选择图片' }}</strong>
+                        <small v-if="uploadFile">{{ formatBytes(uploadFile.size) }}</small>
+                        <small v-else>支持 JPEG、PNG、WebP，单张最大 8 MB</small>
+                      </div>
+                      <button class="cw-btn" type="button" :disabled="busy" @click="chooseUploadFile">
+                        {{ uploadFile ? '重新选择' : '选择图片' }}
+                      </button>
+                    </div>
                     <label
                       ><span>图片类别</span
                       ><select v-model="upload.rating">
@@ -244,7 +250,9 @@
                       ><span>关键词（逗号分隔）</span><input v-model="upload.keywords" required
                     /></label>
                     <p class="wide">上传前会在本地重新编码、移除元数据，并把最大边压缩到 1600px。GIF 不受支持。</p>
-                    <button class="cw-btn cw-btn-primary" :disabled="busy || !uploadFile">处理并上传</button>
+                    <button class="cw-btn cw-btn-primary wide" :disabled="busy || !uploadFile">
+                      {{ busy ? '正在处理…' : '处理并上传' }}
+                    </button>
                   </form>
 
                   <div class="cw-image-grid">
@@ -283,20 +291,10 @@
                 <span><strong>每楼最多插图</strong><small>所有图片统一插入正文末尾。</small></span>
                 <input v-model.number="settings.maxPerMessage" type="number" min="1" max="6" @change="saveSettings" />
               </label>
-              <label class="cw-setting-card wide">
-                <span><strong>服务地址</strong><small>开发阶段使用本地地址；正式发布后由角色卡预置。</small></span>
-                <input v-model="settings.apiBase" type="url" @change="saveSettings" />
-              </label>
               <div class="cw-setting-card wide">
                 <span
                   ><strong>本地占用</strong
                   ><small>{{ installed.length }} 个图包，{{ formatBytes(storageBytes) }}</small></span
-                >
-              </div>
-              <div class="cw-setting-card wide">
-                <span
-                  ><strong>NSFW 显示规则</strong
-                  ><small>NSFW 永远参与匹配，并在候选排序中优先于 SFW；不提供隐藏开关。</small></span
                 >
               </div>
             </div>
@@ -307,35 +305,13 @@
               </div>
               <div v-else>
                 <h2>尚未登录</h2>
-                <p>浏览和下载无需登录；上传、修改和举报需要登录。</p>
+                <p>浏览和下载无需登录；上传和修改需要登录。</p>
               </div>
               <button v-if="auth" class="cw-btn" type="button" @click="logout">退出登录</button>
-              <button v-else class="cw-btn cw-btn-primary" type="button" @click="login">Discord 登录</button>
+              <button v-else class="cw-btn cw-btn-primary" type="button" :disabled="busy" @click="login">
+                {{ loginPending ? '等待登录…' : 'Discord 登录' }}
+              </button>
             </div>
-          </section>
-
-          <section v-else-if="activeTab === 'reports'" class="cw-page">
-            <div class="cw-section-head">
-              <div>
-                <h2>举报管理</h2>
-                <p>举报不会自动隐藏内容，需要管理员结合理由处置。</p>
-              </div>
-              <button class="cw-btn" @click="loadReports">刷新</button>
-            </div>
-            <div v-if="!reports.length" class="cw-empty">没有待处理举报。</div>
-            <article v-for="report in reports" :key="String(report.id)" class="cw-report">
-              <div>
-                <strong>{{ report.target_type }} · {{ report.target_id }}</strong>
-                <p>{{ report.reason }}</p>
-                <small>{{ report.reporter_name }} · {{ formatDate(Number(report.created_at)) }}</small>
-              </div>
-              <div class="cw-inline-actions">
-                <button class="cw-btn" @click="resolveReport(report, 'rejected')">驳回</button
-                ><button class="cw-btn cw-btn-danger" @click="enforceReport(report)">
-                  {{ report.target_type === 'image' ? '隐藏图片并结案' : '下架图包并结案' }}
-                </button>
-              </div>
-            </article>
           </section>
         </main>
       </section>
@@ -357,7 +333,6 @@
             >
               {{ isInstalled(detail.pack.id) ? '已下载' : downloadProgress[detail.pack.id] || '下载完整图包' }}
             </button>
-            <button class="cw-btn" @click="openReport('pack', detail.pack.id)">举报图包</button>
           </div>
           <div class="cw-image-grid detail-images">
             <article v-for="image in detail.images" :key="image.id" class="cw-image-card">
@@ -366,29 +341,10 @@
                 <strong>{{ image.character_name || detail.pack.name }}</strong
                 ><span :class="['cw-rating', image.rating]">{{ image.rating.toUpperCase() }}</span>
                 <p>{{ image.keywords.join('、') }}</p>
-                <button class="cw-link" @click="openReport('image', image.id)">举报此图</button>
               </div>
             </article>
           </div>
         </section>
-      </div>
-
-      <div v-if="reportTarget" class="cw-suboverlay" @mousedown.self="reportTarget = null">
-        <form class="cw-dialog" @submit.prevent="submitReport">
-          <h2>提交举报</h2>
-          <p>请填写具体理由。空理由或重复的未处理举报不会被接受。</p>
-          <textarea
-            v-model="reportReason"
-            minlength="5"
-            maxlength="500"
-            required
-            placeholder="请说明违规、侵权或分类错误的具体情况"
-          ></textarea>
-          <div class="cw-form-actions">
-            <button class="cw-btn" type="button" @click="reportTarget = null">取消</button
-            ><button class="cw-btn cw-btn-danger" :disabled="busy">提交举报</button>
-          </div>
-        </form>
       </div>
 
       <div v-if="imageEdit" class="cw-suboverlay" @mousedown.self="imageEdit = null">
@@ -422,10 +378,11 @@ import { workshopService } from './service';
 import type { AuthRecord, InstalledPack, PackImage, PackManifest, PackSummary, WorkshopSettings } from './types';
 import { closeWorkshop, workshopVisible } from './ui-state';
 
-type Tab = 'browse' | 'installed' | 'mine' | 'settings' | 'reports';
+type Tab = 'browse' | 'installed' | 'mine' | 'settings';
 
 const activeTab = ref<Tab>('browse');
 const busy = ref(false);
+const loginPending = ref(false);
 const notice = ref('');
 const noticeType = ref<'success' | 'error'>('success');
 const auth = ref<AuthRecord>();
@@ -454,9 +411,6 @@ const editPack = reactive({ name: '', description: '', category: '人物' });
 const upload = reactive({ rating: 'sfw', characterName: '', keywords: '' });
 const uploadFile = ref<File>();
 const uploadInput = ref<HTMLInputElement>();
-const reports = ref<Record<string, unknown>[]>([]);
-const reportTarget = ref<{ type: 'pack' | 'image'; id: string } | null>(null);
-const reportReason = ref('');
 const imageEdit = ref<{ id: string; rating: 'sfw' | 'nsfw'; characterName: string; keywords: string } | null>(null);
 
 function tell(message: string, type: 'success' | 'error' = 'success'): void {
@@ -472,9 +426,6 @@ function errorText(error: unknown): string {
 }
 function formatBytes(bytes: number): string {
   return bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}
-function formatDate(seconds: number): string {
-  return new Date(seconds * 1000).toLocaleString('zh-CN');
 }
 function isInstalled(packId: string): boolean {
   return installed.value.some(pack => pack.id === packId);
@@ -492,7 +443,6 @@ async function switchTab(tab: Tab): Promise<void> {
   if (tab === 'browse' && !publicPacks.value.length) await loadPublicPacks(true);
   if (tab === 'installed') await refreshLocal();
   if (tab === 'mine' && auth.value) await loadOwnPacks();
-  if (tab === 'reports' && auth.value?.user.isAdmin) await loadReports();
 }
 
 async function loadPublicPacks(reset: boolean): Promise<void> {
@@ -576,6 +526,9 @@ async function checkAllUpdates(): Promise<void> {
 
 async function login(): Promise<void> {
   busy.value = true;
+  loginPending.value = true;
+  notice.value = '正在等待 Discord 授权完成…';
+  noticeType.value = 'success';
   try {
     auth.value = await workshopService.api.login();
     tell('Discord 登录成功');
@@ -583,6 +536,7 @@ async function login(): Promise<void> {
   } catch (error) {
     tell(errorText(error), 'error');
   } finally {
+    loginPending.value = false;
     busy.value = false;
   }
 }
@@ -713,6 +667,9 @@ async function deleteCurrentPack(): Promise<void> {
 function pickUploadFile(event: Event): void {
   uploadFile.value = (event.target as HTMLInputElement).files?.[0];
 }
+function chooseUploadFile(): void {
+  uploadInput.value?.click();
+}
 async function uploadCurrentImage(): Promise<void> {
   if (!ownDetail.value || !uploadFile.value) return;
   const keywords = upload.keywords
@@ -780,73 +737,6 @@ async function deleteCurrentImage(imageId: string): Promise<void> {
     await loadOwnDetail(ownDetail.value.pack.id);
     await loadOwnPacks();
     tell('图片已删除');
-  } catch (error) {
-    tell(errorText(error), 'error');
-  } finally {
-    busy.value = false;
-  }
-}
-
-function openReport(type: 'pack' | 'image', id: string): void {
-  if (!auth.value) {
-    activeTab.value = 'settings';
-    tell('请先登录 Discord 再举报', 'error');
-    return;
-  }
-  reportTarget.value = { type, id };
-  reportReason.value = '';
-}
-async function submitReport(): Promise<void> {
-  if (!reportTarget.value) return;
-  busy.value = true;
-  try {
-    await workshopService.api.report(reportTarget.value.type, reportTarget.value.id, reportReason.value);
-    reportTarget.value = null;
-    tell('举报已提交');
-  } catch (error) {
-    tell(errorText(error), 'error');
-  } finally {
-    busy.value = false;
-  }
-}
-async function loadReports(): Promise<void> {
-  busy.value = true;
-  try {
-    reports.value = (await workshopService.api.listReports()).items;
-  } catch (error) {
-    tell(errorText(error), 'error');
-  } finally {
-    busy.value = false;
-  }
-}
-async function resolveReport(report: Record<string, unknown>, status: 'resolved' | 'rejected'): Promise<void> {
-  const resolution = window.parent.prompt('填写处置说明（必填）');
-  if (!resolution) return;
-  busy.value = true;
-  try {
-    await workshopService.api.handleReport(String(report.id), status, resolution);
-    await loadReports();
-    tell('举报已处理');
-  } catch (error) {
-    tell(errorText(error), 'error');
-  } finally {
-    busy.value = false;
-  }
-}
-
-async function enforceReport(report: Record<string, unknown>): Promise<void> {
-  const resolution = window.parent.prompt('填写违规处置说明（必填）');
-  if (!resolution) return;
-  busy.value = true;
-  try {
-    if (report.target_type === 'image') {
-      await workshopService.api.adminHideImage(String(report.target_id));
-    } else {
-      await workshopService.api.adminUnpublishPack(String(report.target_id));
-    }
-    await workshopService.api.handleReport(String(report.id), 'resolved', resolution);
-    await loadReports();
-    tell('违规内容已处置并结案');
   } catch (error) {
     tell(errorText(error), 'error');
   } finally {

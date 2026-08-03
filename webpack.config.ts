@@ -538,6 +538,13 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         return callback();
       }
 
+      // 创意工坊是由角色脚本动态导入的纯脚本模块，没有 index.html 可以预先声明
+      // Pinia 的 Vue 编译期特性开关。将 Pinia 留在本包内，让 DefinePlugin 在构建时
+      // 直接替换这些开关，避免 CDN ESM 求值时报 __VUE_PROD_DEVTOOLS__ 未定义。
+      if (request === 'pinia' && entry.script.includes('创意工坊')) {
+        return callback();
+      }
+
       if (
         ['vue', 'vue-router'].every(key => request !== key) &&
         ['pixi', 'react', 'vue'].some(key => request.includes(key))

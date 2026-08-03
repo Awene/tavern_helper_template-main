@@ -161,64 +161,68 @@ export class WorkshopApi {
     );
   }
 
-  report(targetType: 'pack' | 'image', targetId: string, reason: string): Promise<{ report_id: string }> {
-    return this.request(
-      '/api/reports',
-      { method: 'POST', body: JSON.stringify({ target_type: targetType, target_id: targetId, reason }) },
-      true,
-    );
-  }
+  private waitForDiscordExchange(
+    popup: Window,
+    expectedOrigin: string,
+    loginId: string,
+  ): Promise<{ token: string; expires_at: number }> {
+    return new Promise((resolve, reject) => {
+      let exchangeCode = loginId;
+      let exchanging = false;
+      let settled = false;
 
-  listReports(status = 'open'): Promise<{ items: Record<string, unknown>[] }> {
-    return this.request(`/api/admin/reports?status=${encodeURIComponent(status)}`, {}, true);
-  }
-
-  handleReport(reportId: string, status: 'resolved' | 'rejected', resolution: string): Promise<{ ok: true }> {
-    return this.request(
-      `/api/admin/reports/${encodeURIComponent(reportId)}`,
-      { method: 'PATCH', body: JSON.stringify({ status, resolution }) },
-      true,
-    );
-  }
-
-  adminHideImage(imageId: string): Promise<{ ok: true }> {
-    return this.request(`/api/admin/images/${encodeURIComponent(imageId)}/hide`, { method: 'POST' }, true);
-  }
-
-  adminUnpublishPack(packId: string): Promise<{ ok: true }> {
-    return this.request(`/api/admin/packs/${encodeURIComponent(packId)}/unpublish`, { method: 'POST' }, true);
+      const cleanup = () => {
+        window.clearInterval(pollTimer);
+        window.clearTimeout(timeoutTimer);
+        window.parent.removeEventListener('message', listener);
+      };
+      const finish = (callback: () => void) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        callback();
+      };
+      const tryExchange = async () => {
+        if (settled || exchanging) return;
+        exchanging = true;
+        try {
+          const result = await this.request<{ token: string; expires_at: number }>('/api/auth/exchange', {
+            method: 'POST',
+            body: JSON.stringify({ code: exchangeCode }),
+          });
+          finish(() => resolve(result));
+        } catch (error) {
+          // 授权回调完成前登录码尚不存在；400 在轮询阶段表示继续等待。
+          if (!(error instanceof WorkshopApiError) || error.status !== 400) finish(() => reject(error));
+        } finally {
+          exchanging = false;
+        }
+      };
+      const listener = (event: MessageEvent) => {
+        if (event.origin !== expectedOrigin || event.data?.type !== 'cultivation-workshop-oauth') return;
+        if (event.source && event.source !== popup) return;
+        exchangeCode = String(event.data.code || loginId);
+        void tryExchange();
+      };
+      const pollTimer = window.setInterval(() => void tryExchange(), 1500);
+      const timeoutTimer = window.setTimeout(
+        () => finish(() => reject(new WorkshopApiError('未能取得 Discord 登录结果，请重新登录', 0))),
+        5 * 60 * 1000,
+      );
+      window.parent.addEventListener('message', listener);
+      void tryExchange();
+    });
   }
 
   async login(): Promise<AuthRecord> {
     const base = (await this.getApiBase()).replace(/\/$/u, '');
     const expectedOrigin = new URL(base).origin;
     const openerOrigin = window.parent.location.origin;
-    const loginUrl = `${base}/auth/discord/start?opener_origin=${encodeURIComponent(openerOrigin)}`;
+    const loginId = crypto.randomUUID().replaceAll('-', '') + crypto.randomUUID().replaceAll('-', '');
+    const loginUrl = `${base}/auth/discord/start?opener_origin=${encodeURIComponent(openerOrigin)}&login_id=${loginId}`;
     const popup = window.parent.open(loginUrl, 'cultivation-workshop-oauth', 'popup,width=560,height=760');
     if (!popup) throw new WorkshopApiError('浏览器阻止了登录弹窗，请允许弹窗后重试', 0);
-    const code = await new Promise<string>((resolve, reject) => {
-      const timeout = window.setTimeout(
-        () => {
-          cleanup();
-          reject(new WorkshopApiError('Discord 登录超时', 0));
-        },
-        5 * 60 * 1000,
-      );
-      const listener = (event: MessageEvent) => {
-        if (event.origin !== expectedOrigin || event.data?.type !== 'cultivation-workshop-oauth') return;
-        cleanup();
-        resolve(String(event.data.code));
-      };
-      const cleanup = () => {
-        window.clearTimeout(timeout);
-        window.parent.removeEventListener('message', listener);
-      };
-      window.parent.addEventListener('message', listener);
-    });
-    const exchange = await this.request<{ token: string; expires_at: number }>('/api/auth/exchange', {
-      method: 'POST',
-      body: JSON.stringify({ code }),
-    });
+    const exchange = await this.waitForDiscordExchange(popup, expectedOrigin, loginId);
     const me = await this.request<{ user: WorkshopUser }>(
       '/api/auth/me',
       { headers: { Authorization: `Bearer ${exchange.token}` } },

@@ -377,6 +377,50 @@
   color: var(--cw-muted);
   font-size: 12px;
 }
+.cw-native-file {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+.cw-file-picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 76px;
+  padding: 13px 15px;
+  border: 1px dashed var(--cw-line);
+  border-radius: 10px;
+  background: rgba(239, 227, 202, 0.28);
+}
+.cw-file-picker.selected {
+  border-style: solid;
+  border-color: #b78b58;
+  background: rgba(239, 227, 202, 0.48);
+}
+.cw-file-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+.cw-file-copy span,
+.cw-file-copy small {
+  color: var(--cw-muted);
+  font-size: 12px;
+}
+.cw-file-copy strong {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .cw-image-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -462,16 +506,6 @@
   max-width: 560px;
   margin: 50px auto;
   text-align: center;
-}
-.cw-report {
-  display: flex;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 16px;
-  border-bottom: 1px solid var(--cw-line);
-}
-.cw-report p {
-  white-space: pre-wrap;
 }
 .cw-suboverlay {
   position: fixed;
@@ -559,8 +593,7 @@
   }
   .cw-toolbar,
   .cw-section-head,
-  .cw-installed,
-  .cw-report {
+  .cw-installed {
     align-items: stretch;
     flex-direction: column;
   }
