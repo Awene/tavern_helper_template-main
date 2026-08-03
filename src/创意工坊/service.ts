@@ -33,7 +33,7 @@ import type {
 
 const DEFAULT_SETTINGS: WorkshopSettings = {
   key: 'main',
-  apiBase: 'http://localhost:8787',
+  apiBase: 'https://cultivation-illustration-workshop.awenewilly1.workers.dev',
   autoInsert: true,
   maxPerMessage: 1,
   updateIntervalHours: 6,
@@ -95,7 +95,13 @@ export class WorkshopService {
 
   async getSettings(): Promise<WorkshopSettings> {
     const stored = await getSettingsRecord();
-    if (stored) return stored;
+    if (stored) {
+      if (stored.apiBase === 'http://localhost:8787') {
+        stored.apiBase = DEFAULT_SETTINGS.apiBase;
+        await putSettingsRecord(stored);
+      }
+      return stored;
+    }
     await putSettingsRecord(DEFAULT_SETTINGS);
     return { ...DEFAULT_SETTINGS };
   }
