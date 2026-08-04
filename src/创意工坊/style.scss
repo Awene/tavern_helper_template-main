@@ -781,6 +781,32 @@
   margin: 12px 0 6px;
   font-size: 23px;
 }
+.cw-detail-description {
+  max-height: min(36vh, 340px);
+  overflow: auto;
+  margin: 12px 0;
+  padding: 13px 15px;
+  border: 1px solid var(--cw-line);
+  border-left: 3px solid var(--cw-red);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--cw-paper-2) 62%, transparent);
+  scrollbar-width: thin;
+}
+.cw-detail-description-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--cw-red);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+}
+.cw-detail-description p {
+  margin: 0;
+  color: var(--cw-ink);
+  font-size: 15px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
 .cw-detail-actions {
   margin: 12px 0;
 }

@@ -22,7 +22,17 @@
       <div v-if="busy && !publicPacks.length" class="cw-empty">正在读取世界书目录……</div>
       <div v-else-if="!publicPacks.length" class="cw-empty">没有找到符合条件的世界书包。</div>
       <div v-else class="cw-wb-grid">
-        <article v-for="publicBook in publicPacks" :key="publicBook.id" class="cw-wb-card">
+        <article
+          v-for="publicBook in publicPacks"
+          :key="publicBook.id"
+          class="cw-wb-card cw-wb-public-card"
+          :class="{ loading: detailLoadingId === publicBook.id }"
+          tabindex="0"
+          :aria-label="`查看世界书包：${publicBook.name}`"
+          @click="openWorldbookDetail(publicBook)"
+          @keydown.enter.prevent="openWorldbookDetail(publicBook)"
+          @keydown.space.prevent="openWorldbookDetail(publicBook)"
+        >
           <div class="cw-wb-cover">
             <img
               v-if="publicBook.cover_url"
@@ -32,28 +42,32 @@
               referrerpolicy="no-referrer"
             />
             <span v-else aria-hidden="true">卷</span>
-          </div>
-          <div class="cw-wb-card-head">
-            <span class="cw-category">{{ publicBook.category }}</span
-            ><span class="cw-version">v{{ publicBook.version }}</span>
+            <div class="cw-wb-cover-labels">
+              <span class="cw-category">{{ publicBook.category }}</span>
+              <span class="cw-version">v{{ publicBook.version }}</span>
+            </div>
           </div>
           <h2>{{ publicBook.name }}</h2>
-          <code>{{ publicBook.dlc_key }}</code>
-          <p>{{ publicBook.description || '作者没有填写简介。' }}</p>
+          <span class="cw-wb-dlc-key">{{ publicBook.dlc_key }}</span>
+          <p class="cw-wb-card-description">{{ publicBook.description || '作者没有填写简介。' }}</p>
           <div class="cw-wb-meta">
             <span>{{ publicBook.owner_name || '未知作者' }}</span
-            ><span>{{ publicBook.entry_count }} 条 · {{ formatBytes(publicBook.byte_size) }}</span
-            ><span>上传于 {{ formatDate(publicBook.published_at) }}</span>
+            ><span>{{ publicBook.entry_count }} 条 · {{ formatBytes(publicBook.byte_size) }}</span>
           </div>
           <RelationBadges :pack="publicBook" />
-          <button
-            class="cw-btn cw-btn-primary"
-            type="button"
-            :disabled="busy || isInstalled(publicBook.id)"
-            @click="install(publicBook)"
-          >
-            {{ isInstalled(publicBook.id) ? '已安装' : '安装并启用' }}
-          </button>
+          <div class="cw-wb-card-footer">
+            <span>{{ detailLoadingId === publicBook.id ? '正在读取…' : '点击卡片查看详情' }}</span>
+            <button
+              class="cw-btn cw-btn-primary"
+              type="button"
+              :disabled="busy || isInstalled(publicBook.id)"
+              @click.stop="install(publicBook)"
+              @keydown.enter.stop
+              @keydown.space.stop
+            >
+              {{ isInstalled(publicBook.id) ? '已安装' : '安装并启用' }}
+            </button>
+          </div>
         </article>
       </div>
       <button
@@ -84,7 +98,7 @@
               ><span class="cw-version">v{{ item.pack.version }}</span>
             </div>
             <h3>{{ item.pack.name }}</h3>
-            <code>{{ item.pack.dlc_key }}</code>
+            <span class="cw-wb-dlc-key">{{ item.pack.dlc_key }}</span>
             <p>{{ item.pack.entry_count }} 条 · 酒馆世界书：{{ item.bookName }}</p>
             <RelationBadges :pack="item.pack" />
             <div v-if="item.missingPrerequisites.length" class="cw-wb-warning">
@@ -202,7 +216,7 @@
                 ><span class="cw-version">v{{ selectedOwn.version }}</span>
               </div>
               <h2>{{ selectedOwn.name }}</h2>
-              <code>{{ selectedOwn.dlc_key }}</code>
+              <span class="cw-wb-dlc-key">{{ selectedOwn.dlc_key }}</span>
               <RelationBadges :pack="selectedOwn" />
               <label><span>简介</span><textarea v-model="editDescription" maxlength="500"></textarea></label>
               <form class="cw-cover-upload" @submit.prevent="uploadSelectedCover">
@@ -263,6 +277,124 @@
       </template>
     </template>
 
+    <div v-if="worldbookDetail" class="cw-suboverlay" @mousedown.self="closeWorldbookDetail">
+      <section
+        class="cw-wb-detail"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="`${worldbookDetail.pack.name}世界书包详情`"
+      >
+        <button class="cw-close" type="button" aria-label="关闭详情" @click="closeWorldbookDetail">×</button>
+
+        <header class="cw-wb-detail-hero">
+          <div class="cw-wb-cover cw-wb-detail-cover">
+            <img
+              v-if="worldbookDetail.pack.cover_url"
+              :src="worldbookDetail.pack.cover_url"
+              :alt="`${worldbookDetail.pack.name}封面`"
+              referrerpolicy="no-referrer"
+            />
+            <span v-else aria-hidden="true">卷</span>
+          </div>
+          <div class="cw-wb-detail-heading">
+            <div class="cw-wb-card-head">
+              <span class="cw-category">{{ worldbookDetail.pack.category }}</span>
+              <span class="cw-version">v{{ worldbookDetail.pack.version }}</span>
+            </div>
+            <h2>{{ worldbookDetail.pack.name }}</h2>
+            <span class="cw-wb-dlc-key">{{ worldbookDetail.pack.dlc_key }}</span>
+            <div class="cw-wb-meta">
+              <span>作者：{{ worldbookDetail.pack.owner_name || '未知作者' }}</span>
+              <span>{{ worldbookDetail.pack.entry_count }} 条 · {{ formatBytes(worldbookDetail.pack.byte_size) }}</span>
+              <span>上传于 {{ formatDate(worldbookDetail.pack.published_at) }}</span>
+            </div>
+            <RelationBadges :pack="worldbookDetail.pack" />
+          </div>
+        </header>
+
+        <div class="cw-wb-detail-description">
+          <span>世界书包简介</span>
+          <p>{{ worldbookDetail.pack.description || '作者没有填写简介。' }}</p>
+        </div>
+
+        <div class="cw-wb-detail-actions">
+          <button
+            class="cw-btn cw-btn-primary"
+            type="button"
+            :disabled="busy || isInstalled(worldbookDetail.pack.id)"
+            @click="install(worldbookDetail.pack)"
+          >
+            {{ isInstalled(worldbookDetail.pack.id) ? '已安装' : '安装并启用' }}
+          </button>
+          <span>下方为原始条目的安全文本预览，不会执行其中的 EJS 或 HTML。</span>
+        </div>
+
+        <section class="cw-wb-entry-browser" aria-label="世界书条目目录">
+          <div class="cw-wb-entry-browser-head">
+            <div>
+              <span>条目目录</span>
+              <h3>共 {{ worldbookDetail.entries.length }} 个条目</h3>
+            </div>
+            <button class="cw-btn" type="button" @click="toggleAllEntries">
+              {{ allEntriesExpanded ? '全部收起' : '全部展开' }}
+            </button>
+          </div>
+
+          <div class="cw-wb-entry-list">
+            <article
+              v-for="(entry, index) in worldbookDetail.entries"
+              :key="`${entry.name || 'entry'}-${index}`"
+              class="cw-wb-entry"
+              :class="{ expanded: expandedEntryIndexes.has(index) }"
+            >
+              <button
+                class="cw-wb-entry-summary"
+                type="button"
+                :aria-expanded="expandedEntryIndexes.has(index)"
+                @click="toggleEntry(index)"
+              >
+                <span class="cw-wb-entry-index">{{ String(index + 1).padStart(2, '0') }}</span>
+                <span class="cw-wb-entry-title">
+                  <strong>{{ entry.name || `未命名条目 ${index + 1}` }}</strong>
+                  <small>{{ entryKeywordSummary(entry) }}</small>
+                </span>
+                <span class="cw-wb-entry-badges">
+                  <i :class="entry.enabled === false ? 'disabled' : 'enabled'">
+                    {{ entry.enabled === false ? '已停用' : '已启用' }}
+                  </i>
+                  <i>{{ strategyLabel(entry.strategy?.type) }}</i>
+                </span>
+                <span class="cw-wb-entry-chevron" aria-hidden="true">⌄</span>
+              </button>
+
+              <div v-if="expandedEntryIndexes.has(index)" class="cw-wb-entry-detail">
+                <div class="cw-wb-entry-minor-meta">
+                  <span>位置：{{ positionLabel(entry.position?.type) }}</span>
+                  <span>顺序：{{ entry.position?.order ?? 0 }}</span>
+                  <span>概率：{{ entry.probability ?? 100 }}%</span>
+                  <span>深度：{{ scanDepthLabel(entry.strategy?.scan_depth) }}</span>
+                </div>
+                <div class="cw-wb-entry-keys">
+                  <div>
+                    <span>主要关键词</span>
+                    <p>{{ formatKeys(entry.strategy?.keys) }}</p>
+                  </div>
+                  <div v-if="entry.strategy?.keys_secondary?.keys?.length">
+                    <span>次要关键词</span>
+                    <p>{{ formatKeys(entry.strategy?.keys_secondary?.keys) }}</p>
+                  </div>
+                </div>
+                <div class="cw-wb-entry-content">
+                  <span>条目内容</span>
+                  <pre>{{ entry.content || '（空内容）' }}</pre>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+      </section>
+    </div>
+
     <div v-if="showGuide" class="cw-suboverlay" @mousedown.self="showGuide = false">
       <section class="cw-wb-guide" role="dialog" aria-modal="true" aria-label="DLC 世界书条目命名规范">
         <button class="cw-close" type="button" @click="showGuide = false">×</button>
@@ -296,6 +428,7 @@
 import { computed, defineComponent, h, onMounted, ref, watch, type PropType } from 'vue';
 import { prepareUploadImage } from './image';
 import type { AuthRecord, DlcRelations, InstalledWorldbookPack, WorldbookPackSummary } from './types';
+import { parseRawWorldbook, type ParsedWorldbookEntry } from './worldbook-parser';
 import { validateWorldbookFile, type ParsedWorldbookUpload } from './worldbook-prefix';
 import { worldbookWorkshopService } from './worldbook-service';
 
@@ -325,6 +458,9 @@ const ownPacks = ref<WorldbookPackSummary[]>([]);
 const selectedOwn = ref<WorldbookPackSummary>();
 const nextOffset = ref<number | null>(0);
 const showGuide = ref(false);
+const detailLoadingId = ref('');
+const worldbookDetail = ref<{ pack: WorldbookPackSummary; entries: ParsedWorldbookEntry[] }>();
+const expandedEntryIndexes = ref<Set<number>>(new Set());
 const createFile = ref<File>();
 const createValidation = ref<ParsedWorldbookUpload>();
 const createFileInput = ref<HTMLInputElement>();
@@ -337,6 +473,11 @@ const replaceFileInput = ref<HTMLInputElement>();
 const editCoverFile = ref<File>();
 const editCoverInput = ref<HTMLInputElement>();
 const editDescription = ref('');
+const allEntriesExpanded = computed(
+  () =>
+    Boolean(worldbookDetail.value?.entries.length) &&
+    expandedEntryIndexes.value.size === worldbookDetail.value?.entries.length,
+);
 
 function tell(message: string, type: 'success' | 'error' = 'success'): void {
   notice.value = message;
@@ -367,6 +508,71 @@ function isInstalled(id: string): boolean {
 }
 function validationAsPack(value: ParsedWorldbookUpload): Pick<WorldbookPackSummary, 'relations'> {
   return { relations: value.relations };
+}
+function formatKeys(keys?: ReadonlyArray<string | RegExp>): string {
+  return keys?.length ? keys.map(String).join('、') : '无';
+}
+function entryKeywordSummary(entry: ParsedWorldbookEntry): string {
+  if (entry.strategy?.type === 'constant') return '常驻条目，无需关键词触发';
+  const keys = formatKeys(entry.strategy?.keys);
+  return keys === '无' ? '没有设置主要关键词' : `关键词：${keys}`;
+}
+function strategyLabel(type?: string): string {
+  return (
+    ({ constant: '常驻', selective: '关键词', vectorized: '向量匹配' } as Record<string, string>)[type ?? ''] ??
+    '关键词'
+  );
+}
+function positionLabel(type?: string): string {
+  return (
+    (
+      {
+        before_character_definition: '角色定义之前',
+        after_character_definition: '角色定义之后',
+        before_example_messages: '示例消息之前',
+        after_example_messages: '示例消息之后',
+        before_author_note: '作者注释之前',
+        after_author_note: '作者注释之后',
+        at_depth: '指定深度',
+        outlet: '扩展插槽',
+      } as Record<string, string>
+    )[type ?? ''] ?? '未指定'
+  );
+}
+function scanDepthLabel(depth?: number | 'same_as_global'): string {
+  return depth === 'same_as_global' || depth === undefined ? '跟随全局' : String(depth);
+}
+function toggleEntry(index: number): void {
+  const next = new Set(expandedEntryIndexes.value);
+  if (next.has(index)) next.delete(index);
+  else next.add(index);
+  expandedEntryIndexes.value = next;
+}
+function toggleAllEntries(): void {
+  if (!worldbookDetail.value) return;
+  expandedEntryIndexes.value = allEntriesExpanded.value
+    ? new Set()
+    : new Set(worldbookDetail.value.entries.map((_, index) => index));
+}
+function closeWorldbookDetail(): void {
+  worldbookDetail.value = undefined;
+  expandedEntryIndexes.value = new Set();
+}
+async function openWorldbookDetail(pack: WorldbookPackSummary): Promise<void> {
+  if (detailLoadingId.value) return;
+  detailLoadingId.value = pack.id;
+  try {
+    const [detailPack, raw] = await Promise.all([
+      worldbookWorkshopService.api.getWorldbookPack(pack.id),
+      worldbookWorkshopService.api.getWorldbookContent(pack.id),
+    ]);
+    worldbookDetail.value = { pack: detailPack, entries: parseRawWorldbook(raw) };
+    expandedEntryIndexes.value = new Set();
+  } catch (error) {
+    tell(`读取世界书详情失败：${errorText(error)}`, 'error');
+  } finally {
+    detailLoadingId.value = '';
+  }
 }
 
 async function loadInstalled(): Promise<void> {
@@ -671,19 +877,38 @@ onMounted(() => void loadMode());
 }
 .cw-wb-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
 }
 .cw-wb-card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 13px;
+  gap: 6px;
+  padding: 10px;
   border: 1px solid var(--cw-line);
   border-radius: 11px;
   background: color-mix(in srgb, var(--cw-paper-2) 45%, transparent);
 }
+.cw-wb-public-card {
+  cursor: pointer;
+  outline: none;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+.cw-wb-public-card:hover,
+.cw-wb-public-card:focus-visible {
+  border-color: color-mix(in srgb, var(--cw-red) 45%, var(--cw-line));
+  box-shadow: 0 8px 24px rgba(79, 49, 37, 0.12);
+  transform: translateY(-2px);
+}
+.cw-wb-public-card.loading {
+  cursor: wait;
+  opacity: 0.78;
+}
 .cw-wb-cover {
+  position: relative;
   display: grid;
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -702,6 +927,24 @@ onMounted(() => void loadMode());
 .cw-wb-cover > span {
   font-size: 20px;
   letter-spacing: 0.15em;
+}
+.cw-wb-cover-labels {
+  position: absolute;
+  inset: 7px 7px auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: none;
+}
+.cw-wb-cover-labels > span {
+  padding: 2px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: 99px;
+  color: #fff8ec;
+  background: rgba(39, 31, 26, 0.68);
+  box-shadow: 0 2px 8px #0003;
+  backdrop-filter: blur(5px);
 }
 .cw-wb-cover.selected-cover {
   max-height: 300px;
@@ -724,8 +967,34 @@ onMounted(() => void loadMode());
   color: var(--cw-muted);
   font-size: 13px;
 }
-.cw-wb-card code,
-.cw-wb-installed code {
+.cw-wb-card-description {
+  display: -webkit-box;
+  min-height: 2.9em;
+  overflow: hidden;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.cw-wb-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 3px;
+}
+.cw-wb-card-footer > span {
+  color: var(--cw-muted);
+  font-size: 10px;
+}
+.cw-wb-card-footer .cw-btn {
+  min-height: 30px;
+  padding: 5px 10px;
+  font-size: 12px;
+}
+.cw-wb-dlc-key {
   display: block;
   overflow-wrap: anywhere;
   padding: 0;
@@ -835,6 +1104,241 @@ onMounted(() => void loadMode());
 .cw-wb-owner-layout {
   margin-top: 12px;
 }
+.cw-wb-detail {
+  position: relative;
+  width: min(960px, calc(100% - 24px));
+  max-height: min(900px, calc(100% - 24px));
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid var(--cw-line);
+  border-radius: 15px;
+  color: var(--cw-ink);
+  background: var(--cw-paper);
+  box-shadow: 0 22px 80px #0008;
+  scrollbar-width: thin;
+}
+.cw-wb-detail > .cw-close {
+  position: absolute;
+  z-index: 2;
+  top: 10px;
+  right: 10px;
+}
+.cw-wb-detail-hero {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 14px;
+  padding-right: 36px;
+}
+.cw-wb-detail-cover {
+  aspect-ratio: 4 / 3;
+}
+.cw-wb-detail-heading {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+}
+.cw-wb-detail-heading h2 {
+  margin: 0;
+  font-size: clamp(22px, 3.4vw, 30px);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.cw-wb-detail-description {
+  max-height: min(26vh, 240px);
+  overflow: auto;
+  margin: 12px 0 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--cw-line);
+  border-left: 3px solid var(--cw-red);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--cw-paper-2) 62%, transparent);
+  scrollbar-width: thin;
+}
+.cw-wb-detail-description > span,
+.cw-wb-entry-browser-head > div > span,
+.cw-wb-entry-content > span,
+.cw-wb-entry-keys span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--cw-red);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+}
+.cw-wb-detail-description p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.cw-wb-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.cw-wb-detail-actions > span {
+  color: var(--cw-muted);
+  font-size: 12px;
+}
+.cw-wb-entry-browser {
+  padding-top: 10px;
+  border-top: 1px solid var(--cw-line);
+}
+.cw-wb-entry-browser-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 7px;
+}
+.cw-wb-entry-browser-head h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.cw-wb-entry-list {
+  display: grid;
+  gap: 8px;
+}
+.cw-wb-entry {
+  overflow: hidden;
+  border: 1px solid var(--cw-line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--cw-paper-2) 42%, transparent);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.cw-wb-entry.expanded {
+  border-color: color-mix(in srgb, var(--cw-red) 45%, var(--cw-line));
+  box-shadow: 0 7px 22px rgba(79, 49, 37, 0.08);
+}
+.cw-wb-entry-summary {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 34px minmax(0, 1fr) auto 20px;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 0;
+  color: var(--cw-ink);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.cw-wb-entry-summary:hover {
+  background: color-mix(in srgb, var(--cw-red) 5%, transparent);
+}
+.cw-wb-entry-index {
+  color: var(--cw-red);
+  font:
+    500 15px/1 Georgia,
+    serif;
+}
+.cw-wb-entry-title {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+.cw-wb-entry-title strong {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cw-wb-entry-title small {
+  overflow: hidden;
+  color: var(--cw-muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cw-wb-entry-badges {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.cw-wb-entry-badges i {
+  padding: 2px 7px;
+  border: 1px solid var(--cw-line);
+  border-radius: 99px;
+  color: var(--cw-muted);
+  font-size: 10px;
+  font-style: normal;
+  white-space: nowrap;
+}
+.cw-wb-entry-badges i.enabled {
+  color: var(--cw-green);
+}
+.cw-wb-entry-badges i.disabled {
+  color: var(--cw-red);
+}
+.cw-wb-entry-chevron {
+  color: var(--cw-muted);
+  font-size: 20px;
+  line-height: 1;
+  transition: transform 0.18s ease;
+}
+.cw-wb-entry.expanded .cw-wb-entry-chevron {
+  transform: rotate(180deg);
+}
+.cw-wb-entry-detail {
+  padding: 0 11px 11px 45px;
+  border-top: 1px dashed var(--cw-line);
+}
+.cw-wb-entry-minor-meta {
+  display: flex;
+  align-items: center;
+  gap: 3px 12px;
+  flex-wrap: wrap;
+  margin: 7px 0;
+  color: var(--cw-muted);
+  font-size: 10px;
+}
+.cw-wb-entry-keys {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 7px;
+}
+.cw-wb-entry-keys > div {
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid var(--cw-line);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--cw-paper) 60%, transparent);
+}
+.cw-wb-entry-keys > div:only-child {
+  grid-column: 1 / -1;
+}
+.cw-wb-entry-keys p {
+  margin: 0;
+  color: var(--cw-muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.cw-wb-entry-content pre {
+  max-height: min(48vh, 480px);
+  overflow: auto;
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--cw-line);
+  border-radius: 8px;
+  color: var(--cw-ink);
+  background: var(--cw-paper-2);
+  font:
+    12px/1.6 ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  word-break: break-word;
+  scrollbar-width: thin;
+}
 .cw-wb-guide {
   position: relative;
   width: min(760px, calc(100% - 24px));
@@ -868,6 +1372,30 @@ onMounted(() => void loadMode());
   color: var(--cw-muted);
 }
 @media (max-width: 700px) {
+  .cw-wb-detail-hero,
+  .cw-wb-entry-keys {
+    grid-template-columns: 1fr;
+  }
+  .cw-wb-detail {
+    width: calc(100% - 12px);
+    max-height: calc(100% - 12px);
+    padding: 15px;
+  }
+  .cw-wb-detail-hero {
+    padding-right: 28px;
+  }
+  .cw-wb-detail-cover {
+    max-height: 210px;
+  }
+  .cw-wb-entry-summary {
+    grid-template-columns: 32px minmax(0, 1fr) 20px;
+  }
+  .cw-wb-entry-badges {
+    display: none;
+  }
+  .cw-wb-entry-detail {
+    padding-left: 14px;
+  }
   .cw-wb-installed {
     grid-template-columns: 1fr;
   }

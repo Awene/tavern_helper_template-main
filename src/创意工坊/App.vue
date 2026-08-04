@@ -29,9 +29,19 @@
             已安装图包 <span>{{ installed.length }}</span>
           </button>
           <button :class="{ active: activeTab === 'mine' }" type="button" @click="switchTab('mine')">我的图包</button>
-          <button :class="{ active: activeTab === 'worldbooks' }" type="button" @click="switchTab('worldbooks')">浏览世界书</button>
-          <button :class="{ active: activeTab === 'installed-worldbooks' }" type="button" @click="switchTab('installed-worldbooks')">已安装世界书</button>
-          <button :class="{ active: activeTab === 'my-worldbooks' }" type="button" @click="switchTab('my-worldbooks')">我的世界书</button>
+          <button :class="{ active: activeTab === 'worldbooks' }" type="button" @click="switchTab('worldbooks')">
+            浏览世界书
+          </button>
+          <button
+            :class="{ active: activeTab === 'installed-worldbooks' }"
+            type="button"
+            @click="switchTab('installed-worldbooks')"
+          >
+            已安装世界书
+          </button>
+          <button :class="{ active: activeTab === 'my-worldbooks' }" type="button" @click="switchTab('my-worldbooks')">
+            我的世界书
+          </button>
           <button :class="{ active: activeTab === 'settings' }" type="button" @click="switchTab('settings')">
             设置
           </button>
@@ -382,7 +392,9 @@
           </section>
 
           <WorldbookWorkshop
-            v-else-if="activeTab === 'worldbooks' || activeTab === 'installed-worldbooks' || activeTab === 'my-worldbooks'"
+            v-else-if="
+              activeTab === 'worldbooks' || activeTab === 'installed-worldbooks' || activeTab === 'my-worldbooks'
+            "
             :mode="activeTab === 'worldbooks' ? 'browse' : activeTab === 'installed-worldbooks' ? 'installed' : 'mine'"
             :auth="auth"
             @login="login"
@@ -433,7 +445,10 @@
             <h2>{{ detail.pack.name }}</h2>
             <span class="cw-version">v{{ detail.pack.version }}</span>
           </div>
-          <p>{{ detail.pack.description }}</p>
+          <div class="cw-detail-description">
+            <span class="cw-detail-description-label">图包简介</span>
+            <p>{{ detail.pack.description || '作者没有填写简介。' }}</p>
+          </div>
           <div class="cw-detail-stats">
             <span>作者：{{ detail.pack.owner_name || '未知作者' }}</span>
             <span>上传于 {{ formatDate(detail.pack.published_at) }}</span>

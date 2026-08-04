@@ -195,6 +195,7 @@
                 "const": "人物"
               },
               "在场": {
+                "default": false,
                 "type": "boolean"
               },
               "种族": {
@@ -262,18 +263,23 @@
                 "$ref": "#/$defs/__schema18"
               },
               "性格": {
+                "default": "",
                 "type": "string"
               },
               "外貌": {
+                "default": "",
                 "type": "string"
               },
               "着装": {
+                "default": "",
                 "type": "string"
               },
               "道侣": {
+                "default": false,
                 "type": "boolean"
               },
               "好感度": {
+                "default": 0,
                 "type": "number"
               },
               "细节可见": {
@@ -451,6 +457,7 @@
       "type": "object",
       "properties": {
         "年龄": {
+          "default": 0,
           "type": "number"
         },
         "寿命": {
@@ -536,12 +543,15 @@
           }
         },
         "悟性": {
+          "default": 0,
           "type": "number"
         },
         "根骨": {
+          "default": 0,
           "type": "number"
         },
         "气感": {
+          "default": 0,
           "type": "number"
         },
         "元阴": {
@@ -581,6 +591,7 @@
           "type": "string"
         },
         "当前进度": {
+          "default": 0,
           "type": "number"
         },
         "进度上限": {
@@ -588,9 +599,11 @@
           "type": "number"
         },
         "天谴": {
+          "default": 0,
           "type": "number"
         },
         "丹毒": {
+          "default": 0,
           "type": "number"
         }
       }
@@ -604,21 +617,27 @@
           "type": "object",
           "properties": {
             "炼器": {
+              "default": 0,
               "type": "number"
             },
             "驯兽": {
+              "default": 0,
               "type": "number"
             },
             "培育": {
+              "default": 0,
               "type": "number"
             },
             "医术": {
+              "default": 0,
               "type": "number"
             },
             "炼丹": {
+              "default": 0,
               "type": "number"
             },
             "制符": {
+              "default": 0,
               "type": "number"
             }
           }
@@ -628,21 +647,27 @@
           "type": "object",
           "properties": {
             "御物": {
+              "default": 0,
               "type": "number"
             },
             "咒法": {
+              "default": 0,
               "type": "number"
             },
             "幻术": {
+              "default": 0,
               "type": "number"
             },
             "阵法": {
+              "default": 0,
               "type": "number"
             },
             "神识": {
+              "default": 0,
               "type": "number"
             },
             "炼体": {
+              "default": 0,
               "type": "number"
             }
           }
@@ -737,6 +762,7 @@
           "type": "string"
         },
         "来源": {
+          "default": "",
           "type": "string"
         }
       }
@@ -745,6 +771,7 @@
       "type": "object",
       "properties": {
         "使用中": {
+          "default": false,
           "type": "boolean"
         },
         "品质": {
@@ -792,6 +819,7 @@
           }
         },
         "描述": {
+          "default": "",
           "type": "string"
         }
       }
@@ -820,6 +848,7 @@
       ]
     },
     "__schema11": {
+      "default": 0,
       "description": "默认单位为下品灵石",
       "$ref": "#/$defs/__schema12"
     },
@@ -868,6 +897,7 @@
             }
           },
           "数量": {
+            "default": 0,
             "type": "number"
           },
           "效果": {
@@ -880,6 +910,7 @@
             }
           },
           "描述": {
+            "default": "",
             "type": "string"
           }
         }
@@ -933,6 +964,7 @@
             }
           },
           "描述": {
+            "default": "",
             "type": "string"
           },
           "位置": {
@@ -956,6 +988,7 @@
       "type": "object",
       "properties": {
         "使用中": {
+          "default": false,
           "type": "boolean"
         },
         "品质": {
@@ -977,12 +1010,14 @@
           }
         },
         "描述": {
+          "default": "",
           "type": "string"
         },
         "资源池": {
           "$ref": "#/$defs/__schema5"
         },
         "防御力": {
+          "default": 0,
           "type": "number"
         },
         "技能": {
@@ -1001,6 +1036,7 @@
       "type": "object",
       "properties": {
         "攻击力": {
+          "default": 0,
           "type": "number"
         },
         "消耗": {
@@ -1050,9 +1086,11 @@
       }
     },
     "__schema24": {
+      "default": "",
       "type": "string"
     },
     "__schema25": {
+      "default": 0,
       "type": "number"
     },
     "__schema26": {

@@ -381,7 +381,9 @@ export class WorldbookWorkshopService {
   async uninstall(packId: string): Promise<void> {
     const pack = (await getInstalledWorldbooks()).find(item => item.id === packId);
     if (!pack) return;
-    if (pack.enabled) await this.setEnabled(pack.id, false);
+    // 卸载必须能处理玩家已经手动删除统一世界书的情况。这里不再先调用 setEnabled，
+    // 因为停用流程要求包内条目仍然存在；直接释放替换记录并按“存在则删除”清理即可。
+    await this.releaseReplacements(pack.id);
     await this.removePackEntries(pack.id);
     await deleteInstalledWorldbook(pack.id);
     const sharedName = findMatchingWorldbookName(getWorldbookNames(), SHARED_WORLDBOOK_NAME);
