@@ -164,6 +164,7 @@ export interface WorldbookPackSummary {
   byte_size: number;
   sha256: string;
   download_url: string;
+  cover_url?: string | null;
   created_at: number;
   updated_at: number;
   published_at?: number | null;

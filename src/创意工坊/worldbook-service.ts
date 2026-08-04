@@ -8,19 +8,11 @@ import {
   putInstalledWorldbook,
   putWorldbookReplacement,
 } from './storage';
-import type {
-  InstalledWorldbookPack,
-  WorldbookPackSummary,
-  WorldbookReplacementRecord,
-} from './types';
+import type { InstalledWorldbookPack, WorldbookPackSummary, WorldbookReplacementRecord } from './types';
+import { parseRawWorldbook, type ParsedWorldbookEntry } from './worldbook-parser';
 
 function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
-}
-
-function safeBookName(pack: WorldbookPackSummary): string {
-  const label = pack.name.replace(/[<>:"/\\|?*]/gu, '_').trim().slice(0, 48) || '未命名';
-  return `[创意工坊]${label}-${pack.id.slice(-8)}`;
 }
 
 function matchesTarget(pack: InstalledWorldbookPack, target: string): boolean {
@@ -32,6 +24,64 @@ function entryMatchesTarget(name: string, target: string): boolean {
 }
 
 const DEFAULT_API_BASE = 'https://cultivation-illustration-workshop.awenewilly1.workers.dev';
+const SHARED_WORLDBOOK_NAME = '本格数值化修仙·创意工坊';
+
+interface WorkshopEntrySource {
+  sourceId: string;
+  sourceType: 'worldbook_pack';
+  sourceTitle: string;
+  sourceVersion: number;
+  originalEnabled: boolean;
+  installedAt: string;
+}
+
+function entrySource(entry: Pick<WorldbookEntry, 'extra'>): WorkshopEntrySource | undefined {
+  const source = entry.extra?.creativeWorkshop;
+  if (!source || typeof source !== 'object') return undefined;
+  const value = source as Partial<WorkshopEntrySource>;
+  return value.sourceType === 'worldbook_pack' && typeof value.sourceId === 'string'
+    ? (value as WorkshopEntrySource)
+    : undefined;
+}
+
+function isPackEntry(entry: Pick<WorldbookEntry, 'extra'>, packId: string): boolean {
+  return entrySource(entry)?.sourceId === packId;
+}
+
+function decorateEntries(
+  entries: ParsedWorldbookEntry[],
+  pack: WorldbookPackSummary,
+  enabled: boolean,
+): ParsedWorldbookEntry[] {
+  const installedAt = new Date().toISOString();
+  return entries.map(entry => {
+    const originalEnabled = entry.enabled !== false;
+    return {
+      ...entry,
+      enabled: enabled && originalEnabled,
+      extra: {
+        ...(entry.extra ?? {}),
+        creativeWorkshop: {
+          sourceId: pack.id,
+          sourceType: 'worldbook_pack',
+          sourceTitle: pack.name,
+          sourceVersion: pack.version,
+          originalEnabled,
+          installedAt,
+        } satisfies WorkshopEntrySource,
+      },
+    };
+  });
+}
+
+function normalizedWorldbookName(name: string): string {
+  return name.trim().replace(/\.json$/iu, '');
+}
+
+function findMatchingWorldbookName(names: string[], expectedName: string): string | undefined {
+  const expected = normalizedWorldbookName(expectedName);
+  return names.find(name => normalizedWorldbookName(name) === expected);
+}
 
 export class WorldbookWorkshopService {
   readonly api = new WorkshopApi(async () => (await getSettingsRecord())?.apiBase || DEFAULT_API_BASE);
@@ -39,33 +89,46 @@ export class WorldbookWorkshopService {
   async listInstalled(): Promise<InstalledWorldbookPack[]> {
     const installed = await getInstalledWorldbooks();
     const availableBooks = new Set(getWorldbookNames());
-    const boundBooks = new Set(getCharWorldbookNames('current').additional);
     for (const pack of installed) {
-      if (!availableBooks.has(pack.bookName)) {
-        if (pack.enabled) {
-          try {
-            await this.setEnabledInternal(pack.id, false, new Set());
-          } catch {
-            // 下方仍会记录更直观的“世界书缺失”错误。
-          }
-        }
-        pack.enabled = false;
-        pack.missingPrerequisites = [];
-        pack.updateError = `酒馆世界书“${pack.bookName}”已缺失，请卸载后重新安装`;
-        await putInstalledWorldbook(pack);
-        continue;
-      }
-      const actuallyEnabled = boundBooks.has(pack.bookName);
-      if (pack.enabled !== actuallyEnabled) {
+      if (pack.bookName !== SHARED_WORLDBOOK_NAME) {
         try {
-          // 启用状态以当前角色的附加世界书绑定为准；同步时同样应用/释放关系，
-          // 避免用户手动改绑世界书或切换角色后留下失效的替换记录。
-          await this.setEnabledInternal(pack.id, actuallyEnabled, new Set());
+          await this.migrateLegacyPack(pack);
+          availableBooks.add(pack.bookName);
         } catch (error) {
-          pack.updateError = `同步酒馆绑定失败：${errorText(error)}`;
+          pack.updateError = `迁移到统一创意工坊世界书失败：${errorText(error)}`;
           await putInstalledWorldbook(pack);
+          continue;
         }
       }
+      if (!findMatchingWorldbookName([...availableBooks], SHARED_WORLDBOOK_NAME)) {
+        pack.missingPrerequisites = [];
+        pack.updateError = `酒馆世界书“${SHARED_WORLDBOOK_NAME}”已缺失，请卸载后重新安装世界书包`;
+        await putInstalledWorldbook(pack);
+      }
+    }
+    const sharedName = findMatchingWorldbookName([...availableBooks], SHARED_WORLDBOOK_NAME);
+    if (sharedName) {
+      const latest = await getInstalledWorldbooks();
+      const sourceIds = new Set(
+        (await getWorldbook(sharedName))
+          .map(entry => entrySource(entry)?.sourceId)
+          .filter((sourceId): sourceId is string => Boolean(sourceId)),
+      );
+      for (const pack of latest) {
+        pack.bookName = sharedName;
+        if (!sourceIds.has(pack.id)) {
+          pack.updateError = `统一创意工坊世界书中缺少“${pack.pack.name}”的条目，请卸载后重新安装该包`;
+        } else if (
+          pack.updateError.startsWith('酒馆世界书“') ||
+          pack.updateError.startsWith('迁移到统一创意工坊世界书失败：') ||
+          pack.updateError.startsWith('统一创意工坊世界书中缺少“')
+        ) {
+          pack.updateError = '';
+        }
+        await putInstalledWorldbook(pack);
+      }
+      if (latest.some(pack => pack.enabled)) await this.bindBook(sharedName);
+      else await this.unbindBook(sharedName);
     }
     await this.refreshDependencyWarnings();
     return (await getInstalledWorldbooks()).sort(
@@ -77,16 +140,71 @@ export class WorldbookWorkshopService {
     return this.api.listWorldbooks(query, category, offset);
   }
 
-  private async importBook(raw: string, desiredBookName: string): Promise<string> {
-    const before = new Set(getWorldbookNames());
-    const response = await importRawWorldbook(`${desiredBookName}.json`, raw);
-    if (!response.ok) throw new Error((await response.text().catch(() => '')) || `导入世界书失败（${response.status}）`);
-    const after = getWorldbookNames();
-    if (after.includes(desiredBookName)) return desiredBookName;
-    const created = after.find(name => !before.has(name));
-    if (created) return created;
-    if (after.includes(`${desiredBookName}.json`)) return `${desiredBookName}.json`;
-    throw new Error('世界书已导入，但无法确认酒馆中的世界书名称');
+  private async ensureSharedWorldbook(): Promise<string> {
+    const existing = findMatchingWorldbookName(getWorldbookNames(), SHARED_WORLDBOOK_NAME);
+    if (existing) return existing;
+    await createWorldbook(SHARED_WORLDBOOK_NAME, []);
+    const created = findMatchingWorldbookName(getWorldbookNames(), SHARED_WORLDBOOK_NAME);
+    if (!created) throw new Error(`酒馆没有创建世界书“${SHARED_WORLDBOOK_NAME}”`);
+    return created;
+  }
+
+  private async writePackEntries(raw: string, pack: WorldbookPackSummary, enabled: boolean): Promise<string> {
+    const bookName = await this.ensureSharedWorldbook();
+    const entries = decorateEntries(parseRawWorldbook(raw), pack, enabled);
+    await updateWorldbookWith(
+      bookName,
+      worldbook => [...worldbook.filter(entry => !isPackEntry(entry, pack.id)), ...entries],
+      { render: 'immediate' },
+    );
+    const written = (await getWorldbook(bookName)).filter(entry => isPackEntry(entry, pack.id));
+    if (written.length !== entries.length) {
+      throw new Error(`世界书包写入校验失败：应有 ${entries.length} 个条目，实际写入 ${written.length} 个`);
+    }
+    return bookName;
+  }
+
+  private async setPackEntriesEnabled(packId: string, enabled: boolean): Promise<void> {
+    const bookName = await this.ensureSharedWorldbook();
+    let matched = 0;
+    await updateWorldbookWith(
+      bookName,
+      entries =>
+        entries.map(entry => {
+          const source = entrySource(entry);
+          if (source?.sourceId !== packId) return entry;
+          matched += 1;
+          return { ...entry, enabled: enabled && source.originalEnabled };
+        }),
+      { render: 'immediate' },
+    );
+    if (!matched) throw new Error('统一创意工坊世界书中没有找到该包的条目，请重新安装');
+  }
+
+  private async removePackEntries(packId: string): Promise<void> {
+    const bookName = findMatchingWorldbookName(getWorldbookNames(), SHARED_WORLDBOOK_NAME);
+    if (!bookName) return;
+    await updateWorldbookWith(bookName, entries => entries.filter(entry => !isPackEntry(entry, packId)), {
+      render: 'immediate',
+    });
+  }
+
+  private async migrateLegacyPack(pack: InstalledWorldbookPack): Promise<void> {
+    const legacyName = findMatchingWorldbookName(getWorldbookNames(), pack.bookName);
+    if (!legacyName) throw new Error(`旧世界书“${pack.bookName}”不存在`);
+    const legacyEntries = await getWorldbook(legacyName);
+    const sharedName = await this.ensureSharedWorldbook();
+    const converted = decorateEntries(legacyEntries, pack.pack, pack.enabled);
+    await updateWorldbookWith(
+      sharedName,
+      entries => [...entries.filter(entry => !isPackEntry(entry, pack.id)), ...converted],
+      { render: 'immediate' },
+    );
+    await this.unbindBook(legacyName);
+    if (legacyName.startsWith('[创意工坊]')) await deleteWorldbook(legacyName);
+    pack.bookName = sharedName;
+    pack.updateError = '';
+    await putInstalledWorldbook(pack);
   }
 
   private async bindBook(bookName: string): Promise<void> {
@@ -110,7 +228,9 @@ export class WorldbookWorkshopService {
   private async applyReplacements(pack: InstalledWorldbookPack): Promise<void> {
     if (!pack.pack.relations.replacements.length) return;
     const binding = getCharWorldbookNames('current');
-    const books = [...new Set([binding.primary, ...binding.additional].filter((name): name is string => Boolean(name)))];
+    const books = [
+      ...new Set([binding.primary, ...binding.additional].filter((name): name is string => Boolean(name))),
+    ];
     const records = new Map((await getWorldbookReplacements()).map(record => [record.key, record]));
     for (const bookName of books) {
       let entries: WorldbookEntry[];
@@ -174,7 +294,8 @@ export class WorldbookWorkshopService {
 
   private missingPrerequisites(pack: InstalledWorldbookPack, installed: InstalledWorldbookPack[]): string[] {
     return pack.pack.relations.prerequisites.filter(
-      target => !installed.some(candidate => candidate.enabled && candidate.id !== pack.id && matchesTarget(candidate, target)),
+      target =>
+        !installed.some(candidate => candidate.enabled && candidate.id !== pack.id && matchesTarget(candidate, target)),
     );
   }
 
@@ -199,11 +320,14 @@ export class WorldbookWorkshopService {
     try {
       if (enabled) {
         for (const target of pack.pack.relations.exclusions) {
-          for (const conflict of installed.filter(item => item.enabled && item.id !== pack.id && matchesTarget(item, target))) {
+          for (const conflict of installed.filter(
+            item => item.enabled && item.id !== pack.id && matchesTarget(item, target),
+          )) {
             await this.setEnabledInternal(conflict.id, false, visited);
           }
         }
-        await this.bindBook(pack.bookName);
+        await this.setPackEntriesEnabled(pack.id, true);
+        await this.bindBook(await this.ensureSharedWorldbook());
         pack.enabled = true;
         pack.updateError = '';
         pack.missingPrerequisites = this.missingPrerequisites(pack, await getInstalledWorldbooks());
@@ -211,10 +335,13 @@ export class WorldbookWorkshopService {
         await this.applyReplacements(pack);
       } else {
         await this.releaseReplacements(pack.id);
-        await this.unbindBook(pack.bookName);
+        await this.setPackEntriesEnabled(pack.id, false);
         pack.enabled = false;
         pack.missingPrerequisites = [];
         await putInstalledWorldbook(pack);
+        const remaining = (await getInstalledWorldbooks()).some(item => item.id !== pack.id && item.enabled);
+        const sharedName = findMatchingWorldbookName(getWorldbookNames(), SHARED_WORLDBOOK_NAME);
+        if (!remaining && sharedName) await this.unbindBook(sharedName);
       }
       await this.refreshDependencyWarnings();
       return pack.missingPrerequisites;
@@ -234,8 +361,7 @@ export class WorldbookWorkshopService {
     const raw = await this.api.getWorldbookContent(packId);
     const previous = (await getInstalledWorldbooks()).find(item => item.id === packId);
     if (previous) return previous;
-    const desired = safeBookName(metadata);
-    const bookName = await this.importBook(raw, desired);
+    const bookName = await this.writePackEntries(raw, metadata, false);
     const now = Date.now();
     const installed: InstalledWorldbookPack = {
       id: metadata.id,
@@ -256,9 +382,10 @@ export class WorldbookWorkshopService {
     const pack = (await getInstalledWorldbooks()).find(item => item.id === packId);
     if (!pack) return;
     if (pack.enabled) await this.setEnabled(pack.id, false);
-    const deleted = await deleteWorldbook(pack.bookName);
-    if (!deleted && getWorldbookNames().includes(pack.bookName)) throw new Error(`无法删除世界书“${pack.bookName}”`);
+    await this.removePackEntries(pack.id);
     await deleteInstalledWorldbook(pack.id);
+    const sharedName = findMatchingWorldbookName(getWorldbookNames(), SHARED_WORLDBOOK_NAME);
+    if (!(await getInstalledWorldbooks()).some(item => item.enabled) && sharedName) await this.unbindBook(sharedName);
     await this.refreshDependencyWarnings();
   }
 
@@ -284,7 +411,7 @@ export class WorldbookWorkshopService {
       const raw = await this.api.getWorldbookContent(pack.id);
       if (wasEnabled) await this.setEnabled(pack.id, false);
       disabledForUpdate = wasEnabled;
-      const bookName = await this.importBook(raw, pack.bookName);
+      const bookName = await this.writePackEntries(raw, metadata, false);
       const current = (await getInstalledWorldbooks()).find(item => item.id === pack.id) ?? pack;
       Object.assign(current, { pack: metadata, bookName, enabled: false, updatedAt: Date.now(), updateError: '' });
       await putInstalledWorldbook(current);

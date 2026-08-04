@@ -199,7 +199,9 @@ export class WorkshopApi {
     return result.pack;
   }
 
-  getWorldbookPackVersion(packId: string): Promise<{ id: string; version: number; status: string; updated_at: number }> {
+  getWorldbookPackVersion(
+    packId: string,
+  ): Promise<{ id: string; version: number; status: string; updated_at: number }> {
     return this.request(`/api/worldbooks/${encodeURIComponent(packId)}/version`);
   }
 
@@ -230,10 +232,11 @@ export class WorkshopApi {
     return result.pack;
   }
 
-  createWorldbook(file: File, description: string): Promise<{ pack: WorldbookPackSummary }> {
+  createWorldbook(file: File, description: string, cover?: File): Promise<{ pack: WorldbookPackSummary }> {
     const form = new FormData();
     form.set('file', file, file.name);
     form.set('description', description);
+    if (cover) form.set('cover', cover, cover.name);
     return this.request('/api/worldbooks', { method: 'POST', body: form }, true);
   }
 
@@ -250,6 +253,12 @@ export class WorkshopApi {
     form.set('file', file, file.name);
     form.set('description', description);
     return this.request(`/api/worldbooks/${encodeURIComponent(packId)}/content`, { method: 'POST', body: form }, true);
+  }
+
+  uploadWorldbookCover(packId: string, cover: File): Promise<{ pack: WorldbookPackSummary }> {
+    const form = new FormData();
+    form.set('cover', cover, cover.name);
+    return this.request(`/api/worldbooks/${encodeURIComponent(packId)}/cover`, { method: 'POST', body: form }, true);
   }
 
   publishWorldbook(packId: string): Promise<{ ok: true }> {
