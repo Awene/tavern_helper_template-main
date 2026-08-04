@@ -1,6 +1,6 @@
 <template>
   <Transition name="cw-fade">
-    <div v-if="workshopVisible" class="cw-overlay" @mousedown.self="closeWorkshop">
+    <div v-if="workshopVisible" class="cw-overlay" :class="{ 'cw-dark': darkMode }" @mousedown.self="closeWorkshop">
       <section class="cw-shell" role="dialog" aria-modal="true" aria-label="本格数值化修仙创意工坊">
         <header class="cw-header">
           <div>
@@ -8,6 +8,9 @@
             <h1>创意工坊</h1>
           </div>
           <div class="cw-header-actions">
+            <button class="cw-theme-toggle" type="button" @click="toggleTheme">
+              {{ darkMode ? '☀ 日间' : '🌙 夜间' }}
+            </button>
             <button v-if="auth" class="cw-user" type="button" @click="activeTab = 'mine'">
               {{ auth.user.globalName || auth.user.username }}
             </button>
@@ -23,9 +26,12 @@
             浏览图包
           </button>
           <button :class="{ active: activeTab === 'installed' }" type="button" @click="switchTab('installed')">
-            已安装 <span>{{ installed.length }}</span>
+            已安装图包 <span>{{ installed.length }}</span>
           </button>
           <button :class="{ active: activeTab === 'mine' }" type="button" @click="switchTab('mine')">我的图包</button>
+          <button :class="{ active: activeTab === 'worldbooks' }" type="button" @click="switchTab('worldbooks')">浏览世界书</button>
+          <button :class="{ active: activeTab === 'installed-worldbooks' }" type="button" @click="switchTab('installed-worldbooks')">已安装世界书</button>
+          <button :class="{ active: activeTab === 'my-worldbooks' }" type="button" @click="switchTab('my-worldbooks')">我的世界书</button>
           <button :class="{ active: activeTab === 'settings' }" type="button" @click="switchTab('settings')">
             设置
           </button>
@@ -61,26 +67,65 @@
             <div v-else-if="!publicPacks.length" class="cw-empty">没有找到符合条件的图包。</div>
             <div v-else class="cw-grid">
               <article v-for="pack in publicPacks" :key="pack.id" class="cw-card">
-                <button class="cw-card-main" type="button" @click="openPack(pack)">
-                  <div class="cw-card-top">
-                    <span class="cw-category">{{ pack.category }}</span>
-                    <span>v{{ pack.version }}</span>
-                  </div>
-                  <h2>{{ pack.name }}</h2>
-                  <p>{{ pack.description || '作者没有填写简介。' }}</p>
-                  <div class="cw-card-meta">
-                    <span>{{ pack.owner_name || '未知作者' }}</span>
-                    <span>{{ pack.image_count || 0 }} 张</span>
-                  </div>
-                </button>
                 <button
-                  class="cw-btn cw-btn-primary"
+                  class="cw-card-main"
                   type="button"
-                  :disabled="Boolean(downloadProgress[pack.id]) || isInstalled(pack.id)"
-                  @click="install(pack)"
+                  :aria-label="`查看图包 ${pack.name}`"
+                  @click="openPack(pack)"
                 >
-                  {{ isInstalled(pack.id) ? '已下载' : downloadProgress[pack.id] || '下载图包' }}
+                  <div class="cw-card-media">
+                    <template v-if="pack.preview_url && !failedPreviewIds.has(pack.id)">
+                      <img class="cw-card-preview-blur" :src="pack.preview_url" alt="" aria-hidden="true" />
+                      <img
+                        class="cw-card-preview"
+                        :src="pack.preview_url"
+                        :alt="`${pack.name} 预览图`"
+                        loading="lazy"
+                        @error="markPreviewFailed(pack.id)"
+                      />
+                    </template>
+                    <div v-else class="cw-card-preview-empty" aria-hidden="true">
+                      <span>图</span><small>暂无预览</small>
+                    </div>
+                    <div class="cw-card-badges">
+                      <span class="cw-glass-pill">{{ pack.category }}</span>
+                      <span class="cw-glass-pill">{{ pack.image_count || 0 }} 张</span>
+                    </div>
+                    <div class="cw-card-glass">
+                      <div class="cw-title-row">
+                        <h2>{{ pack.name }}</h2>
+                        <span class="cw-version">v{{ pack.version }}</span>
+                      </div>
+                      <div class="cw-card-meta">
+                        <span>{{ pack.owner_name || '未知作者' }}</span>
+                        <span>上传于 {{ formatDate(pack.published_at) }}</span>
+                      </div>
+                      <div class="cw-card-stats">
+                        <span>♡ {{ pack.like_count || 0 }}</span>
+                        <span>⇩ {{ pack.download_count || 0 }}</span>
+                      </div>
+                    </div>
+                  </div>
                 </button>
+                <div class="cw-card-actions">
+                  <button
+                    class="cw-btn cw-like-btn"
+                    :class="{ active: likedPackIds.has(pack.id) }"
+                    type="button"
+                    :aria-pressed="likedPackIds.has(pack.id)"
+                    @click="toggleLike(pack)"
+                  >
+                    {{ likedPackIds.has(pack.id) ? '♥ 已赞' : '♡ 点赞' }} {{ pack.like_count || 0 }}
+                  </button>
+                  <button
+                    class="cw-btn cw-btn-primary"
+                    type="button"
+                    :disabled="Boolean(downloadProgress[pack.id]) || isInstalled(pack.id)"
+                    @click="install(pack)"
+                  >
+                    {{ isInstalled(pack.id) ? '已下载' : downloadProgress[pack.id] || '下载图包' }}
+                  </button>
+                </div>
               </article>
             </div>
             <button
@@ -100,7 +145,17 @@
                 <h2>已安装图包</h2>
                 <p>只有已下载且启用的图包会参与正文匹配。</p>
               </div>
-              <button class="cw-btn" type="button" :disabled="busy" @click="checkAllUpdates">立即检查更新</button>
+              <div class="cw-section-actions">
+                <input
+                  ref="offlineInput"
+                  class="cw-native-file"
+                  type="file"
+                  accept=".cwp,application/vnd.cultivation-workshop-pack"
+                  @change="importOfflinePack"
+                />
+                <button class="cw-btn" type="button" :disabled="busy" @click="chooseOfflinePack">导入离线包</button>
+                <button class="cw-btn" type="button" :disabled="busy" @click="checkAllUpdates">立即检查更新</button>
+              </div>
             </div>
             <div v-if="!installed.length" class="cw-empty">尚未下载任何图包。请先在“浏览图包”中选择并下载。</div>
             <div v-else class="cw-list">
@@ -108,22 +163,40 @@
                 <div class="cw-installed-info">
                   <div class="cw-card-top">
                     <span class="cw-category">{{ pack.manifest.pack.category }}</span>
-                    <span>v{{ pack.manifest.pack.version }}</span>
+                    <span v-if="pack.source === 'offline'" class="cw-offline-tag">离线包</span>
                   </div>
-                  <h3>{{ pack.manifest.pack.name }}</h3>
+                  <div class="cw-title-row">
+                    <h3>{{ pack.manifest.pack.name }}</h3>
+                    <span class="cw-version">v{{ pack.manifest.pack.version }}</span>
+                  </div>
                   <p>
                     {{ pack.manifest.images.length }} 张 · {{ formatBytes(pack.localBytes) }}
                     <span v-if="pack.updateError" class="cw-error"> · {{ pack.updateError }}</span>
                   </p>
                 </div>
                 <div class="cw-installed-actions">
-                  <label class="cw-switch">
-                    <input :checked="pack.enabled" type="checkbox" @change="togglePack(pack, $event)" />
-                    <span>{{ pack.enabled ? '已启用' : '已停用' }}</span>
-                  </label>
-                  <button class="cw-btn" type="button" :disabled="busy" @click="checkOneUpdate(pack)">检查更新</button>
+                  <button
+                    v-if="pack.source !== 'offline'"
+                    class="cw-btn"
+                    type="button"
+                    :disabled="busy"
+                    @click="checkOneUpdate(pack)"
+                  >
+                    检查更新
+                  </button>
                   <button class="cw-btn cw-btn-danger" type="button" @click="uninstall(pack)">卸载</button>
                 </div>
+                <button
+                  class="cw-btn cw-pack-toggle"
+                  :class="pack.enabled ? 'is-enabled' : 'is-disabled'"
+                  type="button"
+                  :disabled="togglingPackIds.has(pack.id)"
+                  :aria-pressed="pack.enabled"
+                  @click="togglePack(pack)"
+                >
+                  <span class="cw-toggle-dot" aria-hidden="true"></span>
+                  {{ pack.enabled ? '已启用' : '已停用' }}
+                </button>
               </article>
             </div>
           </section>
@@ -197,6 +270,7 @@
                     </label>
                     <div class="cw-form-actions wide">
                       <button class="cw-btn" :disabled="busy">保存资料</button>
+                      <button class="cw-btn" type="button" :disabled="busy" @click="exportCurrentPack">离线导出</button>
                       <button
                         v-if="ownDetail.pack.status !== 'published'"
                         class="cw-btn cw-btn-primary"
@@ -222,37 +296,54 @@
                       class="cw-native-file"
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
+                      multiple
                       required
                       @change="pickUploadFile"
                     />
-                    <div class="cw-file-picker wide" :class="{ selected: uploadFile }">
+                    <div class="cw-file-picker wide" :class="{ selected: uploadFiles.length }">
                       <div class="cw-file-copy">
                         <span>图片文件</span>
-                        <strong>{{ uploadFile?.name || '尚未选择图片' }}</strong>
-                        <small v-if="uploadFile">{{ formatBytes(uploadFile.size) }}</small>
-                        <small v-else>支持 JPEG、PNG、WebP，单张最大 8 MB</small>
+                        <strong :title="uploadFiles.map(file => file.name).join('、')">{{
+                          uploadSelectionLabel()
+                        }}</strong>
+                        <small v-if="uploadFiles.length">总计 {{ formatBytes(uploadSelectionBytes()) }}</small>
+                        <small v-else>支持多选 JPEG、PNG、WebP，单张最大 6 MB</small>
                       </div>
                       <button class="cw-btn" type="button" :disabled="busy" @click="chooseUploadFile">
-                        {{ uploadFile ? '重新选择' : '选择图片' }}
+                        {{ uploadFiles.length ? '重新选择' : '选择图片' }}
                       </button>
                     </div>
-                    <label
-                      ><span>图片类别</span
-                      ><select v-model="upload.rating">
-                        <option value="sfw">SFW</option>
-                        <option value="nsfw">NSFW</option>
-                      </select></label
-                    >
-                    <label v-if="editPack.category === '人物'"
-                      ><span>角色名</span><input v-model="upload.characterName" maxlength="60" required
-                    /></label>
-                    <label class="wide"
-                      ><span>关键词（逗号分隔）</span><input v-model="upload.keywords" required
-                    /></label>
-                    <p class="wide">上传前会在本地重新编码、移除元数据，并把最大边压缩到 1600px。GIF 不受支持。</p>
-                    <button class="cw-btn cw-btn-primary wide" :disabled="busy || !uploadFile">
-                      {{ busy ? '正在处理…' : '处理并上传' }}
-                    </button>
+                    <div class="cw-upload-fields wide" :class="{ 'without-character': editPack.category !== '人物' }">
+                      <label
+                        ><span>图片类型</span
+                        ><select v-model="upload.rating">
+                          <option value="sfw">SFW</option>
+                          <option value="nsfw">NSFW</option>
+                        </select></label
+                      >
+                      <label v-if="editPack.category === '人物'"
+                        ><span>角色名</span
+                        ><input v-model="upload.characterName" maxlength="60" required @blur="ensureCharacterKeyword"
+                      /></label>
+                      <label class="cw-upload-keywords"
+                        ><span>关键词（逗号分隔）</span
+                        ><input v-model="upload.keywords" required @focus="ensureCharacterKeyword"
+                      /></label>
+                    </div>
+                    <div class="cw-upload-footer wide">
+                      <p>上传前会移除元数据，并把最大边等比压缩到 1600px；不支持 GIF。</p>
+                      <button class="cw-btn cw-btn-primary" :disabled="busy || !uploadFiles.length">
+                        {{
+                          uploadProgress.total
+                            ? `正在上传 ${uploadProgress.current}/${uploadProgress.total}`
+                            : busy
+                              ? '正在处理…'
+                              : uploadFiles.length > 1
+                                ? `处理并上传 ${uploadFiles.length} 张`
+                                : '处理并上传'
+                        }}
+                      </button>
+                    </div>
                   </form>
 
                   <div class="cw-image-grid">
@@ -267,6 +358,15 @@
                         ><span :class="['cw-rating', image.rating]">{{ image.rating.toUpperCase() }}</span>
                         <p>{{ image.keywords.join('、') }}</p>
                         <div class="cw-inline-actions">
+                          <button
+                            class="cw-btn cw-preview-btn"
+                            :class="{ active: ownDetail.pack.preview_image_id === image.id }"
+                            type="button"
+                            :disabled="busy || ownDetail.pack.preview_image_id === image.id"
+                            @click="setPreviewImage(image.id)"
+                          >
+                            {{ ownDetail.pack.preview_image_id === image.id ? '★ 当前预览' : '☆ 设为预览' }}
+                          </button>
                           <button class="cw-btn" type="button" @click="beginImageEdit(image)">修改</button>
                           <button class="cw-btn cw-btn-danger" type="button" @click="deleteCurrentImage(image.id)">
                             删除
@@ -280,6 +380,13 @@
               </div>
             </template>
           </section>
+
+          <WorldbookWorkshop
+            v-else-if="activeTab === 'worldbooks' || activeTab === 'installed-worldbooks' || activeTab === 'my-worldbooks'"
+            :mode="activeTab === 'worldbooks' ? 'browse' : activeTab === 'installed-worldbooks' ? 'installed' : 'mine'"
+            :auth="auth"
+            @login="login"
+          />
 
           <section v-else-if="activeTab === 'settings'" class="cw-page">
             <div class="cw-settings-grid">
@@ -320,12 +427,29 @@
         <section class="cw-detail">
           <button class="cw-close" type="button" @click="detail = null">×</button>
           <div class="cw-card-top">
-            <span class="cw-category">{{ detail.pack.category }}</span
-            ><span>v{{ detail.pack.version }}</span>
+            <span class="cw-category">{{ detail.pack.category }}</span>
           </div>
-          <h2>{{ detail.pack.name }}</h2>
+          <div class="cw-title-row">
+            <h2>{{ detail.pack.name }}</h2>
+            <span class="cw-version">v{{ detail.pack.version }}</span>
+          </div>
           <p>{{ detail.pack.description }}</p>
+          <div class="cw-detail-stats">
+            <span>作者：{{ detail.pack.owner_name || '未知作者' }}</span>
+            <span>上传于 {{ formatDate(detail.pack.published_at) }}</span>
+            <span>♥ {{ detail.pack.like_count || 0 }}</span>
+            <span>⇩ {{ detail.pack.download_count || 0 }}</span>
+          </div>
           <div class="cw-detail-actions">
+            <button
+              class="cw-btn cw-like-btn"
+              :class="{ active: likedPackIds.has(detail.pack.id) }"
+              type="button"
+              :aria-pressed="likedPackIds.has(detail.pack.id)"
+              @click="toggleLike(detail.pack)"
+            >
+              {{ likedPackIds.has(detail.pack.id) ? '♥ 已点赞' : '♡ 点赞' }}
+            </button>
             <button
               class="cw-btn cw-btn-primary"
               :disabled="isInstalled(detail.pack.id) || Boolean(downloadProgress[detail.pack.id])"
@@ -372,13 +496,14 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+import { onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { prepareUploadImage } from './image';
 import { workshopService } from './service';
 import type { AuthRecord, InstalledPack, PackImage, PackManifest, PackSummary, WorkshopSettings } from './types';
 import { closeWorkshop, workshopVisible } from './ui-state';
+import WorldbookWorkshop from './WorldbookWorkshop.vue';
 
-type Tab = 'browse' | 'installed' | 'mine' | 'settings';
+type Tab = 'browse' | 'installed' | 'mine' | 'worldbooks' | 'installed-worldbooks' | 'my-worldbooks' | 'settings';
 
 const activeTab = ref<Tab>('browse');
 const busy = ref(false);
@@ -404,14 +529,71 @@ const query = ref('');
 const category = ref('');
 const nextOffset = ref<number | null>(0);
 const downloadProgress = reactive<Record<string, string>>({});
+const likedPackIds = ref<Set<string>>(new Set());
+const failedPreviewIds = ref<Set<string>>(new Set());
+const togglingPackIds = ref<Set<string>>(new Set());
 const storageBytes = ref(0);
 const showCreatePack = ref(false);
 const newPack = reactive({ name: '', description: '', category: '人物' });
 const editPack = reactive({ name: '', description: '', category: '人物' });
 const upload = reactive({ rating: 'sfw', characterName: '', keywords: '' });
-const uploadFile = ref<File>();
+const uploadFiles = ref<File[]>([]);
+const uploadProgress = reactive({ current: 0, total: 0 });
 const uploadInput = ref<HTMLInputElement>();
 const imageEdit = ref<{ id: string; rating: 'sfw' | 'nsfw'; characterName: string; keywords: string } | null>(null);
+const offlineInput = ref<HTMLInputElement>();
+const darkMode = ref(false);
+const THEME_KEY = 'rb-theme';
+let autoKeywordCharacter = '';
+
+function readSharedTheme(): void {
+  try {
+    darkMode.value = window.parent.localStorage.getItem(THEME_KEY) !== 'light';
+  } catch {
+    darkMode.value = true;
+  }
+}
+
+function handleThemeChange(event: Event): void {
+  const theme = (event as CustomEvent<string>).detail;
+  if (theme === 'light' || theme === 'dark') darkMode.value = theme === 'dark';
+  else readSharedTheme();
+}
+
+function toggleTheme(): void {
+  const theme = darkMode.value ? 'light' : 'dark';
+  darkMode.value = theme === 'dark';
+  try {
+    window.parent.localStorage.setItem(THEME_KEY, theme);
+    window.parent.dispatchEvent(new CustomEvent('rb-theme-change', { detail: theme }));
+  } catch {
+    // 主题仍会在当前创意工坊会话中切换。
+  }
+}
+
+function keywordTerms(value: string): string[] {
+  return value
+    .split(/[，,\n]/u)
+    .map(item => item.trim())
+    .filter(Boolean);
+}
+
+function syncCharacterKeyword(characterName: string, previousName = autoKeywordCharacter): void {
+  if (editPack.category !== '人物') return;
+  const current = characterName.trim();
+  const terms = keywordTerms(upload.keywords).filter(term => term !== previousName && term !== current);
+  upload.keywords = current ? `${[current, ...terms].join('，')}，` : terms.join('，');
+  autoKeywordCharacter = current;
+}
+
+function ensureCharacterKeyword(): void {
+  syncCharacterKeyword(upload.characterName);
+}
+
+watch(
+  () => upload.characterName,
+  (current, previous) => syncCharacterKeyword(current, previous.trim()),
+);
 
 function tell(message: string, type: 'success' | 'error' = 'success'): void {
   notice.value = message;
@@ -427,6 +609,12 @@ function errorText(error: unknown): string {
 function formatBytes(bytes: number): string {
   return bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
+function formatDate(timestamp?: number | null): string {
+  if (!timestamp) return '尚未发布';
+  return new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'short', day: 'numeric' }).format(
+    new Date(timestamp * 1000),
+  );
+}
 function isInstalled(packId: string): boolean {
   return installed.value.some(pack => pack.id === packId);
 }
@@ -435,6 +623,16 @@ async function refreshLocal(): Promise<void> {
   installed.value = await workshopService.listInstalled();
   storageBytes.value = await workshopService.localStorageUsage();
   auth.value = await workshopService.getAuth();
+  if (auth.value) {
+    try {
+      likedPackIds.value = new Set((await workshopService.api.listMyLikes()).pack_ids);
+    } catch {
+      auth.value = await workshopService.getAuth();
+      likedPackIds.value = new Set();
+    }
+  } else {
+    likedPackIds.value = new Set();
+  }
   Object.assign(settings, await workshopService.getSettings());
 }
 
@@ -448,6 +646,7 @@ async function switchTab(tab: Tab): Promise<void> {
 async function loadPublicPacks(reset: boolean): Promise<void> {
   busy.value = true;
   try {
+    if (reset) failedPreviewIds.value = new Set();
     const offset = reset ? 0 : (nextOffset.value ?? 0);
     const result = await workshopService.publicPacks(query.value, category.value, offset);
     publicPacks.value = reset ? result.items : [...publicPacks.value, ...result.items];
@@ -457,6 +656,12 @@ async function loadPublicPacks(reset: boolean): Promise<void> {
   } finally {
     busy.value = false;
   }
+}
+
+function markPreviewFailed(packId: string): void {
+  const next = new Set(failedPreviewIds.value);
+  next.add(packId);
+  failedPreviewIds.value = next;
 }
 
 async function openPack(pack: PackSummary): Promise<void> {
@@ -478,6 +683,7 @@ async function install(pack: PackSummary): Promise<void> {
     });
     tell(`「${pack.name}」下载完成并已启用`);
     await refreshLocal();
+    await loadPublicPacks(true);
   } catch (error) {
     tell(errorText(error), 'error');
   } finally {
@@ -485,10 +691,55 @@ async function install(pack: PackSummary): Promise<void> {
   }
 }
 
-async function togglePack(pack: InstalledPack, event: Event): Promise<void> {
-  const enabled = (event.target as HTMLInputElement).checked;
-  await workshopService.setPackEnabled(pack.id, enabled);
-  await refreshLocal();
+function applyEngagement(packId: string, likeCount: number, downloadCount: number): void {
+  for (const pack of publicPacks.value) {
+    if (pack.id === packId) Object.assign(pack, { like_count: likeCount, download_count: downloadCount });
+  }
+  if (detail.value?.pack.id === packId) {
+    Object.assign(detail.value.pack, { like_count: likeCount, download_count: downloadCount });
+  }
+  for (const pack of installed.value) {
+    if (pack.id === packId) Object.assign(pack.manifest.pack, { like_count: likeCount, download_count: downloadCount });
+  }
+}
+
+async function toggleLike(pack: PackSummary): Promise<void> {
+  if (!auth.value) {
+    tell('登录 Discord 后即可点赞图包', 'error');
+    return;
+  }
+  try {
+    const currentlyLiked = likedPackIds.value.has(pack.id);
+    const result = currentlyLiked
+      ? await workshopService.api.unlikePack(pack.id)
+      : await workshopService.api.likePack(pack.id);
+    const next = new Set(likedPackIds.value);
+    if (result.liked) next.add(pack.id);
+    else next.delete(pack.id);
+    likedPackIds.value = next;
+    applyEngagement(pack.id, result.like_count, result.download_count);
+  } catch (error) {
+    tell(errorText(error), 'error');
+  }
+}
+
+async function togglePack(pack: InstalledPack): Promise<void> {
+  if (togglingPackIds.value.has(pack.id)) return;
+  const enabled = !pack.enabled;
+  const pending = new Set(togglingPackIds.value);
+  pending.add(pack.id);
+  togglingPackIds.value = pending;
+  pack.enabled = enabled;
+  try {
+    await workshopService.setPackEnabled(pack.id, enabled);
+  } catch (error) {
+    pack.enabled = !enabled;
+    tell(errorText(error), 'error');
+  } finally {
+    const next = new Set(togglingPackIds.value);
+    next.delete(pack.id);
+    togglingPackIds.value = next;
+  }
 }
 
 async function uninstall(pack: InstalledPack): Promise<void> {
@@ -496,6 +747,49 @@ async function uninstall(pack: InstalledPack): Promise<void> {
   await workshopService.uninstallPack(pack.id);
   await refreshLocal();
   tell('图包已卸载');
+}
+
+function chooseOfflinePack(): void {
+  offlineInput.value?.click();
+}
+
+async function importOfflinePack(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+  busy.value = true;
+  try {
+    const pack = await workshopService.importOfflinePack(file);
+    await refreshLocal();
+    tell(`「${pack.manifest.pack.name}」已作为离线图包导入并启用`);
+  } catch (error) {
+    tell(errorText(error), 'error');
+  } finally {
+    busy.value = false;
+    input.value = '';
+  }
+}
+
+async function exportCurrentPack(): Promise<void> {
+  if (!ownDetail.value) return;
+  busy.value = true;
+  try {
+    const exported = await workshopService.exportOwnPack(ownDetail.value);
+    const url = URL.createObjectURL(exported.blob);
+    const anchor = window.parent.document.createElement('a');
+    anchor.href = url;
+    anchor.download = exported.filename;
+    anchor.style.display = 'none';
+    window.parent.document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    tell(`「${ownDetail.value.pack.name}」离线包已导出`);
+  } catch (error) {
+    tell(errorText(error), 'error');
+  } finally {
+    busy.value = false;
+  }
 }
 
 async function checkOneUpdate(pack: InstalledPack): Promise<void> {
@@ -531,6 +825,7 @@ async function login(): Promise<void> {
   noticeType.value = 'success';
   try {
     auth.value = await workshopService.api.login();
+    likedPackIds.value = new Set((await workshopService.api.listMyLikes()).pack_ids);
     tell('Discord 登录成功');
     if (activeTab.value === 'mine') await loadOwnPacks();
   } catch (error) {
@@ -544,6 +839,7 @@ async function login(): Promise<void> {
 async function logout(): Promise<void> {
   await workshopService.api.logout();
   auth.value = undefined;
+  likedPackIds.value = new Set();
   ownPacks.value = [];
   ownDetail.value = undefined;
   clearOwnImageUrls();
@@ -622,6 +918,22 @@ async function savePack(): Promise<void> {
     busy.value = false;
   }
 }
+
+async function setPreviewImage(imageId: string): Promise<void> {
+  if (!ownDetail.value || ownDetail.value.pack.preview_image_id === imageId) return;
+  const packId = ownDetail.value.pack.id;
+  busy.value = true;
+  try {
+    await workshopService.api.updatePack(packId, { preview_image_id: imageId });
+    await loadOwnDetail(packId);
+    await loadOwnPacks();
+    tell('预览图已更新');
+  } catch (error) {
+    tell(errorText(error), 'error');
+  } finally {
+    busy.value = false;
+  }
+}
 async function publishCurrent(): Promise<void> {
   if (!ownDetail.value) return;
   busy.value = true;
@@ -665,37 +977,75 @@ async function deleteCurrentPack(): Promise<void> {
 }
 
 function pickUploadFile(event: Event): void {
-  uploadFile.value = (event.target as HTMLInputElement).files?.[0];
+  uploadFiles.value = Array.from((event.target as HTMLInputElement).files ?? []);
 }
 function chooseUploadFile(): void {
   uploadInput.value?.click();
 }
+function uploadSelectionLabel(): string {
+  if (!uploadFiles.value.length) return '尚未选择图片';
+  if (uploadFiles.value.length === 1) return uploadFiles.value[0].name;
+  return `已选择 ${uploadFiles.value.length} 张图片`;
+}
+function uploadSelectionBytes(): number {
+  return uploadFiles.value.reduce((total, file) => total + file.size, 0);
+}
 async function uploadCurrentImage(): Promise<void> {
-  if (!ownDetail.value || !uploadFile.value) return;
-  const keywords = upload.keywords
-    .split(/[，,\n]/u)
-    .map(value => value.trim())
-    .filter(Boolean);
+  if (!ownDetail.value || !uploadFiles.value.length) return;
+  const keywords = keywordTerms(upload.keywords);
   if (!keywords.length) return tell('请填写关键词', 'error');
+  const packId = ownDetail.value.pack.id;
+  const files = [...uploadFiles.value];
+  const sharedMetadata = {
+    rating: upload.rating,
+    characterName: upload.characterName,
+    keywords,
+  };
+  const failures: Array<{ name: string; reason: string }> = [];
+  let completed = 0;
   busy.value = true;
+  Object.assign(uploadProgress, { current: 0, total: files.length });
   try {
-    const prepared = await prepareUploadImage(uploadFile.value);
-    await workshopService.api.uploadImage(ownDetail.value.pack.id, {
-      file: prepared.blob,
-      filename: prepared.filename,
-      rating: upload.rating,
-      characterName: upload.characterName,
-      keywords,
+    for (const [index, file] of files.entries()) {
+      uploadProgress.current = index + 1;
+      try {
+        const prepared = await prepareUploadImage(file);
+        await workshopService.api.uploadImage(packId, {
+          file: prepared.blob,
+          filename: prepared.filename,
+          ...sharedMetadata,
+        });
+        completed += 1;
+      } catch (error) {
+        failures.push({ name: file.name, reason: errorText(error) });
+        console.error(`[创意工坊] 图片“${file.name}”上传失败：`, error);
+      }
+    }
+    const inheritedCharacterName = editPack.category === '人物' ? upload.characterName.trim() : '';
+    autoKeywordCharacter = inheritedCharacterName;
+    Object.assign(upload, {
+      rating: 'sfw',
+      characterName: inheritedCharacterName,
+      keywords: inheritedCharacterName ? `${inheritedCharacterName}，` : '',
     });
-    Object.assign(upload, { rating: 'sfw', characterName: '', keywords: '' });
-    uploadFile.value = undefined;
+    uploadFiles.value = [];
     if (uploadInput.value) uploadInput.value.value = '';
-    await loadOwnDetail(ownDetail.value.pack.id);
-    await loadOwnPacks();
-    tell('图片已处理并上传');
-  } catch (error) {
-    tell(errorText(error), 'error');
+    if (completed > 0) {
+      await loadOwnDetail(packId);
+      await loadOwnPacks();
+    }
+    if (failures.length) {
+      const shown = failures.slice(0, 5).map(item => `${item.name}：${item.reason}`);
+      const remaining = failures.length - shown.length;
+      tell(
+        `成功上传 ${completed} 张，已跳过 ${failures.length} 张：${shown.join('；')}${remaining ? `；另有 ${remaining} 张失败` : ''}`,
+        'error',
+      );
+    } else {
+      tell(`成功处理并上传 ${completed} 张图片`);
+    }
   } finally {
+    Object.assign(uploadProgress, { current: 0, total: 0 });
     busy.value = false;
   }
 }
@@ -745,9 +1095,20 @@ async function deleteCurrentImage(imageId: string): Promise<void> {
 }
 
 onMounted(async () => {
+  readSharedTheme();
+  window.parent.addEventListener('rb-theme-change', handleThemeChange);
+  window.parent.addEventListener('storage', readSharedTheme);
   await refreshLocal();
   await loadPublicPacks(true);
 });
 
-onBeforeUnmount(clearOwnImageUrls);
+watch(workshopVisible, visible => {
+  if (visible) readSharedTheme();
+});
+
+onBeforeUnmount(() => {
+  clearOwnImageUrls();
+  window.parent.removeEventListener('rb-theme-change', handleThemeChange);
+  window.parent.removeEventListener('storage', readSharedTheme);
+});
 </script>

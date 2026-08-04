@@ -20,6 +20,10 @@ export interface PackSummary {
   status: 'draft' | 'published' | 'hidden' | 'removed';
   version: number;
   image_count?: number;
+  like_count: number;
+  download_count: number;
+  preview_image_id?: string | null;
+  preview_url?: string | null;
   created_at: number;
   updated_at: number;
   published_at?: number | null;
@@ -45,8 +49,14 @@ export interface PackManifest {
   images: PackImage[];
 }
 
+export interface PackEngagement {
+  like_count: number;
+  download_count: number;
+}
+
 export interface InstalledPack {
   id: string;
+  source?: 'remote' | 'offline';
   manifest: PackManifest;
   enabled: boolean;
   installedAt: number;
@@ -129,4 +139,52 @@ export interface WorkshopBridge {
   getSettings: () => Promise<WorkshopSettings>;
   setAutoInsert: (enabled: boolean) => Promise<void>;
   getInstalledSummary: () => Promise<{ installed: number; enabled: number }>;
+}
+
+export type WorldbookPackCategory = '角色' | '事件' | '扩展';
+
+export interface DlcRelations {
+  exclusions: string[];
+  replacements: string[];
+  prerequisites: string[];
+}
+
+export interface WorldbookPackSummary {
+  id: string;
+  owner_id: string;
+  owner_name?: string;
+  name: string;
+  description: string;
+  category: WorldbookPackCategory;
+  dlc_key: string;
+  relations: DlcRelations;
+  status: 'draft' | 'published' | 'hidden' | 'removed';
+  version: number;
+  entry_count: number;
+  byte_size: number;
+  sha256: string;
+  download_url: string;
+  created_at: number;
+  updated_at: number;
+  published_at?: number | null;
+}
+
+export interface InstalledWorldbookPack {
+  id: string;
+  pack: WorldbookPackSummary;
+  bookName: string;
+  enabled: boolean;
+  installedAt: number;
+  updatedAt: number;
+  updateError: string;
+  missingPrerequisites: string[];
+}
+
+export interface WorldbookReplacementRecord {
+  key: string;
+  bookName: string;
+  uid: number;
+  entryName: string;
+  originalEnabled: boolean;
+  activePackIds: string[];
 }

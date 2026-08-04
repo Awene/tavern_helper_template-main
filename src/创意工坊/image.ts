@@ -1,6 +1,6 @@
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const MAX_EDGE = 1600;
-const MAX_BYTES = 8 * 1024 * 1024;
+const MAX_BYTES = 6 * 1024 * 1024;
 
 function canvasBlob(canvas: HTMLCanvasElement, type: string, quality?: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
@@ -34,7 +34,7 @@ export async function prepareUploadImage(
         if (blob.size <= MAX_BYTES) break;
       }
     }
-    if (blob.size > MAX_BYTES) throw new Error('重新编码后图片仍超过 8MB，请降低分辨率后重试');
+    if (blob.size > MAX_BYTES) throw new Error('重新编码后图片仍超过 6MB，请降低分辨率后重试');
     const extension = outputType === 'image/jpeg' ? 'jpg' : outputType === 'image/png' ? 'png' : 'webp';
     const baseName = file.name.replace(/\.[^.]+$/u, '').slice(0, 80) || 'image';
     return { blob, filename: `${baseName}.${extension}`, width, height };

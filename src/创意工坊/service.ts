@@ -1,5 +1,6 @@
 import { WorkshopApi } from './api';
 import { sha256Hex } from './image';
+import { createOfflinePack, readOfflinePack } from './offline-pack';
 import {
   getAllRecords,
   getAuthRecord,
@@ -143,7 +144,9 @@ export class WorkshopService {
   }
 
   async listInstalled(): Promise<InstalledPack[]> {
-    return (await getInstalledPacks()).sort((left, right) => right.updatedAt - left.updatedAt);
+    return (await getInstalledPacks()).sort(
+      (left, right) => right.installedAt - left.installedAt || left.id.localeCompare(right.id),
+    );
   }
 
   async setPackEnabled(packId: string, enabled: boolean): Promise<void> {
@@ -200,6 +203,7 @@ export class WorkshopService {
       images,
       pack: {
         id: manifest.pack.id,
+        source: previous?.source ?? 'remote',
         manifest,
         enabled: previous?.enabled ?? true,
         installedAt: previous?.installedAt ?? Date.now(),
@@ -215,6 +219,11 @@ export class WorkshopService {
     const previous = (await getInstalledPacks()).find(item => item.id === packId);
     const downloaded = await this.downloadManifest(manifest, previous, onProgress);
     await replaceInstalledPack(downloaded.pack, downloaded.images);
+    try {
+      await this.api.recordDownload(packId);
+    } catch (error) {
+      console.warn('[创意工坊] 下载已完成，但下载量记录失败:', error);
+    }
     await clearSelections();
     this.notifyLibraryChanged();
     return downloaded.pack;
@@ -226,6 +235,7 @@ export class WorkshopService {
   ): Promise<'current' | 'updated' | 'hidden'> {
     const installed = (await getInstalledPacks()).find(item => item.id === packId);
     if (!installed) throw new Error('图包未安装');
+    if (installed.source === 'offline') return 'current';
     try {
       const remote = await this.api.getPackVersion(packId);
       if (remote.status !== 'published') {
@@ -258,6 +268,7 @@ export class WorkshopService {
     if (!force && Date.now() - settings.lastUpdateCheck < cooldown) return { updated: 0, hidden: 0, failed: 0 };
     const result = { updated: 0, hidden: 0, failed: 0 };
     for (const pack of await getInstalledPacks()) {
+      if (pack.source === 'offline') continue;
       try {
         const status = await this.checkPackUpdate(pack.id);
         if (status === 'updated') result.updated += 1;
@@ -385,6 +396,18 @@ export class WorkshopService {
     offset: number,
   ): Promise<{ items: PackSummary[]; next_offset: number | null }> {
     return this.api.listPacks(query, category, offset);
+  }
+
+  async exportOwnPack(manifest: PackManifest): Promise<{ blob: Blob; filename: string }> {
+    return createOfflinePack(manifest, imageId => this.api.getOwnImage(imageId));
+  }
+
+  async importOfflinePack(file: File): Promise<InstalledPack> {
+    const imported = await readOfflinePack(file);
+    await replaceInstalledPack(imported.pack, imported.images);
+    await clearSelections();
+    this.notifyLibraryChanged();
+    return imported.pack;
   }
 }
 

@@ -1,5 +1,12 @@
 import { clearAuthRecord, getAuthRecord, putAuthRecord } from './storage';
-import type { AuthRecord, PackManifest, PackSummary, WorkshopUser } from './types';
+import type {
+  AuthRecord,
+  PackEngagement,
+  PackManifest,
+  PackSummary,
+  WorkshopUser,
+  WorldbookPackSummary,
+} from './types';
 
 export class WorkshopApiError extends Error {
   constructor(
@@ -93,6 +100,22 @@ export class WorkshopApi {
     return this.request(`/api/packs/${encodeURIComponent(packId)}/version`);
   }
 
+  recordDownload(packId: string): Promise<PackEngagement & { counted: boolean }> {
+    return this.request(`/api/packs/${encodeURIComponent(packId)}/download`, { method: 'POST' });
+  }
+
+  listMyLikes(): Promise<{ pack_ids: string[] }> {
+    return this.request('/api/me/likes', {}, true);
+  }
+
+  likePack(packId: string): Promise<PackEngagement & { liked: true }> {
+    return this.request(`/api/packs/${encodeURIComponent(packId)}/like`, { method: 'POST' }, true);
+  }
+
+  unlikePack(packId: string): Promise<PackEngagement & { liked: false }> {
+    return this.request(`/api/packs/${encodeURIComponent(packId)}/like`, { method: 'DELETE' }, true);
+  }
+
   listOwnPacks(): Promise<{ items: PackSummary[] }> {
     return this.request('/api/me/packs', {}, true);
   }
@@ -109,7 +132,10 @@ export class WorkshopApi {
     return this.request('/api/packs', { method: 'POST', body: JSON.stringify(input) }, true);
   }
 
-  updatePack(packId: string, input: { name?: string; description?: string; category?: string }): Promise<{ ok: true }> {
+  updatePack(
+    packId: string,
+    input: { name?: string; description?: string; category?: string; preview_image_id?: string | null },
+  ): Promise<{ ok: true }> {
     return this.request(
       `/api/packs/${encodeURIComponent(packId)}`,
       { method: 'PATCH', body: JSON.stringify(input) },
@@ -159,6 +185,83 @@ export class WorkshopApi {
       { method: 'DELETE' },
       true,
     );
+  }
+
+  listWorldbooks(query = '', category = '', offset = 0): Promise<PageResult<WorldbookPackSummary>> {
+    const params = new URLSearchParams({ limit: '24', offset: String(offset) });
+    if (query.trim()) params.set('query', query.trim());
+    if (category) params.set('category', category);
+    return this.request(`/api/worldbooks?${params}`);
+  }
+
+  async getWorldbookPack(packId: string): Promise<WorldbookPackSummary> {
+    const result = await this.request<{ pack: WorldbookPackSummary }>(`/api/worldbooks/${encodeURIComponent(packId)}`);
+    return result.pack;
+  }
+
+  getWorldbookPackVersion(packId: string): Promise<{ id: string; version: number; status: string; updated_at: number }> {
+    return this.request(`/api/worldbooks/${encodeURIComponent(packId)}/version`);
+  }
+
+  async getWorldbookContent(packId: string, own = false): Promise<string> {
+    const base = (await this.getApiBase()).replace(/\/$/u, '');
+    const headers = new Headers();
+    if (own) {
+      const auth = await getAuthRecord();
+      if (!auth || auth.expiresAt <= Math.floor(Date.now() / 1000)) throw new WorkshopApiError('请先登录 Discord', 401);
+      headers.set('Authorization', `Bearer ${auth.token}`);
+    }
+    const prefix = own ? '/api/me/worldbooks' : '/api/worldbooks';
+    const response = await fetch(`${base}${prefix}/${encodeURIComponent(packId)}/content`, { headers });
+    if (!response.ok) throw new WorkshopApiError(await errorMessage(response), response.status);
+    return response.text();
+  }
+
+  listOwnWorldbooks(): Promise<{ items: WorldbookPackSummary[] }> {
+    return this.request('/api/me/worldbooks', {}, true);
+  }
+
+  async getOwnWorldbook(packId: string): Promise<WorldbookPackSummary> {
+    const result = await this.request<{ pack: WorldbookPackSummary }>(
+      `/api/me/worldbooks/${encodeURIComponent(packId)}`,
+      {},
+      true,
+    );
+    return result.pack;
+  }
+
+  createWorldbook(file: File, description: string): Promise<{ pack: WorldbookPackSummary }> {
+    const form = new FormData();
+    form.set('file', file, file.name);
+    form.set('description', description);
+    return this.request('/api/worldbooks', { method: 'POST', body: form }, true);
+  }
+
+  updateWorldbook(packId: string, description: string): Promise<{ ok: true }> {
+    return this.request(
+      `/api/worldbooks/${encodeURIComponent(packId)}`,
+      { method: 'PATCH', body: JSON.stringify({ description }) },
+      true,
+    );
+  }
+
+  replaceWorldbookContent(packId: string, file: File, description: string): Promise<{ ok: true }> {
+    const form = new FormData();
+    form.set('file', file, file.name);
+    form.set('description', description);
+    return this.request(`/api/worldbooks/${encodeURIComponent(packId)}/content`, { method: 'POST', body: form }, true);
+  }
+
+  publishWorldbook(packId: string): Promise<{ ok: true }> {
+    return this.request(`/api/worldbooks/${encodeURIComponent(packId)}/publish`, { method: 'POST' }, true);
+  }
+
+  unpublishWorldbook(packId: string): Promise<{ ok: true }> {
+    return this.request(`/api/worldbooks/${encodeURIComponent(packId)}/unpublish`, { method: 'POST' }, true);
+  }
+
+  deleteWorldbook(packId: string): Promise<{ ok: true }> {
+    return this.request(`/api/worldbooks/${encodeURIComponent(packId)}`, { method: 'DELETE' }, true);
   }
 
   private waitForDiscordExchange(
