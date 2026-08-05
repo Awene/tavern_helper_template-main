@@ -21,6 +21,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # 人物细化界面会在构建期读取角色卡仓库中的提示词与世界书规则。
+      # 保持与本地两个仓库互为同级目录的布局，否则 webpack 无法解析这些 ?raw 导入。
+      - name: Checkout Cultivation-Card-Game build inputs
+        run: git clone --depth 1 --branch main https://github.com/Awene/Cultivation-Card-Game.git ../Cultivation-Card-Game
+
       - uses: JesseTG/rm@v1.0.3
         with:
           path: dist
@@ -34,7 +40,10 @@ jobs:
         with:
           version: 10
 
-      - run: pnpm install && pnpm build
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build all frontends
+        run: pnpm build
       - name: Only keep 角色卡示例 in dist for template upstream
         if: github.repository == 'StageDog/tavern_helper_template'
         run: |
