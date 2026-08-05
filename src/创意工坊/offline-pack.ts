@@ -12,7 +12,7 @@ const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 interface OfflineImageEntry {
   character_name: string;
   rating: 'sfw' | 'nsfw';
-  keywords: string[];
+  aliases?: string[];
   mime_type: 'image/jpeg' | 'image/png' | 'image/webp';
   width: number;
   height: number;
@@ -85,12 +85,13 @@ function assertManifest(value: unknown): asserts value is OfflineManifest {
       throw new Error('离线包包含大小异常的图片');
     }
     if (!/^[a-f0-9]{64}$/u.test(image.sha256)) throw new Error('离线包包含无效的图片哈希');
-    if (!Array.isArray(image.keywords) || image.keywords.some(keyword => typeof keyword !== 'string')) {
-      throw new Error('离线包包含无效的关键词');
+    const aliases = image.aliases ?? [];
+    if (!Array.isArray(aliases) || aliases.some(alias => typeof alias !== 'string')) {
+      throw new Error('离线包包含无效的角色别名');
     }
     if (
-      image.keywords.length > 40 ||
-      image.keywords.some(keyword => !keyword.trim() || keyword.length > 80) ||
+      aliases.length > 30 ||
+      aliases.some(alias => !alias.trim() || alias.length > 30) ||
       typeof image.character_name !== 'string' ||
       image.character_name.length > 60 ||
       !Number.isInteger(image.width) ||
@@ -125,7 +126,7 @@ export async function createOfflinePack(
     entries.push({
       character_name: image.character_name,
       rating: image.rating,
-      keywords: [...image.keywords],
+      aliases: [...(image.aliases ?? [])],
       mime_type: image.mime_type,
       width: image.width,
       height: image.height,
@@ -191,10 +192,10 @@ export async function readOfflinePack(file: File): Promise<{ pack: InstalledPack
       id: imageId,
       character_name: entry.character_name,
       rating: entry.rating,
-      keywords: entry.keywords
-        .map(keyword => keyword.trim())
+      aliases: (entry.aliases ?? [])
+        .map(alias => alias.trim())
         .filter(Boolean)
-        .slice(0, 40),
+        .slice(0, 30),
       mime_type: entry.mime_type,
       width: entry.width,
       height: entry.height,

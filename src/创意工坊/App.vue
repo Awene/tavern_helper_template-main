@@ -91,11 +91,15 @@
                 >
                   <div class="cw-card-media">
                     <WorkshopImage
-                      :src="pack.preview_url"
+                      :src="workshopImageUrl(pack.preview_image_id)"
                       :alt="`${pack.name} 预览图`"
                       fit="contain"
                       blur-background
+                      :pending="workshopImagePending(pack.preview_image_id, false)"
+                      :failed="workshopImageFailed(pack.preview_image_id, false)"
+                      :requestable="Boolean(pack.preview_image_id)"
                       empty-label="暂无预览"
+                      @request="loadPackPreview(pack)"
                     />
                     <div class="cw-card-badges">
                       <span class="cw-glass-pill">{{ pack.category }}</span>
@@ -338,11 +342,11 @@
                       >
                       <label v-if="editPack.category === '人物'"
                         ><span>角色名</span
-                        ><input v-model="upload.characterName" maxlength="60" required @blur="ensureCharacterKeyword"
+                        ><input v-model="upload.characterName" maxlength="60" required
                       /></label>
-                      <label class="cw-upload-keywords"
-                        ><span>关键词（逗号分隔）</span
-                        ><input v-model="upload.keywords" required @focus="ensureCharacterKeyword"
+                      <label v-if="editPack.category === '人物'" class="cw-upload-aliases"
+                        ><span>角色别名（可选，逗号分隔）</span
+                        ><input v-model="upload.aliases" placeholder="例如：璇玑，慕姑娘"
                       /></label>
                     </div>
                     <div class="cw-upload-footer wide">
@@ -361,18 +365,64 @@
                     </div>
                   </form>
 
+                  <div v-if="ownDetail.images.length" class="cw-image-manager">
+                    <div class="cw-image-manager-head">
+                      <div>
+                        <strong>管理已上传图片</strong>
+                        <span>已选择 {{ selectedOwnImageIds.size }} / {{ ownDetail.images.length }} 张</span>
+                      </div>
+                      <div class="cw-inline-actions">
+                        <button class="cw-btn" type="button" :disabled="busy" @click="selectAllOwnImages">全选</button>
+                        <button
+                          class="cw-btn"
+                          type="button"
+                          :disabled="busy || !selectedOwnImageIds.size"
+                          @click="clearOwnImageSelection"
+                        >
+                          取消选择
+                        </button>
+                      </div>
+                    </div>
+                    <div v-if="selectedOwnImageIds.size" class="cw-batch-editor">
+                      <button class="cw-btn cw-btn-danger" type="button" :disabled="busy" @click="deleteSelectedImages">
+                        删除所选
+                      </button>
+                    </div>
+                  </div>
+
                   <div class="cw-image-grid">
-                    <article v-for="image in ownDetail.images" :key="image.id" class="cw-image-card">
+                    <article
+                      v-for="image in ownDetail.images"
+                      :key="image.id"
+                      class="cw-image-card cw-own-image-card"
+                      :class="{ selected: selectedOwnImageIds.has(image.id) }"
+                    >
+                      <label
+                        class="cw-image-select"
+                        :class="{ 'is-selected': selectedOwnImageIds.has(image.id) }"
+                        :title="selectedOwnImageIds.has(image.id) ? '取消选择这张图片' : '选择这张图片'"
+                      >
+                        <input
+                          type="checkbox"
+                          :checked="selectedOwnImageIds.has(image.id)"
+                          :disabled="busy"
+                          :aria-label="`${selectedOwnImageIds.has(image.id) ? '取消选择' : '选择'}图片 ${image.character_name || image.id}`"
+                          @change="toggleOwnImageSelection(image.id)"
+                        />
+                        <span aria-hidden="true">{{ selectedOwnImageIds.has(image.id) ? '✓' : '＋' }}</span>
+                      </label>
                       <WorkshopImage
-                        :src="ownImageUrls[image.id] || ''"
+                        :src="workshopImageUrl(image.id)"
                         :alt="image.character_name || ownDetail.pack.name"
-                        :pending="!ownImageUrls[image.id] && !failedOwnImageIds.has(image.id)"
-                        :failed="failedOwnImageIds.has(image.id)"
+                        :pending="workshopImagePending(image.id, true)"
+                        :failed="workshopImageFailed(image.id, true)"
+                        requestable
+                        @request="loadWorkshopImage(image, true)"
                       />
                       <div class="cw-image-info">
                         <strong>{{ image.character_name || '无角色名' }}</strong
                         ><span :class="['cw-rating', image.rating]">{{ image.rating.toUpperCase() }}</span>
-                        <p>{{ image.keywords.join('、') }}</p>
+                        <p v-if="image.aliases?.length">别名：{{ image.aliases.join('、') }}</p>
                         <div class="cw-inline-actions">
                           <button
                             class="cw-btn cw-preview-btn"
@@ -383,8 +433,15 @@
                           >
                             {{ ownDetail.pack.preview_image_id === image.id ? '★ 当前预览' : '☆ 设为预览' }}
                           </button>
-                          <button class="cw-btn" type="button" @click="beginImageEdit(image)">修改</button>
-                          <button class="cw-btn cw-btn-danger" type="button" @click="deleteCurrentImage(image.id)">
+                          <button class="cw-btn" type="button" :disabled="busy" @click="beginImageEdit(image)">
+                            修改
+                          </button>
+                          <button
+                            class="cw-btn cw-btn-danger"
+                            type="button"
+                            :disabled="busy"
+                            @click="deleteCurrentImage(image.id)"
+                          >
                             删除
                           </button>
                         </div>
@@ -417,7 +474,7 @@
                   <small>
                     {{
                       settings.autoInsert
-                        ? '正文命中关键词时，自动插入已启用图包中的图片。'
+                        ? '按本楼角色名出现频率选择图片；无角色时依次使用风景、其他图包。'
                         : '不会执行选图，也不会改变正文。'
                     }}
                   </small>
@@ -431,10 +488,6 @@
                   @change="saveAutoInsert"
                 />
                 <span class="cw-switch" aria-hidden="true"><span class="cw-switch-thumb"></span></span>
-              </label>
-              <label class="cw-setting-card">
-                <span><strong>每楼最多插图</strong><small>所有图片统一插入正文末尾。</small></span>
-                <input v-model.number="settings.maxPerMessage" type="number" min="1" max="6" @change="saveSettings" />
               </label>
               <div class="cw-setting-card wide">
                 <span
@@ -507,11 +560,18 @@
           </div>
           <div class="cw-image-grid detail-images">
             <article v-for="image in detail.images" :key="image.id" class="cw-image-card">
-              <WorkshopImage :src="image.download_url" :alt="image.character_name || detail.pack.name" />
+              <WorkshopImage
+                :src="workshopImageUrl(image.id)"
+                :alt="image.character_name || detail.pack.name"
+                :pending="workshopImagePending(image.id, false)"
+                :failed="workshopImageFailed(image.id, false)"
+                requestable
+                @request="loadWorkshopImage(image, false)"
+              />
               <div class="cw-image-info">
                 <strong>{{ image.character_name || detail.pack.name }}</strong
                 ><span :class="['cw-rating', image.rating]">{{ image.rating.toUpperCase() }}</span>
-                <p>{{ image.keywords.join('、') }}</p>
+                <p v-if="image.aliases?.length">别名：{{ image.aliases.join('、') }}</p>
               </div>
             </article>
           </div>
@@ -531,13 +591,16 @@
           <label v-if="editPack.category === '人物'"
             ><span>角色名</span><input v-model="imageEdit.characterName" maxlength="60" required
           /></label>
-          <label><span>关键词</span><input v-model="imageEdit.keywords" required /></label>
+          <label v-if="editPack.category === '人物'"
+            ><span>角色别名（可选，逗号分隔）</span><input v-model="imageEdit.aliases"
+          /></label>
           <div class="cw-form-actions">
             <button class="cw-btn" type="button" @click="imageEdit = null">取消</button
             ><button class="cw-btn cw-btn-primary" :disabled="busy">保存</button>
           </div>
         </form>
       </div>
+
     </div>
   </Transition>
 </template>
@@ -564,36 +627,37 @@ const settings = reactive<WorkshopSettings>({
   key: 'main',
   apiBase: '',
   autoInsert: true,
-  maxPerMessage: 1,
   updateIntervalHours: 6,
   lastUpdateCheck: 0,
+  packPreferences: {},
 });
 const publicPacks = ref<PackSummary[]>([]);
 const installed = ref<InstalledPack[]>([]);
 const ownPacks = ref<PackSummary[]>([]);
 const ownDetail = ref<PackManifest>();
-const ownImageUrls = reactive<Record<string, string>>({});
+const workshopImageUrls = reactive<Record<string, string>>({});
 const detail = ref<PackManifest | null>(null);
 const query = ref('');
 const category = ref('');
 const nextOffset = ref<number | null>(0);
 const downloadProgress = reactive<Record<string, string>>({});
 const likedPackIds = ref<Set<string>>(new Set());
-const failedOwnImageIds = ref<Set<string>>(new Set());
+const failedWorkshopImages = ref<Set<string>>(new Set());
+const loadingWorkshopImages = ref<Set<string>>(new Set());
 const togglingPackIds = ref<Set<string>>(new Set());
 const storageBytes = ref(0);
 const showCreatePack = ref(false);
 const newPack = reactive({ name: '', description: '', category: '人物' });
 const editPack = reactive({ name: '', description: '', category: '人物' });
-const upload = reactive({ rating: 'sfw', characterName: '', keywords: '' });
+const upload = reactive({ rating: 'sfw', characterName: '', aliases: '' });
 const uploadFiles = ref<File[]>([]);
 const uploadProgress = reactive({ current: 0, total: 0 });
 const uploadInput = ref<HTMLInputElement>();
-const imageEdit = ref<{ id: string; rating: 'sfw' | 'nsfw'; characterName: string; keywords: string } | null>(null);
+const imageEdit = ref<{ id: string; rating: 'sfw' | 'nsfw'; characterName: string; aliases: string } | null>(null);
+const selectedOwnImageIds = ref<Set<string>>(new Set());
 const offlineInput = ref<HTMLInputElement>();
 const darkMode = ref(false);
 const THEME_KEY = 'rb-theme';
-let autoKeywordCharacter = '';
 
 function readSharedTheme(): void {
   try {
@@ -620,29 +684,16 @@ function toggleTheme(): void {
   }
 }
 
-function keywordTerms(value: string): string[] {
-  return value
-    .split(/[，,\n]/u)
-    .map(item => item.trim())
-    .filter(Boolean);
+function aliasTerms(value: string): string[] {
+  return [
+    ...new Set(
+      value
+        .split(/[，,\n]/u)
+        .map(item => item.normalize('NFKC').trim())
+        .filter(Boolean),
+    ),
+  ];
 }
-
-function syncCharacterKeyword(characterName: string, previousName = autoKeywordCharacter): void {
-  if (editPack.category !== '人物') return;
-  const current = characterName.trim();
-  const terms = keywordTerms(upload.keywords).filter(term => term !== previousName && term !== current);
-  upload.keywords = current ? `${[current, ...terms].join('，')}，` : terms.join('，');
-  autoKeywordCharacter = current;
-}
-
-function ensureCharacterKeyword(): void {
-  syncCharacterKeyword(upload.characterName);
-}
-
-watch(
-  () => upload.characterName,
-  (current, previous) => syncCharacterKeyword(current, previous.trim()),
-);
 
 function tell(message: string, type: 'success' | 'error' = 'success'): void {
   notice.value = message;
@@ -893,7 +944,8 @@ async function logout(): Promise<void> {
   likedPackIds.value = new Set();
   ownPacks.value = [];
   ownDetail.value = undefined;
-  clearOwnImageUrls();
+  clearOwnImageSelection();
+  clearWorkshopImageUrls();
   tell('已退出登录');
 }
 async function saveSettings(): Promise<void> {
@@ -916,8 +968,7 @@ async function saveAutoInsert(): Promise<void> {
 async function loadOwnPacks(): Promise<void> {
   busy.value = true;
   try {
-    ownPacks.value = (await workshopService.api.listOwnPacks()).items;
-    if (ownDetail.value) await loadOwnDetail(ownDetail.value.pack.id);
+    await refreshOwnPackSummaries();
   } catch (error) {
     tell(errorText(error), 'error');
   } finally {
@@ -925,29 +976,29 @@ async function loadOwnPacks(): Promise<void> {
   }
 }
 
+async function refreshOwnPackSummaries(): Promise<void> {
+  ownPacks.value = (await workshopService.api.listOwnPacks()).items;
+  if (!ownDetail.value) return;
+  const currentSummary = ownPacks.value.find(pack => pack.id === ownDetail.value?.pack.id);
+  if (currentSummary) Object.assign(ownDetail.value.pack, currentSummary);
+}
+
 async function loadOwnDetail(packId: string): Promise<void> {
   busy.value = true;
   try {
-    clearOwnImageUrls();
-    ownDetail.value = undefined;
-    ownDetail.value = await workshopService.api.getOwnPack(packId);
-    const failures: string[] = [];
-    await Promise.all(
-      ownDetail.value.images.map(async image => {
-        try {
-          ownImageUrls[image.id] = URL.createObjectURL(await workshopService.api.getOwnImage(image.id));
-        } catch (error) {
-          failures.push(image.id);
-          console.error(`[创意工坊] 图片 ${image.id} 预览加载失败：`, error);
-        }
-      }),
-    );
-    failedOwnImageIds.value = new Set(failures);
-    if (failures.length) tell(`${failures.length} 张图片加载失败，请稍后重试`, 'error');
+    const switchingPack = ownDetail.value?.pack.id !== packId;
+    if (switchingPack) {
+      ownDetail.value = undefined;
+      clearOwnImageSelection();
+    }
+    const manifest = await workshopService.api.getOwnPack(packId);
+    const currentImageIds = new Set(manifest.images.map(image => image.id));
+    selectedOwnImageIds.value = new Set([...selectedOwnImageIds.value].filter(imageId => currentImageIds.has(imageId)));
+    ownDetail.value = manifest;
     Object.assign(editPack, {
-      name: ownDetail.value.pack.name,
-      description: ownDetail.value.pack.description,
-      category: ownDetail.value.pack.category,
+      name: manifest.pack.name,
+      description: manifest.pack.description,
+      category: manifest.pack.category,
     });
   } catch (error) {
     tell(errorText(error), 'error');
@@ -956,10 +1007,59 @@ async function loadOwnDetail(packId: string): Promise<void> {
   }
 }
 
-function clearOwnImageUrls(): void {
-  Object.values(ownImageUrls).forEach(url => URL.revokeObjectURL(url));
-  Object.keys(ownImageUrls).forEach(key => delete ownImageUrls[key]);
-  failedOwnImageIds.value = new Set();
+function workshopImageKey(imageId: string, authenticated: boolean): string {
+  return `${authenticated ? 'own' : 'public'}:${imageId}`;
+}
+
+function workshopImageUrl(imageId?: string | null): string {
+  return imageId ? workshopImageUrls[imageId] || '' : '';
+}
+
+function workshopImagePending(imageId: string | null | undefined, authenticated: boolean): boolean {
+  return Boolean(imageId && loadingWorkshopImages.value.has(workshopImageKey(imageId, authenticated)));
+}
+
+function workshopImageFailed(imageId: string | null | undefined, authenticated: boolean): boolean {
+  return Boolean(imageId && failedWorkshopImages.value.has(workshopImageKey(imageId, authenticated)));
+}
+
+function removeWorkshopImageUrl(imageId: string): void {
+  const url = workshopImageUrls[imageId];
+  if (url) URL.revokeObjectURL(url);
+  delete workshopImageUrls[imageId];
+}
+
+function clearWorkshopImageUrls(): void {
+  Object.keys(workshopImageUrls).forEach(removeWorkshopImageUrl);
+  failedWorkshopImages.value = new Set();
+  loadingWorkshopImages.value = new Set();
+}
+
+async function loadWorkshopImage(image: Pick<PackImage, 'id' | 'byte_size'>, authenticated: boolean): Promise<void> {
+  const requestKey = workshopImageKey(image.id, authenticated);
+  if (workshopImageUrls[image.id] || loadingWorkshopImages.value.has(requestKey)) return;
+  failedWorkshopImages.value = new Set([...failedWorkshopImages.value].filter(key => key !== requestKey));
+  loadingWorkshopImages.value = new Set([...loadingWorkshopImages.value, requestKey]);
+  try {
+    const blob = await workshopService.getPreviewImage({
+      id: image.id,
+      authenticated,
+      expectedBytes: image.byte_size,
+    });
+    removeWorkshopImageUrl(image.id);
+    workshopImageUrls[image.id] = URL.createObjectURL(blob);
+    failedWorkshopImages.value = new Set([...failedWorkshopImages.value].filter(key => !key.endsWith(`:${image.id}`)));
+  } catch (error) {
+    failedWorkshopImages.value = new Set([...failedWorkshopImages.value, requestKey]);
+    console.error(`[创意工坊] 图片 ${image.id} 预览加载失败：`, error);
+  } finally {
+    loadingWorkshopImages.value = new Set([...loadingWorkshopImages.value].filter(key => key !== requestKey));
+  }
+}
+
+async function loadPackPreview(pack: PackSummary): Promise<void> {
+  if (!pack.preview_image_id) return;
+  await loadWorkshopImage({ id: pack.preview_image_id, byte_size: 0 }, false);
 }
 
 async function createPack(): Promise<void> {
@@ -998,8 +1098,8 @@ async function setPreviewImage(imageId: string): Promise<void> {
   busy.value = true;
   try {
     await workshopService.api.updatePack(packId, { preview_image_id: imageId });
-    await loadOwnDetail(packId);
-    await loadOwnPacks();
+    ownDetail.value.pack.preview_image_id = imageId;
+    await refreshOwnPackSummaries();
     tell('预览图已更新');
   } catch (error) {
     tell(errorText(error), 'error');
@@ -1035,11 +1135,16 @@ async function unpublishCurrent(): Promise<void> {
 }
 async function deleteCurrentPack(): Promise<void> {
   if (!ownDetail.value || !window.parent.confirm(`确定删除「${ownDetail.value.pack.name}」吗？`)) return;
+  const removedImageIds = ownDetail.value.images.map(image => image.id);
   busy.value = true;
   try {
     await workshopService.api.deletePack(ownDetail.value.pack.id);
+    for (const imageId of removedImageIds) {
+      removeWorkshopImageUrl(imageId);
+      void workshopService.removePreviewImage(imageId);
+    }
     ownDetail.value = undefined;
-    clearOwnImageUrls();
+    clearOwnImageSelection();
     await loadOwnPacks();
     tell('图包已删除');
   } catch (error) {
@@ -1065,14 +1170,13 @@ function uploadSelectionBytes(): number {
 }
 async function uploadCurrentImage(): Promise<void> {
   if (!ownDetail.value || !uploadFiles.value.length) return;
-  const keywords = keywordTerms(upload.keywords);
-  if (!keywords.length) return tell('请填写关键词', 'error');
+  const aliases = aliasTerms(upload.aliases);
   const packId = ownDetail.value.pack.id;
   const files = [...uploadFiles.value];
   const sharedMetadata = {
     rating: upload.rating,
     characterName: upload.characterName,
-    keywords,
+    aliases,
   };
   const failures: Array<{ name: string; reason: string }> = [];
   let completed = 0;
@@ -1083,11 +1187,22 @@ async function uploadCurrentImage(): Promise<void> {
       uploadProgress.current = index + 1;
       try {
         const prepared = await prepareUploadImage(file);
-        await workshopService.api.uploadImage(packId, {
+        const result = await workshopService.api.uploadImage(packId, {
           file: prepared.blob,
           filename: prepared.filename,
           ...sharedMetadata,
         });
+        if (ownDetail.value?.pack.id === packId) {
+          ownDetail.value.images.push(result.image);
+          ownDetail.value.pack.image_count = ownDetail.value.images.length;
+          ownDetail.value.pack.preview_image_id ??= result.image.id;
+          removeWorkshopImageUrl(result.image.id);
+          workshopImageUrls[result.image.id] = URL.createObjectURL(prepared.blob);
+          failedWorkshopImages.value = new Set(
+            [...failedWorkshopImages.value].filter(key => !key.endsWith(`:${result.image.id}`)),
+          );
+          void workshopService.cachePreviewImage(result.image.id, prepared.blob);
+        }
         completed += 1;
       } catch (error) {
         failures.push({ name: file.name, reason: errorText(error) });
@@ -1095,16 +1210,14 @@ async function uploadCurrentImage(): Promise<void> {
       }
     }
     const inheritedCharacterName = editPack.category === '人物' ? upload.characterName.trim() : '';
-    autoKeywordCharacter = inheritedCharacterName;
     Object.assign(upload, {
       rating: 'sfw',
       characterName: inheritedCharacterName,
-      keywords: inheritedCharacterName ? `${inheritedCharacterName}，` : '',
+      aliases: '',
     });
     uploadFiles.value = [];
     if (uploadInput.value) uploadInput.value.value = '';
     if (completed > 0) {
-      await loadOwnDetail(packId);
       await loadOwnPacks();
     }
     if (failures.length) {
@@ -1123,28 +1236,78 @@ async function uploadCurrentImage(): Promise<void> {
   }
 }
 
+function toggleOwnImageSelection(imageId: string): void {
+  const next = new Set(selectedOwnImageIds.value);
+  if (next.has(imageId)) next.delete(imageId);
+  else next.add(imageId);
+  selectedOwnImageIds.value = next;
+}
+
+function selectAllOwnImages(): void {
+  selectedOwnImageIds.value = new Set(ownDetail.value?.images.map(image => image.id) ?? []);
+}
+
+function clearOwnImageSelection(): void {
+  selectedOwnImageIds.value = new Set();
+}
+
+async function deleteSelectedImages(): Promise<void> {
+  if (!ownDetail.value || !selectedOwnImageIds.value.size) return;
+  const targets = ownDetail.value.images.filter(image => selectedOwnImageIds.value.has(image.id));
+  if (!window.parent.confirm(`确定删除所选的 ${targets.length} 张图片吗？此操作无法撤销。`)) return;
+  const packId = ownDetail.value.pack.id;
+  const deletedIds = new Set<string>();
+  const failures: string[] = [];
+  busy.value = true;
+  try {
+    for (const image of targets) {
+      try {
+        await workshopService.api.deleteImage(packId, image.id);
+        deletedIds.add(image.id);
+        removeWorkshopImageUrl(image.id);
+        void workshopService.removePreviewImage(image.id);
+      } catch (error) {
+        failures.push(`${image.character_name || image.id}：${errorText(error)}`);
+      }
+    }
+    if (deletedIds.size) {
+      ownDetail.value = await workshopService.api.getOwnPack(packId);
+      selectedOwnImageIds.value = new Set([...selectedOwnImageIds.value].filter(imageId => !deletedIds.has(imageId)));
+      await refreshOwnPackSummaries();
+    }
+    if (failures.length) {
+      tell(`已删除 ${deletedIds.size} 张，${failures.length} 张失败：${failures.slice(0, 3).join('；')}`, 'error');
+    } else {
+      tell(`已删除 ${deletedIds.size} 张图片`);
+    }
+  } finally {
+    busy.value = false;
+  }
+}
+
 function beginImageEdit(image: PackImage): void {
   imageEdit.value = {
     id: image.id,
     rating: image.rating,
     characterName: image.character_name,
-    keywords: image.keywords.join('，'),
+    aliases: (image.aliases ?? []).join('，'),
   };
 }
 async function saveImageEdit(): Promise<void> {
   if (!ownDetail.value || !imageEdit.value) return;
+  const edit = imageEdit.value;
+  const aliases = aliasTerms(edit.aliases);
   busy.value = true;
   try {
-    await workshopService.api.updateImage(ownDetail.value.pack.id, imageEdit.value.id, {
-      rating: imageEdit.value.rating,
-      character_name: imageEdit.value.characterName,
-      keywords: imageEdit.value.keywords
-        .split(/[，,\n]/u)
-        .map(value => value.trim())
-        .filter(Boolean),
+    await workshopService.api.updateImage(ownDetail.value.pack.id, edit.id, {
+      rating: edit.rating,
+      character_name: edit.characterName,
+      aliases,
     });
+    const image = ownDetail.value.images.find(item => item.id === edit.id);
+    if (image) Object.assign(image, { rating: edit.rating, character_name: edit.characterName, aliases });
     imageEdit.value = null;
-    await loadOwnDetail(ownDetail.value.pack.id);
+    await refreshOwnPackSummaries();
     tell('图片资料已更新');
   } catch (error) {
     tell(errorText(error), 'error');
@@ -1157,8 +1320,11 @@ async function deleteCurrentImage(imageId: string): Promise<void> {
   busy.value = true;
   try {
     await workshopService.api.deleteImage(ownDetail.value.pack.id, imageId);
+    removeWorkshopImageUrl(imageId);
+    void workshopService.removePreviewImage(imageId);
+    selectedOwnImageIds.value = new Set([...selectedOwnImageIds.value].filter(id => id !== imageId));
     await loadOwnDetail(ownDetail.value.pack.id);
-    await loadOwnPacks();
+    await refreshOwnPackSummaries();
     tell('图片已删除');
   } catch (error) {
     tell(errorText(error), 'error');
@@ -1182,7 +1348,7 @@ watch(workshopVisible, visible => {
 
 onBeforeUnmount(() => {
   workshopService.api.cancelLogin();
-  clearOwnImageUrls();
+  clearWorkshopImageUrls();
   window.parent.removeEventListener('rb-theme-change', handleThemeChange);
   window.parent.removeEventListener('storage', readSharedTheme);
 });

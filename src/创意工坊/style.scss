@@ -543,7 +543,7 @@
   align-items: end;
 }
 .cw-upload-fields.without-character {
-  grid-template-columns: minmax(120px, 0.65fr) minmax(280px, 4fr);
+  grid-template-columns: minmax(120px, 1fr);
 }
 .cw-upload-fields > label {
   min-width: 0;
@@ -557,7 +557,7 @@
 .cw-upload-fields select {
   min-height: 40px;
 }
-.cw-upload-keywords {
+.cw-upload-aliases {
   min-width: 0;
 }
 .cw-upload-footer {
@@ -623,11 +623,104 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
+.cw-image-manager {
+  display: grid;
+  gap: 9px;
+  margin: 4px 0 10px;
+  padding: 10px;
+  border: 1px solid var(--cw-line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--cw-paper-2) 55%, transparent);
+}
+.cw-image-manager-head,
+.cw-batch-editor {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.cw-image-manager-head {
+  justify-content: space-between;
+}
+.cw-image-manager-head > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+.cw-image-manager-head span {
+  color: var(--cw-muted);
+  font-size: 12px;
+}
+.cw-batch-editor {
+  display: grid;
+  grid-template-columns: 160px minmax(220px, 1fr) auto auto;
+}
+.cw-batch-editor label {
+  min-width: 0;
+}
+.cw-batch-editor input,
+.cw-batch-editor select,
+.cw-batch-editor .cw-btn {
+  min-height: 38px;
+}
 .cw-image-card {
+  position: relative;
   overflow: hidden;
   border: 1px solid var(--cw-line);
   border-radius: 9px;
   background: #fff8;
+}
+.cw-own-image-card.selected {
+  border-color: var(--cw-red);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--cw-red) 32%, transparent),
+    inset 0 0 0 1px var(--cw-red);
+}
+.cw-image-select {
+  position: absolute;
+  z-index: 4;
+  top: 7px;
+  left: 7px;
+  display: grid !important;
+  width: 38px !important;
+  height: 38px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--cw-line) 75%, transparent);
+  border-radius: 50%;
+  color: var(--cw-ink);
+  background: color-mix(in srgb, var(--cw-paper) 94%, transparent);
+  box-shadow: 0 3px 12px rgba(24, 17, 12, 0.28);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+.cw-image-select input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+.cw-image-select span {
+  font: 700 24px/1 sans-serif;
+}
+.cw-image-select.is-selected {
+  border-color: color-mix(in srgb, var(--cw-red) 82%, #fff);
+  color: #fff9ec;
+  background: var(--cw-red);
+  box-shadow:
+    0 3px 14px color-mix(in srgb, var(--cw-red) 45%, transparent),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  transform: scale(1.08);
+}
+.cw-image-select:focus-within {
+  outline: 3px solid color-mix(in srgb, var(--cw-red) 36%, transparent);
+  outline-offset: 2px;
+}
+.cw-image-select:has(input:disabled) {
+  cursor: wait;
+  opacity: 0.58;
 }
 .cw-image-card > .cw-media-loader {
   display: block;
@@ -977,6 +1070,12 @@
   .cw-owner-layout {
     grid-template-columns: 1fr;
   }
+  .cw-batch-editor {
+    grid-template-columns: 150px minmax(180px, 1fr) auto;
+  }
+  .cw-batch-editor .cw-btn-danger {
+    grid-column: 3;
+  }
   .cw-owner-list {
     flex-direction: row;
     overflow-x: auto;
@@ -1025,6 +1124,17 @@
   .cw-upload-fields,
   .cw-upload-fields.without-character {
     grid-template-columns: 1fr;
+  }
+  .cw-image-manager-head,
+  .cw-batch-editor {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+  .cw-image-manager-head {
+    flex-direction: column;
+  }
+  .cw-batch-editor .cw-btn-danger {
+    grid-column: auto;
   }
   .cw-form-card .wide,
   .cw-upload .wide,

@@ -33,7 +33,7 @@ export interface PackImage {
   id: string;
   character_name: string;
   rating: ImageRating;
-  keywords: string[];
+  aliases: string[];
   mime_type: 'image/jpeg' | 'image/png' | 'image/webp';
   width: number;
   height: number;
@@ -76,9 +76,9 @@ export interface WorkshopSettings {
   key: 'main';
   apiBase: string;
   autoInsert: boolean;
-  maxPerMessage: number;
   updateIntervalHours: number;
   lastUpdateCheck: number;
+  packPreferences: Record<string, string>;
 }
 
 export interface AuthRecord {
@@ -112,16 +112,27 @@ export interface DisplayRecord {
   createdAt: number;
 }
 
-export interface MatchedWorkshopImage {
+export interface WorkshopPlayerImage {
   id: string;
-  packId: string;
-  packName: string;
-  author: string;
-  characterName: string;
   rating: ImageRating;
-  keywords: string[];
   blob: Blob;
-  score: number;
+}
+
+export interface WorkshopPlayerPack {
+  id: string;
+  name: string;
+  author: string;
+  images: WorkshopPlayerImage[];
+}
+
+export interface WorkshopPlayerData {
+  subjectKey: string;
+  title: string;
+  kind: 'character' | 'category';
+  initialRating: ImageRating;
+  preferredPackId: string;
+  routeDetectionFailed: boolean;
+  packs: WorkshopPlayerPack[];
 }
 
 export interface MatchRequest {
@@ -134,7 +145,8 @@ export interface WorkshopBridge {
   version: string;
   open: () => void;
   close: () => void;
-  matchImages: (request: MatchRequest) => Promise<MatchedWorkshopImage[]>;
+  matchImages: (request: MatchRequest) => Promise<WorkshopPlayerData | null>;
+  setPreferredPack: (subjectKey: string, packId: string) => Promise<void>;
   confirmDisplayed: (request: { chatId: string; messageId: string; imageId: string }) => Promise<void>;
   getSettings: () => Promise<WorkshopSettings>;
   setAutoInsert: (enabled: boolean) => Promise<void>;

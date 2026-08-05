@@ -18,6 +18,7 @@
       :src="activeSrc"
       :alt="alt"
       decoding="async"
+      loading="lazy"
       @load="handleLoad"
       @error="handleError"
     />
@@ -26,9 +27,16 @@
       <span class="cw-media-spinner" aria-hidden="true"></span>
       <small>图片加载中</small>
     </div>
-    <div v-else-if="state === 'error'" class="cw-media-state cw-media-error" role="img" :aria-label="`${alt}加载失败`">
-      <span aria-hidden="true">!</span>
-      <small>图片加载失败</small>
+    <div
+      v-else-if="state === 'error'"
+      class="cw-media-state cw-media-error"
+      role="group"
+      :aria-label="`${alt}加载失败`"
+    >
+      <button type="button" :aria-label="`重新加载${alt}`" @click.stop="retry">
+        <span aria-hidden="true">!</span>
+        <small>加载失败，点击重试</small>
+      </button>
     </div>
     <div v-else-if="state === 'empty'" class="cw-media-state cw-media-empty" aria-hidden="true">
       <span>图</span>
@@ -50,8 +58,9 @@ const props = withDefaults(
     blurBackground?: boolean;
     pending?: boolean;
     failed?: boolean;
+    requestable?: boolean;
     emptyLabel?: string;
-    timeoutMs?: number;
+    maxRetries?: number;
   }>(),
   {
     src: '',
@@ -59,10 +68,15 @@ const props = withDefaults(
     blurBackground: false,
     pending: false,
     failed: false,
+    requestable: false,
     emptyLabel: '暂无图片',
-    timeoutMs: 10_000,
+    maxRetries: 2,
   },
 );
+
+const emit = defineEmits<{
+  request: [];
+}>();
 
 const root = ref<HTMLElement>();
 const activeSrc = ref('');
@@ -71,12 +85,13 @@ const visible = ref(false);
 const backdropImage = computed(() => (activeSrc.value ? `url(${JSON.stringify(activeSrc.value)})` : 'none'));
 
 let observer: IntersectionObserver | undefined;
-let timeoutId: number | undefined;
+let retryTimer: number | undefined;
 let retryCount = 0;
+let requestedDeferredSource = false;
 
-function clearLoadTimeout(): void {
-  if (timeoutId !== undefined) window.clearTimeout(timeoutId);
-  timeoutId = undefined;
+function clearRetryTimer(): void {
+  if (retryTimer !== undefined) window.clearTimeout(retryTimer);
+  retryTimer = undefined;
 }
 
 function retryUrl(source: string): string {
@@ -87,48 +102,83 @@ function retryUrl(source: string): string {
 }
 
 function fail(): void {
-  clearLoadTimeout();
+  clearRetryTimer();
   activeSrc.value = '';
   state.value = 'error';
 }
 
+function requestSource(force = false): void {
+  if (!props.requestable || requestedDeferredSource || props.pending || (!force && props.failed) || !visible.value)
+    return;
+  requestedDeferredSource = true;
+  state.value = 'loading';
+  emit('request');
+}
+
 function startLoad(): void {
   const source = props.src?.trim();
-  if (!source || props.pending || props.failed || !visible.value) return;
+  if (!source || props.pending || props.failed || !visible.value) {
+    if (!source) requestSource();
+    return;
+  }
   state.value = 'loading';
   activeSrc.value = source;
-  clearLoadTimeout();
-  timeoutId = window.setTimeout(fail, props.timeoutMs);
 }
 
 function reset(): void {
-  clearLoadTimeout();
+  clearRetryTimer();
   activeSrc.value = '';
   retryCount = 0;
-  if (props.failed) state.value = 'error';
-  else if (props.pending) state.value = 'loading';
-  else if (!props.src?.trim()) state.value = 'empty';
-  else {
+  if (props.src?.trim()) requestedDeferredSource = false;
+  if (props.failed) {
+    requestedDeferredSource = false;
+    state.value = 'error';
+  } else if (props.pending) state.value = 'loading';
+  else if (!props.src?.trim()) {
+    state.value = props.requestable ? 'loading' : 'empty';
+    requestSource();
+  } else {
     state.value = 'loading';
     startLoad();
   }
 }
 
 function handleLoad(): void {
-  clearLoadTimeout();
+  clearRetryTimer();
   state.value = 'loaded';
 }
 
 function handleError(): void {
-  if (retryCount === 0 && props.src?.trim()) {
-    retryCount = 1;
+  if (retryCount < props.maxRetries && props.src?.trim()) {
+    retryCount += 1;
     activeSrc.value = '';
-    void nextTick(() => {
-      activeSrc.value = retryUrl(props.src!.trim());
-    });
+    state.value = 'loading';
+    clearRetryTimer();
+    retryTimer = window.setTimeout(() => {
+      void nextTick(() => {
+        activeSrc.value = retryUrl(props.src!.trim());
+      });
+    }, 800 * retryCount);
     return;
   }
   fail();
+}
+
+function retry(): void {
+  clearRetryTimer();
+  retryCount = 0;
+  if (props.requestable && !props.src?.trim()) {
+    requestedDeferredSource = false;
+    requestSource(true);
+    return;
+  }
+  const source = props.src?.trim();
+  if (!source) return;
+  state.value = 'loading';
+  activeSrc.value = '';
+  void nextTick(() => {
+    activeSrc.value = retryUrl(source);
+  });
 }
 
 watch(() => [props.src, props.pending, props.failed] as const, reset, { immediate: true });
@@ -153,7 +203,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  clearLoadTimeout();
+  clearRetryTimer();
   observer?.disconnect();
 });
 </script>
@@ -213,6 +263,16 @@ onBeforeUnmount(() => {
   font-size: 11px;
   letter-spacing: 0.08em;
 }
+.cw-media-loading small {
+  width: fit-content;
+  margin: auto;
+  padding: 3px 8px;
+  border: 1px solid color-mix(in srgb, var(--cw-line) 72%, transparent);
+  border-radius: 999px;
+  color: var(--cw-ink);
+  background: color-mix(in srgb, var(--cw-paper) 88%, transparent);
+  box-shadow: 0 2px 8px rgba(46, 34, 25, 0.13);
+}
 .cw-media-spinner {
   width: 27px;
   height: 27px;
@@ -222,6 +282,21 @@ onBeforeUnmount(() => {
   border-radius: 50%;
   box-shadow: 0 0 14px color-mix(in srgb, var(--cw-red) 16%, transparent);
   animation: cw-media-spin 0.78s linear infinite;
+}
+.cw-media-error {
+  pointer-events: auto;
+}
+.cw-media-error button {
+  display: grid;
+  gap: 7px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 9px;
+  color: var(--cw-red);
+  background: color-mix(in srgb, var(--cw-paper) 90%, transparent);
+  box-shadow: 0 3px 12px rgba(46, 34, 25, 0.14);
+  cursor: pointer;
+  font: inherit;
 }
 .cw-media-error span {
   display: grid;
@@ -233,6 +308,9 @@ onBeforeUnmount(() => {
   border-radius: 50%;
   color: var(--cw-red);
   font: 700 17px/1 sans-serif;
+}
+.cw-media-error small {
+  color: var(--cw-ink);
 }
 .cw-media-empty span {
   color: #a96949;

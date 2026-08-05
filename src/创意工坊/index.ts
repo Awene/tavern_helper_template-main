@@ -25,10 +25,11 @@ function bootWorkshop(): void {
   app.mount(mount);
 
   const bridge: WorkshopBridge = {
-    version: '0.2.0',
+    version: '0.3.0',
     open: openWorkshop,
     close: closeWorkshop,
     matchImages: request => workshopService.matchImages(request),
+    setPreferredPack: (subjectKey, packId) => workshopService.setPreferredPack(subjectKey, packId),
     confirmDisplayed: request => workshopService.confirmDisplayed(request),
     getSettings: () => workshopService.getSettings(),
     setAutoInsert: enabled => workshopService.setAutoInsert(enabled),

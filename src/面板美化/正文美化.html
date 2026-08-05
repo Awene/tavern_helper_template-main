@@ -2542,15 +2542,13 @@
       }
 
       .rb-workshop-gallery {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
-        gap: 14px;
         margin: 24px 0 4px;
         padding-top: 18px;
         border-top: 1px dashed var(--rb-border-soft);
         clear: both;
       }
       .rb-workshop-figure {
+        position: relative;
         margin: 0;
         overflow: hidden;
         border: 1px solid var(--rb-border-soft);
@@ -2561,7 +2559,7 @@
         position: relative;
         display: grid;
         width: 100%;
-        min-height: 180px;
+        min-height: 220px;
         place-items: center;
         overflow: hidden;
         color: var(--rb-text-muted);
@@ -2574,6 +2572,7 @@
         width: 100%;
         height: auto;
         max-width: 100%;
+        max-height: min(72vh, 760px);
         object-fit: contain;
         opacity: 0;
         cursor: zoom-in;
@@ -2625,6 +2624,56 @@
         color: var(--rb-text-muted);
         font-size: 11px;
         line-height: 1.5;
+        text-align: center;
+      }
+      .rb-workshop-controls {
+        position: absolute;
+        z-index: 2;
+        left: 50%;
+        bottom: 34px;
+        display: flex;
+        gap: 5px;
+        padding: 5px;
+        border: 1px solid rgba(255,255,255,.14);
+        border-radius: 999px;
+        background: rgba(18,18,20,.64);
+        box-shadow: 0 6px 20px rgba(0,0,0,.24);
+        backdrop-filter: blur(8px);
+        opacity: 0;
+        transform: translate(-50%, 6px);
+        transition: opacity .18s ease, transform .18s ease;
+      }
+      .rb-workshop-figure:hover .rb-workshop-controls,
+      .rb-workshop-figure:focus-within .rb-workshop-controls {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .rb-workshop-control {
+        display: grid;
+        min-width: 30px;
+        height: 30px;
+        padding: 0 8px;
+        place-items: center;
+        border: 0;
+        border-radius: 999px;
+        color: rgba(255,255,255,.9);
+        background: transparent;
+        font: 600 12px/1 sans-serif;
+        cursor: pointer;
+      }
+      .rb-workshop-control:hover,
+      .rb-workshop-control.active { background: rgba(255,255,255,.16); color: #fff; }
+      .rb-workshop-control:disabled { opacity: .32; cursor: default; }
+      @media (hover: none), (max-width: 600px) {
+        .rb-workshop-media { min-height: 180px; }
+        .rb-workshop-controls {
+          bottom: 32px;
+          gap: 2px;
+          padding: 4px;
+          opacity: 1;
+          transform: translate(-50%, 0);
+        }
+        .rb-workshop-control { min-width: 28px; height: 28px; padding: 0 6px; }
       }
 
       /* —— 插图大图查看器 —— */
@@ -5152,6 +5201,7 @@
 
       // ============== 创意工坊桥接 ==============
       const workshopObjectUrls = [];
+      const workshopAutoplayTimers = new Set();
 
       function getWorkshopBridge() {
         try {
@@ -5206,7 +5256,7 @@
         try {
           const [settings, summary] = await Promise.all([bridge.getSettings(), bridge.getInstalledSummary()]);
           if (status) {
-            status.textContent = `已启用 ${summary.enabled} / 已安装 ${summary.installed} 个图包；每楼最多 ${settings.maxPerMessage} 张。`;
+            status.textContent = `已启用 ${summary.enabled} / 已安装 ${summary.installed} 个图包；正文每楼展示一张，可切换同角色图片。`;
           }
           if (toggle) {
             toggle.textContent = settings.autoInsert ? '已开启' : '已关闭';
@@ -5243,73 +5293,155 @@
         container.dataset.workshopMatched = 'true';
         try {
           const context = getWorkshopMessageContext();
-          const images = await bridge.matchImages({
+          const player = await bridge.matchImages({
             text: container.__workshopText || '',
             chatId: context.chatId,
             messageId: context.messageId,
           });
-          if (!images || !images.length) return;
+          if (!player || !player.packs || !player.packs.length) return;
+          if (player.routeDetectionFailed && container.dataset.workshopRouteWarned !== 'true') {
+            container.dataset.workshopRouteWarned = 'true';
+            try {
+              const host = window.parent || window;
+              if (host.toastr && typeof host.toastr.warning === 'function') {
+                host.toastr.warning('未能读取本楼 NSFW 路由结果，创意工坊将优先显示 SFW；若无 SFW 则显示现有图片。', '创意工坊');
+              } else showToast('未读取到 NSFW 路由，本楼将优先显示 SFW');
+            } catch (e) {
+              showToast('未读取到 NSFW 路由，本楼将优先显示 SFW');
+            }
+          }
           const gallery = document.createElement('div');
           gallery.className = 'rb-workshop-gallery';
           gallery.setAttribute('aria-label', '创意工坊插图');
-          images.forEach(image => {
-            const objectUrl = URL.createObjectURL(image.blob);
-            workshopObjectUrls.push(objectUrl);
-            const figure = document.createElement('figure');
-            figure.className = 'rb-workshop-figure';
-            const media = document.createElement('div');
+          const figure = document.createElement('figure');
+          figure.className = 'rb-workshop-figure';
+          const media = document.createElement('div');
+          media.className = 'rb-workshop-media';
+          const img = document.createElement('img');
+          img.loading = 'eager';
+          img.decoding = 'async';
+          img.tabIndex = 0;
+          img.setAttribute('role', 'button');
+          img.title = '点击查看大图';
+          const loadState = document.createElement('div');
+          loadState.className = 'rb-workshop-load-state';
+          const caption = document.createElement('figcaption');
+          caption.className = 'rb-workshop-caption';
+          const controls = document.createElement('div');
+          controls.className = 'rb-workshop-controls';
+          controls.setAttribute('role', 'toolbar');
+          controls.setAttribute('aria-label', '插图切换工具');
+          controls.innerHTML = `
+            <button type="button" class="rb-workshop-control" data-workshop-action="previous" title="上一张" aria-label="上一张">‹</button>
+            <button type="button" class="rb-workshop-control" data-workshop-action="next" title="下一张" aria-label="下一张">›</button>
+            <button type="button" class="rb-workshop-control" data-workshop-action="rating" title="切换 SFW / NSFW"></button>
+            <button type="button" class="rb-workshop-control" data-workshop-action="pack" title="切换图包" aria-label="切换图包">⇄</button>
+            <button type="button" class="rb-workshop-control" data-workshop-action="autoplay" title="开启 10 秒轮播" aria-label="轮播">▶</button>
+            <button type="button" class="rb-workshop-control" data-workshop-action="fullscreen" title="全屏查看" aria-label="全屏查看">⛶</button>`;
+          media.append(img, loadState);
+          figure.append(media, controls, caption);
+          gallery.appendChild(figure);
+
+          let packIndex = Math.max(0, player.packs.findIndex(pack => pack.id === player.preferredPackId));
+          let rating = player.initialRating;
+          let imageIndex = 0;
+          let autoplayTimer = null;
+          const urls = new Map();
+          const currentPack = () => player.packs[packIndex];
+          const currentImages = () => currentPack().images.filter(image => image.rating === rating);
+          const urlFor = image => {
+            if (!urls.has(image.id)) {
+              const url = URL.createObjectURL(image.blob);
+              urls.set(image.id, url);
+              workshopObjectUrls.push(url);
+            }
+            return urls.get(image.id);
+          };
+          const updateButtons = () => {
+            const group = currentImages();
+            controls.querySelectorAll('[data-workshop-action="previous"], [data-workshop-action="next"]')
+              .forEach(button => { button.disabled = group.length < 2; });
+            const ratingButton = controls.querySelector('[data-workshop-action="rating"]');
+            ratingButton.textContent = rating.toUpperCase();
+            ratingButton.disabled = !player.packs.some(pack => pack.images.some(image => image.rating !== rating));
+            controls.querySelector('[data-workshop-action="pack"]').disabled =
+              player.packs.filter(pack => pack.images.some(image => image.rating === rating)).length < 2;
+          };
+          const render = () => {
+            const group = currentImages();
+            if (!group.length) return;
+            imageIndex = ((imageIndex % group.length) + group.length) % group.length;
+            const image = group[imageIndex];
             media.className = 'rb-workshop-media loading';
-            const loadState = document.createElement('div');
             loadState.className = 'rb-workshop-load-state';
-            loadState.setAttribute('role', 'status');
-            loadState.setAttribute('aria-live', 'polite');
-            loadState.innerHTML = '<span class="rb-workshop-spinner" aria-hidden="true"></span><small>图片加载中</small>';
-            const img = document.createElement('img');
-            img.src = objectUrl;
-            img.alt = image.characterName || image.packName || '创意工坊插图';
-            img.loading = 'eager';
-            img.decoding = 'async';
-            img.tabIndex = 0;
-            img.setAttribute('role', 'button');
-            img.title = '点击查看大图';
-            const loadTimeout = setTimeout(() => {
-              if (media.classList.contains('loaded')) return;
-              img.remove();
-              media.classList.remove('loading');
-              media.classList.add('failed');
-              loadState.classList.add('error');
-              loadState.querySelector('small').textContent = '图片加载失败';
-              loadState.setAttribute('role', 'img');
-              loadState.setAttribute('aria-label', img.alt + '加载失败');
-            }, 10000);
-            img.addEventListener('load', () => {
-              clearTimeout(loadTimeout);
-              media.classList.remove('loading');
-              media.classList.add('loaded');
+            loadState.innerHTML = '<span class="rb-workshop-spinner" aria-hidden="true"></span><small>正在准备插图…</small>';
+            if (!loadState.isConnected) media.appendChild(loadState);
+            img.alt = `${player.title} · ${currentPack().name} · ${rating.toUpperCase()}`;
+            img.onload = () => {
+              media.className = 'rb-workshop-media loaded';
               loadState.remove();
               void bridge.confirmDisplayed({ ...context, imageId: image.id });
-            }, { once: true });
-            img.addEventListener('error', () => {
-              clearTimeout(loadTimeout);
-              img.remove();
-              media.classList.remove('loading');
-              media.classList.add('failed');
-              loadState.classList.add('error');
-              loadState.querySelector('small').textContent = '图片加载失败';
-              loadState.setAttribute('role', 'img');
-              loadState.setAttribute('aria-label', img.alt + '加载失败');
-            }, { once: true });
-            const caption = document.createElement('figcaption');
-            caption.className = 'rb-workshop-caption';
-            caption.textContent =
-              (image.characterName ? image.characterName + ' · ' : '') +
-              image.packName +
-              (image.author ? ' · ' + image.author : '') +
-              (image.rating === 'nsfw' ? ' · NSFW' : '');
-            media.append(img, loadState);
-            figure.append(media, caption);
-            gallery.appendChild(figure);
+            };
+            img.onerror = () => {
+              media.className = 'rb-workshop-media failed';
+              loadState.className = 'rb-workshop-load-state error';
+              loadState.innerHTML = '<span class="rb-workshop-spinner" aria-hidden="true"></span><small>图片无法显示</small>';
+            };
+            img.src = urlFor(image);
+            caption.textContent = `${player.title} · ${currentPack().name}${currentPack().author ? ' · ' + currentPack().author : ''} · ${rating.toUpperCase()} · ${imageIndex + 1}/${group.length}`;
+            updateButtons();
+          };
+          const persistPack = () => {
+            if (typeof bridge.setPreferredPack === 'function') {
+              void bridge.setPreferredPack(player.subjectKey, currentPack().id).catch(() => {});
+            }
+          };
+          const move = delta => { imageIndex += delta; render(); };
+          controls.addEventListener('click', event => {
+            const button = event.target.closest && event.target.closest('[data-workshop-action]');
+            if (!button || button.disabled) return;
+            event.stopPropagation();
+            const action = button.getAttribute('data-workshop-action');
+            if (action === 'previous') move(-1);
+            else if (action === 'next') move(1);
+            else if (action === 'rating') {
+              const nextRating = rating === 'sfw' ? 'nsfw' : 'sfw';
+              let targetPack = currentPack().images.some(image => image.rating === nextRating)
+                ? packIndex
+                : player.packs.findIndex(pack => pack.images.some(image => image.rating === nextRating));
+              if (targetPack >= 0) {
+                packIndex = targetPack;
+                rating = nextRating;
+                imageIndex = 0;
+                persistPack();
+                render();
+              }
+            } else if (action === 'pack') {
+              const eligible = player.packs
+                .map((pack, index) => ({ pack, index }))
+                .filter(item => item.pack.images.some(image => image.rating === rating));
+              const position = eligible.findIndex(item => item.index === packIndex);
+              packIndex = eligible[(position + 1) % eligible.length].index;
+              imageIndex = 0;
+              persistPack();
+              render();
+            } else if (action === 'autoplay') {
+              if (autoplayTimer) {
+                clearInterval(autoplayTimer);
+                workshopAutoplayTimers.delete(autoplayTimer);
+                autoplayTimer = null;
+              } else {
+                autoplayTimer = setInterval(() => move(1), 10000);
+                workshopAutoplayTimers.add(autoplayTimer);
+              }
+              button.classList.toggle('active', Boolean(autoplayTimer));
+              button.textContent = autoplayTimer ? 'Ⅱ' : '▶';
+              button.title = autoplayTimer ? '关闭轮播' : '开启 10 秒轮播';
+            } else if (action === 'fullscreen') {
+              rbImageViewerState?.openViewer(img);
+            }
           });
+          render();
           container.appendChild(gallery);
         } catch (e) {
           container.dataset.workshopMatched = 'false';
@@ -5329,6 +5461,8 @@
             container.querySelectorAll('.rb-workshop-gallery').forEach(node => node.remove());
             container.dataset.workshopMatched = 'false';
           }
+          workshopAutoplayTimers.forEach(timer => clearInterval(timer));
+          workshopAutoplayTimers.clear();
           workshopObjectUrls.splice(0).forEach(url => URL.revokeObjectURL(url));
           void updateWorkshopControls();
           void appendWorkshopImages();
@@ -5336,6 +5470,8 @@
         void updateWorkshopControls();
         void appendWorkshopImages();
         window.addEventListener('pagehide', () => {
+          workshopAutoplayTimers.forEach(timer => clearInterval(timer));
+          workshopAutoplayTimers.clear();
           workshopObjectUrls.splice(0).forEach(url => URL.revokeObjectURL(url));
         });
       }

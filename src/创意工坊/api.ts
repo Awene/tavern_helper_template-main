@@ -2,6 +2,7 @@ import { clearAuthRecord, getAuthRecord, putAuthRecord } from './storage';
 import type {
   AuthRecord,
   PackEngagement,
+  PackImage,
   PackManifest,
   PackSummary,
   WorkshopUser,
@@ -70,21 +71,12 @@ export class WorkshopApi {
       }
       headers.set('Authorization', `Bearer ${auth.token}`);
     }
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => controller.abort(), 10_000);
-    try {
-      const response = await fetch(`${base}${path}`, { headers, signal: controller.signal });
-      if (!response.ok) {
-        if (response.status === 401) await clearAuthRecord();
-        throw new WorkshopApiError(await errorMessage(response), response.status);
-      }
-      return response.blob();
-    } catch (error) {
-      if (controller.signal.aborted) throw new WorkshopApiError('图片请求超时，请稍后重试', 408);
-      throw error;
-    } finally {
-      window.clearTimeout(timeoutId);
+    const response = await fetch(`${base}${path}`, { headers });
+    if (!response.ok) {
+      if (response.status === 401) await clearAuthRecord();
+      throw new WorkshopApiError(await errorMessage(response), response.status);
     }
+    return response.blob();
   }
 
   async health(): Promise<boolean> {
@@ -139,6 +131,10 @@ export class WorkshopApi {
     return this.requestBlob(`/api/me/images/${encodeURIComponent(imageId)}`, true);
   }
 
+  getPublicImage(imageId: string): Promise<Blob> {
+    return this.requestBlob(`/api/images/${encodeURIComponent(imageId)}`);
+  }
+
   createPack(input: { name: string; description: string; category: string }): Promise<{ pack: PackSummary }> {
     return this.request('/api/packs', { method: 'POST', body: JSON.stringify(input) }, true);
   }
@@ -168,20 +164,20 @@ export class WorkshopApi {
 
   uploadImage(
     packId: string,
-    input: { file: Blob; filename: string; rating: string; characterName: string; keywords: string[] },
-  ): Promise<{ image: unknown }> {
+    input: { file: Blob; filename: string; rating: string; characterName: string; aliases: string[] },
+  ): Promise<{ image: PackImage }> {
     const form = new FormData();
     form.set('file', input.file, input.filename);
     form.set('rating', input.rating);
     form.set('character_name', input.characterName);
-    form.set('keywords', input.keywords.join(','));
+    form.set('aliases', input.aliases.join(','));
     return this.request(`/api/packs/${encodeURIComponent(packId)}/images`, { method: 'POST', body: form }, true);
   }
 
   updateImage(
     packId: string,
     imageId: string,
-    input: { rating?: string; character_name?: string; keywords?: string[] },
+    input: { rating?: string; character_name?: string; aliases?: string[] },
   ): Promise<{ ok: true }> {
     return this.request(
       `/api/packs/${encodeURIComponent(packId)}/images/${encodeURIComponent(imageId)}`,

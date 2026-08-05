@@ -1,6 +1,7 @@
 import { WorkshopApi } from './api';
 import { sha256Hex } from './image';
 import { createOfflinePack, readOfflinePack } from './offline-pack';
+import { deleteCachedPreviewImage, getCachedPreviewImage, putCachedPreviewImage } from './preview-cache';
 import {
   getAllRecords,
   getAuthRecord,
@@ -9,26 +10,23 @@ import {
   getHistory,
   getInstalledImage,
   getInstalledPacks,
-  getSelection,
   getSettingsRecord,
   putHistory,
   putDisplay,
   putRecord,
-  putSelection,
   putSettingsRecord,
   replaceInstalledPack,
   uninstallPack as removeInstalledPack,
 } from './storage';
 import type {
   AuthRecord,
-  HistoryRecord,
   InstalledImage,
   InstalledPack,
   MatchRequest,
-  MatchedWorkshopImage,
-  PackImage,
   PackManifest,
   PackSummary,
+  WorkshopPlayerData,
+  WorkshopPlayerPack,
   WorkshopSettings,
 } from './types';
 
@@ -36,9 +34,9 @@ const DEFAULT_SETTINGS: WorkshopSettings = {
   key: 'main',
   apiBase: 'https://cultivation-illustration-workshop.awenewilly1.workers.dev',
   autoInsert: true,
-  maxPerMessage: 1,
   updateIntervalHours: 6,
   lastUpdateCheck: 0,
+  packPreferences: {},
 };
 
 export interface DownloadProgress {
@@ -47,9 +45,9 @@ export interface DownloadProgress {
   bytes: number;
 }
 
-export function countOccurrences(text: string, keyword: string): number {
+export function countOccurrences(text: string, term: string): number {
   const source = text.toLocaleLowerCase();
-  const needle = keyword.toLocaleLowerCase();
+  const needle = term.toLocaleLowerCase();
   if (!needle) return 0;
   let count = 0;
   let offset = 0;
@@ -60,29 +58,13 @@ export function countOccurrences(text: string, keyword: string): number {
   return count;
 }
 
-export function historyFactor(previousDisplayCount: number): number {
-  return previousDisplayCount > 0 ? 0.7 : 1;
-}
-
-function stableHash(value: string): number {
-  let hash = 2166136261;
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= value.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
-}
-
-async function contentHash(text: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return [...new Uint8Array(digest)]
-    .slice(0, 12)
-    .map(value => value.toString(16).padStart(2, '0'))
-    .join('');
+function normalizeName(value: string): string {
+  return value.normalize('NFKC').trim().toLocaleLowerCase();
 }
 
 export class WorkshopService {
   readonly api = new WorkshopApi(async () => (await this.getSettings()).apiBase);
+  private readonly pendingPreviewImages = new Map<string, Promise<Blob>>();
 
   async initialize(): Promise<void> {
     await this.getSettings();
@@ -101,7 +83,7 @@ export class WorkshopService {
         stored.apiBase = DEFAULT_SETTINGS.apiBase;
         await putSettingsRecord(stored);
       }
-      return stored;
+      return { ...DEFAULT_SETTINGS, ...stored, packPreferences: stored.packPreferences ?? {} };
     }
     await putSettingsRecord(DEFAULT_SETTINGS);
     return { ...DEFAULT_SETTINGS };
@@ -116,11 +98,11 @@ export class WorkshopService {
       apiBase: String(patch.apiBase ?? current.apiBase)
         .trim()
         .replace(/\/$/u, ''),
-      maxPerMessage: Math.max(1, Math.min(6, Math.round(Number(patch.maxPerMessage ?? current.maxPerMessage)))),
       updateIntervalHours: Math.max(1, Math.min(168, Number(patch.updateIntervalHours ?? current.updateIntervalHours))),
+      packPreferences: patch.packPreferences ?? current.packPreferences ?? {},
     };
     await putSettingsRecord(next);
-    if (next.autoInsert !== current.autoInsert || next.maxPerMessage !== current.maxPerMessage) {
+    if (next.autoInsert !== current.autoInsert) {
       await clearSelections();
       this.notifyLibraryChanged();
     }
@@ -137,6 +119,11 @@ export class WorkshopService {
 
   async setAutoInsert(enabled: boolean): Promise<void> {
     await this.updateSettings({ autoInsert: enabled });
+  }
+
+  async setPreferredPack(subjectKey: string, packId: string): Promise<void> {
+    const settings = await this.getSettings();
+    await this.updateSettings({ packPreferences: { ...settings.packPreferences, [subjectKey]: packId } });
   }
 
   getAuth(): Promise<AuthRecord | undefined> {
@@ -189,11 +176,12 @@ export class WorkshopService {
         onProgress?.({ completed, total: manifest.images.length, bytes });
         continue;
       }
-      const response = await fetch(metadata.download_url);
-      if (!response.ok) throw new Error(`图片 ${metadata.id} 下载失败（${response.status}）`);
-      const blob = await response.blob();
+      const blob = await this.getPreviewImage({ id: metadata.id, expectedBytes: metadata.byte_size });
       if (blob.size !== metadata.byte_size) throw new Error(`图片 ${metadata.id} 大小校验失败`);
-      if ((await sha256Hex(blob)) !== metadata.sha256) throw new Error(`图片 ${metadata.id} 哈希校验失败`);
+      if ((await sha256Hex(blob)) !== metadata.sha256) {
+        await this.removePreviewImage(metadata.id);
+        throw new Error(`图片 ${metadata.id} 哈希校验失败`);
+      }
       images.push({ id: metadata.id, packId: manifest.pack.id, sha256: metadata.sha256, blob });
       completed += 1;
       bytes += blob.size;
@@ -281,71 +269,107 @@ export class WorkshopService {
     return result;
   }
 
-  async matchImages(request: MatchRequest): Promise<MatchedWorkshopImage[]> {
+  async matchImages(request: MatchRequest): Promise<WorkshopPlayerData | null> {
     const settings = await this.getSettings();
-    if (!settings.autoInsert || !request.text.trim()) return [];
-    const hash = await contentHash(request.text);
-    const selectionKey = `${request.chatId}|${request.messageId}|${hash}`;
+    if (!settings.autoInsert || !request.text.trim()) return null;
     const installed = (await getInstalledPacks()).filter(
       pack => pack.enabled && pack.manifest.pack.status === 'published',
     );
-    const packsByImage = new Map<string, InstalledPack>();
-    for (const pack of installed) for (const image of pack.manifest.images) packsByImage.set(image.id, pack);
+    if (!installed.length) return null;
 
-    const cached = await getSelection(selectionKey);
-    if (cached) {
-      const resolved = await Promise.all(cached.imageIds.map(id => this.resolveMatchedImage(id, packsByImage, 0)));
-      return resolved.filter((item): item is MatchedWorkshopImage => item !== null);
-    }
-
-    const candidates: Array<{ image: PackImage; pack: InstalledPack; score: number; longest: number }> = [];
-    const historyByImage = new Map(
-      (await getAllRecords<HistoryRecord>('history'))
-        .filter(record => record.chatId === request.chatId)
-        .map(record => [record.imageId, record.count]),
-    );
+    const roles = new Map<string, { name: string; terms: Set<string> }>();
     for (const pack of installed) {
+      if (pack.manifest.pack.category !== '人物') continue;
       for (const image of pack.manifest.images) {
-        const terms = [...image.keywords];
-        if (pack.manifest.pack.category === '人物' && image.character_name) terms.push(image.character_name);
-        let rawHits = 0;
-        let longest = 0;
-        for (const term of new Set(terms)) {
-          const hits = countOccurrences(request.text, term);
-          rawHits += hits;
-          if (hits > 0) longest = Math.max(longest, term.length);
-        }
-        if (rawHits === 0) continue;
-        candidates.push({
-          image,
-          pack,
-          score: rawHits * historyFactor(historyByImage.get(image.id) ?? 0),
-          longest,
-        });
+        const key = normalizeName(image.character_name);
+        if (!key) continue;
+        const role = roles.get(key) ?? { name: image.character_name.trim(), terms: new Set<string>() };
+        role.terms.add(image.character_name.trim());
+        for (const alias of image.aliases ?? []) if (alias.trim()) role.terms.add(alias.trim());
+        roles.set(key, role);
       }
     }
-    candidates.sort((left, right) => {
-      if (left.image.rating !== right.image.rating) return left.image.rating === 'nsfw' ? -1 : 1;
-      if (left.score !== right.score) return right.score - left.score;
-      if (left.longest !== right.longest) return right.longest - left.longest;
-      return (
-        stableHash(`${request.chatId}|${request.messageId}|${left.image.id}`) -
-        stableHash(`${request.chatId}|${request.messageId}|${right.image.id}`)
+
+    let selectedRole: { key: string; name: string; count: number; latest: number } | null = null;
+    const normalizedText = request.text.normalize('NFKC').toLocaleLowerCase();
+    for (const [key, role] of roles) {
+      let count = 0;
+      let latest = -1;
+      for (const term of role.terms) {
+        count += countOccurrences(normalizedText, term);
+        latest = Math.max(latest, normalizedText.lastIndexOf(normalizeName(term)));
+      }
+      if (count > 0 && (!selectedRole || count > selectedRole.count || (count === selectedRole.count && latest > selectedRole.latest))) {
+        selectedRole = { key, name: role.name, count, latest };
+      }
+    }
+
+    const category = selectedRole
+      ? '人物'
+      : installed.some(pack => pack.manifest.pack.category === '风景' && pack.manifest.images.length)
+        ? '风景'
+        : installed.some(pack => pack.manifest.pack.category === '其他' && pack.manifest.images.length)
+          ? '其他'
+          : null;
+    if (!category) return null;
+    const subjectKey = selectedRole ? `character:${selectedRole.key}` : `category:${category}`;
+    const relevant = installed.filter(pack => pack.manifest.pack.category === category);
+    const packs: WorkshopPlayerPack[] = [];
+    for (const pack of relevant) {
+      const metadata = pack.manifest.images.filter(
+        image => !selectedRole || normalizeName(image.character_name) === selectedRole.key,
       );
-    });
-    const selected = candidates.slice(0, settings.maxPerMessage);
-    await putSelection({
-      key: selectionKey,
-      chatId: request.chatId,
-      messageId: request.messageId,
-      contentHash: hash,
-      imageIds: selected.map(item => item.image.id),
-      createdAt: Date.now(),
-    });
-    const resolved = await Promise.all(
-      selected.map(item => this.resolveMatchedImage(item.image.id, packsByImage, item.score)),
-    );
-    return resolved.filter((item): item is MatchedWorkshopImage => item !== null);
+      const images = (
+        await Promise.all(
+          metadata.map(async image => {
+            const local = await getInstalledImage(image.id);
+            return local ? { id: image.id, rating: image.rating, blob: local.blob } : null;
+          }),
+        )
+      ).filter((image): image is NonNullable<typeof image> => image !== null);
+      if (images.length) packs.push({
+        id: pack.id,
+        name: pack.manifest.pack.name,
+        author: pack.manifest.pack.owner_name ?? '',
+        images,
+      });
+    }
+    if (!packs.length) return null;
+
+    let desiredRating: 'sfw' | 'nsfw' = 'sfw';
+    let routeDetectionFailed = false;
+    if (selectedRole) {
+      try {
+        const host = window.parent as Window & {
+          CultivationRuleRouter?: { getFloorEntryState?: (messageId: string, entryName: string) => { ok: boolean; enabled: boolean } };
+        };
+        const state = host.CultivationRuleRouter?.getFloorEntryState?.(
+          request.messageId,
+          '[mvu_plot][NSFW]基础指导',
+        );
+        if (!state?.ok) routeDetectionFailed = true;
+        else desiredRating = state.enabled ? 'nsfw' : 'sfw';
+      } catch {
+        routeDetectionFailed = true;
+      }
+    }
+    const rememberedPackId = packs.some(pack => pack.id === settings.packPreferences[subjectKey])
+      ? settings.packPreferences[subjectKey]
+      : packs[0].id;
+    const desiredPacks = packs.filter(pack => pack.images.some(image => image.rating === desiredRating));
+    const initialRating = desiredPacks.length ? desiredRating : desiredRating === 'sfw' ? 'nsfw' : 'sfw';
+    const preferredPackId = desiredPacks.some(pack => pack.id === rememberedPackId)
+      ? rememberedPackId
+      : desiredPacks[0]?.id ?? rememberedPackId;
+    return {
+      subjectKey,
+      title: selectedRole?.name ?? category,
+      kind: selectedRole ? 'character' : 'category',
+      initialRating,
+      preferredPackId,
+      routeDetectionFailed,
+      packs,
+    };
   }
 
   async confirmDisplayed(request: { chatId: string; messageId: string; imageId: string }): Promise<void> {
@@ -362,32 +386,54 @@ export class WorkshopService {
     });
   }
 
-  private async resolveMatchedImage(
-    imageId: string,
-    packsByImage: Map<string, InstalledPack>,
-    score: number,
-  ): Promise<MatchedWorkshopImage | null> {
-    const pack = packsByImage.get(imageId);
-    if (!pack) return null;
-    const metadata = pack.manifest.images.find(image => image.id === imageId);
-    const local = await getInstalledImage(imageId);
-    if (!metadata || !local) return null;
-    return {
-      id: imageId,
-      packId: pack.id,
-      packName: pack.manifest.pack.name,
-      author: pack.manifest.pack.owner_name ?? '',
-      characterName: metadata.character_name,
-      rating: metadata.rating,
-      keywords: metadata.keywords,
-      blob: local.blob,
-      score,
-    };
-  }
-
   async localStorageUsage(): Promise<number> {
     const images = await getAllRecords<InstalledImage>('images');
     return images.reduce((sum, image) => sum + image.blob.size, 0);
+  }
+
+  async getPreviewImage(input: { id: string; authenticated?: boolean; expectedBytes?: number }): Promise<Blob> {
+    const installed = await getInstalledImage(input.id);
+    if (installed && (!input.expectedBytes || installed.blob.size === input.expectedBytes)) return installed.blob;
+
+    try {
+      const cached = await getCachedPreviewImage(input.id);
+      if (cached && (!input.expectedBytes || cached.size === input.expectedBytes)) return cached;
+      if (cached) await deleteCachedPreviewImage(input.id);
+    } catch (error) {
+      console.warn('[创意工坊] 读取本地图片缓存失败，将直接请求图片:', error);
+    }
+
+    const pending = this.pendingPreviewImages.get(input.id);
+    if (pending) return pending;
+    const request = (input.authenticated ? this.api.getOwnImage(input.id) : this.api.getPublicImage(input.id))
+      .then(async blob => {
+        if (input.expectedBytes && blob.size !== input.expectedBytes) throw new Error('图片大小校验失败，请重试');
+        try {
+          await putCachedPreviewImage(input.id, blob);
+        } catch (error) {
+          console.warn('[创意工坊] 写入本地图片缓存失败:', error);
+        }
+        return blob;
+      })
+      .finally(() => this.pendingPreviewImages.delete(input.id));
+    this.pendingPreviewImages.set(input.id, request);
+    return request;
+  }
+
+  async cachePreviewImage(imageId: string, blob: Blob): Promise<void> {
+    try {
+      await putCachedPreviewImage(imageId, blob);
+    } catch (error) {
+      console.warn('[创意工坊] 写入本地图片缓存失败:', error);
+    }
+  }
+
+  async removePreviewImage(imageId: string): Promise<void> {
+    try {
+      await deleteCachedPreviewImage(imageId);
+    } catch (error) {
+      console.warn('[创意工坊] 删除本地图片缓存失败:', error);
+    }
   }
 
   async publicPacks(
