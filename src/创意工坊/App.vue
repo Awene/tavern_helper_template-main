@@ -14,8 +14,14 @@
             <button v-if="auth" class="cw-user" type="button" @click="activeTab = 'mine'">
               {{ auth.user.globalName || auth.user.username }}
             </button>
-            <button v-else class="cw-btn cw-btn-primary" type="button" :disabled="busy" @click="login">
-              {{ loginPending ? '等待登录…' : 'Discord 登录' }}
+            <button
+              v-else
+              class="cw-btn cw-btn-primary"
+              type="button"
+              :disabled="busy && !loginPending"
+              @click="handleLoginClick"
+            >
+              {{ loginPending ? '取消等待' : 'Discord 登录' }}
             </button>
             <button class="cw-close" type="button" aria-label="关闭" @click="closeWorkshop">×</button>
           </div>
@@ -209,8 +215,13 @@
             <div v-if="!auth" class="cw-login-prompt">
               <h2>用 Discord 管理自己的图包</h2>
               <p>任何 Discord 用户都可以创建、修改、发布和下架多个图包。</p>
-              <button class="cw-btn cw-btn-primary" type="button" :disabled="busy" @click="login">
-                {{ loginPending ? '等待登录…' : 'Discord 登录' }}
+              <button
+                class="cw-btn cw-btn-primary"
+                type="button"
+                :disabled="busy && !loginPending"
+                @click="handleLoginClick"
+              >
+                {{ loginPending ? '取消等待' : 'Discord 登录' }}
               </button>
             </div>
             <template v-else>
@@ -442,8 +453,14 @@
                 <p>浏览和下载无需登录；上传和修改需要登录。</p>
               </div>
               <button v-if="auth" class="cw-btn" type="button" @click="logout">退出登录</button>
-              <button v-else class="cw-btn cw-btn-primary" type="button" :disabled="busy" @click="login">
-                {{ loginPending ? '等待登录…' : 'Discord 登录' }}
+              <button
+                v-else
+                class="cw-btn cw-btn-primary"
+                type="button"
+                :disabled="busy && !loginPending"
+                @click="handleLoginClick"
+              >
+                {{ loginPending ? '取消等待' : 'Discord 登录' }}
               </button>
             </div>
           </section>
@@ -527,6 +544,7 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import { WorkshopApiError } from './api';
 import { prepareUploadImage } from './image';
 import { workshopService } from './service';
 import type { AuthRecord, InstalledPack, PackImage, PackManifest, PackSummary, WorkshopSettings } from './types';
@@ -853,11 +871,20 @@ async function login(): Promise<void> {
     tell('Discord 登录成功');
     if (activeTab.value === 'mine') await loadOwnPacks();
   } catch (error) {
-    tell(errorText(error), 'error');
+    if (error instanceof WorkshopApiError && error.status === 499) tell(error.message);
+    else tell(errorText(error), 'error');
   } finally {
     loginPending.value = false;
     busy.value = false;
   }
+}
+
+function handleLoginClick(): void {
+  if (loginPending.value) {
+    workshopService.api.cancelLogin();
+    return;
+  }
+  void login();
 }
 
 async function logout(): Promise<void> {
@@ -1150,9 +1177,11 @@ onMounted(async () => {
 
 watch(workshopVisible, visible => {
   if (visible) readSharedTheme();
+  else if (loginPending.value) workshopService.api.cancelLogin();
 });
 
 onBeforeUnmount(() => {
+  workshopService.api.cancelLogin();
   clearOwnImageUrls();
   window.parent.removeEventListener('rb-theme-change', handleThemeChange);
   window.parent.removeEventListener('storage', readSharedTheme);

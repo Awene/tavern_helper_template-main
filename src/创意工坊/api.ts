@@ -32,6 +32,8 @@ async function errorMessage(response: Response): Promise<string> {
 }
 
 export class WorkshopApi {
+  private cancelPendingLogin?: () => void;
+
   constructor(private readonly getApiBase: () => Promise<string>) {}
 
   private async request<T>(path: string, init: RequestInit = {}, authenticated = false): Promise<T> {
@@ -288,14 +290,22 @@ export class WorkshopApi {
     loginId: string,
   ): Promise<{ token: string; expires_at: number }> {
     return new Promise((resolve, reject) => {
+      const pollIntervalMs = 1000;
+      const exchangeTimeoutMs = 8000;
+      const popupClosedGraceMs = 12_000;
       let exchangeCode = loginId;
       let exchanging = false;
       let settled = false;
+      let lastTemporaryError: unknown;
+      let popupClosedAt: number | null = null;
+      let exchangeController: AbortController | null = null;
 
       const cleanup = () => {
         window.clearInterval(pollTimer);
         window.clearTimeout(timeoutTimer);
+        exchangeController?.abort();
         window.parent.removeEventListener('message', listener);
+        if (this.cancelPendingLogin === cancel) this.cancelPendingLogin = undefined;
       };
       const finish = (callback: () => void) => {
         if (settled) return;
@@ -306,18 +316,46 @@ export class WorkshopApi {
       const tryExchange = async () => {
         if (settled || exchanging) return;
         exchanging = true;
+        const controller = new AbortController();
+        exchangeController = controller;
+        const requestTimeout = window.setTimeout(() => controller.abort(), exchangeTimeoutMs);
         try {
           const result = await this.request<{ token: string; expires_at: number }>('/api/auth/exchange', {
             method: 'POST',
             body: JSON.stringify({ code: exchangeCode }),
+            signal: controller.signal,
           });
           finish(() => resolve(result));
         } catch (error) {
-          // 授权回调完成前登录码尚不存在；400 在轮询阶段表示继续等待。
-          if (!(error instanceof WorkshopApiError) || error.status !== 400) finish(() => reject(error));
+          // 授权回调完成前登录码尚不存在；网络抖动、限流与服务端暂时错误也不应让等待流程提前退出。
+          const retryable =
+            !(error instanceof WorkshopApiError) ||
+            error.status === 0 ||
+            error.status === 400 ||
+            error.status === 408 ||
+            error.status === 429 ||
+            error.status >= 500;
+          if (retryable) {
+            if (!(error instanceof WorkshopApiError) || error.status !== 400) {
+              lastTemporaryError = error;
+              console.warn('[创意工坊] Discord 登录结果暂时获取失败，将继续重试:', error);
+            }
+          } else {
+            finish(() => reject(error));
+          }
         } finally {
+          window.clearTimeout(requestTimeout);
+          if (exchangeController === controller) exchangeController = null;
           exchanging = false;
         }
+      };
+      const cancel = () => {
+        try {
+          popup.close();
+        } catch {
+          // 跨站隔离可能阻止访问授权窗口，仍然可以结束本地等待状态。
+        }
+        finish(() => reject(new WorkshopApiError('已取消 Discord 登录', 499)));
       };
       const listener = (event: MessageEvent) => {
         if (event.origin !== expectedOrigin || event.data?.type !== 'cultivation-workshop-oauth') return;
@@ -325,14 +363,61 @@ export class WorkshopApi {
         exchangeCode = String(event.data.code || loginId);
         void tryExchange();
       };
-      const pollTimer = window.setInterval(() => void tryExchange(), 1500);
+      const poll = () => {
+        void tryExchange();
+
+        let popupClosed = false;
+        try {
+          popupClosed = popup.closed;
+        } catch {
+          // 某些浏览器在跨域跳转期间不允许读取弹窗状态，此时继续依靠登录码轮询。
+          return;
+        }
+        if (!popupClosed) {
+          popupClosedAt = null;
+          return;
+        }
+
+        // 正常授权完成也会自动关闭弹窗；保留短暂宽限期，让最终登录码有机会被兑换。
+        popupClosedAt ??= Date.now();
+        if (Date.now() - popupClosedAt < popupClosedGraceMs) return;
+        if (lastTemporaryError) {
+          finish(() =>
+            reject(
+              new WorkshopApiError(
+                `登录窗口已关闭，且登录结果确认失败：${lastTemporaryError instanceof Error ? lastTemporaryError.message : String(lastTemporaryError)}`,
+                0,
+              ),
+            ),
+          );
+          return;
+        }
+        finish(() => reject(new WorkshopApiError('登录窗口已关闭，Discord 登录已取消', 499)));
+      };
+      const pollTimer = window.setInterval(poll, pollIntervalMs);
       const timeoutTimer = window.setTimeout(
-        () => finish(() => reject(new WorkshopApiError('未能取得 Discord 登录结果，请重新登录', 0))),
+        () =>
+          finish(() =>
+            reject(
+              new WorkshopApiError(
+                lastTemporaryError
+                  ? `Discord 登录结果持续获取失败：${lastTemporaryError instanceof Error ? lastTemporaryError.message : String(lastTemporaryError)}`
+                  : '未能取得 Discord 登录结果，请重新登录',
+                0,
+              ),
+            ),
+          ),
         5 * 60 * 1000,
       );
+      this.cancelPendingLogin?.();
+      this.cancelPendingLogin = cancel;
       window.parent.addEventListener('message', listener);
-      void tryExchange();
+      poll();
     });
+  }
+
+  cancelLogin(): void {
+    this.cancelPendingLogin?.();
   }
 
   async login(): Promise<AuthRecord> {
