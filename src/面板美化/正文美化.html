@@ -2557,13 +2557,68 @@
         border-radius: 10px;
         background: var(--rb-narration-bg);
       }
-      .rb-workshop-figure img {
+      .rb-workshop-media {
+        position: relative;
+        display: grid;
+        width: 100%;
+        min-height: 180px;
+        place-items: center;
+        overflow: hidden;
+        color: var(--rb-text-muted);
+        background:
+          radial-gradient(circle at 48% 42%, color-mix(in srgb, var(--rb-accent) 10%, transparent), transparent 38%),
+          var(--rb-narration-bg);
+      }
+      .rb-workshop-media img {
         display: block;
         width: 100%;
         height: auto;
         max-width: 100%;
         object-fit: contain;
+        opacity: 0;
         cursor: zoom-in;
+        transition: opacity 0.24s ease;
+      }
+      .rb-workshop-media.loaded img {
+        opacity: 1;
+      }
+      .rb-workshop-load-state {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-content: center;
+        gap: 8px;
+        text-align: center;
+        pointer-events: none;
+      }
+      .rb-workshop-load-state small {
+        color: var(--rb-text-muted);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+      }
+      .rb-workshop-spinner {
+        width: 28px;
+        height: 28px;
+        margin: auto;
+        border: 2px solid color-mix(in srgb, var(--rb-border-soft) 72%, transparent);
+        border-top-color: var(--rb-accent);
+        border-radius: 50%;
+        box-shadow: 0 0 14px color-mix(in srgb, var(--rb-accent) 16%, transparent);
+        animation: rb-workshop-spin 0.78s linear infinite;
+      }
+      .rb-workshop-load-state.error .rb-workshop-spinner {
+        display: grid;
+        place-items: center;
+        border-color: color-mix(in srgb, var(--rb-accent) 58%, var(--rb-border-soft));
+        color: var(--rb-accent);
+        animation: none;
+      }
+      .rb-workshop-load-state.error .rb-workshop-spinner::before {
+        content: '!';
+        font: 700 17px/1 sans-serif;
+      }
+      @keyframes rb-workshop-spin {
+        to { transform: rotate(360deg); }
       }
       .rb-workshop-caption {
         padding: 7px 10px;
@@ -5202,19 +5257,47 @@
             workshopObjectUrls.push(objectUrl);
             const figure = document.createElement('figure');
             figure.className = 'rb-workshop-figure';
+            const media = document.createElement('div');
+            media.className = 'rb-workshop-media loading';
+            const loadState = document.createElement('div');
+            loadState.className = 'rb-workshop-load-state';
+            loadState.setAttribute('role', 'status');
+            loadState.setAttribute('aria-live', 'polite');
+            loadState.innerHTML = '<span class="rb-workshop-spinner" aria-hidden="true"></span><small>图片加载中</small>';
             const img = document.createElement('img');
             img.src = objectUrl;
             img.alt = image.characterName || image.packName || '创意工坊插图';
-            img.loading = 'lazy';
+            img.loading = 'eager';
+            img.decoding = 'async';
             img.tabIndex = 0;
             img.setAttribute('role', 'button');
             img.title = '点击查看大图';
+            const loadTimeout = setTimeout(() => {
+              if (media.classList.contains('loaded')) return;
+              img.remove();
+              media.classList.remove('loading');
+              media.classList.add('failed');
+              loadState.classList.add('error');
+              loadState.querySelector('small').textContent = '图片加载失败';
+              loadState.setAttribute('role', 'img');
+              loadState.setAttribute('aria-label', img.alt + '加载失败');
+            }, 10000);
             img.addEventListener('load', () => {
+              clearTimeout(loadTimeout);
+              media.classList.remove('loading');
+              media.classList.add('loaded');
+              loadState.remove();
               void bridge.confirmDisplayed({ ...context, imageId: image.id });
             }, { once: true });
             img.addEventListener('error', () => {
-              figure.remove();
-              if (!gallery.children.length) gallery.remove();
+              clearTimeout(loadTimeout);
+              img.remove();
+              media.classList.remove('loading');
+              media.classList.add('failed');
+              loadState.classList.add('error');
+              loadState.querySelector('small').textContent = '图片加载失败';
+              loadState.setAttribute('role', 'img');
+              loadState.setAttribute('aria-label', img.alt + '加载失败');
             }, { once: true });
             const caption = document.createElement('figcaption');
             caption.className = 'rb-workshop-caption';
@@ -5223,7 +5306,8 @@
               image.packName +
               (image.author ? ' · ' + image.author : '') +
               (image.rating === 'nsfw' ? ' · NSFW' : '');
-            figure.append(img, caption);
+            media.append(img, loadState);
+            figure.append(media, caption);
             gallery.appendChild(figure);
           });
           container.appendChild(gallery);
