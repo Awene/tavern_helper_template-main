@@ -187,6 +187,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
     .readFileSync(path.join(import.meta.dirname, entry.script), 'utf-8')
     .includes('@obfuscate');
   const script_filepath = path.parse(entry.script);
+  const should_concatenate_modules = !entry.script.replaceAll('\\', '/').endsWith('src/自定义开局/index.ts');
 
   return (_env, argv) => ({
     experiments: {
@@ -482,6 +483,9 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
           : [],
       ),
     optimization: {
+      // 自定义开局只有一个 CommonJS 依赖（vue-loader 的 exportHelper）。webpack 在 outputModule
+      // 与模块拼接同时启用时会生成孤立的 __webpack_require__.cjs 调用，导致页面在挂载前中断。
+      concatenateModules: should_concatenate_modules,
       minimize: true,
       minimizer: [
         argv.mode === 'production'
