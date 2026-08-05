@@ -25,7 +25,8 @@ jobs:
       # 人物细化界面会在构建期读取角色卡仓库中的提示词与世界书规则。
       # 保持与本地两个仓库互为同级目录的布局，否则 webpack 无法解析这些 ?raw 导入。
       - name: Checkout Cultivation-Card-Game build inputs
-        run: git clone --depth 1 --branch main https://github.com/Awene/Cultivation-Card-Game.git ../Cultivation-Card-Game
+        run:
+          git clone --depth 1 --branch main https://github.com/Awene/Cultivation-Card-Game.git ../Cultivation-Card-Game
 
       - uses: JesseTG/rm@v1.0.3
         with:
@@ -61,13 +62,24 @@ jobs:
           default_author: github_actions
           message: '[bot] bundle'
 
-      # 自动打版本 tag, 从而让 jsdelivr 基于版本号在 12h 内更新缓存而不是用非版本号的 7d 缓存
-      - id: autotag
+      # 必须在 add-and-commit 推送打包产物后再取远端分支尖端。
+      # 第三方 autotag action 会使用触发工作流时的 GITHUB_SHA，导致标签落在打包前的源码提交上。
+      - name: Tag bundled commit
         if: github.repository != 'StageDog/tavern_helper_template'
-        uses: phish108/autotag-action@v1.1.64
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          with-v: true
+        shell: bash
+        run: |
+          git fetch origin "$GITHUB_REF_NAME" --tags
+          target="$(git rev-parse "origin/$GITHUB_REF_NAME")"
+          latest="$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-version:refname | head -n 1)"
+          if [[ -z "$latest" ]]; then
+            next='v1.0.0'
+          else
+            version="${latest#v}"
+            IFS='.' read -r major minor patch <<< "$version"
+            next="v${major}.${minor}.$((patch + 1))"
+          fi
+          git tag -a "$next" "$target" -m "Automated bundle $next"
+          git push origin "$next"
 
       # 上游模板原本在这里有一步 `git push --delete origin <上一个 tag>`, 已移除。
       #
