@@ -78,7 +78,7 @@ jobs:
             IFS='.' read -r major minor patch <<< "$version"
             next="v${major}.${minor}.$((patch + 1))"
           fi
-          git tag -a "$next" "$target" -m "Automated bundle $next"
+          git tag "$next" "$target"
           git push origin "$next"
 
       # 上游模板原本在这里有一步 `git push --delete origin <上一个 tag>`, 已移除。
