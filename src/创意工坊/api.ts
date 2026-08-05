@@ -68,12 +68,21 @@ export class WorkshopApi {
       }
       headers.set('Authorization', `Bearer ${auth.token}`);
     }
-    const response = await fetch(`${base}${path}`, { headers });
-    if (!response.ok) {
-      if (response.status === 401) await clearAuthRecord();
-      throw new WorkshopApiError(await errorMessage(response), response.status);
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 10_000);
+    try {
+      const response = await fetch(`${base}${path}`, { headers, signal: controller.signal });
+      if (!response.ok) {
+        if (response.status === 401) await clearAuthRecord();
+        throw new WorkshopApiError(await errorMessage(response), response.status);
+      }
+      return response.blob();
+    } catch (error) {
+      if (controller.signal.aborted) throw new WorkshopApiError('图片请求超时，请稍后重试', 408);
+      throw error;
+    } finally {
+      window.clearTimeout(timeoutId);
     }
-    return response.blob();
   }
 
   async health(): Promise<boolean> {

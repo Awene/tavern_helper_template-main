@@ -34,14 +34,7 @@
           @keydown.space.prevent="openWorldbookDetail(publicBook)"
         >
           <div class="cw-wb-cover">
-            <img
-              v-if="publicBook.cover_url"
-              :src="publicBook.cover_url"
-              :alt="`${publicBook.name}封面`"
-              loading="lazy"
-              referrerpolicy="no-referrer"
-            />
-            <span v-else aria-hidden="true">卷</span>
+            <WorkshopImage :src="publicBook.cover_url" :alt="`${publicBook.name}封面`" empty-label="暂无封面" />
             <div class="cw-wb-cover-labels">
               <span class="cw-category">{{ publicBook.category }}</span>
               <span class="cw-version">v{{ publicBook.version }}</span>
@@ -203,13 +196,7 @@
           <div v-if="selectedOwn" class="cw-owner-editor">
             <div class="cw-wb-card selected">
               <div class="cw-wb-cover selected-cover">
-                <img
-                  v-if="selectedOwn.cover_url"
-                  :src="selectedOwn.cover_url"
-                  :alt="`${selectedOwn.name}封面`"
-                  referrerpolicy="no-referrer"
-                />
-                <span v-else aria-hidden="true">尚无封面</span>
+                <WorkshopImage :src="selectedOwn.cover_url" :alt="`${selectedOwn.name}封面`" empty-label="尚无封面" />
               </div>
               <div class="cw-wb-card-head">
                 <span class="cw-category">{{ selectedOwn.category }}</span
@@ -288,13 +275,11 @@
 
         <header class="cw-wb-detail-hero">
           <div class="cw-wb-cover cw-wb-detail-cover">
-            <img
-              v-if="worldbookDetail.pack.cover_url"
+            <WorkshopImage
               :src="worldbookDetail.pack.cover_url"
               :alt="`${worldbookDetail.pack.name}封面`"
-              referrerpolicy="no-referrer"
+              empty-label="暂无封面"
             />
-            <span v-else aria-hidden="true">卷</span>
           </div>
           <div class="cw-wb-detail-heading">
             <div class="cw-wb-card-head">
@@ -415,7 +400,8 @@
         <pre>
 [DLC][角色][薇薇拉]薇薇拉-核心设定(Awene-原创角色)
 [DLC][事件][薇薇拉之歌][&lt;薇薇拉]入口(Awene)
-[DLC][扩展][增强战斗][!简化战斗][&gt;基础战斗]规则(Awene)</pre>
+[DLC][扩展][增强战斗][!简化战斗][&gt;基础战斗]规则(Awene)</pre
+        >
         <div class="cw-wb-warning">
           世界书可能包含会影响提示词或由其他插件执行的 EJS 内容。只安装你信任的作者发布的条目。
         </div>
@@ -427,6 +413,7 @@
 <script setup lang="ts">
 import { computed, defineComponent, h, onMounted, ref, watch, type PropType } from 'vue';
 import { prepareUploadImage } from './image';
+import WorkshopImage from './WorkshopImage.vue';
 import type { AuthRecord, DlcRelations, InstalledWorldbookPack, WorldbookPackSummary } from './types';
 import { parseRawWorldbook, type ParsedWorldbookEntry } from './worldbook-parser';
 import { validateWorldbookFile, type ParsedWorldbookUpload } from './worldbook-prefix';

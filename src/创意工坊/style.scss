@@ -261,46 +261,9 @@
   overflow: hidden;
   background: linear-gradient(145deg, var(--cw-paper-2), var(--cw-paper));
 }
-.cw-card-preview-blur,
-.cw-card-preview {
-  position: absolute;
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-.cw-card-preview-blur {
-  inset: -12%;
-  width: 124%;
-  height: 124%;
-  object-fit: cover;
-  filter: blur(18px) brightness(0.76) saturate(0.82);
-  transform: scale(1.05);
-}
-.cw-card-preview {
+.cw-card-media > .cw-media-loader {
   inset: 0;
-  object-fit: contain;
-  filter: drop-shadow(0 5px 12px rgba(0, 0, 0, 0.28));
-}
-.cw-card-preview-empty {
   position: absolute;
-  inset: 0;
-  display: grid;
-  place-content: center;
-  gap: 5px;
-  text-align: center;
-  color: var(--cw-muted);
-  background:
-    radial-gradient(circle at 48% 40%, rgba(190, 139, 80, 0.15), transparent 37%),
-    linear-gradient(145deg, var(--cw-paper-2), var(--cw-paper));
-}
-.cw-card-preview-empty span {
-  font-family: 'Ma Shan Zheng', 'KaiTi', serif;
-  font-size: 42px;
-  color: #a96949;
-}
-.cw-card-preview-empty small {
-  font-size: 12px;
-  letter-spacing: 0.16em;
 }
 .cw-card-badges {
   position: absolute;
@@ -666,11 +629,10 @@
   border-radius: 9px;
   background: #fff8;
 }
-.cw-image-card img {
+.cw-image-card > .cw-media-loader {
   display: block;
   width: 100%;
   aspect-ratio: 4/3;
-  object-fit: cover;
   background: var(--cw-paper-2);
 }
 .cw-image-info {
@@ -729,8 +691,101 @@
   color: var(--cw-muted);
   line-height: 1.5;
 }
-.cw-setting-card input[type='checkbox'] {
-  width: 22px;
+.cw-toggle-setting {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+.cw-toggle-setting:hover {
+  border-color: color-mix(in srgb, var(--cw-green) 65%, var(--cw-line));
+  transform: translateY(-1px);
+}
+.cw-toggle-setting.is-enabled {
+  border-color: color-mix(in srgb, var(--cw-green) 75%, var(--cw-line));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--cw-green) 13%, #fff), #fff8);
+  box-shadow: 0 5px 18px color-mix(in srgb, var(--cw-green) 14%, transparent);
+}
+.cw-setting-copy {
+  min-width: 0;
+  flex: 1;
+}
+.cw-setting-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cw-setting-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 1px 8px;
+  border: 1px solid var(--cw-line);
+  border-radius: 999px;
+  color: var(--cw-muted);
+  background: color-mix(in srgb, var(--cw-paper-2) 54%, transparent);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+.cw-toggle-setting.is-enabled .cw-setting-status {
+  border-color: color-mix(in srgb, var(--cw-green) 58%, transparent);
+  color: var(--cw-green);
+  background: color-mix(in srgb, var(--cw-green) 14%, var(--cw-paper));
+}
+.cw-switch-input {
+  position: absolute;
+  width: 1px !important;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.cw-switch {
+  display: block;
+  flex: 0 0 auto;
+  width: 52px;
+  height: 28px;
+  padding: 3px;
+  border: 1px solid color-mix(in srgb, var(--cw-muted) 55%, var(--cw-line));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cw-muted) 20%, var(--cw-paper-2));
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12);
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.cw-switch-thumb {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--cw-paper);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.28);
+  transition:
+    transform 0.22s ease,
+    background 0.2s ease;
+}
+.cw-switch-input:checked + .cw-switch {
+  border-color: var(--cw-green);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--cw-green) 78%, #fff), var(--cw-green));
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.22),
+    0 0 0 3px color-mix(in srgb, var(--cw-green) 13%, transparent);
+}
+.cw-switch-input:checked + .cw-switch .cw-switch-thumb {
+  transform: translateX(24px);
+  background: #fffdf7;
+}
+.cw-switch-input:focus-visible + .cw-switch {
+  outline: 2px solid var(--cw-red);
+  outline-offset: 3px;
 }
 .cw-setting-card input[type='number'] {
   width: 90px;

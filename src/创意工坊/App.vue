@@ -84,19 +84,13 @@
                   @click="openPack(pack)"
                 >
                   <div class="cw-card-media">
-                    <template v-if="pack.preview_url && !failedPreviewIds.has(pack.id)">
-                      <img class="cw-card-preview-blur" :src="pack.preview_url" alt="" aria-hidden="true" />
-                      <img
-                        class="cw-card-preview"
-                        :src="pack.preview_url"
-                        :alt="`${pack.name} 预览图`"
-                        loading="lazy"
-                        @error="markPreviewFailed(pack.id)"
-                      />
-                    </template>
-                    <div v-else class="cw-card-preview-empty" aria-hidden="true">
-                      <span>图</span><small>暂无预览</small>
-                    </div>
+                    <WorkshopImage
+                      :src="pack.preview_url"
+                      :alt="`${pack.name} 预览图`"
+                      fit="contain"
+                      blur-background
+                      empty-label="暂无预览"
+                    />
                     <div class="cw-card-badges">
                       <span class="cw-glass-pill">{{ pack.category }}</span>
                       <span class="cw-glass-pill">{{ pack.image_count || 0 }} 张</span>
@@ -358,10 +352,11 @@
 
                   <div class="cw-image-grid">
                     <article v-for="image in ownDetail.images" :key="image.id" class="cw-image-card">
-                      <img
+                      <WorkshopImage
                         :src="ownImageUrls[image.id] || ''"
                         :alt="image.character_name || ownDetail.pack.name"
-                        loading="lazy"
+                        :pending="!ownImageUrls[image.id] && !failedOwnImageIds.has(image.id)"
+                        :failed="failedOwnImageIds.has(image.id)"
                       />
                       <div class="cw-image-info">
                         <strong>{{ image.character_name || '无角色名' }}</strong
@@ -402,9 +397,29 @@
 
           <section v-else-if="activeTab === 'settings'" class="cw-page">
             <div class="cw-settings-grid">
-              <label class="cw-setting-card">
-                <span><strong>自动插入图片</strong><small>关闭后不执行选图，也不改变正文。</small></span>
-                <input v-model="settings.autoInsert" type="checkbox" @change="saveSettings" />
+              <label class="cw-setting-card cw-toggle-setting" :class="{ 'is-enabled': settings.autoInsert }">
+                <span class="cw-setting-copy">
+                  <span class="cw-setting-title-row">
+                    <strong>自动插入图片</strong>
+                    <span class="cw-setting-status">{{ settings.autoInsert ? '已开启' : '已关闭' }}</span>
+                  </span>
+                  <small>
+                    {{
+                      settings.autoInsert
+                        ? '正文命中关键词时，自动插入已启用图包中的图片。'
+                        : '不会执行选图，也不会改变正文。'
+                    }}
+                  </small>
+                </span>
+                <input
+                  v-model="settings.autoInsert"
+                  class="cw-switch-input"
+                  type="checkbox"
+                  role="switch"
+                  :aria-checked="settings.autoInsert"
+                  @change="saveAutoInsert"
+                />
+                <span class="cw-switch" aria-hidden="true"><span class="cw-switch-thumb"></span></span>
               </label>
               <label class="cw-setting-card">
                 <span><strong>每楼最多插图</strong><small>所有图片统一插入正文末尾。</small></span>
@@ -475,7 +490,7 @@
           </div>
           <div class="cw-image-grid detail-images">
             <article v-for="image in detail.images" :key="image.id" class="cw-image-card">
-              <img :src="image.download_url" :alt="image.character_name || detail.pack.name" loading="lazy" />
+              <WorkshopImage :src="image.download_url" :alt="image.character_name || detail.pack.name" />
               <div class="cw-image-info">
                 <strong>{{ image.character_name || detail.pack.name }}</strong
                 ><span :class="['cw-rating', image.rating]">{{ image.rating.toUpperCase() }}</span>
@@ -516,6 +531,7 @@ import { prepareUploadImage } from './image';
 import { workshopService } from './service';
 import type { AuthRecord, InstalledPack, PackImage, PackManifest, PackSummary, WorkshopSettings } from './types';
 import { closeWorkshop, workshopVisible } from './ui-state';
+import WorkshopImage from './WorkshopImage.vue';
 import WorldbookWorkshop from './WorldbookWorkshop.vue';
 
 type Tab = 'browse' | 'installed' | 'mine' | 'worldbooks' | 'installed-worldbooks' | 'my-worldbooks' | 'settings';
@@ -545,7 +561,7 @@ const category = ref('');
 const nextOffset = ref<number | null>(0);
 const downloadProgress = reactive<Record<string, string>>({});
 const likedPackIds = ref<Set<string>>(new Set());
-const failedPreviewIds = ref<Set<string>>(new Set());
+const failedOwnImageIds = ref<Set<string>>(new Set());
 const togglingPackIds = ref<Set<string>>(new Set());
 const storageBytes = ref(0);
 const showCreatePack = ref(false);
@@ -661,7 +677,6 @@ async function switchTab(tab: Tab): Promise<void> {
 async function loadPublicPacks(reset: boolean): Promise<void> {
   busy.value = true;
   try {
-    if (reset) failedPreviewIds.value = new Set();
     const offset = reset ? 0 : (nextOffset.value ?? 0);
     const result = await workshopService.publicPacks(query.value, category.value, offset);
     publicPacks.value = reset ? result.items : [...publicPacks.value, ...result.items];
@@ -671,12 +686,6 @@ async function loadPublicPacks(reset: boolean): Promise<void> {
   } finally {
     busy.value = false;
   }
-}
-
-function markPreviewFailed(packId: string): void {
-  const next = new Set(failedPreviewIds.value);
-  next.add(packId);
-  failedPreviewIds.value = next;
 }
 
 async function openPack(pack: PackSummary): Promise<void> {
@@ -865,6 +874,18 @@ async function saveSettings(): Promise<void> {
   tell('设置已保存');
 }
 
+async function saveAutoInsert(): Promise<void> {
+  const desired = settings.autoInsert;
+  try {
+    const saved = await workshopService.updateSettings({ autoInsert: desired });
+    Object.assign(settings, saved);
+    tell(desired ? '自动插入图片已开启' : '自动插入图片已关闭');
+  } catch (error) {
+    settings.autoInsert = !desired;
+    tell(`自动插入图片设置保存失败：${errorText(error)}`, 'error');
+  }
+}
+
 async function loadOwnPacks(): Promise<void> {
   busy.value = true;
   try {
@@ -881,12 +902,21 @@ async function loadOwnDetail(packId: string): Promise<void> {
   busy.value = true;
   try {
     clearOwnImageUrls();
+    ownDetail.value = undefined;
     ownDetail.value = await workshopService.api.getOwnPack(packId);
+    const failures: string[] = [];
     await Promise.all(
       ownDetail.value.images.map(async image => {
-        ownImageUrls[image.id] = URL.createObjectURL(await workshopService.api.getOwnImage(image.id));
+        try {
+          ownImageUrls[image.id] = URL.createObjectURL(await workshopService.api.getOwnImage(image.id));
+        } catch (error) {
+          failures.push(image.id);
+          console.error(`[创意工坊] 图片 ${image.id} 预览加载失败：`, error);
+        }
       }),
     );
+    failedOwnImageIds.value = new Set(failures);
+    if (failures.length) tell(`${failures.length} 张图片加载失败，请稍后重试`, 'error');
     Object.assign(editPack, {
       name: ownDetail.value.pack.name,
       description: ownDetail.value.pack.description,
@@ -902,6 +932,7 @@ async function loadOwnDetail(packId: string): Promise<void> {
 function clearOwnImageUrls(): void {
   Object.values(ownImageUrls).forEach(url => URL.revokeObjectURL(url));
   Object.keys(ownImageUrls).forEach(key => delete ownImageUrls[key]);
+  failedOwnImageIds.value = new Set();
 }
 
 async function createPack(): Promise<void> {
