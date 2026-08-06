@@ -28,6 +28,7 @@ interface OfflineManifest {
     name: string;
     description: string;
     category: '风景' | '人物' | '其他';
+    match_terms?: string[];
     owner_name: string;
     preview_image_index?: number;
   };
@@ -67,6 +68,14 @@ function assertManifest(value: unknown): asserts value is OfflineManifest {
     manifest.exported_at < 1
   ) {
     throw new Error('离线包的图包文字资料无效');
+  }
+  const matchTerms = manifest.pack.match_terms ?? [];
+  if (
+    !Array.isArray(matchTerms) ||
+    matchTerms.length > 30 ||
+    matchTerms.some(term => typeof term !== 'string' || !term.trim() || term.length > 60)
+  ) {
+    throw new Error('离线包包含无效的图包抓取词');
   }
   if (!Array.isArray(manifest.images) || manifest.images.length < 1 || manifest.images.length > MAX_IMAGES) {
     throw new Error(`离线包应包含 1-${MAX_IMAGES} 张图片`);
@@ -142,6 +151,7 @@ export async function createOfflinePack(
       name: source.pack.name,
       description: source.pack.description,
       category: source.pack.category,
+      match_terms: [...(source.pack.match_terms ?? [])],
       owner_name: source.pack.owner_name ?? '',
       preview_image_index: Math.max(
         0,
@@ -221,6 +231,7 @@ export async function readOfflinePack(file: File): Promise<{ pack: InstalledPack
           name: parsed.pack.name.slice(0, 60),
           description: parsed.pack.description.slice(0, 500),
           category: parsed.pack.category,
+          match_terms: [...(parsed.pack.match_terms ?? [])],
           status: 'published',
           version: 1,
           image_count: imageMetadata.length,

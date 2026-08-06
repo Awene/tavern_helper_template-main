@@ -3,7 +3,7 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import { workshopService } from './service';
 import './style.scss';
-import type { WorkshopBridge } from './types';
+import type { WorkshopBridge, WorkshopMatchResult, WorkshopPlayerData } from './types';
 import { closeWorkshop, openWorkshop } from './ui-state';
 
 const GLOBAL_NAME = 'CultivationWorkshop';
@@ -28,7 +28,7 @@ function bootWorkshop(): void {
     version: '0.3.0',
     open: openWorkshop,
     close: closeWorkshop,
-    matchImages: request => workshopService.matchImages(request),
+    matchImages: async request => toCompatibleMatchResult(await workshopService.matchImages(request)),
     setPreferredPack: (subjectKey, packId) => workshopService.setPreferredPack(subjectKey, packId),
     confirmDisplayed: request => workshopService.confirmDisplayed(request),
     getSettings: () => workshopService.getSettings(),
@@ -66,6 +66,28 @@ function bootWorkshop(): void {
     transplantedStyles.forEach(style => style.remove());
     booted = false;
   });
+}
+
+function toCompatibleMatchResult(player: WorkshopPlayerData | null): WorkshopMatchResult | null {
+  if (!player) return null;
+  const preferredPack =
+    player.packs.find(pack => pack.id === player.preferredPackId && pack.images.some(image => image.rating === player.initialRating)) ??
+    player.packs.find(pack => pack.images.some(image => image.rating === player.initialRating)) ??
+    player.packs[0];
+  const image = preferredPack?.images.find(image => image.rating === player.initialRating) ?? preferredPack?.images[0];
+  const legacyImages = image
+    ? [
+        {
+          id: image.id,
+          rating: image.rating,
+          blob: image.blob,
+          characterName: player.kind === 'character' ? player.title : '',
+          packName: preferredPack.name,
+          author: preferredPack.author,
+        },
+      ]
+    : [];
+  return Object.assign(legacyImages, player) as WorkshopMatchResult;
 }
 
 function resolveHostWindow(): Window {

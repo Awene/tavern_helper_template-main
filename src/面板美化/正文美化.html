@@ -159,6 +159,22 @@
         color: var(--rb-text-soft);
         letter-spacing: 1px;
       }
+      .rb-settings-select {
+        min-width: 92px;
+        padding: 5px 28px 5px 10px;
+        border: 1px solid var(--rb-border-soft);
+        border-radius: 16px;
+        color: var(--rb-text);
+        background: var(--rb-paper-flat);
+        font: inherit;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .rb-settings-select:focus-visible {
+        border-color: var(--rb-accent);
+        outline: 2px solid color-mix(in srgb, var(--rb-accent) 24%, transparent);
+        outline-offset: 2px;
+      }
       .rb-toggle {
         width: 36px;
         height: 20px;
@@ -2575,7 +2591,7 @@
         max-height: min(72vh, 760px);
         object-fit: contain;
         opacity: 0;
-        cursor: zoom-in;
+        cursor: default;
         transition: opacity 0.24s ease;
       }
       .rb-workshop-media.loaded img {
@@ -2664,24 +2680,29 @@
       .rb-workshop-control:hover,
       .rb-workshop-control.active { background: rgba(255,255,255,.16); color: #fff; }
       .rb-workshop-control:disabled { opacity: .32; cursor: default; }
-      @media (hover: none), (max-width: 600px) {
+      @media (hover: none), (pointer: coarse), (max-width: 600px) {
         .rb-workshop-media { min-height: 180px; }
         .rb-workshop-controls {
-          bottom: 32px;
+          bottom: max(34px, calc(env(safe-area-inset-bottom) + 30px));
           gap: 2px;
           padding: 4px;
+          max-width: calc(100% - 12px);
           opacity: 1;
           transform: translate(-50%, 0);
         }
-        .rb-workshop-control { min-width: 28px; height: 28px; padding: 0 6px; }
+        .rb-workshop-control {
+          min-width: 34px;
+          height: 34px;
+          padding: 0 7px;
+          touch-action: manipulation;
+        }
       }
 
       /* —— 插图大图查看器 —— */
       .rb-img-wrap img {
         cursor: zoom-in;
       }
-      .rb-img-wrap img:focus-visible,
-      .rb-workshop-figure img:focus-visible {
+      .rb-img-wrap img:focus-visible {
         outline: 2px solid var(--rb-accent);
         outline-offset: 3px;
       }
@@ -2878,8 +2899,19 @@
 
       <div class="rb-section-title">🖼 创意工坊插图</div>
       <div class="rb-settings-row">
-        <span class="rb-settings-label">自动插入图片</span>
+        <span class="rb-settings-label">正文插入图包</span>
         <button class="rb-btn" id="workshopAutoToggle" data-action="workshop-toggle">读取中</button>
+      </div>
+      <div class="rb-settings-row">
+        <label class="rb-settings-label" for="workshopAutoplayInterval">轮播间隔</label>
+        <select class="rb-settings-select" id="workshopAutoplayInterval">
+          <option value="5">5 秒</option>
+          <option value="10">10 秒</option>
+          <option value="15">15 秒</option>
+          <option value="20">20 秒</option>
+          <option value="30">30 秒</option>
+          <option value="60">60 秒</option>
+        </select>
       </div>
       <div class="rb-workshop-status" id="workshopStatus">正在等待创意工坊脚本……</div>
       <button class="rb-btn rb-workshop-open" data-action="workshop-open">打开创意工坊与图包管理</button>
@@ -5069,7 +5101,7 @@
         };
         const openViewer = sourceImage => {
           const src = sourceImage.currentSrc || sourceImage.src;
-          if (!src) return;
+          if (!src) return false;
           previousFocus = document.activeElement;
           displayImage.src = src;
           backdropImage.src = src;
@@ -5080,11 +5112,16 @@
           viewer.setAttribute('aria-hidden', 'false');
           resetView();
           viewer.querySelector('[data-viewer-action="close"]').focus();
+          return true;
+        };
+        const openFullscreen = async sourceImage => {
+          if (!openViewer(sourceImage)) return;
+          await toggleFullscreen();
         };
         const imageFromEvent = event => {
           const target = event.target;
           return target && target.closest
-            ? target.closest('.rb-img-wrap img, .rb-workshop-figure img')
+            ? target.closest('.rb-img-wrap img')
             : null;
         };
 
@@ -5196,12 +5233,56 @@
           else if (event.key.toLowerCase() === 'f') void toggleFullscreen();
         });
 
-        rbImageViewerState = { viewer, openViewer, closeViewer };
+        rbImageViewerState = { viewer, openViewer, openFullscreen, closeViewer };
       }
 
       // ============== 创意工坊桥接 ==============
       const workshopObjectUrls = [];
       const workshopAutoplayTimers = new Set();
+      const WORKSHOP_AUTOPLAY_KEY = 'rb-workshop-autoplay-enabled';
+      const WORKSHOP_AUTOPLAY_INTERVAL_KEY = 'rb-workshop-autoplay-interval-seconds';
+      const WORKSHOP_AUTOPLAY_INTERVAL_EVENT = 'cultivation-workshop-autoplay-interval-changed';
+
+      function getWorkshopAutoplayPreference() {
+        try {
+          return localStorage.getItem(WORKSHOP_AUTOPLAY_KEY) !== 'false';
+        } catch (e) {
+          return true;
+        }
+      }
+
+      function setWorkshopAutoplayPreference(enabled) {
+        try {
+          localStorage.setItem(WORKSHOP_AUTOPLAY_KEY, String(enabled));
+        } catch (e) {
+          /* ignore */
+        }
+      }
+
+      function getWorkshopAutoplayInterval() {
+        try {
+          const saved = Number.parseInt(localStorage.getItem(WORKSHOP_AUTOPLAY_INTERVAL_KEY) || '10', 10);
+          return Number.isFinite(saved) ? Math.min(120, Math.max(3, saved)) : 10;
+        } catch (e) {
+          return 10;
+        }
+      }
+
+      function setWorkshopAutoplayInterval(seconds) {
+        const next = Math.min(120, Math.max(3, Number.parseInt(String(seconds), 10) || 10));
+        try {
+          localStorage.setItem(WORKSHOP_AUTOPLAY_INTERVAL_KEY, String(next));
+        } catch (e) {
+          /* ignore */
+        }
+        try {
+          const target = window.top || window.parent || window;
+          target.dispatchEvent(new CustomEvent(WORKSHOP_AUTOPLAY_INTERVAL_EVENT, { detail: { seconds: next } }));
+        } catch (e) {
+          window.dispatchEvent(new CustomEvent(WORKSHOP_AUTOPLAY_INTERVAL_EVENT, { detail: { seconds: next } }));
+        }
+        return next;
+      }
 
       function getWorkshopBridge() {
         try {
@@ -5245,6 +5326,8 @@
         const bridge = getWorkshopBridge();
         const status = document.getElementById('workshopStatus');
         const toggle = document.getElementById('workshopAutoToggle');
+        const interval = document.getElementById('workshopAutoplayInterval');
+        if (interval) interval.value = String(getWorkshopAutoplayInterval());
         if (!bridge) {
           if (status) status.textContent = '创意工坊脚本尚未加载，请确认角色卡脚本已启用。';
           if (toggle) {
@@ -5256,7 +5339,7 @@
         try {
           const [settings, summary] = await Promise.all([bridge.getSettings(), bridge.getInstalledSummary()]);
           if (status) {
-            status.textContent = `已启用 ${summary.enabled} / 已安装 ${summary.installed} 个图包；正文每楼展示一张，可切换同角色图片。`;
+            status.textContent = `已启用 ${summary.enabled} / 已安装 ${summary.installed} 个图包；轮播间隔 ${getWorkshopAutoplayInterval()} 秒。`;
           }
           if (toggle) {
             toggle.textContent = settings.autoInsert ? '已开启' : '已关闭';
@@ -5320,9 +5403,6 @@
           const img = document.createElement('img');
           img.loading = 'eager';
           img.decoding = 'async';
-          img.tabIndex = 0;
-          img.setAttribute('role', 'button');
-          img.title = '点击查看大图';
           const loadState = document.createElement('div');
           loadState.className = 'rb-workshop-load-state';
           const caption = document.createElement('figcaption');
@@ -5336,7 +5416,7 @@
             <button type="button" class="rb-workshop-control" data-workshop-action="next" title="下一张" aria-label="下一张">›</button>
             <button type="button" class="rb-workshop-control" data-workshop-action="rating" title="切换 SFW / NSFW"></button>
             <button type="button" class="rb-workshop-control" data-workshop-action="pack" title="切换图包" aria-label="切换图包">⇄</button>
-            <button type="button" class="rb-workshop-control" data-workshop-action="autoplay" title="开启 10 秒轮播" aria-label="轮播">▶</button>
+            <button type="button" class="rb-workshop-control" data-workshop-action="autoplay" title="关闭 10 秒轮播" aria-label="轮播" aria-pressed="true">Ⅱ</button>
             <button type="button" class="rb-workshop-control" data-workshop-action="fullscreen" title="全屏查看" aria-label="全屏查看">⛶</button>`;
           media.append(img, loadState);
           figure.append(media, controls, caption);
@@ -5346,6 +5426,8 @@
           let rating = player.initialRating;
           let imageIndex = 0;
           let autoplayTimer = null;
+          let autoplayEnabled = getWorkshopAutoplayPreference();
+          let autoplayIntervalSeconds = getWorkshopAutoplayInterval();
           const urls = new Map();
           const currentPack = () => player.packs[packIndex];
           const currentImages = () => currentPack().images.filter(image => image.rating === rating);
@@ -5362,10 +5444,44 @@
             controls.querySelectorAll('[data-workshop-action="previous"], [data-workshop-action="next"]')
               .forEach(button => { button.disabled = group.length < 2; });
             const ratingButton = controls.querySelector('[data-workshop-action="rating"]');
+            ratingButton.hidden = player.kind !== 'character';
             ratingButton.textContent = rating.toUpperCase();
             ratingButton.disabled = !player.packs.some(pack => pack.images.some(image => image.rating !== rating));
             controls.querySelector('[data-workshop-action="pack"]').disabled =
               player.packs.filter(pack => pack.images.some(image => image.rating === rating)).length < 2;
+          };
+          const stopAutoplayTimer = () => {
+            if (!autoplayTimer) return;
+            clearInterval(autoplayTimer);
+            workshopAutoplayTimers.delete(autoplayTimer);
+            autoplayTimer = null;
+          };
+          const syncAutoplay = () => {
+            const autoplayButton = controls.querySelector('[data-workshop-action="autoplay"]');
+            autoplayButton.classList.toggle('active', autoplayEnabled);
+            autoplayButton.textContent = autoplayEnabled ? 'Ⅱ' : '▶';
+            autoplayButton.title = autoplayEnabled
+              ? (currentImages().length > 1 ? `关闭 ${autoplayIntervalSeconds} 秒轮播` : '轮播已开启；当前仅有一张图片')
+              : `开启 ${autoplayIntervalSeconds} 秒轮播`;
+            autoplayButton.setAttribute('aria-pressed', String(autoplayEnabled));
+            if (!autoplayEnabled || currentImages().length < 2) {
+              stopAutoplayTimer();
+            } else if (!autoplayTimer) {
+              autoplayTimer = setInterval(() => move(1), autoplayIntervalSeconds * 1000);
+              workshopAutoplayTimers.add(autoplayTimer);
+            }
+          };
+          const handleAutoplayIntervalChange = event => {
+            autoplayIntervalSeconds = Math.min(120, Math.max(3, Number(event.detail?.seconds) || 10));
+            stopAutoplayTimer();
+            syncAutoplay();
+          };
+          let autoplayEventTarget = window;
+          try { autoplayEventTarget = window.top || window.parent || window; } catch (e) { /* use current window */ }
+          autoplayEventTarget.addEventListener(WORKSHOP_AUTOPLAY_INTERVAL_EVENT, handleAutoplayIntervalChange);
+          gallery.__workshopCleanup = () => {
+            stopAutoplayTimer();
+            autoplayEventTarget.removeEventListener(WORKSHOP_AUTOPLAY_INTERVAL_EVENT, handleAutoplayIntervalChange);
           };
           const render = () => {
             const group = currentImages();
@@ -5390,6 +5506,7 @@
             img.src = urlFor(image);
             caption.textContent = `${player.title} · ${currentPack().name}${currentPack().author ? ' · ' + currentPack().author : ''} · ${rating.toUpperCase()} · ${imageIndex + 1}/${group.length}`;
             updateButtons();
+            syncAutoplay();
           };
           const persistPack = () => {
             if (typeof bridge.setPreferredPack === 'function') {
@@ -5426,19 +5543,11 @@
               persistPack();
               render();
             } else if (action === 'autoplay') {
-              if (autoplayTimer) {
-                clearInterval(autoplayTimer);
-                workshopAutoplayTimers.delete(autoplayTimer);
-                autoplayTimer = null;
-              } else {
-                autoplayTimer = setInterval(() => move(1), 10000);
-                workshopAutoplayTimers.add(autoplayTimer);
-              }
-              button.classList.toggle('active', Boolean(autoplayTimer));
-              button.textContent = autoplayTimer ? 'Ⅱ' : '▶';
-              button.title = autoplayTimer ? '关闭轮播' : '开启 10 秒轮播';
+              autoplayEnabled = !autoplayEnabled;
+              setWorkshopAutoplayPreference(autoplayEnabled);
+              syncAutoplay();
             } else if (action === 'fullscreen') {
-              rbImageViewerState?.openViewer(img);
+              void rbImageViewerState?.openFullscreen(img);
             }
           });
           render();
@@ -5458,7 +5567,10 @@
         target.addEventListener('cultivation-workshop-library-changed', () => {
           const container = document.getElementById('readingContent');
           if (container) {
-            container.querySelectorAll('.rb-workshop-gallery').forEach(node => node.remove());
+            container.querySelectorAll('.rb-workshop-gallery').forEach(node => {
+              if (typeof node.__workshopCleanup === 'function') node.__workshopCleanup();
+              node.remove();
+            });
             container.dataset.workshopMatched = 'false';
           }
           workshopAutoplayTimers.forEach(timer => clearInterval(timer));
@@ -5470,6 +5582,9 @@
         void updateWorkshopControls();
         void appendWorkshopImages();
         window.addEventListener('pagehide', () => {
+          document.querySelectorAll('.rb-workshop-gallery').forEach(node => {
+            if (typeof node.__workshopCleanup === 'function') node.__workshopCleanup();
+          });
           workshopAutoplayTimers.forEach(timer => clearInterval(timer));
           workshopAutoplayTimers.clear();
           workshopObjectUrls.splice(0).forEach(url => URL.revokeObjectURL(url));
@@ -5480,7 +5595,16 @@
       function initSettingsPanel() {
         const btn = document.getElementById('settingsBtn');
         const panel = document.getElementById('settingsPanel');
+        const interval = document.getElementById('workshopAutoplayInterval');
         if (!btn || !panel) return;
+        if (interval) {
+          interval.value = String(getWorkshopAutoplayInterval());
+          interval.addEventListener('change', () => {
+            const seconds = setWorkshopAutoplayInterval(interval.value);
+            interval.value = String(seconds);
+            void updateWorkshopControls();
+          });
+        }
         btn.addEventListener('click', e => {
           e.stopPropagation();
           panel.classList.toggle('active');

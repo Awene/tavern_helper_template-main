@@ -135,13 +135,24 @@ export class WorkshopApi {
     return this.requestBlob(`/api/images/${encodeURIComponent(imageId)}`);
   }
 
-  createPack(input: { name: string; description: string; category: string }): Promise<{ pack: PackSummary }> {
+  createPack(input: {
+    name: string;
+    description: string;
+    category: string;
+    match_terms?: string[];
+  }): Promise<{ pack: PackSummary }> {
     return this.request('/api/packs', { method: 'POST', body: JSON.stringify(input) }, true);
   }
 
   updatePack(
     packId: string,
-    input: { name?: string; description?: string; category?: string; preview_image_id?: string | null },
+    input: {
+      name?: string;
+      description?: string;
+      category?: string;
+      match_terms?: string[];
+      preview_image_id?: string | null;
+    },
   ): Promise<{ ok: true }> {
     return this.request(
       `/api/packs/${encodeURIComponent(packId)}`,

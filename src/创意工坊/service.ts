@@ -62,6 +62,26 @@ function normalizeName(value: string): string {
   return value.normalize('NFKC').trim().toLocaleLowerCase();
 }
 
+function messageLocationText(messageId: string): string {
+  try {
+    const parsedId = Number(messageId);
+    const variables = getVariables({ type: 'message', message_id: Number.isFinite(parsedId) ? parsedId : -1 });
+    const location = _.get(variables, 'stat_data.地点', {}) as Record<string, unknown>;
+    return [location.世界, location.地域, location.具体地点]
+      .map(value =>
+        String(value ?? '')
+          .normalize('NFKC')
+          .trim(),
+      )
+      .filter(Boolean)
+      .join(' ')
+      .toLocaleLowerCase();
+  } catch (error) {
+    console.warn('[创意工坊] 读取本楼 MVU 地点失败:', error);
+    return '';
+  }
+}
+
 export class WorkshopService {
   readonly api = new WorkshopApi(async () => (await this.getSettings()).apiBase);
   private readonly pendingPreviewImages = new Map<string, Promise<Blob>>();
@@ -146,6 +166,23 @@ export class WorkshopService {
     this.notifyLibraryChanged();
   }
 
+  async setCharacterMigration(packId: string, name: string, aliases: string[]): Promise<void> {
+    const pack = (await getInstalledPacks()).find(item => item.id === packId);
+    if (!pack) throw new Error('本地未安装该图包');
+    if (pack.manifest.pack.category !== '人物') throw new Error('只有人物图包可以迁移角色名');
+    const normalizedName = name.normalize('NFKC').trim();
+    const normalizedAliases = [...new Set(aliases.map(alias => alias.normalize('NFKC').trim()).filter(Boolean))];
+    if (normalizedName.length > 60) throw new Error('替换角色名不能超过 60 字');
+    if (normalizedAliases.length > 30 || normalizedAliases.some(alias => alias.length > 30)) {
+      throw new Error('角色别名最多 30 个，单个不能超过 30 字');
+    }
+    pack.characterMigration = normalizedName ? { name: normalizedName, aliases: normalizedAliases } : undefined;
+    pack.updatedAt = Date.now();
+    await putRecord('packs', pack);
+    await clearSelections();
+    this.notifyLibraryChanged();
+  }
+
   async uninstallPack(packId: string): Promise<void> {
     await removeInstalledPack(packId);
     await clearSelections();
@@ -198,6 +235,7 @@ export class WorkshopService {
         updatedAt: Date.now(),
         localBytes: images.reduce((sum, image) => sum + image.blob.size, 0),
         updateError: '',
+        characterMigration: previous?.characterMigration,
       },
     };
   }
@@ -280,6 +318,15 @@ export class WorkshopService {
     const roles = new Map<string, { name: string; terms: Set<string> }>();
     for (const pack of installed) {
       if (pack.manifest.pack.category !== '人物') continue;
+      const migration = pack.characterMigration;
+      if (migration?.name.trim()) {
+        const key = normalizeName(migration.name);
+        const role = roles.get(key) ?? { name: migration.name.trim(), terms: new Set<string>() };
+        role.terms.add(migration.name.trim());
+        for (const alias of migration.aliases ?? []) if (alias.trim()) role.terms.add(alias.trim());
+        roles.set(key, role);
+        continue;
+      }
       for (const image of pack.manifest.images) {
         const key = normalizeName(image.character_name);
         if (!key) continue;
@@ -299,26 +346,52 @@ export class WorkshopService {
         count += countOccurrences(normalizedText, term);
         latest = Math.max(latest, normalizedText.lastIndexOf(normalizeName(term)));
       }
-      if (count > 0 && (!selectedRole || count > selectedRole.count || (count === selectedRole.count && latest > selectedRole.latest))) {
+      if (
+        count > 0 &&
+        (!selectedRole || count > selectedRole.count || (count === selectedRole.count && latest > selectedRole.latest))
+      ) {
         selectedRole = { key, name: role.name, count, latest };
       }
     }
 
-    const category = selectedRole
-      ? '人物'
-      : installed.some(pack => pack.manifest.pack.category === '风景' && pack.manifest.images.length)
-        ? '风景'
-        : installed.some(pack => pack.manifest.pack.category === '其他' && pack.manifest.images.length)
-          ? '其他'
-          : null;
+    const locationText = messageLocationText(request.messageId);
+    const termMatches = (pack: InstalledPack, source: string) =>
+      (pack.manifest.pack.match_terms ?? []).some(term => source.includes(normalizeName(term)));
+    const landscapePacks = selectedRole
+      ? []
+      : installed.filter(
+          pack =>
+            pack.manifest.pack.category === '风景' &&
+            pack.manifest.images.length > 0 &&
+            Boolean(locationText) &&
+            termMatches(pack, locationText),
+        );
+    const otherPacks =
+      selectedRole || landscapePacks.length
+        ? []
+        : installed.filter(
+            pack =>
+              pack.manifest.pack.category === '其他' &&
+              pack.manifest.images.length > 0 &&
+              termMatches(pack, normalizedText),
+          );
+    const category = selectedRole ? '人物' : landscapePacks.length ? '风景' : otherPacks.length ? '其他' : null;
     if (!category) return null;
     const subjectKey = selectedRole ? `character:${selectedRole.key}` : `category:${category}`;
-    const relevant = installed.filter(pack => pack.manifest.pack.category === category);
+    const relevant = selectedRole
+      ? installed.filter(pack => pack.manifest.pack.category === '人物')
+      : category === '风景'
+        ? landscapePacks
+        : otherPacks;
     const packs: WorkshopPlayerPack[] = [];
     for (const pack of relevant) {
-      const metadata = pack.manifest.images.filter(
-        image => !selectedRole || normalizeName(image.character_name) === selectedRole.key,
-      );
+      const migrationMatches = selectedRole && normalizeName(pack.characterMigration?.name ?? '') === selectedRole.key;
+      const metadata = pack.manifest.images.filter(image => {
+        if (!selectedRole) return true;
+        if (migrationMatches) return true;
+        if (pack.characterMigration?.name) return false;
+        return normalizeName(image.character_name) === selectedRole.key;
+      });
       const images = (
         await Promise.all(
           metadata.map(async image => {
@@ -327,12 +400,13 @@ export class WorkshopService {
           }),
         )
       ).filter((image): image is NonNullable<typeof image> => image !== null);
-      if (images.length) packs.push({
-        id: pack.id,
-        name: pack.manifest.pack.name,
-        author: pack.manifest.pack.owner_name ?? '',
-        images,
-      });
+      if (images.length)
+        packs.push({
+          id: pack.id,
+          name: pack.manifest.pack.name,
+          author: pack.manifest.pack.owner_name ?? '',
+          images,
+        });
     }
     if (!packs.length) return null;
 
@@ -341,12 +415,11 @@ export class WorkshopService {
     if (selectedRole) {
       try {
         const host = window.parent as Window & {
-          CultivationRuleRouter?: { getFloorEntryState?: (messageId: string, entryName: string) => { ok: boolean; enabled: boolean } };
+          CultivationRuleRouter?: {
+            getFloorEntryState?: (messageId: string, entryName: string) => { ok: boolean; enabled: boolean };
+          };
         };
-        const state = host.CultivationRuleRouter?.getFloorEntryState?.(
-          request.messageId,
-          '[mvu_plot][NSFW]基础指导',
-        );
+        const state = host.CultivationRuleRouter?.getFloorEntryState?.(request.messageId, '[mvu_plot][NSFW]基础指导');
         if (!state?.ok) routeDetectionFailed = true;
         else desiredRating = state.enabled ? 'nsfw' : 'sfw';
       } catch {
@@ -360,7 +433,7 @@ export class WorkshopService {
     const initialRating = desiredPacks.length ? desiredRating : desiredRating === 'sfw' ? 'nsfw' : 'sfw';
     const preferredPackId = desiredPacks.some(pack => pack.id === rememberedPackId)
       ? rememberedPackId
-      : desiredPacks[0]?.id ?? rememberedPackId;
+      : (desiredPacks[0]?.id ?? rememberedPackId);
     return {
       subjectKey,
       title: selectedRole?.name ?? category,

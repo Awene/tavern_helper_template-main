@@ -23,7 +23,9 @@ export interface PackSummary {
   like_count: number;
   download_count: number;
   preview_image_id?: string | null;
+  preview_rating?: ImageRating | null;
   preview_url?: string | null;
+  match_terms: string[];
   created_at: number;
   updated_at: number;
   published_at?: number | null;
@@ -63,6 +65,10 @@ export interface InstalledPack {
   updatedAt: number;
   localBytes: number;
   updateError: string;
+  characterMigration?: {
+    name: string;
+    aliases: string[];
+  };
 }
 
 export interface InstalledImage {
@@ -135,6 +141,18 @@ export interface WorkshopPlayerData {
   packs: WorkshopPlayerPack[];
 }
 
+/** 兼容仍按旧版“图片数组”协议读取工坊结果的正文美化。 */
+export interface LegacyWorkshopImage {
+  id: string;
+  rating: ImageRating;
+  blob: Blob;
+  characterName: string;
+  packName: string;
+  author: string;
+}
+
+export type WorkshopMatchResult = WorkshopPlayerData & LegacyWorkshopImage[];
+
 export interface MatchRequest {
   text: string;
   chatId: string;
@@ -145,7 +163,7 @@ export interface WorkshopBridge {
   version: string;
   open: () => void;
   close: () => void;
-  matchImages: (request: MatchRequest) => Promise<WorkshopPlayerData | null>;
+  matchImages: (request: MatchRequest) => Promise<WorkshopMatchResult | null>;
   setPreferredPack: (subjectKey: string, packId: string) => Promise<void>;
   confirmDisplayed: (request: { chatId: string; messageId: string; imageId: string }) => Promise<void>;
   getSettings: () => Promise<WorkshopSettings>;
