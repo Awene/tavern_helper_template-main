@@ -1,6 +1,7 @@
 {
   "mcpServers": {
     "chrome-devtools": {
+<<<<<<< HEAD
       "command": "npx",
       "args": [
         "-y",
@@ -8,6 +9,10 @@
         "--browserUrl",
         "http://localhost:9222"
       ]
+=======
+      "command": "pnpx",
+      "args": ["chrome-devtools-mcp@latest", "--autoConnect"]
+>>>>>>> 9072edeaaddd1166c92d20e75542e4d14d4fdbc2
     }
   }
 }
