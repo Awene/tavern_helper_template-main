@@ -518,8 +518,19 @@
 .cw-upload .wide {
   grid-column: 1/-1;
 }
-.cw-char-name {
-  max-width: 220px;
+.cw-char-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.cw-char-row > label {
+  min-width: 0;
+}
+.cw-char-row .cw-char-name {
+  flex: 0 0 150px;
+}
+.cw-char-row > label:not(.cw-char-name) {
+  flex: 1 1 auto;
 }
 .cw-form-actions {
   grid-column: 1/-1;
@@ -1113,6 +1124,13 @@
 @media (max-width: 600px) {
   .cw-header {
     padding: 16px;
+  }
+  .cw-char-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cw-char-row .cw-char-name {
+    flex: none;
   }
   .cw-body {
     padding: 16px;

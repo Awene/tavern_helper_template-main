@@ -290,14 +290,16 @@
                 <label class="wide"
                   ><span>简介</span><textarea v-model="newPack.description" maxlength="500"></textarea>
                 </label>
-                <label v-if="newPack.category === '人物'" class="cw-char-name">
-                  <span>角色名</span>
-                  <input v-model="newPack.characterName" maxlength="60" required placeholder="一个图包对应一个角色" />
-                </label>
-                <label v-if="newPack.category === '人物'" class="wide">
-                  <span>角色别名（可选，逗号分隔）</span>
-                  <input v-model="newPack.aliases" placeholder="例如：璇玑，慕姑娘" />
-                </label>
+                <div v-if="newPack.category === '人物'" class="cw-char-row wide">
+                  <label class="cw-char-name">
+                    <span>角色名</span>
+                    <input v-model="newPack.characterName" maxlength="60" required placeholder="一个图包对应一个角色" />
+                  </label>
+                  <label>
+                    <span>角色别名（可选，逗号分隔）</span>
+                    <input v-model="newPack.aliases" placeholder="例如：璇玑，慕姑娘" />
+                  </label>
+                </div>
                 <label v-if="newPack.category !== '人物'" class="wide">
                   <span>{{ newPack.category === '风景' ? '地点抓取词' : '抓取词' }}（逗号分隔）</span>
                   <input
@@ -341,14 +343,16 @@
                     <label class="wide"
                       ><span>简介</span><textarea v-model="editPack.description" maxlength="500"></textarea>
                     </label>
-                    <label v-if="editPack.category === '人物'" class="cw-char-name">
-                      <span>角色名</span>
-                      <input v-model="editPack.characterName" maxlength="60" required />
-                    </label>
-                    <label v-if="editPack.category === '人物'" class="wide">
-                      <span>角色别名（可选，逗号分隔）</span>
-                      <input v-model="editPack.aliases" placeholder="例如：璇玑，慕姑娘" />
-                    </label>
+                    <div v-if="editPack.category === '人物'" class="cw-char-row wide">
+                      <label class="cw-char-name">
+                        <span>角色名</span>
+                        <input v-model="editPack.characterName" maxlength="60" required />
+                      </label>
+                      <label>
+                        <span>角色别名（可选，逗号分隔）</span>
+                        <input v-model="editPack.aliases" placeholder="例如：璇玑，慕姑娘" />
+                      </label>
+                    </div>
                     <label v-if="editPack.category !== '人物'" class="wide">
                       <span>{{ editPack.category === '风景' ? '地点抓取词' : '抓取词' }}（逗号分隔）</span>
                       <input v-model="editPack.matchTerms" required />
