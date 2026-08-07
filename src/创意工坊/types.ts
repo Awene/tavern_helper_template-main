@@ -26,6 +26,8 @@ export interface PackSummary {
   preview_rating?: ImageRating | null;
   preview_url?: string | null;
   match_terms: string[];
+  character_name: string;
+  aliases: string[];
   created_at: number;
   updated_at: number;
   published_at?: number | null;

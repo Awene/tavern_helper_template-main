@@ -13,6 +13,8 @@ interface OfflineImageEntry {
   character_name: string;
   rating: 'sfw' | 'nsfw';
   aliases?: string[];
+  /** 旧格式离线包把抓取词放在单张图片上；新格式统一放在图包级。读取时兼容旧包。 */
+  match_terms?: string[];
   mime_type: 'image/jpeg' | 'image/png' | 'image/webp';
   width: number;
   height: number;
@@ -29,6 +31,8 @@ interface OfflineManifest {
     description: string;
     category: '风景' | '人物' | '其他';
     match_terms?: string[];
+    character_name?: string;
+    aliases?: string[];
     owner_name: string;
     preview_image_index?: number;
   };
@@ -77,6 +81,16 @@ function assertManifest(value: unknown): asserts value is OfflineManifest {
   ) {
     throw new Error('离线包包含无效的图包抓取词');
   }
+  const packAliases = manifest.pack.aliases ?? [];
+  if (
+    typeof (manifest.pack.character_name ?? '') !== 'string' ||
+    (manifest.pack.character_name ?? '').length > 60 ||
+    !Array.isArray(packAliases) ||
+    packAliases.length > 30 ||
+    packAliases.some(alias => typeof alias !== 'string' || !alias.trim() || alias.length > 30)
+  ) {
+    throw new Error('离线包包含无效的图包角色资料');
+  }
   if (!Array.isArray(manifest.images) || manifest.images.length < 1 || manifest.images.length > MAX_IMAGES) {
     throw new Error(`离线包应包含 1-${MAX_IMAGES} 张图片`);
   }
@@ -113,6 +127,16 @@ function assertManifest(value: unknown): asserts value is OfflineManifest {
       throw new Error('离线包包含越界的图片资料');
     }
     if (image.rating !== 'sfw' && image.rating !== 'nsfw') throw new Error('离线包包含无效的图片分级');
+    const legacyImageTerms = image.match_terms ?? [];
+    if (
+      !Array.isArray(legacyImageTerms) ||
+      legacyImageTerms.length > 30 ||
+      legacyImageTerms.some(term => typeof term !== 'string' || !term.trim() || term.length > 60)
+    )
+      throw new Error('离线包包含无效的图片抓取词');
+    if (manifest.pack.category !== '人物' && !matchTerms.length && !legacyImageTerms.length) {
+      throw new Error(manifest.pack.category === '风景' ? '风景图包缺少地点抓取词' : '其他图包缺少抓取词');
+    }
   }
 }
 
@@ -152,6 +176,8 @@ export async function createOfflinePack(
       description: source.pack.description,
       category: source.pack.category,
       match_terms: [...(source.pack.match_terms ?? [])],
+      character_name: source.pack.character_name || '',
+      aliases: [...(source.pack.aliases ?? [])],
       owner_name: source.pack.owner_name ?? '',
       preview_image_index: Math.max(
         0,
@@ -189,6 +215,32 @@ export async function readOfflinePack(file: File): Promise<{ pack: InstalledPack
   if (expectedSize !== file.size) throw new Error('离线包尺寸与清单不一致');
 
   const packId = `offline_pack_${crypto.randomUUID().replaceAll('-', '')}`;
+  const characterName =
+    parsed.pack.category === '人物'
+      ? parsed.pack.character_name?.trim() ||
+        parsed.images.find(image => image.character_name.trim())?.character_name.trim() ||
+        ''
+      : '';
+  const aliases =
+    parsed.pack.category === '人物'
+      ? parsed.pack.aliases?.length
+        ? parsed.pack.aliases
+        : (parsed.images.find(image => image.character_name.trim() === characterName)?.aliases ?? [])
+      : [];
+  if (parsed.pack.category === '人物' && !characterName) throw new Error('人物图包缺少图包级角色名');
+  const packMatchTerms =
+    parsed.pack.category === '人物'
+      ? []
+      : [
+          ...new Set(
+            (parsed.pack.match_terms?.length
+              ? parsed.pack.match_terms
+              : parsed.images.flatMap(image => image.match_terms ?? [])
+            ).map(term => term.normalize('NFKC').trim()),
+          ),
+        ]
+          .filter(Boolean)
+          .slice(0, 30);
   const images: InstalledImage[] = [];
   const imageMetadata = [];
   let offset = HEADER_BYTES + manifestLength;
@@ -200,9 +252,9 @@ export async function readOfflinePack(file: File): Promise<{ pack: InstalledPack
     images.push({ id: imageId, packId, sha256: entry.sha256, blob });
     imageMetadata.push({
       id: imageId,
-      character_name: entry.character_name,
+      character_name: characterName,
       rating: entry.rating,
-      aliases: (entry.aliases ?? [])
+      aliases: aliases
         .map(alias => alias.trim())
         .filter(Boolean)
         .slice(0, 30),
@@ -231,7 +283,9 @@ export async function readOfflinePack(file: File): Promise<{ pack: InstalledPack
           name: parsed.pack.name.slice(0, 60),
           description: parsed.pack.description.slice(0, 500),
           category: parsed.pack.category,
-          match_terms: [...(parsed.pack.match_terms ?? [])],
+          match_terms: [...packMatchTerms],
+          character_name: characterName,
+          aliases: [...aliases],
           status: 'published',
           version: 1,
           image_count: imageMetadata.length,

@@ -62,6 +62,16 @@ function normalizeName(value: string): string {
   return value.normalize('NFKC').trim().toLocaleLowerCase();
 }
 
+function packCharacterIdentity(pack: InstalledPack): { name: string; aliases: string[] } | null {
+  if (pack.characterMigration?.name.trim()) return pack.characterMigration;
+  const name = pack.manifest.pack.character_name?.trim() || pack.manifest.images[0]?.character_name?.trim() || '';
+  if (!name) return null;
+  const aliases = pack.manifest.pack.aliases?.length
+    ? pack.manifest.pack.aliases
+    : (pack.manifest.images.find(image => image.character_name.trim() === name)?.aliases ?? []);
+  return { name, aliases };
+}
+
 function messageLocationText(messageId: string): string {
   try {
     const parsedId = Number(messageId);
@@ -318,23 +328,13 @@ export class WorkshopService {
     const roles = new Map<string, { name: string; terms: Set<string> }>();
     for (const pack of installed) {
       if (pack.manifest.pack.category !== '人物') continue;
-      const migration = pack.characterMigration;
-      if (migration?.name.trim()) {
-        const key = normalizeName(migration.name);
-        const role = roles.get(key) ?? { name: migration.name.trim(), terms: new Set<string>() };
-        role.terms.add(migration.name.trim());
-        for (const alias of migration.aliases ?? []) if (alias.trim()) role.terms.add(alias.trim());
-        roles.set(key, role);
-        continue;
-      }
-      for (const image of pack.manifest.images) {
-        const key = normalizeName(image.character_name);
-        if (!key) continue;
-        const role = roles.get(key) ?? { name: image.character_name.trim(), terms: new Set<string>() };
-        role.terms.add(image.character_name.trim());
-        for (const alias of image.aliases ?? []) if (alias.trim()) role.terms.add(alias.trim());
-        roles.set(key, role);
-      }
+      const identity = packCharacterIdentity(pack);
+      if (!identity) continue;
+      const key = normalizeName(identity.name);
+      const role = roles.get(key) ?? { name: identity.name.trim(), terms: new Set<string>() };
+      role.terms.add(identity.name.trim());
+      for (const alias of identity.aliases ?? []) if (alias.trim()) role.terms.add(alias.trim());
+      roles.set(key, role);
     }
 
     let selectedRole: { key: string; name: string; count: number; latest: number } | null = null;
@@ -379,19 +379,17 @@ export class WorkshopService {
     if (!category) return null;
     const subjectKey = selectedRole ? `character:${selectedRole.key}` : `category:${category}`;
     const relevant = selectedRole
-      ? installed.filter(pack => pack.manifest.pack.category === '人物')
+      ? installed.filter(
+          pack =>
+            pack.manifest.pack.category === '人物' &&
+            normalizeName(packCharacterIdentity(pack)?.name ?? '') === selectedRole.key,
+        )
       : category === '风景'
         ? landscapePacks
         : otherPacks;
     const packs: WorkshopPlayerPack[] = [];
     for (const pack of relevant) {
-      const migrationMatches = selectedRole && normalizeName(pack.characterMigration?.name ?? '') === selectedRole.key;
-      const metadata = pack.manifest.images.filter(image => {
-        if (!selectedRole) return true;
-        if (migrationMatches) return true;
-        if (pack.characterMigration?.name) return false;
-        return normalizeName(image.character_name) === selectedRole.key;
-      });
+      const metadata = pack.manifest.images;
       const images = (
         await Promise.all(
           metadata.map(async image => {

@@ -139,6 +139,8 @@ export class WorkshopApi {
     name: string;
     description: string;
     category: string;
+    character_name?: string;
+    aliases?: string[];
     match_terms?: string[];
   }): Promise<{ pack: PackSummary }> {
     return this.request('/api/packs', { method: 'POST', body: JSON.stringify(input) }, true);
@@ -150,6 +152,8 @@ export class WorkshopApi {
       name?: string;
       description?: string;
       category?: string;
+      character_name?: string;
+      aliases?: string[];
       match_terms?: string[];
       preview_image_id?: string | null;
     },
@@ -175,20 +179,18 @@ export class WorkshopApi {
 
   uploadImage(
     packId: string,
-    input: { file: Blob; filename: string; rating: string; characterName: string; aliases: string[] },
+    input: { file: Blob; filename: string; rating: string },
   ): Promise<{ image: PackImage }> {
     const form = new FormData();
     form.set('file', input.file, input.filename);
     form.set('rating', input.rating);
-    form.set('character_name', input.characterName);
-    form.set('aliases', input.aliases.join(','));
     return this.request(`/api/packs/${encodeURIComponent(packId)}/images`, { method: 'POST', body: form }, true);
   }
 
   updateImage(
     packId: string,
     imageId: string,
-    input: { rating?: string; character_name?: string; aliases?: string[] },
+    input: { rating?: string },
   ): Promise<{ ok: true }> {
     return this.request(
       `/api/packs/${encodeURIComponent(packId)}/images/${encodeURIComponent(imageId)}`,

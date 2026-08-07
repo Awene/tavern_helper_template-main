@@ -92,13 +92,13 @@
                   <div class="cw-card-media">
                     <WorkshopImage
                       :src="workshopImageUrl(pack.preview_image_id)"
-                      :alt="`${pack.name} 预览图`"
+                      :alt="`${pack.name} 封面图`"
                       fit="contain"
                       blur-background
                       :pending="workshopImagePending(pack.preview_image_id, false)"
                       :failed="workshopImageFailed(pack.preview_image_id, false)"
                       :requestable="Boolean(pack.preview_image_id)"
-                      empty-label="暂无预览"
+                      empty-label="暂无封面"
                       @request="loadPackPreview(pack)"
                     />
                     <div class="cw-card-badges">
@@ -290,6 +290,14 @@
                 <label class="wide"
                   ><span>简介</span><textarea v-model="newPack.description" maxlength="500"></textarea>
                 </label>
+                <label v-if="newPack.category === '人物'" class="cw-char-name">
+                  <span>角色名</span>
+                  <input v-model="newPack.characterName" maxlength="60" required placeholder="一个图包对应一个角色" />
+                </label>
+                <label v-if="newPack.category === '人物'" class="wide">
+                  <span>角色别名（可选，逗号分隔）</span>
+                  <input v-model="newPack.aliases" placeholder="例如：璇玑，慕姑娘" />
+                </label>
                 <label v-if="newPack.category !== '人物'" class="wide">
                   <span>{{ newPack.category === '风景' ? '地点抓取词' : '抓取词' }}（逗号分隔）</span>
                   <input
@@ -332,6 +340,14 @@
                     >
                     <label class="wide"
                       ><span>简介</span><textarea v-model="editPack.description" maxlength="500"></textarea>
+                    </label>
+                    <label v-if="editPack.category === '人物'" class="cw-char-name">
+                      <span>角色名</span>
+                      <input v-model="editPack.characterName" maxlength="60" required />
+                    </label>
+                    <label v-if="editPack.category === '人物'" class="wide">
+                      <span>角色别名（可选，逗号分隔）</span>
+                      <input v-model="editPack.aliases" placeholder="例如：璇玑，慕姑娘" />
                     </label>
                     <label v-if="editPack.category !== '人物'" class="wide">
                       <span>{{ editPack.category === '风景' ? '地点抓取词' : '抓取词' }}（逗号分隔）</span>
@@ -383,20 +399,13 @@
                       </button>
                     </div>
                     <div v-if="editPack.category === '人物'" class="cw-upload-fields wide">
-                      <label
-                        ><span>图片类型</span
-                        ><select v-model="upload.rating">
+                      <label>
+                        <span>图片类型</span>
+                        <select v-model="upload.rating">
                           <option value="sfw">SFW</option>
                           <option value="nsfw">NSFW</option>
-                        </select></label
-                      >
-                      <label v-if="editPack.category === '人物'"
-                        ><span>角色名</span><input v-model="upload.characterName" maxlength="60" required
-                      /></label>
-                      <label v-if="editPack.category === '人物'" class="cw-upload-aliases"
-                        ><span>角色别名（可选，逗号分隔）</span
-                        ><input v-model="upload.aliases" placeholder="例如：璇玑，慕姑娘"
-                      /></label>
+                        </select>
+                      </label>
                     </div>
                     <div class="cw-upload-footer wide">
                       <p>上传前会移除元数据，并把最大边等比压缩到 1600px；不支持 GIF。</p>
@@ -419,6 +428,7 @@
                       <div>
                         <strong>管理已上传图片</strong>
                         <span>已选择 {{ selectedOwnImageIds.size }} / {{ ownDetail.images.length }} 张</span>
+                        <span>点击任一图片下方的“设为封面”，即可指定浏览页封面。</span>
                       </div>
                       <div class="cw-inline-actions">
                         <button class="cw-btn" type="button" :disabled="busy" @click="selectAllOwnImages">全选</button>
@@ -433,23 +443,29 @@
                       </div>
                     </div>
                     <div v-if="selectedOwnImageIds.size" class="cw-batch-editor">
-                      <div
-                        v-if="editPack.category === '人物'"
-                        class="cw-batch-rating"
-                        role="group"
-                        aria-label="批量修改图片类别"
-                      >
-                        <span>批量改变类别</span>
-                        <button class="cw-btn" type="button" :disabled="busy" @click="setSelectedImageRating('sfw')">
-                          SFW
-                        </button>
+                      <div class="cw-batch-actions">
+                        <div
+                          v-if="editPack.category === '人物'"
+                          class="cw-batch-rating"
+                          role="group"
+                          aria-label="批量修改图片类别"
+                        >
+                          <span>批量改变类别</span>
+                          <button class="cw-btn" type="button" :disabled="busy" @click="setSelectedImageRating('sfw')">
+                            SFW
+                          </button>
+                          <button class="cw-btn" type="button" :disabled="busy" @click="setSelectedImageRating('nsfw')">
+                            NSFW
+                          </button>
+                        </div>
                         <button
+                          v-if="selectedOwnImageIds.size === 1"
                           class="cw-btn"
                           type="button"
                           :disabled="busy"
-                          @click="setSelectedImageRating('nsfw')"
+                          @click="setCoverFromSelection"
                         >
-                          NSFW
+                          ★ 设为封面
                         </button>
                       </div>
                       <button class="cw-btn cw-btn-danger" type="button" :disabled="busy" @click="deleteSelectedImages">
@@ -474,14 +490,14 @@
                           type="checkbox"
                           :checked="selectedOwnImageIds.has(image.id)"
                           :disabled="busy"
-                          :aria-label="`${selectedOwnImageIds.has(image.id) ? '取消选择' : '选择'}图片 ${image.character_name || image.id}`"
+                          :aria-label="`${selectedOwnImageIds.has(image.id) ? '取消选择' : '选择'}图片 ${ownDetail.pack.character_name || image.id}`"
                           @change="toggleOwnImageSelection(image.id)"
                         />
                         <span aria-hidden="true">{{ selectedOwnImageIds.has(image.id) ? '✓' : '＋' }}</span>
                       </label>
                       <WorkshopImage
                         :src="workshopImageUrl(image.id)"
-                        :alt="image.character_name || ownDetail.pack.name"
+                        :alt="ownDetail.pack.character_name || ownDetail.pack.name"
                         :pending="workshopImagePending(image.id, true)"
                         :failed="workshopImageFailed(image.id, true)"
                         requestable
@@ -494,24 +510,36 @@
                         aria-label="NSFW 图片"
                         >18+</span
                       >
+                      <span
+                        v-if="ownDetail.pack.preview_image_id === image.id"
+                        class="cw-cover-badge"
+                        title="这张图片是图包封面"
+                      >
+                        ★ 封面
+                      </span>
                       <div class="cw-image-info">
-                        <strong>{{ image.character_name || ownDetail.pack.name }}</strong
+                        <strong>{{ ownImageLabel(image) }}</strong
                         ><span v-if="ownDetail.pack.category === '人物'" :class="['cw-rating', image.rating]">{{
                           image.rating.toUpperCase()
                         }}</span>
-                        <p v-if="image.aliases?.length">别名：{{ image.aliases.join('、') }}</p>
                         <div class="cw-inline-actions">
                           <button
                             class="cw-btn cw-preview-btn"
                             :class="{ active: ownDetail.pack.preview_image_id === image.id }"
                             type="button"
                             :disabled="busy || ownDetail.pack.preview_image_id === image.id"
-                            @click="setPreviewImage(image.id)"
+                            @click="setCoverImage(image.id)"
                           >
-                            {{ ownDetail.pack.preview_image_id === image.id ? '★ 当前预览' : '☆ 设为预览' }}
+                            {{ ownDetail.pack.preview_image_id === image.id ? '★ 当前封面' : '☆ 设为封面' }}
                           </button>
-                          <button class="cw-btn" type="button" :disabled="busy" @click="beginImageEdit(image)">
-                            修改
+                          <button
+                            v-if="ownDetail.pack.category === '人物'"
+                            class="cw-btn"
+                            type="button"
+                            :disabled="busy"
+                            @click="beginImageEdit(image)"
+                          >
+                            修改类别
                           </button>
                           <button
                             class="cw-btn cw-btn-danger"
@@ -587,6 +615,10 @@
             <span class="cw-detail-description-label">图包简介</span>
             <p>{{ detail.pack.description || '作者没有填写简介。' }}</p>
           </div>
+          <div v-if="detail.pack.category === '人物'" class="cw-pack-identity">
+            <strong>角色：{{ detail.pack.character_name || detail.pack.name }}</strong>
+            <span v-if="detail.pack.aliases?.length">别名：{{ detail.pack.aliases.join('、') }}</span>
+          </div>
           <div class="cw-detail-stats">
             <span>作者：{{ detail.pack.owner_name || '未知作者' }}</span>
             <span>上传于 {{ formatDate(detail.pack.published_at) }}</span>
@@ -619,7 +651,7 @@
             <article v-for="image in detail.images" :key="image.id" class="cw-image-card">
               <WorkshopImage
                 :src="workshopImageUrl(image.id)"
-                :alt="image.character_name || detail.pack.name"
+                :alt="detail.pack.character_name || detail.pack.name"
                 :pending="workshopImagePending(image.id, false)"
                 :failed="workshopImageFailed(image.id, false)"
                 requestable
@@ -633,11 +665,10 @@
                 >18+</span
               >
               <div class="cw-image-info">
-                <strong>{{ image.character_name || detail.pack.name }}</strong
+                <strong>{{ detailImageLabel(image) }}</strong
                 ><span v-if="detail.pack.category === '人物'" :class="['cw-rating', image.rating]">{{
                   image.rating.toUpperCase()
                 }}</span>
-                <p v-if="image.aliases?.length">别名：{{ image.aliases.join('、') }}</p>
               </div>
             </article>
           </div>
@@ -646,20 +677,14 @@
 
       <div v-if="imageEdit" class="cw-suboverlay" @mousedown.self="imageEdit = null">
         <form class="cw-dialog" @submit.prevent="saveImageEdit">
-          <h2>修改图片资料</h2>
-          <label v-if="editPack.category === '人物'"
+          <h2>修改图片类别</h2>
+          <label
             ><span>类别</span
             ><select v-model="imageEdit.rating">
               <option value="sfw">SFW</option>
               <option value="nsfw">NSFW</option>
             </select></label
           >
-          <label v-if="editPack.category === '人物'"
-            ><span>角色名</span><input v-model="imageEdit.characterName" maxlength="60" required
-          /></label>
-          <label v-if="editPack.category === '人物'"
-            ><span>角色别名（可选，逗号分隔）</span><input v-model="imageEdit.aliases"
-          /></label>
           <div class="cw-form-actions">
             <button class="cw-btn" type="button" @click="imageEdit = null">取消</button
             ><button class="cw-btn cw-btn-primary" :disabled="busy">保存</button>
@@ -722,23 +747,35 @@ const loadingWorkshopImages = ref<Set<string>>(new Set());
 const togglingPackIds = ref<Set<string>>(new Set());
 const storageBytes = ref(0);
 const showCreatePack = ref(false);
-const newPack = reactive<{ name: string; description: string; category: PackCategory; matchTerms: string }>({
+type PackEditor = {
+  name: string;
+  description: string;
+  category: PackCategory;
+  characterName: string;
+  aliases: string;
+  matchTerms: string;
+};
+const newPack = reactive<PackEditor>({
   name: '',
   description: '',
   category: '人物',
+  characterName: '',
+  aliases: '',
   matchTerms: '',
 });
-const editPack = reactive<{ name: string; description: string; category: PackCategory; matchTerms: string }>({
+const editPack = reactive<PackEditor>({
   name: '',
   description: '',
   category: '人物',
+  characterName: '',
+  aliases: '',
   matchTerms: '',
 });
-const upload = reactive({ rating: 'sfw', characterName: '', aliases: '' });
+const upload = reactive({ rating: 'sfw' });
 const uploadFiles = ref<File[]>([]);
 const uploadProgress = reactive({ current: 0, total: 0 });
 const uploadInput = ref<HTMLInputElement>();
-const imageEdit = ref<{ id: string; rating: 'sfw' | 'nsfw'; characterName: string; aliases: string } | null>(null);
+const imageEdit = ref<{ id: string; rating: 'sfw' | 'nsfw' } | null>(null);
 const selectedOwnImageIds = ref<Set<string>>(new Set());
 const migrationPackId = ref<string | null>(null);
 const migrationEdit = reactive({ name: '', aliases: '' });
@@ -780,6 +817,25 @@ function aliasTerms(value: string): string[] {
         .filter(Boolean),
     ),
   ];
+}
+
+function imageMatchTerms(pack: PackSummary): string[] {
+  // 抓取词位于图包级。
+  return pack.match_terms ?? [];
+}
+
+function imageLabel(image: PackImage, pack: PackSummary): string {
+  if (pack.category === '人物') return pack.character_name || image.character_name || pack.name;
+  const terms = imageMatchTerms(pack);
+  return terms.length ? `${pack.category === '风景' ? '地点词' : '抓取词'}：${terms.join('、')}` : '尚未设置抓取词';
+}
+
+function ownImageLabel(image: PackImage): string {
+  return ownDetail.value ? imageLabel(image, ownDetail.value.pack) : image.id;
+}
+
+function detailImageLabel(image: PackImage): string {
+  return detail.value ? imageLabel(image, detail.value.pack) : image.id;
 }
 
 function tell(message: string, type: 'success' | 'error' = 'success'): void {
@@ -1103,6 +1159,8 @@ async function loadOwnDetail(packId: string): Promise<void> {
       name: manifest.pack.name,
       description: manifest.pack.description,
       category: manifest.pack.category,
+      characterName: manifest.pack.character_name || manifest.images[0]?.character_name || '',
+      aliases: (manifest.pack.aliases?.length ? manifest.pack.aliases : (manifest.images[0]?.aliases ?? [])).join('，'),
       matchTerms: (manifest.pack.match_terms ?? []).join('，'),
     });
   } catch (error) {
@@ -1174,10 +1232,19 @@ async function createPack(): Promise<void> {
       name: newPack.name,
       description: newPack.description,
       category: newPack.category,
+      character_name: newPack.category === '人物' ? newPack.characterName : '',
+      aliases: newPack.category === '人物' ? aliasTerms(newPack.aliases) : [],
       match_terms: newPack.category === '人物' ? [] : aliasTerms(newPack.matchTerms),
     });
     showCreatePack.value = false;
-    Object.assign(newPack, { name: '', description: '', category: '人物', matchTerms: '' });
+    Object.assign(newPack, {
+      name: '',
+      description: '',
+      category: '人物',
+      characterName: '',
+      aliases: '',
+      matchTerms: '',
+    });
     await loadOwnPacks();
     await loadOwnDetail(created.pack.id);
     tell('图包已创建，请添加图片');
@@ -1196,8 +1263,11 @@ async function savePack(): Promise<void> {
       name: editPack.name,
       description: editPack.description,
       category: editPack.category,
+      character_name: editPack.category === '人物' ? editPack.characterName : '',
+      aliases: editPack.category === '人物' ? aliasTerms(editPack.aliases) : [],
       match_terms: editPack.category === '人物' ? [] : aliasTerms(editPack.matchTerms),
     });
+    await loadOwnDetail(ownDetail.value.pack.id);
     await loadOwnPacks();
     tell('图包资料已更新');
   } catch (error) {
@@ -1207,7 +1277,13 @@ async function savePack(): Promise<void> {
   }
 }
 
-async function setPreviewImage(imageId: string): Promise<void> {
+function setCoverFromSelection(): void {
+  if (!ownDetail.value || selectedOwnImageIds.value.size !== 1) return;
+  const imageId = [...selectedOwnImageIds.value][0];
+  void setCoverImage(imageId);
+}
+
+async function setCoverImage(imageId: string): Promise<void> {
   if (!ownDetail.value || ownDetail.value.pack.preview_image_id === imageId) return;
   const packId = ownDetail.value.pack.id;
   busy.value = true;
@@ -1215,7 +1291,7 @@ async function setPreviewImage(imageId: string): Promise<void> {
     await workshopService.api.updatePack(packId, { preview_image_id: imageId });
     ownDetail.value.pack.preview_image_id = imageId;
     await refreshOwnPackSummaries();
-    tell('预览图已更新');
+    tell('图包封面已更新');
   } catch (error) {
     tell(errorText(error), 'error');
   } finally {
@@ -1285,13 +1361,10 @@ function uploadSelectionBytes(): number {
 }
 async function uploadCurrentImage(): Promise<void> {
   if (!ownDetail.value || !uploadFiles.value.length) return;
-  const aliases = aliasTerms(upload.aliases);
   const packId = ownDetail.value.pack.id;
   const files = [...uploadFiles.value];
   const sharedMetadata = {
     rating: editPack.category === '人物' ? upload.rating : 'sfw',
-    characterName: upload.characterName,
-    aliases,
   };
   const failures: Array<{ name: string; reason: string }> = [];
   let completed = 0;
@@ -1324,12 +1397,7 @@ async function uploadCurrentImage(): Promise<void> {
         console.error(`[创意工坊] 图片“${file.name}”上传失败：`, error);
       }
     }
-    const inheritedCharacterName = editPack.category === '人物' ? upload.characterName.trim() : '';
-    Object.assign(upload, {
-      rating: 'sfw',
-      characterName: inheritedCharacterName,
-      aliases: '',
-    });
+    upload.rating = 'sfw';
     uploadFiles.value = [];
     if (uploadInput.value) uploadInput.value.value = '';
     if (completed > 0) {
@@ -1438,23 +1506,16 @@ function beginImageEdit(image: PackImage): void {
   imageEdit.value = {
     id: image.id,
     rating: image.rating,
-    characterName: image.character_name,
-    aliases: (image.aliases ?? []).join('，'),
   };
 }
 async function saveImageEdit(): Promise<void> {
   if (!ownDetail.value || !imageEdit.value) return;
   const edit = imageEdit.value;
-  const aliases = aliasTerms(edit.aliases);
   busy.value = true;
   try {
-    await workshopService.api.updateImage(ownDetail.value.pack.id, edit.id, {
-      rating: edit.rating,
-      character_name: edit.characterName,
-      aliases,
-    });
+    await workshopService.api.updateImage(ownDetail.value.pack.id, edit.id, { rating: edit.rating });
     const image = ownDetail.value.images.find(item => item.id === edit.id);
-    if (image) Object.assign(image, { rating: edit.rating, character_name: edit.characterName, aliases });
+    if (image) image.rating = edit.rating;
     imageEdit.value = null;
     await refreshOwnPackSummaries();
     tell('图片资料已更新');
