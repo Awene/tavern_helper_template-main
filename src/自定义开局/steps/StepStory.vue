@@ -31,7 +31,7 @@
           <div class="xs-story-head">
             <span class="xs-story-name">{{ store.selection.customStory.name }}</span>
             <span class="xs-pill xs-pill-cinnabar">自创</span>
-            <span class="xs-pill">{{ store.selection.customStory.类型 }}</span>
+            <span v-if="customKind" class="xs-pill">{{ customKind }}</span>
           </div>
           <p v-if="store.selection.customStory.desc" class="xs-story-desc">
             {{ store.selection.customStory.desc }}
@@ -62,12 +62,6 @@
             maxlength="24"
             placeholder="为这段开局命名"
           />
-          <label>分类</label>
-          <select v-model="draft.类型">
-            <option value="宗门">宗门</option>
-            <option value="散修">散修</option>
-            <option value="特殊">特殊</option>
-          </select>
         </div>
         <div class="xs-custom-edit-row">
           <label>简述</label>
@@ -243,6 +237,7 @@ import type { CustomStory, StoryKind, StoryOption, SmallRealm } from '../types';
 import {
   BIG_REALMS,
   SMALL_REALMS,
+  deriveCustomStoryKind,
   describeConstraints,
   describeSettings,
   isCustomStoryValid,
@@ -316,6 +311,13 @@ const hasValidSelectedStory = computed(() => {
   return isStoryAvailable(s, store.selection);
 });
 
+// 自创剧本不设「分类」；卡片上按宗门字段推导展示（散修→散修，其余→宗门）
+const customKind = computed(() =>
+  store.selection.customStory
+    ? deriveCustomStoryKind(store.selection.customStory.settings.宗门)
+    : '',
+);
+
 // —— 自创剧本编辑器 ——
 const editorOpen = ref(false);
 
@@ -323,7 +325,6 @@ interface Draft {
   name: string;
   desc: string;
   body: string;
-  类型: StoryKind;
   year: number;
   month: number;
   day: number;
@@ -337,7 +338,6 @@ const draft = reactive<Draft>({
   name: '',
   desc: '',
   body: '',
-  类型: '散修',
   year: 7200,
   month: 1,
   day: 1,
@@ -351,7 +351,6 @@ function resetDraft() {
   draft.name = '';
   draft.desc = '';
   draft.body = '';
-  draft.类型 = '散修';
   draft.year = 7200;
   draft.month = 1;
   draft.day = 1;
@@ -371,7 +370,6 @@ function openEdit() {
   draft.name = c.name;
   draft.desc = c.desc || '';
   draft.body = c.body;
-  draft.类型 = c.类型;
   draft.year = c.settings.时间.年;
   draft.month = c.settings.时间.月;
   draft.day = c.settings.时间.日;
@@ -393,7 +391,7 @@ const canSave = computed(() => {
     name: draft.name.trim(),
     desc: draft.desc.trim() || undefined,
     body: draft.body.trim(),
-    类型: draft.类型,
+    类型: deriveCustomStoryKind(draft.sect),
     settings: {
       时间: {
         年: draft.year,
@@ -413,7 +411,7 @@ function onSave() {
     name: draft.name.trim(),
     desc: draft.desc.trim() || undefined,
     body: draft.body.trim(),
-    类型: draft.类型,
+    类型: deriveCustomStoryKind(draft.sect),
     settings: {
       时间: {
         年: draft.year,

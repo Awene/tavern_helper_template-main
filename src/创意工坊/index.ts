@@ -20,12 +20,23 @@ function bootWorkshop(): void {
   const app = createApp(App).use(createPinia());
   const mount = hostDocument.createElement('div');
   mount.dataset.cultivationWorkshop = 'root';
+  // 酒馆在移动端可能把脚本放进多层 iframe。显式建立一个完整视口的
+  // 挂载层，避免宿主页面针对普通 div 的布局规则把弹窗压成一条边框。
+  mount.style.cssText = [
+    'position:fixed',
+    'inset:0',
+    'width:100vw',
+    'height:100vh',
+    'height:100dvh',
+    'z-index:2147483200',
+    'pointer-events:none',
+  ].join(';');
   hostDocument.body.appendChild(mount);
   const transplantedStyles = transplantStyles(hostDocument);
   app.mount(mount);
 
   const bridge: WorkshopBridge = {
-    version: '0.4.0',
+    version: '0.4.3',
     open: openWorkshop,
     close: closeWorkshop,
     matchImages: async request => toCompatibleMatchResult(await workshopService.matchImages(request)),
@@ -71,7 +82,9 @@ function bootWorkshop(): void {
 function toCompatibleMatchResult(player: WorkshopPlayerData | null): WorkshopMatchResult | null {
   if (!player) return null;
   const preferredPack =
-    player.packs.find(pack => pack.id === player.preferredPackId && pack.images.some(image => image.rating === player.initialRating)) ??
+    player.packs.find(
+      pack => pack.id === player.preferredPackId && pack.images.some(image => image.rating === player.initialRating),
+    ) ??
     player.packs.find(pack => pack.images.some(image => image.rating === player.initialRating)) ??
     player.packs[0];
   const image = preferredPack?.images.find(image => image.rating === player.initialRating) ?? preferredPack?.images[0];
@@ -91,12 +104,23 @@ function toCompatibleMatchResult(player: WorkshopPlayerData | null): WorkshopMat
 }
 
 function resolveHostWindow(): Window {
-  try {
-    if (window.parent && window.parent !== window && window.parent.document?.body) return window.parent;
-  } catch (error) {
-    console.warn('[创意工坊] 无法访问酒馆父页面，将使用当前脚本页面:', error);
+  let hostWindow: Window = window;
+  let candidate: Window = window;
+
+  // 不能只取直接父窗口：移动端酒馆可能存在“脚本 iframe → 中间 iframe →
+  // 酒馆主页面”的结构，中间层的可视高度有时只有几像素。
+  while (candidate.parent && candidate.parent !== candidate) {
+    try {
+      const parentWindow = candidate.parent;
+      if (!parentWindow.document?.body) break;
+      hostWindow = parentWindow;
+      candidate = parentWindow;
+    } catch (error) {
+      console.warn('[创意工坊] 已到达不可跨域访问的父页面，将使用最高可访问页面:', error);
+      break;
+    }
   }
-  return window;
+  return hostWindow;
 }
 
 function transplantStyles(hostDocument: Document): HTMLStyleElement[] {

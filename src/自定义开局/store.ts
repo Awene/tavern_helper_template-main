@@ -6,6 +6,7 @@ import {
   canToggleElement,
   computeCustomItemCost,
   computeRootCost,
+  deriveCustomStoryKind,
   difficulties,
   emptyPhysiqueChoice,
   emptyRootChoice,
@@ -56,6 +57,10 @@ const normalizeSelection = (raw: any): Selection => {
     customStory = raw.customStory;
   } else if (Array.isArray(raw.customStories) && raw.customStories.length > 0) {
     customStory = raw.customStories[0];
+  }
+  // 自创剧本不设「分类」：读取时按宗门字段归一化，清洗历史遗留的「特殊」等值
+  if (customStory && typeof customStory.settings?.宗门 === 'string') {
+    customStory = { ...customStory, 类型: deriveCustomStoryKind(customStory.settings.宗门) };
   }
   return {
     ...base,
