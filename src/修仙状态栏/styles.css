@@ -59,17 +59,34 @@
     0 0 0 1px var(--xy-scroll-edge);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  transition: padding 0.25s ease, background 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    padding 0.25s ease,
+    background 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 /* SVG 装饰：远山 / 仙鹤 主题感知 */
-.xy-mt-stop-1 { stop-color: var(--xy-deco-mountain-1); }
-.xy-mt-stop-2 { stop-color: var(--xy-deco-mountain-2); }
-.xy-mt-stop-3 { stop-color: var(--xy-deco-mountain-3); }
-.xy-mt-stop-4 { stop-color: var(--xy-deco-mountain-4); }
-.xy-crane-body { fill: var(--xy-deco-crane-1); }
-.xy-crane-body--soft { fill: var(--xy-deco-crane-2); }
-.xy-crane-tail { stroke: var(--xy-deco-crane-1); }
+.xy-mt-stop-1 {
+  stop-color: var(--xy-deco-mountain-1);
+}
+.xy-mt-stop-2 {
+  stop-color: var(--xy-deco-mountain-2);
+}
+.xy-mt-stop-3 {
+  stop-color: var(--xy-deco-mountain-3);
+}
+.xy-mt-stop-4 {
+  stop-color: var(--xy-deco-mountain-4);
+}
+.xy-crane-body {
+  fill: var(--xy-deco-crane-1);
+}
+.xy-crane-body--soft {
+  fill: var(--xy-deco-crane-2);
+}
+.xy-crane-tail {
+  stroke: var(--xy-deco-crane-1);
+}
 .xy-scroll-collapsed {
   padding: 8px 14px;
 }
@@ -197,7 +214,9 @@
   cursor: pointer;
   flex: 0 0 auto;
   opacity: 0.55;
-  transition: opacity 0.15s ease, color 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease;
   vertical-align: middle;
 }
 .xy-edit-pencil:hover {
@@ -302,7 +321,9 @@
   font-size: 14px;
   line-height: 1;
   opacity: 0.5;
-  transition: color 0.15s ease, opacity 0.15s ease;
+  transition:
+    color 0.15s ease,
+    opacity 0.15s ease;
   vertical-align: middle;
 }
 .xy-effect-del:hover {
@@ -678,7 +699,9 @@
   color: var(--xy-ink);
   position: relative;
   cursor: default;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   box-shadow: 0 3px 10px -4px rgba(42, 37, 32, 0.22);
 }
 .xy-user-avatar.has-img {
@@ -785,13 +808,20 @@
   font-size: 12.5px;
 }
 
-/* 资源条 */
+/* 资源 / 灵根 / 体质总览 */
+.xy-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.82fr) minmax(390px, 1.18fr);
+  gap: 10px;
+  align-items: stretch;
+  margin-top: 10px;
+}
 .xy-resources {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 6px;
-  margin-top: 10px;
-  padding: 8px 12px;
+  gap: 5px;
+  margin-top: 0;
+  padding: 9px 12px 8px;
   background: var(--xy-glass);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -799,10 +829,11 @@
   border-radius: 6px;
 }
 .xy-resource-extra {
-  margin-top: 0;
+  margin-top: 1px;
   display: flex;
+  justify-content: flex-end;
   gap: 12px;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--xy-ink-soft);
 }
 .xy-extra-item i {
@@ -813,27 +844,34 @@
 }
 
 .xy-bar {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  min-height: 23px;
 }
 .xy-bar-head {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11.5px;
+  display: contents;
 }
 .xy-bar-label {
+  grid-column: 1;
   font-family: var(--xy-font-display);
-  letter-spacing: 4px;
+  font-size: 12px;
+  letter-spacing: 3px;
   color: var(--xy-ink);
 }
 .xy-bar-num {
+  grid-column: 3;
+  white-space: nowrap;
+  font-size: 10.5px;
   color: var(--xy-ink-mute);
   font-variant-numeric: tabular-nums;
 }
 .xy-bar-track {
+  grid-column: 2;
+  grid-row: 1;
   position: relative;
-  height: 6px;
+  height: 5px;
   background: var(--xy-tint-ink-strong);
   border-radius: 3px;
   overflow: hidden;
@@ -866,6 +904,221 @@
 .xy-bar-spirit {
   --bar-from: #3d5a8a;
   --bar-to: #6f9bd0;
+}
+
+.xy-traits-panel {
+  min-width: 0;
+  padding: 8px 9px;
+  background: var(--xy-glass);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--xy-line-gold);
+  border-radius: 7px;
+  box-shadow: inset 0 1px var(--xy-glass-strong);
+}
+.xy-trait-cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.24fr);
+  gap: 7px;
+}
+.xy-overview-trait {
+  min-width: 0;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px 7px;
+  padding: 7px 8px;
+  text-align: left;
+  color: var(--xy-ink);
+  background: var(--xy-glass);
+  border: 1px solid var(--xy-line);
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.18s ease;
+}
+.xy-overview-trait:hover,
+.xy-overview-trait.active {
+  border-color: var(--xy-gold);
+  background: var(--xy-paper-soft);
+}
+.xy-overview-trait:hover {
+  transform: translateY(-1px);
+}
+.xy-trait-kicker,
+.xy-status-label {
+  flex: 0 0 auto;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--xy-gold-deep);
+}
+.xy-overview-trait > strong {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: var(--xy-font-display);
+  font-size: 14px;
+  letter-spacing: 1px;
+  font-weight: 500;
+}
+.xy-trait-rank,
+.xy-trait-effect-count {
+  flex: 0 0 auto;
+  padding: 1px 5px;
+  border: 1px solid var(--xy-line-gold);
+  border-radius: 7px;
+  background: var(--xy-paper-warm);
+  color: var(--xy-gold-deep);
+  font-size: 8px;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+.xy-trait-elements {
+  margin-left: auto;
+  display: flex;
+  gap: 3px;
+}
+.xy-trait-attrs {
+  flex: 1 0 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 1px;
+}
+.xy-trait-attrs > span {
+  text-align: center;
+  font-size: 8px;
+  line-height: 1.25;
+  color: var(--xy-ink-mute);
+  border-left: 1px solid var(--xy-line);
+}
+.xy-trait-attrs > span:first-child {
+  border-left: 0;
+}
+.xy-trait-attrs b {
+  display: block;
+  font-family: var(--xy-font-display);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--xy-ink);
+}
+.xy-overview-statuses {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 7px;
+  padding: 0 2px;
+}
+.xy-status-icon {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 50%;
+  font-family: var(--xy-font-display);
+  font-size: 11px;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.xy-status-icon.xy-buff-增益 {
+  color: var(--xy-jade-deep);
+  border: 1px solid color-mix(in srgb, var(--xy-jade) 60%, transparent);
+  background: color-mix(in srgb, var(--xy-jade) 13%, var(--xy-paper-soft));
+}
+.xy-status-icon.xy-buff-减益 {
+  color: var(--xy-cinnabar-deep);
+  border: 1px solid color-mix(in srgb, var(--xy-cinnabar) 50%, transparent);
+  background: var(--xy-tint-cinnabar-soft);
+}
+.xy-status-icon.xy-buff-特殊 {
+  color: var(--xy-gold-deep);
+  border: 1px solid color-mix(in srgb, var(--xy-gold) 55%, transparent);
+  background: var(--xy-tint-gold-soft);
+}
+.xy-status-icon:hover,
+.xy-status-icon.active {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 2px var(--xy-tint-gold-glow),
+    0 3px 8px rgba(42, 37, 32, 0.13);
+}
+.xy-status-icon small {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  min-width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  border-radius: 7px;
+  border: 1px solid var(--xy-paper-soft);
+  background: var(--xy-cinnabar);
+  color: var(--xy-paper);
+  font-family: var(--xy-font-body);
+  font-size: 8px;
+  line-height: 1;
+}
+.xy-trait-detail,
+.xy-overview-buff-detail {
+  position: relative;
+  margin-top: 7px;
+  padding: 7px 32px 7px 9px;
+  border: 1px solid var(--xy-line);
+  border-left: 3px solid var(--xy-gold-deep);
+  border-radius: 5px;
+  background: var(--xy-paper-warm);
+  animation: xy-collapse-in 0.2s ease-out;
+}
+.xy-trait-detail .xy-root-name,
+.xy-trait-detail .xy-body-name {
+  margin-bottom: 5px;
+}
+.xy-trait-detail .xy-body-effects,
+.xy-trait-detail .xy-body-essence,
+.xy-trait-detail .xy-body-genital {
+  margin-top: 6px;
+}
+.xy-trait-detail-close {
+  position: absolute;
+  top: 5px;
+  right: 7px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--xy-ink-mute);
+  font-family: var(--xy-font-display);
+  font-size: 16px;
+  cursor: pointer;
+}
+.xy-overview-buff-detail {
+  font-size: 11px;
+}
+.xy-overview-buff-detail .xy-buff-detail-head {
+  margin-bottom: 2px;
+}
+.xy-buff-detail-delete {
+  margin-left: auto;
+  padding: 1px 6px;
+  border: 1px solid var(--xy-cinnabar);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--xy-cinnabar);
+  font-size: 9px;
+  cursor: pointer;
 }
 
 /* 状态横条 */
@@ -1437,11 +1690,200 @@ button.xy-card-title-clickable.open .xy-card-summary {
   background: var(--xy-tint-cinnabar-strong);
   color: var(--xy-cinnabar);
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 .xy-craft-btn:hover {
   background: var(--xy-cinnabar);
   color: var(--xy-paper);
+}
+
+/* 技艺页：印章环代替横向进度条，数值使用 formatSkillNum 压缩显示 */
+.xy-skill-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.xy-skill-panel {
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid var(--xy-line-gold);
+  border-radius: 8px;
+  background: var(--xy-glass);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: var(--xy-shadow);
+}
+.xy-skill-panel .xy-skill-group-title {
+  margin: 0 2px 7px;
+  padding-left: 0;
+  border-left: 0;
+  color: var(--xy-gold-deep);
+  font-size: 13px;
+  letter-spacing: 3px;
+}
+.xy-skill-panel .xy-skill-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+.xy-skill-panel .xy-skill-wrap {
+  display: contents;
+}
+.xy-skill-panel .xy-skill-wrap:has(.xy-skill.open) {
+  display: block;
+  grid-column: 1 / -1;
+}
+.xy-skill-panel .xy-skill {
+  position: relative;
+  min-width: 0;
+  min-height: 72px;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  gap: 2px 7px;
+  align-items: center;
+  padding: 7px;
+  overflow: hidden;
+  border: 1px solid var(--xy-line);
+  border-radius: 7px;
+  background: var(--xy-glass);
+  font-size: 12px;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+.xy-skill-panel .xy-skill:hover,
+.xy-skill-panel .xy-skill.open {
+  border-color: var(--xy-gold);
+  box-shadow: 0 4px 12px -6px rgba(89, 64, 28, 0.3);
+}
+.xy-skill-panel .xy-skill:hover {
+  transform: translateY(-1px);
+}
+.xy-skill-panel .xy-skill-toggle {
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  gap: 2px 7px;
+  align-items: center;
+  padding: 0;
+}
+.xy-skill-seal {
+  --skill-pct: 2%;
+  grid-row: 1 / 3;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: conic-gradient(var(--xy-cinnabar) var(--skill-pct), var(--xy-line) 0);
+  box-shadow: inset 0 0 0 1px var(--xy-tint-cinnabar-border);
+}
+.xy-skill-seal > span {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--xy-paper-soft);
+  color: var(--xy-cinnabar);
+  font-family: var(--xy-font-display);
+  font-size: 14px;
+}
+.xy-skill-panel .xy-skill-name {
+  align-self: end;
+  min-width: 0;
+  padding-right: 2px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--xy-ink);
+  font-family: var(--xy-font-display);
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+.xy-skill-panel .xy-skill-num {
+  position: relative;
+  z-index: 2;
+  grid-column: 2;
+  grid-row: 2;
+  align-self: start;
+  min-width: 0;
+  max-width: 100%;
+  text-align: left;
+  color: var(--xy-gold-deep);
+  font-family: var(--xy-font-display);
+  font-size: 14px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.xy-skill-panel .xy-skill-num .xy-edit-input {
+  width: 100%;
+  min-width: 0;
+}
+.xy-skill-panel .xy-skill-recipe-count {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 2;
+  padding: 1px 5px;
+  border: 1px solid var(--xy-line-gold);
+  border-radius: 7px;
+  background: var(--xy-paper-warm);
+  color: var(--xy-gold-deep);
+  font-size: 8px;
+  line-height: 1.25;
+}
+.xy-skill-panel .xy-skill:has(.xy-skill-recipe-count) .xy-skill-name {
+  padding-right: 34px;
+}
+.xy-skill-panel .xy-recipe-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin: 7px 0 0;
+  padding: 7px 0 0;
+  border: 0;
+  border-top: 1px dashed var(--xy-line-gold);
+  border-radius: 0;
+  background: transparent;
+}
+.xy-skill-panel .xy-recipe-card {
+  min-width: 0;
+  padding: 7px 8px;
+}
+.xy-skill-panel .xy-recipe-card .xy-item-name {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 11px;
+}
+.xy-skill-panel .xy-recipe-card .xy-item-desc,
+.xy-skill-panel .xy-recipe-card .xy-effect-list {
+  font-size: 9.5px;
+  line-height: 1.4;
+}
+.xy-skill-panel .xy-recipe-card .xy-item-meta,
+.xy-skill-panel .xy-recipe-card .xy-item-tags {
+  gap: 3px;
+}
+.xy-skill-panel .xy-craft-btn {
+  min-width: 42px;
+  padding: 2px 7px;
+  border-color: var(--xy-line-gold);
+  border-radius: 9px;
+  background: var(--xy-paper-warm);
+  color: var(--xy-cinnabar);
+  font-family: var(--xy-font-body);
+  font-size: 9px;
+  line-height: 1.2;
+  letter-spacing: 1px;
 }
 
 /* 状态详情 */
@@ -1531,7 +1973,9 @@ button.xy-card-title-clickable.open .xy-card-summary {
   border: 1px solid var(--xy-line-gold);
   border-radius: 6px;
   padding: 12px 14px;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
 }
 .xy-art:hover {
   transform: translateY(-2px);
@@ -1540,7 +1984,9 @@ button.xy-card-title-clickable.open .xy-card-summary {
 .xy-art-active {
   background: linear-gradient(135deg, var(--xy-tint-gold-bold), var(--xy-glass-strong));
   border-color: var(--xy-gold);
-  box-shadow: 0 0 0 1px var(--xy-tint-gold-glow), 0 4px 16px -4px var(--xy-tint-gold-glow);
+  box-shadow:
+    0 0 0 1px var(--xy-tint-gold-glow),
+    0 4px 16px -4px var(--xy-tint-gold-glow);
 }
 .xy-art-active::after {
   content: '运';
@@ -1764,7 +2210,9 @@ button.xy-card-title-clickable.open .xy-card-summary {
   border: 1px solid var(--xy-line);
   border-radius: 6px;
   padding: 10px 12px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 .xy-item:hover {
   transform: translateY(-1px);
@@ -2061,13 +2509,23 @@ button.xy-card-title-clickable.open .xy-card-summary {
   letter-spacing: 1px;
 }
 /* 按性别(由 元阴/元阳 字段存在与否判定)给 NPC 名字着色 */
-.xy-npc-name--female { color: #8b1a1a; }
-.xy-npc-name--male { color: #1e3a8a; }
-.xy-npc-name--other { color: var(--xy-ink); }
+.xy-npc-name--female {
+  color: #8b1a1a;
+}
+.xy-npc-name--male {
+  color: #1e3a8a;
+}
+.xy-npc-name--other {
+  color: var(--xy-ink);
+}
 :root[data-theme='dark'] .xy-npc-name--female,
-html[data-theme='dark'] .xy-npc-name--female { color: #e07878; }
+html[data-theme='dark'] .xy-npc-name--female {
+  color: #e07878;
+}
 :root[data-theme='dark'] .xy-npc-name--male,
-html[data-theme='dark'] .xy-npc-name--male { color: #8aa8e0; }
+html[data-theme='dark'] .xy-npc-name--male {
+  color: #8aa8e0;
+}
 .xy-npc-realm {
   font-size: 12px;
   color: var(--xy-cinnabar);
@@ -2779,7 +3237,9 @@ html[data-theme='dark'] .xy-npc-name--male { color: #8aa8e0; }
 /* ============ Tab transition ============ */
 .xy-fade-enter-active,
 .xy-fade-leave-active {
-  transition: opacity 0.35s ease, transform 0.35s ease;
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease;
 }
 .xy-fade-enter-from {
   opacity: 0;
@@ -2788,6 +3248,120 @@ html[data-theme='dark'] .xy-npc-name--male { color: #8aa8e0; }
 .xy-fade-leave-to {
   opacity: 0;
   transform: translateY(-8px);
+}
+
+/* 状态总览与技艺页响应式 */
+@media (max-width: 700px) {
+  .xy-overview-grid,
+  .xy-skill-layout {
+    grid-template-columns: 1fr;
+  }
+  .xy-overview-grid {
+    gap: 7px;
+  }
+  .xy-skill-layout {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 520px) {
+  .xy-resources {
+    padding: 8px 10px 7px;
+  }
+  .xy-bar {
+    grid-template-columns: 35px minmax(0, 1fr) auto;
+    gap: 6px;
+    min-height: 22px;
+  }
+  .xy-bar-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+  }
+  .xy-bar-num {
+    font-size: 10px;
+  }
+  .xy-traits-panel {
+    padding: 7px;
+  }
+  .xy-trait-cards {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: 6px;
+  }
+  .xy-overview-trait {
+    min-height: 58px;
+    padding: 7px;
+    gap: 4px 5px;
+  }
+  .xy-overview-trait > strong {
+    font-size: 13px;
+  }
+  .xy-trait-rank {
+    order: 3;
+  }
+  .xy-trait-elements {
+    order: 4;
+  }
+  .xy-status-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 12px;
+  }
+  .xy-trait-detail,
+  .xy-overview-buff-detail {
+    padding: 7px 30px 7px 8px;
+  }
+  .xy-skill-panel {
+    padding: 8px;
+  }
+  .xy-skill-panel .xy-skill-grid {
+    gap: 5px;
+  }
+  .xy-skill-panel .xy-skill {
+    min-height: 66px;
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 2px 5px;
+    padding: 6px 5px;
+  }
+  .xy-skill-panel .xy-skill-toggle {
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 2px 5px;
+  }
+  .xy-skill-seal {
+    width: 34px;
+    height: 34px;
+  }
+  .xy-skill-seal > span {
+    width: 27px;
+    height: 27px;
+    font-size: 12px;
+  }
+  .xy-skill-panel .xy-skill-name {
+    font-size: 11px;
+  }
+  .xy-skill-panel .xy-skill-num {
+    font-size: 12px;
+  }
+  .xy-skill-panel .xy-skill-recipe-count {
+    top: 3px;
+    right: 3px;
+    padding: 1px 4px;
+    font-size: 7px;
+  }
+  .xy-skill-panel .xy-skill:has(.xy-skill-recipe-count) .xy-skill-name {
+    padding-right: 28px;
+  }
+  .xy-skill-panel .xy-recipe-list {
+    grid-template-columns: 1fr;
+  }
+  .xy-skill-panel .xy-recipe-card {
+    padding: 7px 8px;
+  }
+  .xy-skill-panel .xy-craft-btn {
+    min-width: 42px;
+    padding: 3px 7px;
+    font-size: 9px;
+    line-height: 1.2;
+  }
 }
 
 /* 响应式：小屏 */
@@ -2828,7 +3402,10 @@ html[data-theme='dark'] .xy-npc-name--male { color: #8aa8e0; }
   font-size: 13px;
   letter-spacing: 2px;
   cursor: pointer;
-  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.15s ease;
   box-shadow: var(--xy-shadow);
 }
 .xy-map-current:hover {
@@ -2932,7 +3509,10 @@ html[data-theme='dark'] .xy-npc-name--male { color: #8aa8e0; }
   font-size: 12px;
   letter-spacing: 1px;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 .xy-map-tree-region:hover {
   background: var(--xy-paper-warm);
@@ -3013,7 +3593,10 @@ html[data-theme='dark'] .xy-npc-name--male { color: #8aa8e0; }
   border: 1px solid var(--xy-line-gold);
   color: var(--xy-ink-soft);
   cursor: pointer;
-  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    background 0.2s ease;
 }
 .xy-map-stage-btn:hover {
   border-color: var(--xy-cinnabar);

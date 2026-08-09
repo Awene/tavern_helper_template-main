@@ -26,11 +26,8 @@ export const state = reactive({
   appCollapsed: false,
   editMode: false,
   settingsOpen: false,
-  userRootOpen: false,
-  userBodyOpen: false,
-  userSkillOpen: false,
-  userBuffOpen: false,
-  // 道身 · 技艺下挂的配方面板展开状态(按技艺名 key)
+  overviewOpen: null as 'root' | 'body' | null,
+  // 技艺下挂的配方面板展开状态(按技艺名 key)
   skillRecipeOpen: {} as Record<string, boolean>,
   // 性器折叠状态(按角色 key：'user'=主角 / NPC名=对应NPC；默认 false=折叠)
   genitalOpen: {} as Record<string, boolean>,
@@ -44,7 +41,7 @@ const npcAvatars = reactive<Record<string, string>>({});
 
 // ============ 常量 ============
 export const tabs = [
-  { label: '道身', icon: '☯' },
+  { label: '技艺', icon: '技' },
   { label: '功法', icon: '卷' },
   { label: '储物', icon: '囊' },
   { label: '关系', icon: '缘' },
@@ -92,8 +89,7 @@ const SUB_RANKS: Record<string, number> = {
 const EXCLUSIVE_ART_TYPES = ['心法', '护体', '身法'] as const;
 
 // ============ 通用辅助函数（不依赖 store）============
-export const barPct = (cur: number, total: number) =>
-  Math.max(0, Math.min(100, (cur / Math.max(total, 1)) * 100));
+export const barPct = (cur: number, total: number) => Math.max(0, Math.min(100, (cur / Math.max(total, 1)) * 100));
 
 // 主境界 L (0~9)：用于按《领悟规则》计算技艺上限 Max_S = 10^(L+1)
 export const realmLevel = (realm: string): number => Math.floor(realmScore(realm) / 10);
@@ -130,16 +126,18 @@ export const npcBarPct = (pool?: { 现值?: number; 上限?: number }) => {
 };
 
 export const elColor = (el: string) =>
-  ({
-    金: 'var(--xy-el-jin)',
-    木: 'var(--xy-el-mu)',
-    水: 'var(--xy-el-shui)',
-    火: 'var(--xy-el-huo)',
-    土: 'var(--xy-el-tu)',
-    阴: 'var(--xy-el-yin)',
-    阳: 'var(--xy-el-yang)',
-    混沌: 'var(--xy-el-hundun)',
-  } as Record<string, string>)[el] || 'var(--xy-ink)';
+  (
+    ({
+      金: 'var(--xy-el-jin)',
+      木: 'var(--xy-el-mu)',
+      水: 'var(--xy-el-shui)',
+      火: 'var(--xy-el-huo)',
+      土: 'var(--xy-el-tu)',
+      阴: 'var(--xy-el-yin)',
+      阳: 'var(--xy-el-yang)',
+      混沌: 'var(--xy-el-hundun)',
+    }) as Record<string, string>
+  )[el] || 'var(--xy-ink)';
 
 export const avatarChar = (name: string) => {
   const m = name.match(/^([^\s【[]+)/);
@@ -211,8 +209,7 @@ export const filterRecord = <T extends Record<string, any>>(
   return out;
 };
 
-export const canControlNpc = (npc: any): boolean =>
-  !!npc?.道侣 || (npc?.好感度 ?? 0) > 80;
+export const canControlNpc = (npc: any): boolean => !!npc?.道侣 || (npc?.好感度 ?? 0) > 80;
 
 export const isArtEffectivelyActive = (npc: any, artName: string, art: any): boolean => {
   if (canControlNpc(npc)) return !!art?.使用中;
@@ -234,17 +231,12 @@ export const isArtEffectivelyActive = (npc: any, artName: string, art: any): boo
   return bestName === artName;
 };
 
-export const hasSkills = (npc: any) =>
-  !_.isEmpty(npc?.技艺?.生产类) || !_.isEmpty(npc?.技艺?.战斗类);
+export const hasSkills = (npc: any) => !_.isEmpty(npc?.技艺?.生产类) || !_.isEmpty(npc?.技艺?.战斗类);
 
 export const hasStorage = (npc: any) => {
   if (!npc) return false;
   return (
-    (npc.灵石 ?? 0) > 0 ||
-    !_.isEmpty(npc.物品) ||
-    !_.isEmpty(npc.装备) ||
-    !_.isEmpty(npc.傀儡) ||
-    !_.isEmpty(npc.灵兽)
+    (npc.灵石 ?? 0) > 0 || !_.isEmpty(npc.物品) || !_.isEmpty(npc.装备) || !_.isEmpty(npc.傀儡) || !_.isEmpty(npc.灵兽)
   );
 };
 
@@ -268,8 +260,7 @@ export const cycleEssence = (obj: any, key: '元阳' | '元阴') => {
   const v = obj.体质[key];
   obj.体质[key] = v === true ? false : v === false ? null : true;
 };
-export const essenceState = (v: any): string =>
-  v === true ? '尚存' : v === false ? '已损' : '无（不存在）';
+export const essenceState = (v: any): string => (v === true ? '尚存' : v === false ? '已损' : '无（不存在）');
 export const essenceMark = (v: any): string => (v === true ? '✓' : v === false ? '✗' : '–');
 
 // ============ 物品标签解析 (形如 "所属技艺:炼丹"、"炼制难度:5") ============
@@ -288,10 +279,10 @@ export const parseItemTags = (tags: any): Array<{ label: string; value: string }
 // 从 标签数组中取出指定 label 的 value 字符串(找不到返回 null)
 export const getTagValue = (tags: any, label: string): string | null => {
   const parsed = parseItemTags(tags);
-  return parsed.find((t) => t.label === label)?.value ?? null;
+  return parsed.find(t => t.label === label)?.value ?? null;
 };
 
-// ============ 道身 · 技艺 - 配方筛选 + 制造按钮 ============
+// ============ 技艺 - 配方筛选 + 制造按钮 ============
 // 给定技艺名(如 '炼丹'), 返回 user.物品 里 类型='配方' 且 标签.所属技艺=该技艺 的所有条目
 export const recipesForSkill = (
   items: Record<string, any> | undefined,
@@ -409,8 +400,7 @@ export const setEquipStat = (eq: any, stat: '攻击力' | '防御力', value: nu
 };
 
 // ============ NPC 详情区折叠 ============
-export const isSectionOpen = (name: string, section: string): boolean =>
-  !!npcSectionOpen[name]?.[section];
+export const isSectionOpen = (name: string, section: string): boolean => !!npcSectionOpen[name]?.[section];
 export const toggleSection = (name: string, section: string) => {
   if (!npcSectionOpen[name]) npcSectionOpen[name] = {};
   npcSectionOpen[name][section] = !npcSectionOpen[name][section];
@@ -534,13 +524,29 @@ const idbDeleteAvatar = async (name: string): Promise<void> => {
 const migrateAvatarFromLocalStorage = async (name: string): Promise<AvatarRecord | null> => {
   let thumb = '';
   let hi = '';
-  try { thumb = localStorage.getItem(NPC_AVATAR_KEY(name)) || ''; } catch { /* */ }
-  try { hi = localStorage.getItem(NPC_AVATAR_HI_KEY(name)) || ''; } catch { /* */ }
+  try {
+    thumb = localStorage.getItem(NPC_AVATAR_KEY(name)) || '';
+  } catch {
+    /* */
+  }
+  try {
+    hi = localStorage.getItem(NPC_AVATAR_HI_KEY(name)) || '';
+  } catch {
+    /* */
+  }
   if (!thumb && !hi) return null;
   const rec: AvatarRecord = { thumb: thumb || hi, hi: hi || thumb };
   if (await idbPutAvatar(name, rec)) {
-    try { localStorage.removeItem(NPC_AVATAR_KEY(name)); } catch { /* */ }
-    try { localStorage.removeItem(NPC_AVATAR_HI_KEY(name)); } catch { /* */ }
+    try {
+      localStorage.removeItem(NPC_AVATAR_KEY(name));
+    } catch {
+      /* */
+    }
+    try {
+      localStorage.removeItem(NPC_AVATAR_HI_KEY(name));
+    } catch {
+      /* */
+    }
   }
   return rec;
 };
@@ -625,7 +631,11 @@ export const onAvatarFileChange = async (e: Event) => {
         try {
           localStorage.setItem(NPC_AVATAR_HI_KEY(name), hi);
         } catch (quotaErr) {
-          try { localStorage.removeItem(NPC_AVATAR_HI_KEY(name)); } catch { /* */ }
+          try {
+            localStorage.removeItem(NPC_AVATAR_HI_KEY(name));
+          } catch {
+            /* */
+          }
           console.warn('[修仙状态栏] 高清头像存储失败（容量不足），仅保留缩略图', quotaErr);
         }
       } catch (err) {
@@ -643,8 +653,16 @@ export const onAvatarFileChange = async (e: Event) => {
 export const clearNpcAvatar = (name: string) => {
   void idbDeleteAvatar(name);
   // 一并清理可能残留的旧版 localStorage 数据。
-  try { localStorage.removeItem(NPC_AVATAR_KEY(name)); } catch { /* */ }
-  try { localStorage.removeItem(NPC_AVATAR_HI_KEY(name)); } catch { /* */ }
+  try {
+    localStorage.removeItem(NPC_AVATAR_KEY(name));
+  } catch {
+    /* */
+  }
+  try {
+    localStorage.removeItem(NPC_AVATAR_HI_KEY(name));
+  } catch {
+    /* */
+  }
   npcAvatars[name] = '';
 };
 

@@ -26,7 +26,7 @@ export const state = reactive({
 
 // =============== 静态常量 ===============
 export const tabs = [
-  { label: '道身', icon: '☯' },
+  { label: '技艺', icon: '技' },
   { label: '功法', icon: '卷' },
   { label: '储物', icon: '囊' },
   { label: '关系', icon: '缘' },
@@ -79,20 +79,21 @@ const NPC_AVATAR_HI_KEY = (name: string) => `xy-npc-avatar-hi::${name}`;
 
 // =============== 通用辅助 ===============
 export const elColor = (el: string) =>
-  ({
-    金: 'var(--xy-el-jin)',
-    木: 'var(--xy-el-mu)',
-    水: 'var(--xy-el-shui)',
-    火: 'var(--xy-el-huo)',
-    土: 'var(--xy-el-tu)',
-    阴: 'var(--xy-el-yin)',
-    阳: 'var(--xy-el-yang)',
-    混沌: 'var(--xy-el-hundun)',
-  } as Record<string, string>)[el] || 'var(--xy-ink)';
+  (
+    ({
+      金: 'var(--xy-el-jin)',
+      木: 'var(--xy-el-mu)',
+      水: 'var(--xy-el-shui)',
+      火: 'var(--xy-el-huo)',
+      土: 'var(--xy-el-tu)',
+      阴: 'var(--xy-el-yin)',
+      阳: 'var(--xy-el-yang)',
+      混沌: 'var(--xy-el-hundun)',
+    }) as Record<string, string>
+  )[el] || 'var(--xy-ink)';
 
 export const skillPct = (v: number) => Math.max(2, Math.min(100, v));
-export const barPct = (cur: number, total: number) =>
-  Math.max(0, Math.min(100, (cur / Math.max(total, 1)) * 100));
+export const barPct = (cur: number, total: number) => Math.max(0, Math.min(100, (cur / Math.max(total, 1)) * 100));
 
 export const npcBarPct = (pool?: { 现值?: number; 上限?: number }) => {
   if (!pool) return 0;
@@ -143,11 +144,7 @@ export const realmScore = (realm: string): number => {
   return major * 10 + sub;
 };
 
-export const countField = (
-  rec: Record<string, any> | undefined,
-  field: string,
-  value: string,
-): number => {
+export const countField = (rec: Record<string, any> | undefined, field: string, value: string): number => {
   if (!rec) return 0;
   let n = 0;
   for (const v of Object.values(rec)) if (v?.[field] === value) n++;
@@ -168,24 +165,18 @@ export const filterRecord = <T extends Record<string, any>>(
   return out;
 };
 
-export const hasSkills = (npc: any) =>
-  !_.isEmpty(npc?.技艺?.生产类) || !_.isEmpty(npc?.技艺?.战斗类);
+export const hasSkills = (npc: any) => !_.isEmpty(npc?.技艺?.生产类) || !_.isEmpty(npc?.技艺?.战斗类);
 
 export const hasStorage = (npc: any) => {
   if (!npc) return false;
   return (
-    (npc.灵石 ?? 0) > 0 ||
-    !_.isEmpty(npc.物品) ||
-    !_.isEmpty(npc.装备) ||
-    !_.isEmpty(npc.傀儡) ||
-    !_.isEmpty(npc.灵兽)
+    (npc.灵石 ?? 0) > 0 || !_.isEmpty(npc.物品) || !_.isEmpty(npc.装备) || !_.isEmpty(npc.傀儡) || !_.isEmpty(npc.灵兽)
   );
 };
 
 // =============== NPC 详情区折叠 ===============
 const npcSectionOpen = reactive<Record<string, Record<string, boolean>>>({});
-export const isSectionOpen = (name: string, section: string): boolean =>
-  !!npcSectionOpen[name]?.[section];
+export const isSectionOpen = (name: string, section: string): boolean => !!npcSectionOpen[name]?.[section];
 export const toggleSection = (name: string, section: string) => {
   if (!npcSectionOpen[name]) npcSectionOpen[name] = {};
   npcSectionOpen[name][section] = !npcSectionOpen[name][section];
@@ -281,7 +272,11 @@ export const onAvatarFileChange = async (e: Event) => {
     try {
       localStorage.setItem(NPC_AVATAR_HI_KEY(name), hi);
     } catch (quotaErr) {
-      try { localStorage.removeItem(NPC_AVATAR_HI_KEY(name)); } catch { /* */ }
+      try {
+        localStorage.removeItem(NPC_AVATAR_HI_KEY(name));
+      } catch {
+        /* */
+      }
       console.warn('[修仙状态栏] 高清头像存储失败（容量不足），仅保留缩略图', quotaErr);
     }
     npcAvatars[name] = thumb;
@@ -345,8 +340,7 @@ export const performDelete = () => {
 };
 
 // =============== 功法切换 ===============
-export const canControlNpc = (npc: any): boolean =>
-  !!npc?.道侣 || (npc?.好感度 ?? 0) > 80;
+export const canControlNpc = (npc: any): boolean => !!npc?.道侣 || (npc?.好感度 ?? 0) > 80;
 
 export const isArtEffectivelyActive = (npc: any, artName: string, art: any): boolean => {
   if (canControlNpc(npc)) return !!art?.使用中;
@@ -406,21 +400,11 @@ export const toggleUnit = (kind: '傀儡' | '灵兽', name: string, value: boole
 };
 
 // =============== 储物 / 关系 / 传闻 计算属性 ===============
-export const filteredArts = computed(() =>
-  filterRecord(store.data?.功法, '类型', state.artFilter),
-);
-export const filteredItems = computed(() =>
-  filterRecord(store.data?.物品, '类型', state.itemFilter),
-);
-export const filteredEquips = computed(() =>
-  filterRecord(store.data?.装备, '类型', state.equipFilter),
-);
-export const filteredPuppets = computed(() =>
-  filterRecord(store.data?.傀儡, '品质', state.puppetFilter),
-);
-export const filteredBeasts = computed(() =>
-  filterRecord(store.data?.灵兽, '品质', state.beastFilter),
-);
+export const filteredArts = computed(() => filterRecord(store.data?.功法, '类型', state.artFilter));
+export const filteredItems = computed(() => filterRecord(store.data?.物品, '类型', state.itemFilter));
+export const filteredEquips = computed(() => filterRecord(store.data?.装备, '类型', state.equipFilter));
+export const filteredPuppets = computed(() => filterRecord(store.data?.傀儡, '品质', state.puppetFilter));
+export const filteredBeasts = computed(() => filterRecord(store.data?.灵兽, '品质', state.beastFilter));
 
 export const sortedRelations = computed(() => {
   const list = store.data?.关系列表;
