@@ -36,7 +36,7 @@ function bootWorkshop(): void {
   app.mount(mount);
 
   const bridge: WorkshopBridge = {
-    version: '0.4.3',
+    version: '0.4.4',
     open: openWorkshop,
     close: closeWorkshop,
     matchImages: async request => toCompatibleMatchResult(await workshopService.matchImages(request)),

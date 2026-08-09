@@ -92,6 +92,68 @@ function messageLocationText(messageId: string): string {
   }
 }
 
+interface FloorEntryState {
+  ok: boolean;
+  enabled: boolean;
+  reason?: string;
+}
+
+type RouterHostWindow = Window & {
+  CultivationRuleRouter?: {
+    getFloorEntryState?: (messageId: string, entryName: string) => FloorEntryState;
+  };
+};
+
+function getFloorEntryState(messageId: string, entryName: string): FloorEntryState {
+  const accessibleWindows: RouterHostWindow[] = [];
+  let candidate = window as RouterHostWindow;
+
+  while (candidate) {
+    accessibleWindows.push(candidate);
+    try {
+      const parentWindow = candidate.parent as RouterHostWindow;
+      if (!parentWindow || parentWindow === candidate) break;
+      // 读取 document 可提前确认该父窗口同源且可访问。
+      void parentWindow.document;
+      candidate = parentWindow;
+    } catch {
+      break;
+    }
+  }
+
+  // 路由插件运行在酒馆主页面，优先从最高可访问窗口向下查找；
+  // 移动端可能存在“脚本 iframe → 中间 iframe → 酒馆主页面”。
+  for (let index = accessibleWindows.length - 1; index >= 0; index -= 1) {
+    const router = accessibleWindows[index].CultivationRuleRouter;
+    if (typeof router?.getFloorEntryState !== 'function') continue;
+    try {
+      return router.getFloorEntryState(messageId, entryName);
+    } catch (error) {
+      return {
+        ok: false,
+        enabled: false,
+        reason: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  return { ok: false, enabled: false, reason: '最高可访问页面中未找到规则路由接口' };
+}
+
+async function waitForFloorEntryState(messageId: string, entryName: string): Promise<FloorEntryState> {
+  let state = getFloorEntryState(messageId, entryName);
+  if (state.ok || !Number.isInteger(Number(messageId))) return state;
+
+  // 路由记录与楼层 iframe 几乎同时生成；给 MESSAGE_RECEIVED 的记录落盘留出短暂时间，
+  // 避免正文第一次渲染恰好抢在路由插件之前时永久回退到 SFW。
+  for (const delayMs of [60, 140, 300]) {
+    await new Promise(resolve => window.setTimeout(resolve, delayMs));
+    state = getFloorEntryState(messageId, entryName);
+    if (state.ok) return state;
+  }
+  return state;
+}
+
 export class WorkshopService {
   readonly api = new WorkshopApi(async () => (await this.getSettings()).apiBase);
   private readonly pendingPreviewImages = new Map<string, Promise<Blob>>();
@@ -411,17 +473,15 @@ export class WorkshopService {
     let desiredRating: 'sfw' | 'nsfw' = 'sfw';
     let routeDetectionFailed = false;
     if (selectedRole) {
-      try {
-        const host = window.parent as Window & {
-          CultivationRuleRouter?: {
-            getFloorEntryState?: (messageId: string, entryName: string) => { ok: boolean; enabled: boolean };
-          };
-        };
-        const state = host.CultivationRuleRouter?.getFloorEntryState?.(request.messageId, '[mvu_plot][NSFW]基础指导');
-        if (!state?.ok) routeDetectionFailed = true;
-        else desiredRating = state.enabled ? 'nsfw' : 'sfw';
-      } catch {
+      const state = await waitForFloorEntryState(request.messageId, '[mvu_plot][NSFW]基础指导');
+      if (!state.ok) {
         routeDetectionFailed = true;
+        console.warn('[创意工坊] 未能读取本楼 NSFW 路由结果:', {
+          messageId: request.messageId,
+          reason: state.reason ?? '未知原因',
+        });
+      } else {
+        desiredRating = state.enabled ? 'nsfw' : 'sfw';
       }
     }
     const rememberedPackId = packs.some(pack => pack.id === settings.packPreferences[subjectKey])
