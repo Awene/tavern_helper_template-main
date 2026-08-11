@@ -18,6 +18,7 @@
       /* ================== 主题变量 ================== */
       :root,
       [data-theme='dark'] {
+        --rb-reading-scale: 1;
         --rb-bg: #1a1a2e;
         --rb-paper: linear-gradient(180deg, rgba(45, 40, 60, 0.95) 0%, rgba(30, 25, 45, 0.98) 100%);
         --rb-paper-flat: rgba(45, 40, 60, 0.92);
@@ -69,6 +70,8 @@
         min-height: 100vh;
         line-height: 1.9;
         font-size: 16px;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
         transition:
           background 0.25s ease,
           color 0.25s ease;
@@ -123,6 +126,10 @@
         color: var(--rb-bg);
         border-color: var(--rb-accent);
       }
+      .rb-btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.35;
+      }
 
       /* ================== 设置面板 ================== */
       .rb-settings {
@@ -158,6 +165,18 @@
         font-size: 13px;
         color: var(--rb-text-soft);
         letter-spacing: 1px;
+      }
+      .rb-font-controls {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .rb-font-value {
+        min-width: 58px;
+        color: var(--rb-accent);
+        font: 700 12px/1.2 sans-serif;
+        text-align: center;
+        white-space: nowrap;
       }
       .rb-settings-select {
         min-width: 92px;
@@ -229,13 +248,20 @@
         padding: 0 14px;
       }
       .rb-content {
+        /*
+         * 正文始终按 17px 的设计稿排版，再通过 zoom 整体缩放。这样字号变化时，
+         * 卡片的间距、图标、圆角与装饰也会同步变化。Chromium 会让 zoom 参与
+         * 布局计算，因此保持 100% 宽度即可在缩放后继续铺满正文容器。
+         */
+        width: 100%;
+        zoom: var(--rb-reading-scale, 1);
         background: var(--rb-paper);
         border: 2px solid var(--rb-border);
         border-radius: 14px;
         padding: 28px 32px;
         box-shadow: var(--rb-shadow);
         position: relative;
-        font-size: var(--rb-reading-font, 17px);
+        font-size: 17px;
       }
       .rb-content::before {
         content: '';
@@ -3378,6 +3404,31 @@
       }
 
       @media (max-width: 600px) {
+        .rb-toolbar {
+          gap: 8px;
+          padding: 8px 10px;
+        }
+        .rb-logo {
+          min-width: 0;
+        }
+        .rb-controls {
+          gap: 5px;
+        }
+        .rb-btn {
+          padding: 4px 10px;
+          letter-spacing: 0.5px;
+        }
+        .rb-settings {
+          top: 50px;
+          right: 8px;
+          width: calc(100vw - 16px);
+          max-height: calc(100vh - 64px);
+          padding: 12px;
+        }
+        .rb-container {
+          margin: 10px auto;
+          padding: 0 8px;
+        }
         .rb-content {
           padding: 18px 16px;
         }
@@ -3399,8 +3450,11 @@
     <div class="rb-settings" id="settingsPanel">
       <div class="rb-settings-row">
         <span class="rb-settings-label">正文字号</span>
-        <button class="rb-btn" data-action="font" data-arg="-1" style="padding: 2px 8px">−</button>
-        <button class="rb-btn" data-action="font" data-arg="1" style="padding: 2px 8px">+</button>
+        <div class="rb-font-controls">
+          <button class="rb-btn" data-action="font" data-arg="-1" title="缩小正文" aria-label="缩小正文">−</button>
+          <output class="rb-font-value" id="fontSizeValue" aria-live="polite">17px</output>
+          <button class="rb-btn" data-action="font" data-arg="1" title="放大正文" aria-label="放大正文">+</button>
+        </div>
       </div>
 
       <div class="rb-section-title">🖼 创意工坊插图</div>
@@ -3442,6 +3496,9 @@
       // ============== localStorage ==============
       const THEME_KEY = 'rb-theme';
       const FONT_SIZE_KEY = 'rb-font-size';
+      const BASE_READING_FONT_SIZE = 17;
+      const MIN_READING_FONT_SIZE = 11;
+      const MAX_READING_FONT_SIZE = 24;
 
       function cleanupLegacyAvatarStorage() {
         try {
@@ -5751,30 +5808,57 @@
       }
 
       // ============== 字号 ==============
+      function applyFontSize(size, persist = true) {
+        const root = document.querySelector('.rb-content');
+        if (!root) return;
+        const next = Math.max(MIN_READING_FONT_SIZE, Math.min(MAX_READING_FONT_SIZE, Math.round(Number(size) || 0)));
+        const scale = next / BASE_READING_FONT_SIZE;
+
+        root.dataset.fontSize = String(next);
+        if (CSS.supports && CSS.supports('zoom', '1')) {
+          root.style.setProperty('--rb-reading-scale', String(scale));
+          root.style.width = '100%';
+          root.style.fontSize = BASE_READING_FONT_SIZE + 'px';
+        } else {
+          // 非 Chromium 旧浏览器退化为仅调字号，至少保证阅读设置仍然可用。
+          root.style.removeProperty('--rb-reading-scale');
+          root.style.width = '100%';
+          root.style.fontSize = next + 'px';
+        }
+
+        const value = document.getElementById('fontSizeValue');
+        if (value) value.textContent = `${next}px · ${Math.round(scale * 100)}%`;
+        document.querySelectorAll('[data-action="font"]').forEach(button => {
+          const delta = parseInt(button.getAttribute('data-arg') || '0', 10);
+          button.disabled =
+            (delta < 0 && next <= MIN_READING_FONT_SIZE) || (delta > 0 && next >= MAX_READING_FONT_SIZE);
+        });
+
+        if (persist) {
+          try {
+            localStorage.setItem(FONT_SIZE_KEY, String(next));
+          } catch (e) {
+            /* ignore */
+          }
+        }
+      }
+
       function adjustFontSize(delta) {
         const root = document.querySelector('.rb-content');
         if (!root) return;
-        const cur = parseInt(getComputedStyle(root).fontSize) || 17;
-        const next = Math.max(13, Math.min(24, cur + delta));
-        root.style.setProperty('--rb-reading-font', next + 'px');
-        root.style.fontSize = next + 'px';
-        try {
-          localStorage.setItem(FONT_SIZE_KEY, String(next));
-        } catch (e) {
-          /* ignore */
-        }
+        const current = parseInt(root.dataset.fontSize || '', 10) || BASE_READING_FONT_SIZE;
+        applyFontSize(current + delta);
       }
       window.adjustFontSize = adjustFontSize;
       function initFontSize() {
+        let saved = NaN;
         try {
-          const saved = parseInt(localStorage.getItem(FONT_SIZE_KEY) || '17');
-          const root = document.querySelector('.rb-content');
-          if (root && saved >= 13 && saved <= 24) {
-            root.style.fontSize = saved + 'px';
-          }
+          saved = parseInt(localStorage.getItem(FONT_SIZE_KEY) || '', 10);
         } catch (e) {
           /* ignore */
         }
+        const mobileDefault = window.matchMedia && window.matchMedia('(max-width: 600px)').matches ? 15 : 17;
+        applyFontSize(Number.isFinite(saved) ? saved : mobileDefault, false);
       }
 
       // ============== Toast ==============
