@@ -27,9 +27,17 @@ interface Config {
 interface Entry {
   script: string;
   html?: string;
+  htmlFilename?: string;
 }
 
 function parse_entry(script_file: string) {
+  if (script_file.replaceAll('\\', '/').endsWith('src/正文美化/index.ts')) {
+    return {
+      script: script_file,
+      html: path.join(path.dirname(script_file), '..', '面板美化', '正文美化.html'),
+      htmlFilename: 'index.html',
+    };
+  }
   const html = path.join(path.dirname(script_file), 'index.html');
   if (fs.existsSync(html)) {
     return { script: script_file, html };
@@ -424,7 +432,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       : [
           new HtmlWebpackPlugin({
             template: path.join(import.meta.dirname, entry.html),
-            filename: path.parse(entry.html).base,
+            filename: entry.htmlFilename ?? path.parse(entry.html).base,
             scriptLoading: 'module',
             cache: false,
           }),

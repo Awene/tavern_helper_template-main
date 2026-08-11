@@ -287,10 +287,12 @@
         margin: 12px 0;
         border-radius: 12px;
         overflow: hidden;
-        background: linear-gradient(155deg,
+        background: linear-gradient(
+          155deg,
           rgba(20, 16, 32, 0.78) 0%,
           rgba(28, 22, 44, 0.72) 60%,
-          rgba(20, 16, 32, 0.82) 100%);
+          rgba(20, 16, 32, 0.82) 100%
+        );
         backdrop-filter: blur(18px) saturate(180%);
         -webkit-backdrop-filter: blur(18px) saturate(180%);
         border: 1px solid rgba(255, 255, 255, 0.08);
@@ -300,7 +302,10 @@
           0 -1px 0 rgba(0, 0, 0, 0.25) inset;
         color: #e8d5b7;
         animation: rb-panel-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
-        transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+        transition:
+          transform 0.25s ease,
+          box-shadow 0.25s ease,
+          border-color 0.25s ease;
       }
       .action-panel:hover,
       .battle-panel:hover,
@@ -314,8 +319,14 @@
           0 1px 0 rgba(255, 255, 255, 0.08) inset;
       }
       @keyframes rb-panel-in {
-        from { opacity: 0; transform: translateY(12px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
 
       /* —— 顶部光带（带流光动画） —— */
@@ -325,33 +336,62 @@
       .item-panel::before {
         content: '';
         position: absolute;
-        top: 0; left: 0; right: 0;
+        top: 0;
+        left: 0;
+        right: 0;
         height: 2px;
-        background: linear-gradient(90deg,
+        background: linear-gradient(
+          90deg,
           transparent 0%,
           var(--rb-panel-accent, #a89968) 30%,
           color-mix(in srgb, var(--rb-panel-accent, #a89968) 70%, white) 50%,
           var(--rb-panel-accent, #a89968) 70%,
-          transparent 100%);
+          transparent 100%
+        );
         background-size: 250% 100%;
         animation: rb-panel-shimmer 6s ease-in-out infinite;
       }
       @keyframes rb-panel-shimmer {
-        0%, 100% { background-position: 0% 0; }
-        50% { background-position: 100% 0; }
+        0%,
+        100% {
+          background-position: 0% 0;
+        }
+        50% {
+          background-position: 100% 0;
+        }
       }
 
       /* —— 强调色（每个 panel 类型 + 6 种 action 子类） —— */
-      .action-panel { --rb-panel-accent: #fc8181; }
-      .action-panel.battle { --rb-panel-accent: #fc8181; }
-      .action-panel.craft { --rb-panel-accent: #68d391; }
-      .action-panel.cultivation { --rb-panel-accent: #90cdf4; }
-      .action-panel.breakthrough { --rb-panel-accent: #f6ad55; }
-      .action-panel.insight { --rb-panel-accent: #b794f4; }
-      .action-panel.judge { --rb-panel-accent: #63b3ed; }
-      .battle-panel { --rb-panel-accent: #fc8181; }
-      .char-panel { --rb-panel-accent: #d4af37; }
-      .item-panel { --rb-panel-accent: #f6e27a; }
+      .action-panel {
+        --rb-panel-accent: #fc8181;
+      }
+      .action-panel.battle {
+        --rb-panel-accent: #fc8181;
+      }
+      .action-panel.craft {
+        --rb-panel-accent: #68d391;
+      }
+      .action-panel.cultivation {
+        --rb-panel-accent: #90cdf4;
+      }
+      .action-panel.breakthrough {
+        --rb-panel-accent: #f6ad55;
+      }
+      .action-panel.insight {
+        --rb-panel-accent: #b794f4;
+      }
+      .action-panel.judge {
+        --rb-panel-accent: #63b3ed;
+      }
+      .battle-panel {
+        --rb-panel-accent: #fc8181;
+      }
+      .char-panel {
+        --rb-panel-accent: #d4af37;
+      }
+      .item-panel {
+        --rb-panel-accent: #f6e27a;
+      }
 
       /* —— 头部 —— */
       .action-panel .panel-header,
@@ -364,10 +404,12 @@
         padding: 9px 14px;
         cursor: pointer;
         user-select: none;
-        background: linear-gradient(135deg,
+        background: linear-gradient(
+          135deg,
           rgba(255, 255, 255, 0.04) 0%,
           rgba(255, 255, 255, 0.02) 50%,
-          rgba(255, 255, 255, 0.06) 100%);
+          rgba(255, 255, 255, 0.06) 100%
+        );
         border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         transition: background 0.25s ease;
       }
@@ -375,10 +417,12 @@
       .battle-panel .panel-header:hover,
       .char-panel .panel-header:hover,
       .item-panel .panel-header:hover {
-        background: linear-gradient(135deg,
+        background: linear-gradient(
+          135deg,
           rgba(255, 255, 255, 0.08) 0%,
           rgba(255, 255, 255, 0.04) 50%,
-          rgba(255, 255, 255, 0.10) 100%);
+          rgba(255, 255, 255, 0.1) 100%
+        );
       }
       .action-panel .panel-icon,
       .battle-panel .panel-icon,
@@ -407,16 +451,22 @@
       .item-panel .panel-toggle {
         color: var(--rb-panel-accent);
         opacity: 0.7;
-        transition: transform 0.3s ease, opacity 0.2s ease;
+        transition:
+          transform 0.3s ease,
+          opacity 0.2s ease;
       }
       .action-panel .panel-header:hover .panel-toggle,
       .battle-panel .panel-header:hover .panel-toggle,
       .char-panel .panel-header:hover .panel-toggle,
-      .item-panel .panel-header:hover .panel-toggle { opacity: 1; }
+      .item-panel .panel-header:hover .panel-toggle {
+        opacity: 1;
+      }
       .action-panel .panel-header.collapsed .panel-toggle,
       .battle-panel .panel-header.collapsed .panel-toggle,
       .char-panel .panel-header.collapsed .panel-toggle,
-      .item-panel .panel-header.collapsed .panel-toggle { transform: rotate(-90deg); }
+      .item-panel .panel-header.collapsed .panel-toggle {
+        transform: rotate(-90deg);
+      }
 
       /* —— 内容区 —— */
       .action-panel .panel-content,
@@ -424,14 +474,21 @@
       .char-panel .panel-content,
       .item-panel .panel-content {
         padding: 10px 13px;
-        transition: max-height 0.4s ease, padding 0.4s ease, opacity 0.3s ease;
+        transition:
+          max-height 0.4s ease,
+          padding 0.4s ease,
+          opacity 0.3s ease;
         overflow: hidden;
         color: #e8d5b7; /* 显式设色,避免在 light 主题下被父级覆盖成黑色 */
       }
       .action-panel .panel-content.collapsed,
       .battle-panel .panel-content.collapsed,
       .char-panel .panel-content.collapsed,
-      .item-panel .panel-content.collapsed { max-height: 0; padding: 0 16px; opacity: 0; }
+      .item-panel .panel-content.collapsed {
+        max-height: 0;
+        padding: 0 16px;
+        opacity: 0;
+      }
 
       /* —— 数据行 —— */
       .action-panel .data-row,
@@ -450,11 +507,16 @@
         border: 1px solid rgba(255, 255, 255, 0.05);
         border-left: 3px solid color-mix(in srgb, var(--rb-panel-accent) 60%, transparent);
         color: #e8d5b7;
-        transition: background 0.18s ease, border-left-color 0.18s ease, transform 0.18s ease;
+        transition:
+          background 0.18s ease,
+          border-left-color 0.18s ease,
+          transform 0.18s ease;
       }
       .action-panel .data-row:last-child,
       .battle-panel .data-row:last-child,
-      .item-panel .data-row:last-child { margin-bottom: 0; }
+      .item-panel .data-row:last-child {
+        margin-bottom: 0;
+      }
       .action-panel .data-row:hover,
       .battle-panel .data-row:hover,
       .item-panel .data-row:hover {
@@ -488,11 +550,15 @@
         border: 1px solid rgba(255, 255, 255, 0.12);
         color: #e8d5b7;
         vertical-align: middle;
-        transition: transform 0.15s ease, box-shadow 0.18s ease;
+        transition:
+          transform 0.15s ease,
+          box-shadow 0.18s ease;
       }
       .action-panel .tag:hover,
       .battle-panel .tag:hover,
-      .item-panel .tag:hover { transform: translateY(-1px); }
+      .item-panel .tag:hover {
+        transform: translateY(-1px);
+      }
       .char-panel .tag {
         display: inline-block;
         padding: 1px 8px;
@@ -518,46 +584,169 @@
       }
 
       /* —— 品质标签:渐变 + 发光 —— */
-      .tag-quality-凡 { background: linear-gradient(135deg, #4a5568, #2d3748) !important; color: #e2e8f0 !important; border-color: rgba(255,255,255,0.1) !important; }
-      .tag-quality-黄 { background: linear-gradient(135deg, #d69e2e, #b7791f) !important; color: #fff !important; border-color: rgba(255,255,255,0.18) !important; box-shadow: 0 0 14px rgba(214, 158, 46, 0.4); }
-      .tag-quality-玄 { background: linear-gradient(135deg, #4299e1, #2c5282) !important; color: #fff !important; border-color: rgba(255,255,255,0.18) !important; box-shadow: 0 0 14px rgba(49, 130, 206, 0.45); }
-      .tag-quality-地 { background: linear-gradient(135deg, #9f7aea, #553c9a) !important; color: #fff !important; border-color: rgba(255,255,255,0.2) !important; box-shadow: 0 0 16px rgba(128, 90, 213, 0.55); }
-      .tag-quality-天 { background: linear-gradient(135deg, #f56565, #9b2c2c) !important; color: #fff !important; border-color: rgba(255,255,255,0.25) !important; box-shadow: 0 0 18px rgba(245, 101, 101, 0.7); animation: rb-tag-pulse 2.6s ease-in-out infinite; }
+      .tag-quality-凡 {
+        background: linear-gradient(135deg, #4a5568, #2d3748) !important;
+        color: #e2e8f0 !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+      }
+      .tag-quality-黄 {
+        background: linear-gradient(135deg, #d69e2e, #b7791f) !important;
+        color: #fff !important;
+        border-color: rgba(255, 255, 255, 0.18) !important;
+        box-shadow: 0 0 14px rgba(214, 158, 46, 0.4);
+      }
+      .tag-quality-玄 {
+        background: linear-gradient(135deg, #4299e1, #2c5282) !important;
+        color: #fff !important;
+        border-color: rgba(255, 255, 255, 0.18) !important;
+        box-shadow: 0 0 14px rgba(49, 130, 206, 0.45);
+      }
+      .tag-quality-地 {
+        background: linear-gradient(135deg, #9f7aea, #553c9a) !important;
+        color: #fff !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+        box-shadow: 0 0 16px rgba(128, 90, 213, 0.55);
+      }
+      .tag-quality-天 {
+        background: linear-gradient(135deg, #f56565, #9b2c2c) !important;
+        color: #fff !important;
+        border-color: rgba(255, 255, 255, 0.25) !important;
+        box-shadow: 0 0 18px rgba(245, 101, 101, 0.7);
+        animation: rb-tag-pulse 2.6s ease-in-out infinite;
+      }
       @keyframes rb-tag-pulse {
-        0%, 100% { box-shadow: 0 0 18px rgba(245, 101, 101, 0.7); }
-        50% { box-shadow: 0 0 28px rgba(245, 101, 101, 1); }
+        0%,
+        100% {
+          box-shadow: 0 0 18px rgba(245, 101, 101, 0.7);
+        }
+        50% {
+          box-shadow: 0 0 28px rgba(245, 101, 101, 1);
+        }
       }
 
       /* —— 结果 —— */
-      .tag-success { background: linear-gradient(135deg, #38a169, #276749) !important; color: #fff !important; border-color: rgba(255,255,255,0.15) !important; }
-      .tag-fail { background: linear-gradient(135deg, #e53e3e, #9b2c2c) !important; color: #fff !important; border-color: rgba(255,255,255,0.15) !important; }
-      .tag-critical-success { background: linear-gradient(135deg, #f6e05e, #d69e2e) !important; color: #1a202c !important; font-weight: 800 !important; border-color: rgba(255,255,255,0.3) !important; box-shadow: 0 0 18px rgba(246, 224, 94, 0.7); animation: rb-tag-pulse-gold 2.4s ease-in-out infinite; }
-      @keyframes rb-tag-pulse-gold {
-        0%, 100% { box-shadow: 0 0 18px rgba(246, 224, 94, 0.7); }
-        50% { box-shadow: 0 0 32px rgba(246, 224, 94, 1); }
+      .tag-success {
+        background: linear-gradient(135deg, #38a169, #276749) !important;
+        color: #fff !important;
+        border-color: rgba(255, 255, 255, 0.15) !important;
       }
-      .tag-critical-fail { background: linear-gradient(135deg, #b794f4, #553c9a) !important; color: #fff !important; border-color: rgba(255,255,255,0.2) !important; }
+      .tag-fail {
+        background: linear-gradient(135deg, #e53e3e, #9b2c2c) !important;
+        color: #fff !important;
+        border-color: rgba(255, 255, 255, 0.15) !important;
+      }
+      .tag-critical-success {
+        background: linear-gradient(135deg, #f6e05e, #d69e2e) !important;
+        color: #1a202c !important;
+        font-weight: 800 !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+        box-shadow: 0 0 18px rgba(246, 224, 94, 0.7);
+        animation: rb-tag-pulse-gold 2.4s ease-in-out infinite;
+      }
+      @keyframes rb-tag-pulse-gold {
+        0%,
+        100% {
+          box-shadow: 0 0 18px rgba(246, 224, 94, 0.7);
+        }
+        50% {
+          box-shadow: 0 0 32px rgba(246, 224, 94, 1);
+        }
+      }
+      .tag-critical-fail {
+        background: linear-gradient(135deg, #b794f4, #553c9a) !important;
+        color: #fff !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+      }
 
       /* —— 通用类型/属性 —— */
-      .tag-type { background: linear-gradient(135deg, #805ad5, #44337a) !important; color: #faf5ff !important; border-color: rgba(255,255,255,0.15) !important; }
-      .tag-attr { background: linear-gradient(135deg, #4299e1, #2c5282) !important; color: #fff !important; border-color: rgba(255,255,255,0.15) !important; }
-      .tag-effect { background: linear-gradient(135deg, #9f7aea, #44337a) !important; color: #faf5ff !important; border-color: rgba(255,255,255,0.15) !important; }
-      .tag-label { background: linear-gradient(135deg, #4a5568, #2d3748) !important; color: #e2e8f0 !important; border-color: rgba(255,255,255,0.1) !important; }
-      .tag-realm { background: linear-gradient(135deg, #b794f4, #553c9a) !important; color: #fff !important; border-color: rgba(255,255,255,0.18) !important; }
-      .tag-element { background: linear-gradient(135deg, #f6ad55, #c05621) !important; color: #fff !important; border-color: rgba(255,255,255,0.18) !important; }
-      .tag-status { background: linear-gradient(135deg, #4fd1c5, #285e61) !important; color: #fff !important; border-color: rgba(255,255,255,0.15) !important; }
-      .tag-unit-type { background: linear-gradient(135deg, #4299e1, #2a4365) !important; color: #fff !important; border-color: rgba(255,255,255,0.15) !important; }
-      .tag-formation { background: linear-gradient(135deg, #d69e2e, #744210) !important; color: #fff !important; border-color: rgba(255,255,255,0.18) !important; }
+      .tag-type {
+        background: linear-gradient(135deg, #805ad5, #44337a) !important;
+        color: #faf5ff !important;
+        border-color: rgba(255, 255, 255, 0.15) !important;
+      }
+      .tag-attr {
+        background: linear-gradient(135deg, #4299e1, #2c5282) !important;
+        color: #fff !important;
+        border-color: rgba(255, 255, 255, 0.15) !important;
+      }
+      .tag-effect {
+        background: linear-gradient(135deg, #9f7aea, #44337a) !important;
+        color: #faf5ff !important;
+        border-color: rgba(255, 255, 255, 0.15) !important;
+      }
+      .tag-label {
+        background: linear-gradient(135deg, #4a5568, #2d3748) !important;
+        color: #e2e8f0 !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+      }
+      .tag-realm {
+        background: linear-gradient(135deg, #b794f4, #553c9a) !important;
+        color: #fff !important;
+        border-color: rgba(255, 255, 255, 0.18) !important;
+      }
+      .tag-element {
+        background: linear-gradient(135deg, #f6ad55, #c05621) !important;
+        color: #fff !important;
+        border-color: rgba(255, 255, 255, 0.18) !important;
+      }
+      .tag-status {
+        background: linear-gradient(135deg, #4fd1c5, #285e61) !important;
+        color: #fff !important;
+        border-color: rgba(255, 255, 255, 0.15) !important;
+      }
+      .tag-unit-type {
+        background: linear-gradient(135deg, #4299e1, #2a4365) !important;
+        color: #fff !important;
+        border-color: rgba(255, 255, 255, 0.15) !important;
+      }
+      .tag-formation {
+        background: linear-gradient(135deg, #d69e2e, #744210) !important;
+        color: #fff !important;
+        border-color: rgba(255, 255, 255, 0.18) !important;
+      }
 
       /* —— 战斗专用辅助 —— */
-      .tree-indent { display: inline-block; color: #a0aec0; margin-right: 4px; font-family: monospace; opacity: 0.85; }
-      .unit-name { color: #fbd38d; font-weight: 700; }
-      .stat-label { color: #90cdf4; font-weight: 600; }
-      .sequence-arrow { color: #68d391; margin: 0 4px; font-weight: 700; }
-      .stat-value { color: #fbd38d; font-weight: 700; }
-      .effect-text { color: #cbd5e0; font-style: italic; }
-      .description-text { color: #cbd5e0; line-height: 1.6; }
-      .description-box { background: rgba(212, 175, 55, 0.06); border-left: 3px solid #d4af37; padding: 10px 12px; margin-top: 8px; border-radius: 6px; color: #cbd5e0; line-height: 1.6; }
+      .tree-indent {
+        display: inline-block;
+        color: #a0aec0;
+        margin-right: 4px;
+        font-family: monospace;
+        opacity: 0.85;
+      }
+      .unit-name {
+        color: #fbd38d;
+        font-weight: 700;
+      }
+      .stat-label {
+        color: #90cdf4;
+        font-weight: 600;
+      }
+      .sequence-arrow {
+        color: #68d391;
+        margin: 0 4px;
+        font-weight: 700;
+      }
+      .stat-value {
+        color: #fbd38d;
+        font-weight: 700;
+      }
+      .effect-text {
+        color: #cbd5e0;
+        font-style: italic;
+      }
+      .description-text {
+        color: #cbd5e0;
+        line-height: 1.6;
+      }
+      .description-box {
+        background: rgba(212, 175, 55, 0.06);
+        border-left: 3px solid #d4af37;
+        padding: 10px 12px;
+        margin-top: 8px;
+        border-radius: 6px;
+        color: #cbd5e0;
+        line-height: 1.6;
+      }
 
       /* —— 时光流转(time-paper):报纸风版面 —— */
       .time-paper {
@@ -565,13 +754,16 @@
         padding: 16px 18px 14px;
         border: 1.5px solid color-mix(in srgb, var(--rb-panel-accent, #a07f48) 38%, transparent);
         border-radius: 4px;
-        background:
-          repeating-linear-gradient(90deg,
-            color-mix(in srgb, var(--rb-panel-bg, #1f1810) 95%, var(--rb-panel-accent, #a07f48) 5%) 0,
-            color-mix(in srgb, var(--rb-panel-bg, #1f1810) 95%, var(--rb-panel-accent, #a07f48) 5%) 2px,
-            color-mix(in srgb, var(--rb-panel-bg, #1f1810) 92%, var(--rb-panel-accent, #a07f48) 8%) 2px,
-            color-mix(in srgb, var(--rb-panel-bg, #1f1810) 92%, var(--rb-panel-accent, #a07f48) 8%) 4px);
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.18) inset;
+        background: repeating-linear-gradient(
+          90deg,
+          color-mix(in srgb, var(--rb-panel-bg, #1f1810) 95%, var(--rb-panel-accent, #a07f48) 5%) 0,
+          color-mix(in srgb, var(--rb-panel-bg, #1f1810) 95%, var(--rb-panel-accent, #a07f48) 5%) 2px,
+          color-mix(in srgb, var(--rb-panel-bg, #1f1810) 92%, var(--rb-panel-accent, #a07f48) 8%) 2px,
+          color-mix(in srgb, var(--rb-panel-bg, #1f1810) 92%, var(--rb-panel-accent, #a07f48) 8%) 4px
+        );
+        box-shadow:
+          0 4px 18px rgba(0, 0, 0, 0.22),
+          0 0 0 1px rgba(0, 0, 0, 0.18) inset;
         font-family: 'Noto Serif SC', 'Songti SC', serif;
         position: relative;
       }
@@ -584,8 +776,12 @@
         height: 0;
         border-top: 1px solid color-mix(in srgb, var(--rb-panel-accent, #a07f48) 30%, transparent);
       }
-      .time-paper::before { top: 4px; }
-      .time-paper::after { bottom: 4px; }
+      .time-paper::before {
+        top: 4px;
+      }
+      .time-paper::after {
+        bottom: 4px;
+      }
 
       .time-paper .tp-masthead {
         text-align: center;
@@ -598,7 +794,7 @@
         font-size: 1.7em;
         font-weight: 900;
         letter-spacing: 14px;
-        text-indent: 14px;  /* 抵消 letter-spacing 让标题视觉居中 */
+        text-indent: 14px; /* 抵消 letter-spacing 让标题视觉居中 */
         color: var(--rb-panel-accent, #a07f48);
         text-shadow: 0 0 14px color-mix(in srgb, var(--rb-panel-accent, #a07f48) 32%, transparent);
         line-height: 1.2;
@@ -627,13 +823,18 @@
         letter-spacing: 4px;
         margin-top: 4px;
       }
-      .time-paper .tp-paper-sub i { margin-right: 6px; opacity: 0.85; }
+      .time-paper .tp-paper-sub i {
+        margin-right: 6px;
+        opacity: 0.85;
+      }
 
       .time-paper .tp-section {
         margin-bottom: 14px;
         padding: 0 4px;
       }
-      .time-paper .tp-section:last-child { margin-bottom: 0; }
+      .time-paper .tp-section:last-child {
+        margin-bottom: 0;
+      }
       .time-paper .tp-section-title {
         margin: 0 0 8px;
         padding: 0 0 4px;
@@ -666,7 +867,10 @@
         gap: 10px;
       }
       @media (min-width: 720px) {
-        .time-paper .tp-people-grid { grid-template-columns: 1fr 1fr; column-gap: 22px; }
+        .time-paper .tp-people-grid {
+          grid-template-columns: 1fr 1fr;
+          column-gap: 22px;
+        }
       }
       .time-paper .tp-person {
         padding: 8px 12px;
@@ -722,8 +926,12 @@
         font-weight: 700;
         color: var(--rb-panel-accent, #a07f48);
       }
-      .time-paper .tp-line-val { color: #e0d4b8; }
-      .time-paper .tp-line-text { color: #d4c8b0; }
+      .time-paper .tp-line-val {
+        color: #e0d4b8;
+      }
+      .time-paper .tp-line-text {
+        color: #d4c8b0;
+      }
 
       /* 文明/世界/传闻: 单栏新闻 */
       .time-paper .tp-news-list {
@@ -741,7 +949,9 @@
         color: #d4c8b0;
         border-radius: 0 2px 2px 0;
       }
-      .time-paper .tp-news-item:last-child { margin-bottom: 0; }
+      .time-paper .tp-news-item:last-child {
+        margin-bottom: 0;
+      }
       .time-paper .tp-news-tag {
         display: inline-block;
         padding: 1px 7px;
@@ -754,7 +964,9 @@
         border-radius: 2px;
         letter-spacing: 0.5px;
       }
-      .time-paper .tp-news-text { color: #e0d4b8; }
+      .time-paper .tp-news-text {
+        color: #e0d4b8;
+      }
       .time-paper .tp-news-extra {
         margin-left: 4px;
         font-size: 0.92em;
@@ -764,14 +976,11 @@
 
       /* 日间模式覆盖 */
       [data-theme='light'] .time-paper {
-        background:
-          repeating-linear-gradient(90deg,
-            #f9f1e0 0,
-            #f9f1e0 2px,
-            #f4ead4 2px,
-            #f4ead4 4px);
+        background: repeating-linear-gradient(90deg, #f9f1e0 0, #f9f1e0 2px, #f4ead4 2px, #f4ead4 4px);
         border-color: rgba(160, 127, 72, 0.55);
-        box-shadow: 0 4px 18px rgba(89, 65, 33, 0.14), 0 0 0 1px rgba(89, 65, 33, 0.08) inset;
+        box-shadow:
+          0 4px 18px rgba(89, 65, 33, 0.14),
+          0 0 0 1px rgba(89, 65, 33, 0.08) inset;
       }
       [data-theme='light'] .time-paper::before,
       [data-theme='light'] .time-paper::after {
@@ -781,30 +990,61 @@
         color: #6e4f1d;
         text-shadow: 0 0 8px rgba(212, 175, 55, 0.18);
       }
-      [data-theme='light'] .time-paper .tp-paper-rule { border-top-color: rgba(160, 127, 72, 0.55); }
-      [data-theme='light'] .time-paper .tp-paper-rule::after { background: #f9f1e0; color: #8a6a36; }
-      [data-theme='light'] .time-paper .tp-paper-sub { color: #6a5a36; }
-      [data-theme='light'] .time-paper .tp-section-title { color: #6e4f1d; border-bottom-color: rgba(160, 127, 72, 0.4); }
-      [data-theme='light'] .time-paper .tp-section-title::after { background: #a07f48; }
+      [data-theme='light'] .time-paper .tp-paper-rule {
+        border-top-color: rgba(160, 127, 72, 0.55);
+      }
+      [data-theme='light'] .time-paper .tp-paper-rule::after {
+        background: #f9f1e0;
+        color: #8a6a36;
+      }
+      [data-theme='light'] .time-paper .tp-paper-sub {
+        color: #6a5a36;
+      }
+      [data-theme='light'] .time-paper .tp-section-title {
+        color: #6e4f1d;
+        border-bottom-color: rgba(160, 127, 72, 0.4);
+      }
+      [data-theme='light'] .time-paper .tp-section-title::after {
+        background: #a07f48;
+      }
       [data-theme='light'] .time-paper .tp-person {
         background: rgba(255, 252, 244, 0.55);
         border-color: rgba(160, 127, 72, 0.32);
         border-left-color: #a07f48;
       }
-      [data-theme='light'] .time-paper .tp-person-name { color: #6e4f1d; }
-      [data-theme='light'] .time-paper .tp-person-meta { color: #5a4a36; }
-      [data-theme='light'] .time-paper .tp-person-line { color: #4a3d2c; }
-      [data-theme='light'] .time-paper .tp-person-line::before { color: #a07f48; }
-      [data-theme='light'] .time-paper .tp-line-key { color: #6e4f1d; }
-      [data-theme='light'] .time-paper .tp-line-val { color: #2a2018; }
+      [data-theme='light'] .time-paper .tp-person-name {
+        color: #6e4f1d;
+      }
+      [data-theme='light'] .time-paper .tp-person-meta {
+        color: #5a4a36;
+      }
+      [data-theme='light'] .time-paper .tp-person-line {
+        color: #4a3d2c;
+      }
+      [data-theme='light'] .time-paper .tp-person-line::before {
+        color: #a07f48;
+      }
+      [data-theme='light'] .time-paper .tp-line-key {
+        color: #6e4f1d;
+      }
+      [data-theme='light'] .time-paper .tp-line-val {
+        color: #2a2018;
+      }
       [data-theme='light'] .time-paper .tp-news-item {
         background: rgba(255, 252, 244, 0.45);
         border-left-color: rgba(160, 127, 72, 0.45);
         color: #4a3d2c;
       }
-      [data-theme='light'] .time-paper .tp-news-tag { color: #fff; background: #a07f48; }
-      [data-theme='light'] .time-paper .tp-news-text { color: #2a2018; }
-      [data-theme='light'] .time-paper .tp-news-extra { color: #5a4a36; }
+      [data-theme='light'] .time-paper .tp-news-tag {
+        color: #fff;
+        background: #a07f48;
+      }
+      [data-theme='light'] .time-paper .tp-news-text {
+        color: #2a2018;
+      }
+      [data-theme='light'] .time-paper .tp-news-extra {
+        color: #5a4a36;
+      }
 
       /* —— 物品名片(item-card):品质边框 + 类型图标 + 数值/资源条/技能/效果 —— */
       .item-card {
@@ -818,13 +1058,24 @@
         box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
       }
       /* 按品质给左侧色带 */
-      .item-card.ic-q-bg-凡 { border-left: 4px solid #b8b0a3; }
-      .item-card.ic-q-bg-黄 { border-left: 4px solid #d4af37; box-shadow: 0 0 14px rgba(212, 175, 55, 0.10); }
-      .item-card.ic-q-bg-玄 { border-left: 4px solid #6b6f7a; }
-      .item-card.ic-q-bg-地 { border-left: 4px solid #a06439; }
+      .item-card.ic-q-bg-凡 {
+        border-left: 4px solid #b8b0a3;
+      }
+      .item-card.ic-q-bg-黄 {
+        border-left: 4px solid #d4af37;
+        box-shadow: 0 0 14px rgba(212, 175, 55, 0.1);
+      }
+      .item-card.ic-q-bg-玄 {
+        border-left: 4px solid #6b6f7a;
+      }
+      .item-card.ic-q-bg-地 {
+        border-left: 4px solid #a06439;
+      }
       .item-card.ic-q-bg-天 {
         border-left: 4px solid #e6c34a;
-        box-shadow: 0 0 18px rgba(230, 195, 74, 0.18), 0 2px 12px rgba(0, 0, 0, 0.2);
+        box-shadow:
+          0 0 18px rgba(230, 195, 74, 0.18),
+          0 2px 12px rgba(0, 0, 0, 0.2);
       }
 
       .item-card .ic-head {
@@ -832,9 +1083,11 @@
         align-items: center;
         gap: 10px;
         padding: 9px 12px;
-        background: linear-gradient(135deg,
+        background: linear-gradient(
+          135deg,
           color-mix(in srgb, var(--rb-panel-accent, #a07f48) 14%, transparent),
-          transparent);
+          transparent
+        );
         border-bottom: 1px dashed color-mix(in srgb, var(--rb-panel-accent, #a07f48) 22%, transparent);
       }
       .item-card .ic-icon {
@@ -845,9 +1098,11 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg,
+        background: linear-gradient(
+          135deg,
           color-mix(in srgb, var(--rb-panel-accent, #a07f48) 60%, #1a0f00),
-          color-mix(in srgb, var(--rb-panel-accent, #a07f48) 26%, #0a0500));
+          color-mix(in srgb, var(--rb-panel-accent, #a07f48) 26%, #0a0500)
+        );
         border: 1.5px solid var(--rb-panel-accent, #a07f48);
         color: #fff;
         font-size: 15px;
@@ -886,10 +1141,23 @@
         color: #cbd5e0;
         border: 1px solid rgba(255, 255, 255, 0.08);
       }
-      .item-card .ic-pill.ic-quality.ic-q-凡 { background: linear-gradient(135deg, #6b6356, #4a443a); color: #e0d8c8; }
-      .item-card .ic-pill.ic-quality.ic-q-黄 { background: linear-gradient(135deg, #d4af37, #8b6914); color: #fff; border-color: #b58938; }
-      .item-card .ic-pill.ic-quality.ic-q-玄 { background: linear-gradient(135deg, #6b6f7a, #3d4046); color: #fff; }
-      .item-card .ic-pill.ic-quality.ic-q-地 { background: linear-gradient(135deg, #a06439, #6b3c1a); color: #fff; }
+      .item-card .ic-pill.ic-quality.ic-q-凡 {
+        background: linear-gradient(135deg, #6b6356, #4a443a);
+        color: #e0d8c8;
+      }
+      .item-card .ic-pill.ic-quality.ic-q-黄 {
+        background: linear-gradient(135deg, #d4af37, #8b6914);
+        color: #fff;
+        border-color: #b58938;
+      }
+      .item-card .ic-pill.ic-quality.ic-q-玄 {
+        background: linear-gradient(135deg, #6b6f7a, #3d4046);
+        color: #fff;
+      }
+      .item-card .ic-pill.ic-quality.ic-q-地 {
+        background: linear-gradient(135deg, #a06439, #6b3c1a);
+        color: #fff;
+      }
       .item-card .ic-pill.ic-quality.ic-q-天 {
         background: linear-gradient(135deg, #f4d472, #b58938);
         color: #2a1f00;
@@ -960,7 +1228,7 @@
       .item-card .ic-stat.ic-stat-命中,
       .item-card .ic-stat.ic-stat-闪避 {
         background: rgba(214, 158, 46, 0.12);
-        border-color: rgba(214, 158, 46, 0.30);
+        border-color: rgba(214, 158, 46, 0.3);
         color: #e6c478;
       }
       .item-card .ic-stat.ic-stat-修行速度,
@@ -973,14 +1241,14 @@
       .item-card .ic-stat.ic-stat-灵气受击,
       .item-card .ic-stat.ic-stat-灵气容量 {
         background: rgba(99, 179, 237, 0.12);
-        border-color: rgba(99, 179, 237, 0.30);
+        border-color: rgba(99, 179, 237, 0.3);
         color: #93c5e9;
       }
       .item-card .ic-stat.ic-stat-加成,
       .item-card .ic-stat.ic-stat-减免\%,
       .item-card .ic-stat.ic-stat-穿透\% {
         background: rgba(72, 187, 120, 0.12);
-        border-color: rgba(72, 187, 120, 0.30);
+        border-color: rgba(72, 187, 120, 0.3);
         color: #93dca5;
       }
 
@@ -1077,7 +1345,9 @@
         font-weight: 700;
         flex-shrink: 0;
       }
-      .item-card .ic-effect-name::after { content: ":"; }
+      .item-card .ic-effect-name::after {
+        content: ':';
+      }
       .item-card .ic-effect-val {
         color: #d8c8a8;
         flex: 1 1 auto;
@@ -1101,7 +1371,9 @@
       .item-card .ic-skill {
         margin-bottom: 4px;
       }
-      .item-card .ic-skill:last-child { margin-bottom: 0; }
+      .item-card .ic-skill:last-child {
+        margin-bottom: 0;
+      }
       .item-card .ic-skill-head {
         display: flex;
         flex-wrap: wrap;
@@ -1148,10 +1420,10 @@
       [data-theme='light'] .item-card {
         background: linear-gradient(135deg, #f9f3e6, #f0e6d2);
         border-color: rgba(160, 127, 72, 0.35);
-        box-shadow: 0 2px 12px rgba(89, 65, 33, 0.10);
+        box-shadow: 0 2px 12px rgba(89, 65, 33, 0.1);
       }
       [data-theme='light'] .item-card .ic-head {
-        background: linear-gradient(135deg, rgba(212, 175, 55, 0.10), transparent);
+        background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), transparent);
         border-bottom-color: rgba(160, 127, 72, 0.18);
       }
       [data-theme='light'] .item-card .ic-name {
@@ -1167,9 +1439,15 @@
         background: rgba(160, 127, 72, 0.06);
         color: #4a3d2c;
       }
-      [data-theme='light'] .item-card .ic-stat b { color: #2a2018; }
-      [data-theme='light'] .item-card .ic-bar-num { color: #5a4a36; }
-      [data-theme='light'] .item-card .ic-bar-label { color: #5a4a36; }
+      [data-theme='light'] .item-card .ic-stat b {
+        color: #2a2018;
+      }
+      [data-theme='light'] .item-card .ic-bar-num {
+        color: #5a4a36;
+      }
+      [data-theme='light'] .item-card .ic-bar-label {
+        color: #5a4a36;
+      }
       [data-theme='light'] .item-card .ic-effect-val,
       [data-theme='light'] .item-card .ic-skill-name,
       [data-theme='light'] .item-card .ic-tag-desc {
@@ -1193,12 +1471,15 @@
         width: 50px;
         height: 50px;
         border-radius: 50%;
-        background: linear-gradient(135deg,
+        background: linear-gradient(
+          135deg,
           color-mix(in srgb, var(--rb-panel-accent) 60%, #2a1f10),
-          color-mix(in srgb, var(--rb-panel-accent) 28%, #0f0a05));
+          color-mix(in srgb, var(--rb-panel-accent) 28%, #0f0a05)
+        );
         border: 2px solid var(--rb-panel-accent);
-        box-shadow: 0 0 16px color-mix(in srgb, var(--rb-panel-accent) 35%, transparent),
-                    0 0 0 1px rgba(0, 0, 0, 0.2) inset;
+        box-shadow:
+          0 0 16px color-mix(in srgb, var(--rb-panel-accent) 35%, transparent),
+          0 0 0 1px rgba(0, 0, 0, 0.2) inset;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -1208,7 +1489,10 @@
         color: #fff;
         text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
       }
-      .char-panel .char-card-meta { flex: 1; min-width: 0; }
+      .char-panel .char-card-meta {
+        flex: 1;
+        min-width: 0;
+      }
       .char-panel .char-card-name {
         font-family: 'Cinzel', 'Noto Serif SC', serif;
         font-size: 1.18em;
@@ -1255,7 +1539,10 @@
         font-weight: 600;
         letter-spacing: 0.4px;
         cursor: pointer;
-        transition: background 0.18s ease, color 0.18s ease, transform 0.15s ease;
+        transition:
+          background 0.18s ease,
+          color 0.18s ease,
+          transform 0.15s ease;
       }
       .char-panel .char-card-tab:hover {
         color: #e8d5b7;
@@ -1268,14 +1555,22 @@
         box-shadow: 0 2px 10px color-mix(in srgb, var(--rb-panel-accent) 38%, transparent);
       }
 
-      .char-panel .char-card-tab-content { display: none; }
+      .char-panel .char-card-tab-content {
+        display: none;
+      }
       .char-panel .char-card-tab-content.active {
         display: block;
         animation: rb-tab-fade 0.25s ease-out;
       }
       @keyframes rb-tab-fade {
-        from { opacity: 0; transform: translateY(4px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
 
       /* —— tab 内的内容(scalar / multiline / section) —— */
@@ -1310,7 +1605,7 @@
       }
       .char-panel .char-card-section--narrative .char-card-field {
         padding: 3px 0;
-        border-bottom: 1px dashed rgba(168, 153, 104, 0.10);
+        border-bottom: 1px dashed rgba(168, 153, 104, 0.1);
       }
       .char-panel .char-card-section--narrative .char-card-field:last-child {
         border-bottom: none;
@@ -1438,7 +1733,11 @@
         gap: 5px;
         padding: 1px 9px;
         border-radius: 999px;
-        background: linear-gradient(135deg, color-mix(in srgb, var(--rb-panel-accent) 20%, transparent), color-mix(in srgb, var(--rb-panel-accent) 35%, transparent));
+        background: linear-gradient(
+          135deg,
+          color-mix(in srgb, var(--rb-panel-accent) 20%, transparent),
+          color-mix(in srgb, var(--rb-panel-accent) 35%, transparent)
+        );
         border: 1px solid color-mix(in srgb, var(--rb-panel-accent) 35%, transparent);
         font-size: 0.92em;
       }
@@ -1477,7 +1776,7 @@
         align-items: baseline;
         padding: 1px 9px;
         border-radius: 4px;
-        background: rgba(168, 153, 104, 0.10);
+        background: rgba(168, 153, 104, 0.1);
         border: 1px solid rgba(168, 153, 104, 0.22);
         font-size: 0.83em;
       }
@@ -1513,7 +1812,10 @@
         background: rgba(255, 255, 255, 0.03);
         border: 1px solid rgba(255, 255, 255, 0.06);
         border-left: 3px solid color-mix(in srgb, var(--rb-panel-accent) 60%, transparent);
-        transition: background 0.18s ease, border-left-color 0.18s ease, transform 0.15s ease;
+        transition:
+          background 0.18s ease,
+          border-left-color 0.18s ease,
+          transform 0.15s ease;
       }
       .char-panel .char-card-item:hover {
         background: rgba(255, 255, 255, 0.05);
@@ -1648,9 +1950,15 @@
         border-radius: 2px;
         transition: width 0.4s ease;
       }
-      .char-panel .char-card-unit-stat.stat-hp .char-card-unit-stat-bar-fill { background: linear-gradient(90deg, #f56565, #c53030); }
-      .char-panel .char-card-unit-stat.stat-mp .char-card-unit-stat-bar-fill { background: linear-gradient(90deg, #4299e1, #2c5282); }
-      .char-panel .char-card-unit-stat.stat-other .char-card-unit-stat-bar-fill { background: linear-gradient(90deg, #68d391, #2f855a); }
+      .char-panel .char-card-unit-stat.stat-hp .char-card-unit-stat-bar-fill {
+        background: linear-gradient(90deg, #f56565, #c53030);
+      }
+      .char-panel .char-card-unit-stat.stat-mp .char-card-unit-stat-bar-fill {
+        background: linear-gradient(90deg, #4299e1, #2c5282);
+      }
+      .char-panel .char-card-unit-stat.stat-other .char-card-unit-stat-bar-fill {
+        background: linear-gradient(90deg, #68d391, #2f855a);
+      }
       .char-panel .char-card-unit-stat-value {
         flex-shrink: 0;
         min-width: 4.5em;
@@ -1680,7 +1988,9 @@
       .char-panel .char-card-unit-skill {
         margin-bottom: 4px;
       }
-      .char-panel .char-card-unit-skill:last-child { margin-bottom: 0; }
+      .char-panel .char-card-unit-skill:last-child {
+        margin-bottom: 0;
+      }
       .char-panel .char-card-unit-skill-head {
         display: flex;
         flex-wrap: wrap;
@@ -1774,8 +2084,16 @@
       }
 
       /* —— 旧 char-panel .section 兼容(已弃用,但留着以防它处引用) —— */
-      .char-panel .section { margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px dashed rgba(168, 153, 104, 0.18); }
-      .char-panel .section:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+      .char-panel .section {
+        margin-bottom: 8px;
+        padding-bottom: 6px;
+        border-bottom: 1px dashed rgba(168, 153, 104, 0.18);
+      }
+      .char-panel .section:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+      }
       .char-panel .section-title {
         color: var(--rb-panel-accent);
         font-weight: 700;
@@ -1820,10 +2138,12 @@
       [data-theme='light'] .battle-panel,
       [data-theme='light'] .char-panel,
       [data-theme='light'] .item-panel {
-        background: linear-gradient(155deg,
+        background: linear-gradient(
+          155deg,
           rgba(255, 250, 240, 0.92) 0%,
           rgba(248, 240, 222, 0.86) 55%,
-          rgba(252, 244, 228, 0.94) 100%);
+          rgba(252, 244, 228, 0.94) 100%
+        );
         border: 1px solid rgba(160, 127, 72, 0.28);
         color: #3a2f24;
         box-shadow:
@@ -1837,7 +2157,7 @@
       [data-theme='light'] .item-panel:hover {
         border-color: rgba(160, 127, 72, 0.45);
         box-shadow:
-          0 16px 40px rgba(101, 75, 38, 0.20),
+          0 16px 40px rgba(101, 75, 38, 0.2),
           0 0 0 1px var(--rb-panel-accent) inset,
           0 1px 0 rgba(255, 255, 255, 0.7) inset;
       }
@@ -1846,20 +2166,24 @@
       [data-theme='light'] .battle-panel .panel-header,
       [data-theme='light'] .char-panel .panel-header,
       [data-theme='light'] .item-panel .panel-header {
-        background: linear-gradient(135deg,
-          rgba(168, 153, 104, 0.10) 0%,
+        background: linear-gradient(
+          135deg,
+          rgba(168, 153, 104, 0.1) 0%,
           rgba(168, 153, 104, 0.05) 50%,
-          rgba(168, 153, 104, 0.14) 100%);
-        border-bottom: 1px solid rgba(160, 127, 72, 0.20);
+          rgba(168, 153, 104, 0.14) 100%
+        );
+        border-bottom: 1px solid rgba(160, 127, 72, 0.2);
       }
       [data-theme='light'] .action-panel .panel-header:hover,
       [data-theme='light'] .battle-panel .panel-header:hover,
       [data-theme='light'] .char-panel .panel-header:hover,
       [data-theme='light'] .item-panel .panel-header:hover {
-        background: linear-gradient(135deg,
+        background: linear-gradient(
+          135deg,
           rgba(168, 153, 104, 0.16) 0%,
           rgba(168, 153, 104, 0.08) 50%,
-          rgba(168, 153, 104, 0.22) 100%);
+          rgba(168, 153, 104, 0.22) 100%
+        );
       }
       [data-theme='light'] .action-panel .panel-icon,
       [data-theme='light'] .battle-panel .panel-icon,
@@ -1940,8 +2264,8 @@
         color: #5a4a36;
       }
       [data-theme='light'] .char-panel .char-card-tabs {
-        background: rgba(168, 153, 104, 0.10);
-        border-color: rgba(160, 127, 72, 0.20);
+        background: rgba(168, 153, 104, 0.1);
+        border-color: rgba(160, 127, 72, 0.2);
       }
       [data-theme='light'] .char-panel .char-card-tab {
         color: #5a4a36;
@@ -1958,7 +2282,7 @@
         border-bottom-color: color-mix(in srgb, var(--rb-panel-accent) 30%, transparent);
       }
       [data-theme='light'] .char-panel .char-card-section {
-        border-bottom-color: rgba(160, 127, 72, 0.20);
+        border-bottom-color: rgba(160, 127, 72, 0.2);
       }
       [data-theme='light'] .char-panel .char-card-field-key {
         color: color-mix(in srgb, var(--rb-panel-accent) 70%, #2a1f10);
@@ -1968,7 +2292,7 @@
         color: #3a2f24;
       }
       [data-theme='light'] .char-panel .char-card-text {
-        background: rgba(168, 153, 104, 0.10);
+        background: rgba(168, 153, 104, 0.1);
       }
       [data-theme='light'] .char-panel .char-card-item {
         background: rgba(168, 153, 104, 0.07);
@@ -1991,7 +2315,7 @@
         border-color: rgba(160, 127, 72, 0.35);
       }
       [data-theme='light'] .char-panel .char-card-item-effects {
-        background: rgba(168, 153, 104, 0.10);
+        background: rgba(168, 153, 104, 0.1);
       }
       [data-theme='light'] .char-panel .char-card-effect-name,
       [data-theme='light'] .char-panel .char-card-item-loc {
@@ -2001,7 +2325,7 @@
       /* light:资源池/技艺/体质 */
       [data-theme='light'] .char-panel .char-card-stat-bar {
         background: rgba(168, 153, 104, 0.18);
-        border-color: rgba(160, 127, 72, 0.20);
+        border-color: rgba(160, 127, 72, 0.2);
       }
       [data-theme='light'] .char-panel .char-card-stat-value {
         color: #3a2f24;
@@ -2011,7 +2335,7 @@
       }
       [data-theme='light'] .char-panel .char-card-mini-stat {
         background: rgba(168, 153, 104, 0.18);
-        border-color: rgba(160, 127, 72, 0.30);
+        border-color: rgba(160, 127, 72, 0.3);
       }
       [data-theme='light'] .char-panel .char-card-physique-desc {
         color: #4a3f30;
@@ -2024,13 +2348,27 @@
       }
 
       /* 战斗助手专用类 */
-      [data-theme='light'] .tree-indent { color: #8b7355; }
-      [data-theme='light'] .unit-name { color: #c05621; }
-      [data-theme='light'] .stat-label { color: #2c5aa0; }
-      [data-theme='light'] .sequence-arrow { color: #2f855a; }
-      [data-theme='light'] .stat-value { color: #c05621; }
-      [data-theme='light'] .effect-text { color: #5a4a36; }
-      [data-theme='light'] .description-text { color: #4a3f30; }
+      [data-theme='light'] .tree-indent {
+        color: #8b7355;
+      }
+      [data-theme='light'] .unit-name {
+        color: #c05621;
+      }
+      [data-theme='light'] .stat-label {
+        color: #2c5aa0;
+      }
+      [data-theme='light'] .sequence-arrow {
+        color: #2f855a;
+      }
+      [data-theme='light'] .stat-value {
+        color: #c05621;
+      }
+      [data-theme='light'] .effect-text {
+        color: #5a4a36;
+      }
+      [data-theme='light'] .description-text {
+        color: #4a3f30;
+      }
       [data-theme='light'] .description-box {
         background: rgba(168, 153, 104, 0.12);
         border-left-color: #a07f48;
@@ -2052,22 +2390,34 @@
         .action-panel,
         .battle-panel,
         .char-panel,
-        .item-panel { margin: 9px 0; }
+        .item-panel {
+          margin: 9px 0;
+        }
         .action-panel .panel-header,
         .battle-panel .panel-header,
         .char-panel .panel-header,
-        .item-panel .panel-header { padding: 7px 11px; }
+        .item-panel .panel-header {
+          padding: 7px 11px;
+        }
         .action-panel .panel-title,
         .battle-panel .panel-title,
         .char-panel .panel-title,
-        .item-panel .panel-title { font-size: 0.92em; letter-spacing: 0.8px; }
+        .item-panel .panel-title {
+          font-size: 0.92em;
+          letter-spacing: 0.8px;
+        }
         .action-panel .panel-content,
         .battle-panel .panel-content,
         .char-panel .panel-content,
-        .item-panel .panel-content { padding: 8px 10px; }
+        .item-panel .panel-content {
+          padding: 8px 10px;
+        }
         .action-panel .data-row,
         .battle-panel .data-row,
-        .item-panel .data-row { font-size: 0.82em; padding: 4px 8px; }
+        .item-panel .data-row {
+          font-size: 0.82em;
+          padding: 4px 8px;
+        }
       }
 
       /* —— <tp> 时空栏:正文最前的时间/地点/天气优雅卷轴 —— */
@@ -2079,11 +2429,13 @@
         gap: 6px 18px;
         margin: 0 0 14px;
         padding: 10px 16px;
-        background: linear-gradient(135deg,
+        background: linear-gradient(
+          135deg,
           rgba(168, 153, 104, 0.12) 0%,
           rgba(168, 153, 104, 0.04) 50%,
-          rgba(168, 153, 104, 0.10) 100%);
-        border: 1px solid rgba(168, 153, 104, 0.30);
+          rgba(168, 153, 104, 0.1) 100%
+        );
+        border: 1px solid rgba(168, 153, 104, 0.3);
         border-radius: 10px;
         overflow: hidden;
         animation: rb-panel-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
@@ -2092,14 +2444,18 @@
       .rb-tp::before {
         content: '';
         position: absolute;
-        top: 0; left: 0; right: 0;
+        top: 0;
+        left: 0;
+        right: 0;
         height: 1.5px;
-        background: linear-gradient(90deg,
+        background: linear-gradient(
+          90deg,
           transparent,
           var(--rb-accent, #a89968) 30%,
           color-mix(in srgb, var(--rb-accent, #a89968) 70%, white) 50%,
           var(--rb-accent, #a89968) 70%,
-          transparent);
+          transparent
+        );
         background-size: 200% 100%;
         animation: rb-panel-shimmer 8s ease-in-out infinite;
       }
@@ -2142,17 +2498,27 @@
         font-size: 0.85em;
       }
       @media (max-width: 600px) {
-        .rb-tp { gap: 4px 0; padding: 9px 12px; }
-        .rb-tp-cell { font-size: 0.85em; flex-basis: 100%; }
-        .rb-tp-cell + .rb-tp-cell::before { display: none; }
+        .rb-tp {
+          gap: 4px 0;
+          padding: 9px 12px;
+        }
+        .rb-tp-cell {
+          font-size: 0.85em;
+          flex-basis: 100%;
+        }
+        .rb-tp-cell + .rb-tp-cell::before {
+          display: none;
+        }
       }
 
       /* light 主题:暖纸感 */
       [data-theme='light'] .rb-tp {
-        background: linear-gradient(135deg,
+        background: linear-gradient(
+          135deg,
           rgba(168, 153, 104, 0.16) 0%,
           rgba(168, 153, 104, 0.06) 50%,
-          rgba(168, 153, 104, 0.16) 100%);
+          rgba(168, 153, 104, 0.16) 100%
+        );
         border-color: rgba(160, 127, 72, 0.32);
       }
       [data-theme='light'] .rb-tp-cell--time .rb-tp-text {
@@ -2201,10 +2567,12 @@
         margin: 14px 0;
         border-radius: 12px;
         overflow: hidden;
-        background: linear-gradient(155deg,
+        background: linear-gradient(
+          155deg,
           rgba(20, 16, 32, 0.78) 0%,
           rgba(28, 22, 44, 0.72) 60%,
-          rgba(20, 16, 32, 0.82) 100%);
+          rgba(20, 16, 32, 0.82) 100%
+        );
         backdrop-filter: blur(18px) saturate(180%);
         -webkit-backdrop-filter: blur(18px) saturate(180%);
         border: 1px solid rgba(255, 255, 255, 0.08);
@@ -2214,7 +2582,10 @@
           0 -1px 0 rgba(0, 0, 0, 0.25) inset;
         color: #e8d5b7;
         animation: rb-panel-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
-        transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+        transition:
+          transform 0.25s ease,
+          box-shadow 0.25s ease,
+          border-color 0.25s ease;
       }
       .rb-summary:hover {
         transform: translateY(-2px);
@@ -2227,14 +2598,18 @@
       .rb-summary::before {
         content: '';
         position: absolute;
-        top: 0; left: 0; right: 0;
+        top: 0;
+        left: 0;
+        right: 0;
         height: 2px;
-        background: linear-gradient(90deg,
+        background: linear-gradient(
+          90deg,
           transparent 0%,
           var(--rb-accent, #a89968) 30%,
           color-mix(in srgb, var(--rb-accent, #a89968) 70%, white) 50%,
           var(--rb-accent, #a89968) 70%,
-          transparent 100%);
+          transparent 100%
+        );
         background-size: 250% 100%;
         animation: rb-panel-shimmer 6s ease-in-out infinite;
         z-index: 1;
@@ -2248,20 +2623,26 @@
         padding: 10px 14px;
         cursor: pointer;
         user-select: none;
-        background: linear-gradient(135deg,
+        background: linear-gradient(
+          135deg,
           rgba(255, 255, 255, 0.04) 0%,
           rgba(255, 255, 255, 0.02) 50%,
-          rgba(255, 255, 255, 0.06) 100%);
+          rgba(255, 255, 255, 0.06) 100%
+        );
         border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         list-style: none;
         transition: background 0.25s ease;
       }
-      .rb-summary-head::-webkit-details-marker { display: none; }
+      .rb-summary-head::-webkit-details-marker {
+        display: none;
+      }
       .rb-summary-head:hover {
-        background: linear-gradient(135deg,
+        background: linear-gradient(
+          135deg,
           rgba(255, 255, 255, 0.08) 0%,
           rgba(255, 255, 255, 0.04) 50%,
-          rgba(255, 255, 255, 0.10) 100%);
+          rgba(255, 255, 255, 0.1) 100%
+        );
       }
       .rb-summary-icon {
         font-size: 1.05em;
@@ -2283,8 +2664,12 @@
         opacity: 0.7;
         letter-spacing: 0.4px;
       }
-      .rb-summary[open] .rb-summary-toggle-text::after { content: attr(data-open); }
-      .rb-summary:not([open]) .rb-summary-toggle-text::after { content: attr(data-close); }
+      .rb-summary[open] .rb-summary-toggle-text::after {
+        content: attr(data-open);
+      }
+      .rb-summary:not([open]) .rb-summary-toggle-text::after {
+        content: attr(data-close);
+      }
 
       .rb-summary-body {
         padding: 11px 16px;
@@ -2294,7 +2679,7 @@
         line-height: 1.7;
         font-size: 0.92em;
         word-break: break-word;
-        background: rgba(0, 0, 0, 0.10);
+        background: rgba(0, 0, 0, 0.1);
       }
       .rb-summary[open] > .rb-summary-body {
         animation: rb-tab-fade 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -2320,22 +2705,37 @@
         font-size: 0.85em;
         opacity: 0.75;
       }
-      .rb-summary-text { white-space: pre-wrap; }
-      .rb-summary-body::-webkit-scrollbar { width: 5px; }
-      .rb-summary-body::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.18); border-radius: 3px; }
+      .rb-summary-text {
+        white-space: pre-wrap;
+      }
+      .rb-summary-body::-webkit-scrollbar {
+        width: 5px;
+      }
+      .rb-summary-body::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.18);
+        border-radius: 3px;
+      }
       .rb-summary-body::-webkit-scrollbar-thumb {
-        background: linear-gradient(180deg, var(--rb-accent, #a89968), color-mix(in srgb, var(--rb-accent, #a89968) 60%, white));
+        background: linear-gradient(
+          180deg,
+          var(--rb-accent, #a89968),
+          color-mix(in srgb, var(--rb-accent, #a89968) 60%, white)
+        );
         border-radius: 3px;
         opacity: 0.5;
       }
-      .rb-summary-body::-webkit-scrollbar-thumb:hover { opacity: 0.85; }
+      .rb-summary-body::-webkit-scrollbar-thumb:hover {
+        opacity: 0.85;
+      }
 
       /* light 主题:暖纸卷轴 */
       [data-theme='light'] .rb-summary {
-        background: linear-gradient(155deg,
+        background: linear-gradient(
+          155deg,
           rgba(255, 250, 240, 0.92) 0%,
           rgba(248, 240, 222, 0.86) 55%,
-          rgba(252, 244, 228, 0.94) 100%);
+          rgba(252, 244, 228, 0.94) 100%
+        );
         border: 1px solid rgba(160, 127, 72, 0.28);
         color: #3a2f24;
         box-shadow:
@@ -2346,22 +2746,26 @@
       [data-theme='light'] .rb-summary:hover {
         border-color: rgba(160, 127, 72, 0.45);
         box-shadow:
-          0 16px 40px rgba(101, 75, 38, 0.20),
+          0 16px 40px rgba(101, 75, 38, 0.2),
           0 0 0 1px var(--rb-accent, #a07f48) inset,
           0 1px 0 rgba(255, 255, 255, 0.7) inset;
       }
       [data-theme='light'] .rb-summary-head {
-        background: linear-gradient(135deg,
-          rgba(168, 153, 104, 0.10) 0%,
+        background: linear-gradient(
+          135deg,
+          rgba(168, 153, 104, 0.1) 0%,
           rgba(168, 153, 104, 0.05) 50%,
-          rgba(168, 153, 104, 0.14) 100%);
-        border-bottom: 1px solid rgba(160, 127, 72, 0.20);
+          rgba(168, 153, 104, 0.14) 100%
+        );
+        border-bottom: 1px solid rgba(160, 127, 72, 0.2);
       }
       [data-theme='light'] .rb-summary-head:hover {
-        background: linear-gradient(135deg,
+        background: linear-gradient(
+          135deg,
           rgba(168, 153, 104, 0.16) 0%,
           rgba(168, 153, 104, 0.08) 50%,
-          rgba(168, 153, 104, 0.22) 100%);
+          rgba(168, 153, 104, 0.22) 100%
+        );
       }
       [data-theme='light'] .rb-summary-title {
         color: color-mix(in srgb, var(--rb-accent, #a07f48) 75%, #1a0f00);
@@ -2371,13 +2775,23 @@
         background: rgba(168, 153, 104, 0.08);
       }
       [data-theme='light'] .rb-summary-list li:not(:last-child) {
-        border-bottom-color: rgba(160, 127, 72, 0.20);
+        border-bottom-color: rgba(160, 127, 72, 0.2);
       }
 
       @media (max-width: 600px) {
-        .rb-summary-head { padding: 9px 12px; gap: 8px; }
-        .rb-summary-title { font-size: 0.94em; letter-spacing: 0.8px; }
-        .rb-summary-body { padding: 9px 12px; font-size: 0.88em; max-height: 360px; }
+        .rb-summary-head {
+          padding: 9px 12px;
+          gap: 8px;
+        }
+        .rb-summary-title {
+          font-size: 0.94em;
+          letter-spacing: 0.8px;
+        }
+        .rb-summary-body {
+          padding: 9px 12px;
+          font-size: 0.88em;
+          max-height: 360px;
+        }
       }
 
       /* —— 行动选项 <options>/<action_options> —— 视觉与其他面板一致(金色调,呼应 char-panel) */
@@ -2387,10 +2801,12 @@
         margin: 12px 0;
         border-radius: 12px;
         overflow: hidden;
-        background: linear-gradient(155deg,
+        background: linear-gradient(
+          155deg,
           rgba(20, 16, 32, 0.78) 0%,
           rgba(28, 22, 44, 0.72) 60%,
-          rgba(20, 16, 32, 0.82) 100%);
+          rgba(20, 16, 32, 0.82) 100%
+        );
         backdrop-filter: blur(18px) saturate(180%);
         -webkit-backdrop-filter: blur(18px) saturate(180%);
         border: 1px solid rgba(255, 255, 255, 0.08);
@@ -2400,7 +2816,10 @@
           0 -1px 0 rgba(0, 0, 0, 0.25) inset;
         color: #e8d5b7;
         animation: rb-panel-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
-        transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+        transition:
+          transform 0.25s ease,
+          box-shadow 0.25s ease,
+          border-color 0.25s ease;
       }
       .rb-options:hover {
         transform: translateY(-2px);
@@ -2413,14 +2832,18 @@
       .rb-options::before {
         content: '';
         position: absolute;
-        top: 0; left: 0; right: 0;
+        top: 0;
+        left: 0;
+        right: 0;
         height: 2px;
-        background: linear-gradient(90deg,
+        background: linear-gradient(
+          90deg,
           transparent 0%,
           var(--rb-options-accent) 30%,
           color-mix(in srgb, var(--rb-options-accent) 70%, white) 50%,
           var(--rb-options-accent) 70%,
-          transparent 100%);
+          transparent 100%
+        );
         background-size: 250% 100%;
         animation: rb-panel-shimmer 6s ease-in-out infinite;
       }
@@ -2429,10 +2852,12 @@
         align-items: center;
         gap: 9px;
         padding: 9px 14px;
-        background: linear-gradient(135deg,
+        background: linear-gradient(
+          135deg,
           rgba(255, 255, 255, 0.04) 0%,
           rgba(255, 255, 255, 0.02) 50%,
-          rgba(255, 255, 255, 0.06) 100%);
+          rgba(255, 255, 255, 0.06) 100%
+        );
         border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       }
       .rb-options-icon {
@@ -2474,13 +2899,19 @@
         color: #e8d5b7;
         cursor: pointer;
         user-select: none;
-        transition: background 0.18s ease, border-left-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+        transition:
+          background 0.18s ease,
+          border-left-color 0.18s ease,
+          transform 0.18s ease,
+          box-shadow 0.18s ease;
       }
       .rb-options-item:hover {
         background: rgba(255, 255, 255, 0.06);
         border-left-color: var(--rb-options-accent);
         transform: translateX(3px);
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25), inset 0 0 18px color-mix(in srgb, var(--rb-options-accent) 12%, transparent);
+        box-shadow:
+          0 4px 14px rgba(0, 0, 0, 0.25),
+          inset 0 0 18px color-mix(in srgb, var(--rb-options-accent) 12%, transparent);
       }
       .rb-options-item:active {
         transform: translateX(3px) scale(0.985);
@@ -2489,9 +2920,15 @@
         animation: rb-options-flash 0.6s ease-out;
       }
       @keyframes rb-options-flash {
-        0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.0); }
-        30% { box-shadow: 0 0 0 6px rgba(212, 175, 55, 0.35); }
-        100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+        0% {
+          box-shadow: 0 0 0 0 rgba(212, 175, 55, 0);
+        }
+        30% {
+          box-shadow: 0 0 0 6px rgba(212, 175, 55, 0.35);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(212, 175, 55, 0);
+        }
       }
       .rb-options-num {
         flex: 0 0 auto;
@@ -2502,9 +2939,11 @@
         height: 24px;
         padding: 0 6px;
         border-radius: 50%;
-        background: linear-gradient(135deg,
+        background: linear-gradient(
+          135deg,
           color-mix(in srgb, var(--rb-options-accent) 80%, transparent),
-          color-mix(in srgb, var(--rb-options-accent) 40%, #1a0f00));
+          color-mix(in srgb, var(--rb-options-accent) 40%, #1a0f00)
+        );
         color: #fff;
         font-family: 'Cinzel', 'Noto Serif SC', serif;
         font-weight: 700;
@@ -2522,10 +2961,12 @@
       }
       /* light theme */
       [data-theme='light'] .rb-options {
-        background: linear-gradient(155deg,
+        background: linear-gradient(
+          155deg,
           rgba(255, 250, 240, 0.92) 0%,
           rgba(248, 240, 222, 0.86) 55%,
-          rgba(252, 244, 228, 0.94) 100%);
+          rgba(252, 244, 228, 0.94) 100%
+        );
         border: 1px solid rgba(160, 127, 72, 0.28);
         color: #3a2f24;
         box-shadow:
@@ -2536,15 +2977,17 @@
       [data-theme='light'] .rb-options:hover {
         border-color: rgba(160, 127, 72, 0.45);
         box-shadow:
-          0 16px 40px rgba(101, 75, 38, 0.20),
+          0 16px 40px rgba(101, 75, 38, 0.2),
           0 0 0 1px var(--rb-options-accent) inset;
       }
       [data-theme='light'] .rb-options-head {
-        background: linear-gradient(135deg,
-          rgba(168, 153, 104, 0.10) 0%,
+        background: linear-gradient(
+          135deg,
+          rgba(168, 153, 104, 0.1) 0%,
           rgba(168, 153, 104, 0.05) 50%,
-          rgba(168, 153, 104, 0.14) 100%);
-        border-bottom-color: rgba(160, 127, 72, 0.20);
+          rgba(168, 153, 104, 0.14) 100%
+        );
+        border-bottom-color: rgba(160, 127, 72, 0.2);
       }
       [data-theme='light'] .rb-options-title {
         color: color-mix(in srgb, var(--rb-options-accent) 75%, #1a0f00);
@@ -2555,7 +2998,7 @@
       }
       [data-theme='light'] .rb-options-item {
         background: rgba(168, 153, 104, 0.07);
-        border: 1px solid rgba(168, 153, 104, 0.20);
+        border: 1px solid rgba(168, 153, 104, 0.2);
         border-left: 3px solid color-mix(in srgb, var(--rb-options-accent) 70%, transparent);
         color: #3a2f24;
       }
@@ -2564,13 +3007,29 @@
         border-left-color: var(--rb-options-accent);
       }
       @media (max-width: 600px) {
-        .rb-options { margin: 9px 0; }
-        .rb-options-head { padding: 7px 11px; }
-        .rb-options-title { font-size: 0.92em; letter-spacing: 0.8px; }
-        .rb-options-body { padding: 8px 10px; }
-        .rb-options-item { font-size: 0.88em; padding: 6px 9px; }
-        .rb-options-text { font-size: 0.88em; }
-        .rb-options-hint { display: none; }
+        .rb-options {
+          margin: 9px 0;
+        }
+        .rb-options-head {
+          padding: 7px 11px;
+        }
+        .rb-options-title {
+          font-size: 0.92em;
+          letter-spacing: 0.8px;
+        }
+        .rb-options-body {
+          padding: 8px 10px;
+        }
+        .rb-options-item {
+          font-size: 0.88em;
+          padding: 6px 9px;
+        }
+        .rb-options-text {
+          font-size: 0.88em;
+        }
+        .rb-options-hint {
+          display: none;
+        }
       }
 
       /* —— 旁白 / 叙事段落 —— */
@@ -2662,7 +3121,9 @@
         font: 700 17px/1 sans-serif;
       }
       @keyframes rb-workshop-spin {
-        to { transform: rotate(360deg); }
+        to {
+          transform: rotate(360deg);
+        }
       }
       .rb-workshop-caption {
         padding: 7px 10px;
@@ -2679,14 +3140,16 @@
         display: flex;
         gap: 5px;
         padding: 5px;
-        border: 1px solid rgba(255,255,255,.14);
+        border: 1px solid rgba(255, 255, 255, 0.14);
         border-radius: 999px;
-        background: rgba(18,18,20,.64);
-        box-shadow: 0 6px 20px rgba(0,0,0,.24);
+        background: rgba(18, 18, 20, 0.64);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.24);
         backdrop-filter: blur(8px);
         opacity: 0;
         transform: translate(-50%, 6px);
-        transition: opacity .18s ease, transform .18s ease;
+        transition:
+          opacity 0.18s ease,
+          transform 0.18s ease;
       }
       .rb-workshop-figure:hover .rb-workshop-controls,
       .rb-workshop-figure:focus-within .rb-workshop-controls {
@@ -2701,16 +3164,24 @@
         place-items: center;
         border: 0;
         border-radius: 999px;
-        color: rgba(255,255,255,.9);
+        color: rgba(255, 255, 255, 0.9);
         background: transparent;
         font: 600 12px/1 sans-serif;
         cursor: pointer;
       }
       .rb-workshop-control:hover,
-      .rb-workshop-control.active { background: rgba(255,255,255,.16); color: #fff; }
-      .rb-workshop-control:disabled { opacity: .32; cursor: default; }
+      .rb-workshop-control.active {
+        background: rgba(255, 255, 255, 0.16);
+        color: #fff;
+      }
+      .rb-workshop-control:disabled {
+        opacity: 0.32;
+        cursor: default;
+      }
       @media (hover: none), (pointer: coarse), (max-width: 600px) {
-        .rb-workshop-media { min-height: 180px; }
+        .rb-workshop-media {
+          min-height: 180px;
+        }
         .rb-workshop-controls {
           bottom: max(34px, calc(env(safe-area-inset-bottom) + 30px));
           gap: 2px;
@@ -2871,8 +3342,12 @@
           line-height: 30px;
           font-size: 12px;
         }
-        .rb-image-viewer-scale { min-width: 54px; }
-        .rb-image-viewer-image { max-height: calc(100% - 96px); }
+        .rb-image-viewer-scale {
+          min-width: 54px;
+        }
+        .rb-image-viewer-image {
+          max-height: calc(100% - 96px);
+        }
       }
 
       /* —— Toast —— */
@@ -2906,7 +3381,9 @@
         .rb-content {
           padding: 18px 16px;
         }
-        .rb-workshop-gallery { grid-template-columns: 1fr; }
+        .rb-workshop-gallery {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
@@ -2922,8 +3399,8 @@
     <div class="rb-settings" id="settingsPanel">
       <div class="rb-settings-row">
         <span class="rb-settings-label">正文字号</span>
-        <button class="rb-btn" data-action="font" data-arg="-1" style="padding: 2px 8px;">−</button>
-        <button class="rb-btn" data-action="font" data-arg="1" style="padding: 2px 8px;">+</button>
+        <button class="rb-btn" data-action="font" data-arg="-1" style="padding: 2px 8px">−</button>
+        <button class="rb-btn" data-action="font" data-arg="1" style="padding: 2px 8px">+</button>
       </div>
 
       <div class="rb-section-title">🖼 创意工坊插图</div>
@@ -2947,12 +3424,20 @@
     </div>
 
     <div class="rb-container">
-      <div class="rb-content" id="readingContent">$1</div>
+      <div class="rb-content" id="readingContent"></div>
     </div>
 
     <script>
       // 脚本进入即记录，便于在 DevTools 里确认是否执行
-      try { console.log('[正文美化] script loaded, readyState=', document.readyState); } catch (_) {}
+      try {
+        console.log('[正文美化] script loaded, readyState=', document.readyState);
+      } catch (_) {}
+
+      // 轻量正则会在加载本页面前保存本楼层的捕获正文；每层消息 iframe 拥有独立 window，
+      // 因此载荷不会在不同楼层之间串写。直接打开构建页时允许为空，方便独立调试。
+      const initialContent = typeof window.__rb_content_payload === 'string' ? window.__rb_content_payload : '';
+      const initialContentHost = document.getElementById('readingContent');
+      if (initialContentHost) initialContentHost.innerHTML = initialContent;
 
       // ============== localStorage ==============
       const THEME_KEY = 'rb-theme';
@@ -3142,7 +3627,11 @@
             })();
             while (j < rawLines.length) {
               const nl = rawLines[j];
-              if (!nl.trim()) { buf.push(''); j++; continue; }
+              if (!nl.trim()) {
+                buf.push('');
+                j++;
+                continue;
+              }
               const ni = nl.search(/\S/) - base;
               if (ni <= indent) break;
               const sliceFrom = base + childMinIndent;
@@ -3183,8 +3672,8 @@
           }
           // 显式列出的"物件型" section 才走 list-section,且确认子节点确实是嵌套对象
           if (CHAR_LIST_SECTIONS.includes(n.key)) {
-            const allNested = n.children.every(c =>
-              (c.value === '' || c.value == null) && c.children && c.children.length > 0
+            const allNested = n.children.every(
+              c => (c.value === '' || c.value == null) && c.children && c.children.length > 0,
             );
             if (allNested) {
               return {
@@ -3208,9 +3697,7 @@
         return children.map(c => {
           if ((c.value === '' || c.value == null) && c.children && c.children.length > 0) {
             // 嵌套对象 — 拼成 "k1: v1 / k2: v2"
-            const sub = c.children.map(cc =>
-              cc.key + (cc.value ? ': ' + cc.value : '')
-            ).join(' / ');
+            const sub = c.children.map(cc => cc.key + (cc.value ? ': ' + cc.value : '')).join(' / ');
             return { key: c.key, value: sub };
           }
           return { key: c.key, value: c.value };
@@ -3226,15 +3713,38 @@
             `<span class="field-label">品质:</span> <span class="tag tag-quality-${q}"><i class="fa-solid fa-star"></i> ${q}</span>`,
           );
         });
-        html = html.replace(/结果:\s*大成功/g, `<span class="field-label">结果:</span> <span class="tag tag-critical-success"><i class="fa-solid fa-star"></i> 大成功</span>`);
-        html = html.replace(/结果:\s*成功/g, `<span class="field-label">结果:</span> <span class="tag tag-success"><i class="fa-solid fa-check"></i> 成功</span>`);
-        html = html.replace(/结果:\s*失败/g, `<span class="field-label">结果:</span> <span class="tag tag-fail"><i class="fa-solid fa-times"></i> 失败</span>`);
-        html = html.replace(/结果:\s*大失败/g, `<span class="field-label">结果:</span> <span class="tag tag-critical-fail"><i class="fa-solid fa-skull"></i> 大失败</span>`);
-        html = html.replace(/状态:\s*制作成功/g, `<span class="field-label">状态:</span> <span class="tag tag-success"><i class="fa-solid fa-check"></i> 制作成功</span>`);
-        html = html.replace(/状态:\s*制作失败/g, `<span class="field-label">状态:</span> <span class="tag tag-fail"><i class="fa-solid fa-times"></i> 制作失败</span>`);
+        html = html.replace(
+          /结果:\s*大成功/g,
+          `<span class="field-label">结果:</span> <span class="tag tag-critical-success"><i class="fa-solid fa-star"></i> 大成功</span>`,
+        );
+        html = html.replace(
+          /结果:\s*成功/g,
+          `<span class="field-label">结果:</span> <span class="tag tag-success"><i class="fa-solid fa-check"></i> 成功</span>`,
+        );
+        html = html.replace(
+          /结果:\s*失败/g,
+          `<span class="field-label">结果:</span> <span class="tag tag-fail"><i class="fa-solid fa-times"></i> 失败</span>`,
+        );
+        html = html.replace(
+          /结果:\s*大失败/g,
+          `<span class="field-label">结果:</span> <span class="tag tag-critical-fail"><i class="fa-solid fa-skull"></i> 大失败</span>`,
+        );
+        html = html.replace(
+          /状态:\s*制作成功/g,
+          `<span class="field-label">状态:</span> <span class="tag tag-success"><i class="fa-solid fa-check"></i> 制作成功</span>`,
+        );
+        html = html.replace(
+          /状态:\s*制作失败/g,
+          `<span class="field-label">状态:</span> <span class="tag tag-fail"><i class="fa-solid fa-times"></i> 制作失败</span>`,
+        );
         const tagMappings = [
           { pattern: /类型:\s*([^|]+)/g, label: '类型', icon: 'fa-solid fa-tag', className: 'tag-type' },
-          { pattern: /方法:\s*([^|]+)/g, label: '方法', icon: 'fa-solid fa-wand-magic-sparkles', className: 'tag-type' },
+          {
+            pattern: /方法:\s*([^|]+)/g,
+            label: '方法',
+            icon: 'fa-solid fa-wand-magic-sparkles',
+            className: 'tag-type',
+          },
           { pattern: /检定类型:\s*([^|]+)/g, label: '检定类型', icon: 'fa-solid fa-tag', className: 'tag-type' },
           { pattern: /难度:\s*([^|]+)/g, label: '难度', icon: 'fa-solid fa-chart-line', className: 'tag-attr' },
           { pattern: /当前境界:\s*([^|]+)/g, label: '当前境界', icon: 'fa-solid fa-crown', className: 'tag-attr' },
@@ -3245,7 +3755,11 @@
           { pattern: /产出:\s*([^|]+)/g, label: '产出', icon: 'fa-solid fa-box-open', className: 'tag-attr' },
         ];
         tagMappings.forEach(({ pattern, label, icon, className }) => {
-          html = html.replace(pattern, (m, val) => `<span class="field-label">${label}:</span> <span class="tag ${className}"><i class="${icon}"></i> ${val.trim()}</span>`);
+          html = html.replace(
+            pattern,
+            (m, val) =>
+              `<span class="field-label">${label}:</span> <span class="tag ${className}"><i class="${icon}"></i> ${val.trim()}</span>`,
+          );
         });
         return html;
       }
@@ -3268,7 +3782,10 @@
           { pattern: /炼体\[(\d+)\]/g, label: '炼体', icon: 'fa-solid fa-person' },
         ];
         attrMappings.forEach(({ pattern, label, icon }) => {
-          html = html.replace(pattern, (m, val) => `<span class="stat-label"><i class="${icon}"></i> ${label}${val}</span>`);
+          html = html.replace(
+            pattern,
+            (m, val) => `<span class="stat-label"><i class="${icon}"></i> ${label}${val}</span>`,
+          );
         });
         html = html.replace(/五行:\s*([金木水火土])\s*vs\s*([金木水火土])/g, (m, e1, e2) => {
           const t1 = `<span class="tag tag-element"><i class="fa-solid fa-circle"></i> ${e1}</span>`;
@@ -3288,25 +3805,65 @@
               `<span class="tag tag-unit-type"><i class="fa-solid fa-users"></i> ${unitType}${suffix}</span>`,
           );
         });
-        html = html.replace(/结阵中/g, `<span class="tag tag-formation"><i class="fa-solid fa-circle-notch"></i> 结阵中</span>`);
-        html = html.replace(/已结阵/g, `<span class="tag tag-formation"><i class="fa-solid fa-check-circle"></i> 已结阵</span>`);
+        html = html.replace(
+          /结阵中/g,
+          `<span class="tag tag-formation"><i class="fa-solid fa-circle-notch"></i> 结阵中</span>`,
+        );
+        html = html.replace(
+          /已结阵/g,
+          `<span class="tag tag-formation"><i class="fa-solid fa-check-circle"></i> 已结阵</span>`,
+        );
         return html;
       }
 
       function beautifyCharRow(row) {
         let html = _.escape(row);
         ['凡', '黄', '玄', '地', '天'].forEach(q => {
-          html = html.replace(new RegExp(`品质:\\s*${q}`, 'g'), `<span class="field-label">品质:</span> <span class="tag">${q}</span>`);
+          html = html.replace(
+            new RegExp(`品质:\\s*${q}`, 'g'),
+            `<span class="field-label">品质:</span> <span class="tag">${q}</span>`,
+          );
         });
         ['火', '水', '木', '金', '土', '阴', '阳'].forEach(elem => {
-          html = html.replace(new RegExp(`五行:\\s*\\[${elem}\\]`, 'g'), `<span class="field-label">五行:</span> <span class="tag">[${elem}]</span>`);
-          html = html.replace(new RegExp(`灵根五行:\\s*\\[${elem}\\]`, 'g'), `<span class="field-label">灵根五行:</span> <span class="tag">[${elem}]</span>`);
+          html = html.replace(
+            new RegExp(`五行:\\s*\\[${elem}\\]`, 'g'),
+            `<span class="field-label">五行:</span> <span class="tag">[${elem}]</span>`,
+          );
+          html = html.replace(
+            new RegExp(`灵根五行:\\s*\\[${elem}\\]`, 'g'),
+            `<span class="field-label">灵根五行:</span> <span class="tag">[${elem}]</span>`,
+          );
         });
         ['渡劫', '大乘', '合体', '分神', '元神', '化神', '炼虚', '炼神', '金丹', '筑基', '练气'].forEach(realm => {
-          html = html.replace(new RegExp(`境界:\\s*${realm}`, 'g'), `<span class="field-label">境界:</span> <span class="tag">${realm}</span>`);
+          html = html.replace(
+            new RegExp(`境界:\\s*${realm}`, 'g'),
+            `<span class="field-label">境界:</span> <span class="tag">${realm}</span>`,
+          );
         });
-        ['心法', '攻击', '咒法', '幻术', '神识', '身法', '护体', '阵法', '法宝', '护甲', '饰品', '工具', '符箓', '丹药', '秘籍', '素材', '傀儡', '灵兽'].forEach(type => {
-          html = html.replace(new RegExp(`类型:\\s*${type}`, 'g'), `<span class="field-label">类型:</span> <span class="tag">${type}</span>`);
+        [
+          '心法',
+          '攻击',
+          '咒法',
+          '幻术',
+          '神识',
+          '身法',
+          '护体',
+          '阵法',
+          '法宝',
+          '护甲',
+          '饰品',
+          '工具',
+          '符箓',
+          '丹药',
+          '秘籍',
+          '素材',
+          '傀儡',
+          '灵兽',
+        ].forEach(type => {
+          html = html.replace(
+            new RegExp(`类型:\\s*${type}`, 'g'),
+            `<span class="field-label">类型:</span> <span class="tag">${type}</span>`,
+          );
         });
         html = html.replace(/使用中:\s*(true|false)/g, (m, val) => {
           const status = val === 'true' ? '✓ 使用中' : '✗ 未使用';
@@ -3323,19 +3880,54 @@
             `<span class="field-label">品质:</span> <span class="tag tag-quality-${q}"><i class="fa-solid fa-star"></i> ${q}</span>`,
           );
         });
-        ['物品', '功法', '法宝', '护甲', '饰品', '傀儡', '灵兽', '秘籍', '配方', '符箓', '丹药', '素材', '工具'].forEach(t => {
+        [
+          '物品',
+          '功法',
+          '法宝',
+          '护甲',
+          '饰品',
+          '傀儡',
+          '灵兽',
+          '秘籍',
+          '配方',
+          '符箓',
+          '丹药',
+          '素材',
+          '工具',
+        ].forEach(t => {
           html = html.replace(
             new RegExp(`类型:\\s*${t}`, 'g'),
             `<span class="field-label">类型:</span> <span class="tag tag-type"><i class="fa-solid fa-tag"></i> ${t}</span>`,
           );
         });
-        html = html.replace(/攻击力:\s*(\d+)/g, (m, val) => `<span class="field-label">攻击力:</span> <span class="stat-value">${val}</span>`);
-        html = html.replace(/防御力:\s*(\d+)/g, (m, val) => `<span class="field-label">防御力:</span> <span class="stat-value">${val}</span>`);
-        html = html.replace(/遁速:\s*(\d+)/g, (m, val) => `<span class="field-label">遁速:</span> <span class="stat-value">${val}</span>`);
-        html = html.replace(/气血:\s*(\d+)/g, (m, val) => `<span class="field-label">气血:</span> <span class="stat-value">${val}</span>`);
-        html = html.replace(/灵气:\s*(\d+)/g, (m, val) => `<span class="field-label">灵气:</span> <span class="stat-value">${val}</span>`);
-        html = html.replace(/\[([^\]]+)\]/g, (m, tag) => `<span class="tag tag-attr"><i class="fa-solid fa-bookmark"></i> ${tag}</span>`);
-        html = html.replace(/效果:\s*([^|]+)/g, (m, effect) => `<span class="field-label">效果:</span> <span class="effect-text">${effect.trim()}</span>`);
+        html = html.replace(
+          /攻击力:\s*(\d+)/g,
+          (m, val) => `<span class="field-label">攻击力:</span> <span class="stat-value">${val}</span>`,
+        );
+        html = html.replace(
+          /防御力:\s*(\d+)/g,
+          (m, val) => `<span class="field-label">防御力:</span> <span class="stat-value">${val}</span>`,
+        );
+        html = html.replace(
+          /遁速:\s*(\d+)/g,
+          (m, val) => `<span class="field-label">遁速:</span> <span class="stat-value">${val}</span>`,
+        );
+        html = html.replace(
+          /气血:\s*(\d+)/g,
+          (m, val) => `<span class="field-label">气血:</span> <span class="stat-value">${val}</span>`,
+        );
+        html = html.replace(
+          /灵气:\s*(\d+)/g,
+          (m, val) => `<span class="field-label">灵气:</span> <span class="stat-value">${val}</span>`,
+        );
+        html = html.replace(
+          /\[([^\]]+)\]/g,
+          (m, tag) => `<span class="tag tag-attr"><i class="fa-solid fa-bookmark"></i> ${tag}</span>`,
+        );
+        html = html.replace(
+          /效果:\s*([^|]+)/g,
+          (m, effect) => `<span class="field-label">效果:</span> <span class="effect-text">${effect.trim()}</span>`,
+        );
         return html;
       }
 
@@ -3345,7 +3937,9 @@
         _.forEach(panel.sections, section => {
           const config = RB_PANEL_CONFIG_ACTION[section.title] || { type: 'battle', icon: 'fa-solid fa-scroll' };
           let rowsHtml = '';
-          _.forEach(section.rows, row => { rowsHtml += `<div class="data-row">${beautifyActionRow(row)}</div>`; });
+          _.forEach(section.rows, row => {
+            rowsHtml += `<div class="data-row">${beautifyActionRow(row)}</div>`;
+          });
           html += `<div class="action-panel ${config.type}"><div class="panel-header"><i class="panel-icon ${config.icon}"></i><span class="panel-title">${_.escape(section.title)}</span><i class="panel-toggle fa-solid fa-chevron-down"></i></div><div class="panel-content">${rowsHtml}</div></div>`;
         });
         return html;
@@ -3356,7 +3950,9 @@
         _.forEach(panel.sections, section => {
           const icon = RB_PANEL_CONFIG_BATTLE[section.title] || 'fa-solid fa-scroll';
           let rowsHtml = '';
-          _.forEach(section.rows, row => { rowsHtml += `<div class="data-row">${beautifyBattleRow(row)}</div>`; });
+          _.forEach(section.rows, row => {
+            rowsHtml += `<div class="data-row">${beautifyBattleRow(row)}</div>`;
+          });
           html += `<div class="battle-panel"><div class="panel-header"><i class="panel-icon ${icon}"></i><span class="panel-title">${_.escape(section.title)}</span><i class="panel-toggle fa-solid fa-chevron-down"></i></div><div class="panel-content">${rowsHtml}</div></div>`;
         });
         return html;
@@ -3377,7 +3973,7 @@
         { key: '关系', label: '关系', match: ['关系', '人际', '亲属', '师承', '道侣', '好感度'] },
       ];
       function classifyCharItem(item) {
-        const probe = (item.kind === 'section' || item.kind === 'list-section') ? item.title : item.key;
+        const probe = item.kind === 'section' || item.kind === 'list-section' ? item.title : item.key;
         if (!probe) return '背景';
         // 精确匹配优先
         for (const tab of CHAR_TAB_DEFS) {
@@ -3442,14 +4038,16 @@
             const max = Number(sub['上限'] ?? cur);
             const pct = max > 0 ? Math.max(0, Math.min(100, (cur / max) * 100)) : 0;
             const cls = node.key === '气血' ? 'stat-hp' : node.key === '灵气' ? 'stat-mp' : 'stat-other';
-            html += `<div class="char-card-stat ${cls}">` +
+            html +=
+              `<div class="char-card-stat ${cls}">` +
               `<span class="char-card-stat-label">${_.escape(node.key)}</span>` +
               `<div class="char-card-stat-bar"><div class="char-card-stat-bar-fill" style="width:${pct.toFixed(1)}%"></div></div>` +
               `<span class="char-card-stat-value">${cur} / ${max}</span>` +
               `</div>`;
           } else {
             // 标量(遁速等) → 简单展示
-            html += `<div class="char-card-stat char-card-stat--simple">` +
+            html +=
+              `<div class="char-card-stat char-card-stat--simple">` +
               `<span class="char-card-stat-label">${_.escape(node.key)}</span>` +
               `<span class="char-card-stat-value">${_.escape(String(node.value))}</span>` +
               `</div>`;
@@ -3466,14 +4064,16 @@
         for (const group of raw) {
           if (!group.children || !group.children.length) continue;
           const nonzero = group.children.filter(s => Number(s.value) > 0);
-          html += `<div class="char-card-skill-group">` +
+          html +=
+            `<div class="char-card-skill-group">` +
             `<span class="char-card-skill-group-title">${_.escape(group.key)}</span>`;
           if (nonzero.length === 0) {
             html += `<span class="char-card-skill-empty">未习</span>`;
           } else {
             html += `<div class="char-card-skill-list">`;
             for (const s of nonzero) {
-              html += `<span class="char-card-skill-pill">` +
+              html +=
+                `<span class="char-card-skill-pill">` +
                 `<span class="char-card-skill-name">${_.escape(s.key)}</span>` +
                 `<span class="char-card-skill-value">${_.escape(s.value)}</span>` +
                 `</span>`;
@@ -3511,7 +4111,8 @@
           if (effect.children && effect.children.length) {
             html += `<div class="char-card-item-effects">`;
             for (const e of effect.children) {
-              html += `<div class="char-card-effect-row">` +
+              html +=
+                `<div class="char-card-effect-row">` +
                 `<span class="char-card-effect-name">${_.escape(e.key)}:</span>` +
                 `<span class="char-card-effect-val">${_.escape(String(e.value))}</span>` +
                 `</div>`;
@@ -3541,7 +4142,7 @@
           } else {
             // 兜底:只有 key 没 value(AI 把整段描述写成无冒号行,如 性格/外貌/着装),
             // 或只有 value 没 key,都当作整段描述文本渲染,避免被塞进窄标签里溢出截断。
-            const text = (f.key && !hasVal) ? f.key : f.value;
+            const text = f.key && !hasVal ? f.key : f.value;
             if (text != null && String(text).trim() !== '') {
               html += `<div class="char-card-text">${_.escape(text)}</div>`;
             }
@@ -3576,8 +4177,10 @@
           return m ? m[1] : undefined;
         };
         // 兼容:旧数据顶级 攻击力/防御力 优先;否则从标签字符串里提
-        const atk = map['攻击力'] != null && map['攻击力'] !== '' ? map['攻击力'] : lookupNumFromTagStr(tagsField, '攻击力');
-        const def = map['防御力'] != null && map['防御力'] !== '' ? map['防御力'] : lookupNumFromTagStr(tagsField, '防御力');
+        const atk =
+          map['攻击力'] != null && map['攻击力'] !== '' ? map['攻击力'] : lookupNumFromTagStr(tagsField, '攻击力');
+        const def =
+          map['防御力'] != null && map['防御力'] !== '' ? map['防御力'] : lookupNumFromTagStr(tagsField, '防御力');
 
         // head:名字 + 使用中/数量 徽章
         let headHtml = `<span class="char-card-item-name">${_.escape(name)}</span>`;
@@ -3603,7 +4206,9 @@
         if (elem) {
           const m = String(elem).match(/^\[(.+)\]$/);
           const elems = m ? m[1].split(/[,，\s]+/).filter(Boolean) : [String(elem).trim()];
-          elems.forEach(e => { if (e) metaTags += `<span class="tag">${_.escape(e)}</span>`; });
+          elems.forEach(e => {
+            if (e) metaTags += `<span class="tag">${_.escape(e)}</span>`;
+          });
         }
         if (atk) metaTags += `<span class="tag tag-attr">攻 ${_.escape(atk)}</span>`;
         if (def) metaTags += `<span class="tag tag-attr">防 ${_.escape(def)}</span>`;
@@ -3641,7 +4246,9 @@
           // 攻击力/防御力 已在上方 meta 区以 攻/防 chip 呈现,这里跳过避免重复。
           const META_STAT_KEYS = ['攻击力', '防御力'];
           for (const t of ts) {
-            const tag = String(t).replace(/^[\s\-–—•·*‣◦]+/, '').trim();
+            const tag = String(t)
+              .replace(/^[\s\-–—•·*‣◦]+/, '')
+              .trim();
             if (!tag) continue;
             const kv = tag.match(/^(.+?)\s*[:：]\s*(.+)$/);
             if (kv) {
@@ -3659,15 +4266,20 @@
         let effHtml = '';
         if (effects) {
           // effects 是 "key: val / key2: val2"
-          const parts = String(effects).split(/\s*\/\s*/).filter(Boolean);
-          effHtml = `<div class="char-card-item-effects">` +
-            parts.map(p => {
-              const ci = p.indexOf(':');
-              if (ci > 0) {
-                return `<div class="char-card-effect-row"><span class="char-card-effect-name">${_.escape(p.slice(0, ci).trim())}:</span><span class="char-card-effect-val">${_.escape(p.slice(ci + 1).trim())}</span></div>`;
-              }
-              return `<div class="char-card-effect-row">${_.escape(p)}</div>`;
-            }).join('') +
+          const parts = String(effects)
+            .split(/\s*\/\s*/)
+            .filter(Boolean);
+          effHtml =
+            `<div class="char-card-item-effects">` +
+            parts
+              .map(p => {
+                const ci = p.indexOf(':');
+                if (ci > 0) {
+                  return `<div class="char-card-effect-row"><span class="char-card-effect-name">${_.escape(p.slice(0, ci).trim())}:</span><span class="char-card-effect-val">${_.escape(p.slice(ci + 1).trim())}</span></div>`;
+                }
+                return `<div class="char-card-effect-row">${_.escape(p)}</div>`;
+              })
+              .join('') +
             `</div>`;
         }
 
@@ -3683,7 +4295,8 @@
               const mx = Number(sub['上限'] ?? cur);
               const pct = mx > 0 ? Math.max(0, Math.min(100, (cur / mx) * 100)) : 0;
               const cls = r.key === '气血' ? 'stat-hp' : r.key === '灵气' ? 'stat-mp' : 'stat-other';
-              resourceHtml += `<div class="char-card-unit-stat ${cls}">` +
+              resourceHtml +=
+                `<div class="char-card-unit-stat ${cls}">` +
                 `<span class="char-card-unit-stat-label">${_.escape(r.key)}</span>` +
                 `<div class="char-card-unit-stat-bar"><div class="char-card-unit-stat-bar-fill" style="width:${pct.toFixed(1)}%"></div></div>` +
                 `<span class="char-card-unit-stat-value">${cur}/${mx}</span>` +
@@ -3705,17 +4318,19 @@
             const skAtk = skMap['攻击力'] ? skMap['攻击力'].value : '';
             const skCost = skMap['消耗'] ? skMap['消耗'].value : '';
             const skEff = skMap['效果'];
-            skillsHtml += `<div class="char-card-unit-skill">` +
+            skillsHtml +=
+              `<div class="char-card-unit-skill">` +
               `<div class="char-card-unit-skill-head">` +
-                `<span class="char-card-unit-skill-name">${_.escape(sk.key)}</span>` +
-                (skAtk ? `<span class="tag tag-attr">攻 ${_.escape(skAtk)}</span>` : '') +
-                (skCost ? `<span class="tag">耗 ${_.escape(skCost)}</span>` : '') +
+              `<span class="char-card-unit-skill-name">${_.escape(sk.key)}</span>` +
+              (skAtk ? `<span class="tag tag-attr">攻 ${_.escape(skAtk)}</span>` : '') +
+              (skCost ? `<span class="tag">耗 ${_.escape(skCost)}</span>` : '') +
               `</div>`;
             if (skEff) {
               if (skEff.children && skEff.children.length) {
                 skillsHtml += `<div class="char-card-unit-skill-effects">`;
                 for (const e of skEff.children) {
-                  skillsHtml += `<div class="char-card-effect-row">` +
+                  skillsHtml +=
+                    `<div class="char-card-effect-row">` +
                     `<span class="char-card-effect-name">${_.escape(e.key)}:</span>` +
                     `<span class="char-card-effect-val">${_.escape(String(e.value))}</span>` +
                     `</div>`;
@@ -3738,7 +4353,8 @@
         if (effHtml) html += effHtml;
         if (skillsHtml) html += skillsHtml;
         if (desc) html += `<div class="char-card-item-desc">${_.escape(desc)}</div>`;
-        if (pos) html += `<div class="char-card-item-loc"><i class="fa-solid fa-location-dot"></i> ${_.escape(pos)}</div>`;
+        if (pos)
+          html += `<div class="char-card-item-loc"><i class="fa-solid fa-location-dot"></i> ${_.escape(pos)}</div>`;
         html += `</div>`;
         return html;
       }
@@ -3762,7 +4378,12 @@
         const inner = m ? m[1] : s;
         return inner
           .split(/[,，;；、|｜\/／\n\r]+/)
-          .map(t => t.replace(/^[\s\-•·*‣◦‧]+/, '').replace(/[\s。.]+$/, '').trim())
+          .map(t =>
+            t
+              .replace(/^[\s\-•·*‣◦‧]+/, '')
+              .replace(/[\s。.]+$/, '')
+              .trim(),
+          )
           .filter(Boolean);
       }
       // —— 身份 渲染:无论 scalar/section/multiline 都拍成 tag 列表 —— //
@@ -3772,7 +4393,7 @@
           parts = splitIdentity(item.value);
         } else if (item.kind === 'section') {
           // section 子节点的 key 即一条身份;若 key 为空但 value 有,退化用 value
-          for (const f of (item.fields || [])) {
+          for (const f of item.fields || []) {
             const piece = (f.key && f.key.trim()) || (f.value && String(f.value).trim()) || '';
             if (piece) {
               // 单条 key 内仍可能含 "/" 等分隔,继续 split
@@ -3780,7 +4401,7 @@
             }
           }
         } else if (item.kind === 'list-section') {
-          for (const it of (item.items || [])) {
+          for (const it of item.items || []) {
             if (it.name) splitIdentity(it.name).forEach(p => parts.push(p));
           }
         }
@@ -3788,13 +4409,13 @@
         const seen = new Set();
         parts = parts.filter(p => (seen.has(p) ? false : (seen.add(p), true)));
         if (!parts.length) return '';
-        const tagsHtml = parts.map(p =>
-          `<span class="tag char-id-tag">${_.escape(p)}</span>`
-        ).join('');
-        return `<div class="char-card-section char-card-section--identity">` +
-                 `<div class="char-card-section-title">身份</div>` +
-                 `<div class="char-card-id-tags">${tagsHtml}</div>` +
-               `</div>`;
+        const tagsHtml = parts.map(p => `<span class="tag char-id-tag">${_.escape(p)}</span>`).join('');
+        return (
+          `<div class="char-card-section char-card-section--identity">` +
+          `<div class="char-card-section-title">身份</div>` +
+          `<div class="char-card-id-tags">${tagsHtml}</div>` +
+          `</div>`
+        );
       }
 
       function renderCharItem(item) {
@@ -3805,7 +4426,7 @@
           if (/^[\[{]\s*[\]}]$/.test(sv)) return '';
         }
         // 身份 特殊渲染:tag 列表(健壮处理多种分隔符)
-        const probe = (item.kind === 'section' || item.kind === 'list-section') ? item.title : item.key;
+        const probe = item.kind === 'section' || item.kind === 'list-section' ? item.title : item.key;
         if (probe === '身份') return renderCharIdentity(item);
         if (item.kind === 'scalar') return renderCharScalar(item);
         if (item.kind === 'multiline') return renderCharMultiline(item);
@@ -3835,7 +4456,7 @@
             continue;
           }
           // hide:不进 tab 也不在内容显示(但 header tag 仍可从这些 section 抽 境界/天谴)
-          const probe = (item.kind === 'section' || item.kind === 'list-section') ? item.title : item.key;
+          const probe = item.kind === 'section' || item.kind === 'list-section' ? item.title : item.key;
           if (probe && CHAR_HIDE_FIELDS.includes(probe)) {
             // 抽 header 用的境界:支持 修炼进度.境界 / 境界.当前境界 / 境界.境界 几种写法
             if (item.kind === 'section' && (item.title === '修炼进度' || item.title === '境界')) {
@@ -3864,7 +4485,11 @@
             continue;
           }
           // 元阳/元阴 已并入 体质:从 体质 section 抽到 header(不 continue,体质仍照常渲染)
-          if ((item.kind === 'section' || item.kind === 'list-section') && item.title === '体质' && Array.isArray(item.fields)) {
+          if (
+            (item.kind === 'section' || item.kind === 'list-section') &&
+            item.title === '体质' &&
+            Array.isArray(item.fields)
+          ) {
             for (const f of item.fields) {
               if (f.key === '元阳' || f.key === '元阴') headerMap[f.key] = f.value;
             }
@@ -3923,8 +4548,8 @@
         // 资料 tab 内重排:资源池/状态 提前(它们最重要)
         const TAB_PRIORITY_资料 = ['资源池', '状态', '寿元', '灵根', '体质', '技艺'];
         if (groups['资料']) {
-          const pri = (it) => {
-            const probe = (it.kind === 'section' || it.kind === 'list-section') ? it.title : it.key;
+          const pri = it => {
+            const probe = it.kind === 'section' || it.kind === 'list-section' ? it.title : it.key;
             const idx = TAB_PRIORITY_资料.indexOf(probe || '');
             return idx === -1 ? 99 : idx;
           };
@@ -3940,29 +4565,37 @@
 
         // 4) 拼 HTML
         const panelId = `rb-char-${++_charPanelCounter}`;
-        const tabsHtml = activeTabs.length > 1
-          ? `<div class="char-card-tabs" data-panel="${panelId}">${activeTabs.map((t, idx) =>
-              `<button type="button" class="char-card-tab${idx === 0 ? ' active' : ''}" data-tab="${t.key}">${_.escape(t.label)}</button>`
-            ).join('')}</div>`
-          : '';
-        const contentsHtml = activeTabs.map((t, idx) => {
-          const inner = (groups[t.key] || []).map(renderCharItem).join('');
-          return `<div class="char-card-tab-content${idx === 0 ? ' active' : ''}" data-tab="${t.key}">${inner}</div>`;
-        }).join('');
+        const tabsHtml =
+          activeTabs.length > 1
+            ? `<div class="char-card-tabs" data-panel="${panelId}">${activeTabs
+                .map(
+                  (t, idx) =>
+                    `<button type="button" class="char-card-tab${idx === 0 ? ' active' : ''}" data-tab="${t.key}">${_.escape(t.label)}</button>`,
+                )
+                .join('')}</div>`
+            : '';
+        const contentsHtml = activeTabs
+          .map((t, idx) => {
+            const inner = (groups[t.key] || []).map(renderCharItem).join('');
+            return `<div class="char-card-tab-content${idx === 0 ? ' active' : ''}" data-tab="${t.key}">${inner}</div>`;
+          })
+          .join('');
 
         const headerHtml =
           `<div class="char-card-header">` +
-            `<div class="char-card-avatar">${_.escape(avatarChar)}</div>` +
-            `<div class="char-card-meta">` +
-              `<div class="char-card-name">${_.escape(name)}</div>` +
-              (headerTags.length ? `<div class="char-card-tags">${headerTags.join('')}</div>` : '') +
-            `</div>` +
+          `<div class="char-card-avatar">${_.escape(avatarChar)}</div>` +
+          `<div class="char-card-meta">` +
+          `<div class="char-card-name">${_.escape(name)}</div>` +
+          (headerTags.length ? `<div class="char-card-tags">${headerTags.join('')}</div>` : '') +
+          `</div>` +
           `</div>`;
 
-        return `<div class="char-panel" data-panel-id="${panelId}">` +
+        return (
+          `<div class="char-panel" data-panel-id="${panelId}">` +
           `<div class="panel-header"><i class="panel-icon fa-solid fa-id-card"></i><span class="panel-title">${_.escape(name)} · 角色卡</span><i class="panel-toggle fa-solid fa-chevron-down"></i></div>` +
           `<div class="panel-content">${headerHtml}${tabsHtml}${contentsHtml}</div>` +
-          `</div>`;
+          `</div>`
+        );
       }
 
       // —— item_info 名片化渲染 —— //
@@ -3989,8 +4622,14 @@
         灵兽: 'fa-solid fa-dragon',
       };
       const ITEM_EL_COLOR = {
-        金: '#d6c474', 木: '#7ec47b', 水: '#5d9cd4', 火: '#d46b50',
-        土: '#b48a5e', 阴: '#7a4f7a', 阳: '#d4a85e', 混沌: '#888',
+        金: '#d6c474',
+        木: '#7ec47b',
+        水: '#5d9cd4',
+        火: '#d46b50',
+        土: '#b48a5e',
+        阴: '#7a4f7a',
+        阳: '#d4a85e',
+        混沌: '#888',
       };
 
       function _splitRowKv(row) {
@@ -4000,7 +4639,7 @@
           if (!part.trim()) continue;
           const colonIdx = part.indexOf(':');
           const colonIdx2 = part.indexOf('：');
-          const idx = colonIdx === -1 ? colonIdx2 : (colonIdx2 === -1 ? colonIdx : Math.min(colonIdx, colonIdx2));
+          const idx = colonIdx === -1 ? colonIdx2 : colonIdx2 === -1 ? colonIdx : Math.min(colonIdx, colonIdx2);
           if (idx > 0) {
             result.push({ key: part.slice(0, idx).trim(), value: part.slice(idx + 1).trim() });
           } else {
@@ -4088,10 +4727,10 @@
             fields: {},
             标签: [],
             效果: {},
-            inlineResources: [],   // 主段内识别出的 资源池 行
-            inline防御力: '',       // 主段内识别出的 防御力
-            inlineSkills: [],      // 主段内识别出的 技能 行
-            subs: {},              // 子段原始 rows (资源池/防御/技能)
+            inlineResources: [], // 主段内识别出的 资源池 行
+            inline防御力: '', // 主段内识别出的 防御力
+            inlineSkills: [], // 主段内识别出的 技能 行
+            subs: {}, // 子段原始 rows (资源池/防御/技能)
           };
         }
         for (const section of panel.sections) {
@@ -4122,7 +4761,10 @@
                     }
                   } else {
                     // 去掉外层方括号(空数组 [] / [ ] 在此收敛为空,不再产生空标签),再按分隔符拆
-                    const inner = String(value).trim().replace(/^\[|\]$/g, '').trim();
+                    const inner = String(value)
+                      .trim()
+                      .replace(/^\[|\]$/g, '')
+                      .trim();
                     for (const t of inner.split(/[,，、]+/)) {
                       const tt = t.trim();
                       if (tt) cur.标签.push(tt);
@@ -4177,7 +4819,10 @@
         if (!防御力 && card.subs['防御']) {
           for (const row of card.subs['防御']) {
             const cls = _classifyItemRow(row);
-            if (cls.type === 'defense') { 防御力 = cls.value; break; }
+            if (cls.type === 'defense') {
+              防御力 = cls.value;
+              break;
+            }
           }
         }
         // 技能: inline 优先
@@ -4194,11 +4839,14 @@
         const elColor = ITEM_EL_COLOR[五行] || '#888';
 
         let metaHtml = '';
-        if (品质) metaHtml += `<span class="ic-pill ic-quality ${qCls}"><i class="fa-solid fa-star"></i> ${_.escape(品质)}品</span>`;
+        if (品质)
+          metaHtml += `<span class="ic-pill ic-quality ${qCls}"><i class="fa-solid fa-star"></i> ${_.escape(品质)}品</span>`;
         if (类型) metaHtml += `<span class="ic-pill ic-type"><i class="${iconCls}"></i> ${_.escape(类型)}</span>`;
         if (境界) metaHtml += `<span class="ic-pill ic-realm">${_.escape(境界)}</span>`;
-        if (五行) metaHtml += `<span class="ic-element" style="--el:${elColor}">${_.escape(五行 === '混沌' ? '混' : 五行)}</span>`;
-        if (数量 && /^\d+$/.test(数量) && +数量 > 1) metaHtml += `<span class="ic-pill ic-qty">×${_.escape(数量)}</span>`;
+        if (五行)
+          metaHtml += `<span class="ic-element" style="--el:${elColor}">${_.escape(五行 === '混沌' ? '混' : 五行)}</span>`;
+        if (数量 && /^\d+$/.test(数量) && +数量 > 1)
+          metaHtml += `<span class="ic-pill ic-qty">×${_.escape(数量)}</span>`;
         if (完整度) metaHtml += `<span class="ic-pill ic-meta-mini">${_.escape(完整度)}</span>`;
         if (阅读进度) metaHtml += `<span class="ic-pill ic-meta-mini">进度 ${_.escape(阅读进度)}</span>`;
 
@@ -4230,7 +4878,8 @@
         // 描述性标签
         let descTagsHtml = '';
         if (descTags.length) {
-          descTagsHtml = '<div class="ic-tagrow">' +
+          descTagsHtml =
+            '<div class="ic-tagrow">' +
             descTags.map(t => `<span class="ic-tag-desc">${_.escape(t)}</span>`).join('') +
             '</div>';
         }
@@ -4239,8 +4888,14 @@
         let effHtml = '';
         const effKeys = Object.keys(card.效果);
         if (effKeys.length) {
-          effHtml = '<div class="ic-effects">' +
-            effKeys.map(k => `<div class="ic-effect-row"><span class="ic-effect-name">${_.escape(k)}</span><span class="ic-effect-val">${_.escape(card.效果[k])}</span></div>`).join('') +
+          effHtml =
+            '<div class="ic-effects">' +
+            effKeys
+              .map(
+                k =>
+                  `<div class="ic-effect-row"><span class="ic-effect-name">${_.escape(k)}</span><span class="ic-effect-val">${_.escape(card.效果[k])}</span></div>`,
+              )
+              .join('') +
             '</div>';
         }
 
@@ -4249,7 +4904,8 @@
         if (skills.length) {
           skillsHtml = '<div class="ic-skills"><div class="ic-skills-head"><i class="fa-solid fa-bolt"></i> 技能</div>';
           for (const s of skills) {
-            skillsHtml += `<div class="ic-skill"><div class="ic-skill-head"><span class="ic-skill-name">${_.escape(s.name)}</span>` +
+            skillsHtml +=
+              `<div class="ic-skill"><div class="ic-skill-head"><span class="ic-skill-name">${_.escape(s.name)}</span>` +
               (s.攻击力 ? `<span class="ic-stat ic-stat-攻击力">攻 <b>${_.escape(s.攻击力)}</b></span>` : '') +
               (s.消耗 ? `<span class="ic-skill-cost">耗 ${_.escape(s.消耗)}</span>` : '') +
               '</div>';
@@ -4267,26 +4923,30 @@
 
         // 底栏:消耗 / 位置
         let footHtml = '';
-        if (消耗 && 消耗 !== '无') footHtml += `<span class="ic-foot-item"><i class="fa-solid fa-droplet"></i> ${_.escape(消耗)}</span>`;
-        if (位置) footHtml += `<span class="ic-foot-item"><i class="fa-solid fa-location-dot"></i> ${_.escape(位置)}</span>`;
+        if (消耗 && 消耗 !== '无')
+          footHtml += `<span class="ic-foot-item"><i class="fa-solid fa-droplet"></i> ${_.escape(消耗)}</span>`;
+        if (位置)
+          footHtml += `<span class="ic-foot-item"><i class="fa-solid fa-location-dot"></i> ${_.escape(位置)}</span>`;
         if (footHtml) footHtml = `<div class="ic-foot">${footHtml}</div>`;
 
-        return `<div class="item-card ic-q-bg-${品质 || '凡'}">` +
-                 `<div class="ic-head">` +
-                   `<div class="ic-icon"><i class="${iconCls}"></i></div>` +
-                   `<div class="ic-headinfo">` +
-                     `<div class="ic-name">${_.escape(card.name)}</div>` +
-                     (metaHtml ? `<div class="ic-meta">${metaHtml}</div>` : '') +
-                   `</div>` +
-                 `</div>` +
-                 (statsHtml ? `<div class="ic-stats">${statsHtml}</div>` : '') +
-                 resourceHtml +
-                 descTagsHtml +
-                 effHtml +
-                 skillsHtml +
-                 descHtml +
-                 footHtml +
-               `</div>`;
+        return (
+          `<div class="item-card ic-q-bg-${品质 || '凡'}">` +
+          `<div class="ic-head">` +
+          `<div class="ic-icon"><i class="${iconCls}"></i></div>` +
+          `<div class="ic-headinfo">` +
+          `<div class="ic-name">${_.escape(card.name)}</div>` +
+          (metaHtml ? `<div class="ic-meta">${metaHtml}</div>` : '') +
+          `</div>` +
+          `</div>` +
+          (statsHtml ? `<div class="ic-stats">${statsHtml}</div>` : '') +
+          resourceHtml +
+          descTagsHtml +
+          effHtml +
+          skillsHtml +
+          descHtml +
+          footHtml +
+          `</div>`
+        );
       }
 
       function renderItemHtml(panel) {
@@ -4338,7 +4998,10 @@
 
       // 把一行 "k: v | k2: v2" 拆成多个键值对(纯字符串)
       function _splitTimeRowFields(row) {
-        const segs = String(row).split(/\s*\|\s*/).map(s => s.trim()).filter(Boolean);
+        const segs = String(row)
+          .split(/\s*\|\s*/)
+          .map(s => s.trim())
+          .filter(Boolean);
         return segs.map(seg => {
           const m = seg.match(/^([^:：]+)\s*[:：]\s*(.+)$/);
           return m ? { k: m[1].trim(), v: m[2].trim() } : { k: '', v: seg };
@@ -4424,12 +5087,15 @@
             if (cat === 'span') {
               for (const row of section.rows) {
                 const m = String(row).match(/^跨度\s*[:：]\s*(.+)$/);
-                if (m) { span = m[1].trim(); break; }
+                if (m) {
+                  span = m[1].trim();
+                  break;
+                }
               }
             } else if (cat === 'people') {
               people = _groupPeople(section.rows);
             } else if (cat === 'civ' || cat === 'world' || cat === 'rumor' || cat === 'other' || cat === 'unknown') {
-              const targetKey = (cat === 'unknown' || cat === 'other') ? 'other' : cat;
+              const targetKey = cat === 'unknown' || cat === 'other' ? 'other' : cat;
               buckets[targetKey].push({ title: section.title || '其他', rows: section.rows });
             }
           }
@@ -4440,7 +5106,8 @@
         html += '<div class="tp-masthead">';
         html += '<div class="tp-paper-title">修 真 月 报</div>';
         html += '<div class="tp-paper-rule"></div>';
-        if (span) html += `<div class="tp-paper-sub"><i class="fa-solid fa-hourglass-half"></i> 时光流转 · ${_.escape(span)}</div>`;
+        if (span)
+          html += `<div class="tp-paper-sub"><i class="fa-solid fa-hourglass-half"></i> 时光流转 · ${_.escape(span)}</div>`;
         else html += '<div class="tp-paper-sub"><i class="fa-solid fa-hourglass-half"></i> 时光流转</div>';
         html += '</div>';
 
@@ -4467,7 +5134,7 @@
           for (const sec of buckets[cat]) {
             if (!sec.rows || !sec.rows.length) continue;
             const headerTitle = sec.title || titleMap[cat];
-            const iconCls = ({ civ: 'fa-landmark', world: 'fa-globe', rumor: 'fa-feather', other: 'fa-newspaper' })[cat];
+            const iconCls = { civ: 'fa-landmark', world: 'fa-globe', rumor: 'fa-feather', other: 'fa-newspaper' }[cat];
             html += `<section class="tp-section tp-section-${cat}">`;
             html += `<h3 class="tp-section-title"><i class="fa-solid ${iconCls}"></i> ${_.escape(headerTitle)}</h3>`;
             html += _renderNewsList(sec.rows);
@@ -4481,7 +5148,9 @@
 
       // 渲染失败时的兜底:把原始内容裹一个红色"解析失败"条回退,避免整段 processContent 崩溃
       function renderPanelFallback(label, rawInner) {
-        const safe = (typeof escapeHtml === 'function' ? escapeHtml : (s => String(s)))(String(rawInner || '').slice(0, 800));
+        const safe = (typeof escapeHtml === 'function' ? escapeHtml : s => String(s))(
+          String(rawInner || '').slice(0, 800),
+        );
         return `<div class="rb-fallback"><span class="rb-fallback-tag">${escapeHtml(label)} 解析失败</span>${safe}</div>`;
       }
 
@@ -4492,10 +5161,8 @@
           if (!trimmed) return ''; // 空面板直接丢弃
           const parsed = parseFn(trimmed);
           // 没有任何 section/items 时直接丢弃,不渲染空壳
-          const empty = !parsed || (
-            (!parsed.sections || !parsed.sections.length) &&
-            (!parsed.items || !parsed.items.length)
-          );
+          const empty =
+            !parsed || ((!parsed.sections || !parsed.sections.length) && (!parsed.items || !parsed.items.length));
           if (empty) return '';
           const html = renderFn(parsed);
           return html || '';
@@ -4510,7 +5177,9 @@
         const text = String(inner || '').trim();
         if (!text) return '';
         // 解析:<时间> @ <地点> | <天气>
-        let timePart = '', placePart = '', weatherPart = '';
+        let timePart = '',
+          placePart = '',
+          weatherPart = '';
         const m = text.match(/^([^@|]+?)(?:\s*@\s*([^|]+?))?(?:\s*\|\s*([\s\S]+))?$/);
         if (m) {
           timePart = (m[1] || '').trim();
@@ -4520,25 +5189,32 @@
           timePart = text;
         }
         // 把 "-" 分隔符换成 "·" 并清理空白
-        const beautify = s => s.replace(/\s*-\s*/g, ' · ').replace(/\s+/g, ' ').trim();
+        const beautify = s =>
+          s
+            .replace(/\s*-\s*/g, ' · ')
+            .replace(/\s+/g, ' ')
+            .trim();
         timePart = beautify(timePart);
         placePart = beautify(placePart);
 
         let html = `<div class="rb-tp">`;
         if (timePart) {
-          html += `<div class="rb-tp-cell rb-tp-cell--time">` +
+          html +=
+            `<div class="rb-tp-cell rb-tp-cell--time">` +
             `<i class="fa-regular fa-calendar rb-tp-icon"></i>` +
             `<span class="rb-tp-text">${_.escape(timePart)}</span>` +
             `</div>`;
         }
         if (placePart) {
-          html += `<div class="rb-tp-cell rb-tp-cell--place">` +
+          html +=
+            `<div class="rb-tp-cell rb-tp-cell--place">` +
             `<i class="fa-solid fa-location-dot rb-tp-icon"></i>` +
             `<span class="rb-tp-text">${_.escape(placePart)}</span>` +
             `</div>`;
         }
         if (weatherPart) {
-          html += `<div class="rb-tp-cell rb-tp-cell--weather">` +
+          html +=
+            `<div class="rb-tp-cell rb-tp-cell--weather">` +
             `<i class="fa-solid fa-cloud-sun rb-tp-icon"></i>` +
             `<span class="rb-tp-text">${_.escape(weatherPart)}</span>` +
             `</div>`;
@@ -4557,12 +5233,16 @@
           .replace(/&nbsp;/g, ' ')
           .trim();
 
-        const lines = cleanBody.split(/\n+/).map(l => l.trim()).filter(Boolean);
+        const lines = cleanBody
+          .split(/\n+/)
+          .map(l => l.trim())
+          .filter(Boolean);
         const allBullets = lines.length > 0 && lines.every(l => /^[-•·*]\s/.test(l));
 
         let bodyHtml;
         if (allBullets) {
-          bodyHtml = '<ul class="rb-summary-list">' +
+          bodyHtml =
+            '<ul class="rb-summary-list">' +
             lines.map(l => `<li>${_.escape(l.replace(/^[-•·*]\s*/, ''))}</li>`).join('') +
             '</ul>';
         } else {
@@ -4570,14 +5250,16 @@
         }
 
         const titleEsc = _.escape(String(title || '小总结').trim() || '小总结');
-        return `<details class="rb-summary" open>` +
+        return (
+          `<details class="rb-summary" open>` +
           `<summary class="rb-summary-head">` +
-            `<span class="rb-summary-icon">📜</span>` +
-            `<span class="rb-summary-title">${titleEsc}</span>` +
-            `<span class="rb-summary-toggle"><span class="rb-summary-toggle-text" data-close="▸ 展开" data-open="▾ 收起"></span></span>` +
+          `<span class="rb-summary-icon">📜</span>` +
+          `<span class="rb-summary-title">${titleEsc}</span>` +
+          `<span class="rb-summary-toggle"><span class="rb-summary-toggle-text" data-close="▸ 展开" data-open="▾ 收起"></span></span>` +
           `</summary>` +
           `<div class="rb-summary-body">${bodyHtml}</div>` +
-        `</details>`;
+          `</details>`
+        );
       }
 
       // —— 行动选项 <options>/<action_options> 渲染:解析 "1. xxx / 2. xxx / ..." 列表为可点击编号卡片 —— //
@@ -4591,7 +5273,10 @@
           .trim();
         if (!text) return '';
 
-        const lines = text.split(/\n+/).map(l => l.trim()).filter(Boolean);
+        const lines = text
+          .split(/\n+/)
+          .map(l => l.trim())
+          .filter(Boolean);
         const options = [];
         for (const line of lines) {
           const m = line.match(/^(\d+)\s*[.、)\]:]\s*(.+)$/);
@@ -4609,22 +5294,27 @@
         if (options.length === 0) {
           body = `<div class="rb-options-item" data-option-text="${_.escape(text)}"><span class="rb-options-text">${_.escape(text)}</span></div>`;
         } else {
-          body = options.map(o =>
-            `<div class="rb-options-item" data-option-text="${_.escape(o.text)}" title="点击填入输入框">` +
-              `<span class="rb-options-num">${_.escape(o.idx)}</span>` +
-              `<span class="rb-options-text">${_.escape(o.text)}</span>` +
-            `</div>`
-          ).join('');
+          body = options
+            .map(
+              o =>
+                `<div class="rb-options-item" data-option-text="${_.escape(o.text)}" title="点击填入输入框">` +
+                `<span class="rb-options-num">${_.escape(o.idx)}</span>` +
+                `<span class="rb-options-text">${_.escape(o.text)}</span>` +
+                `</div>`,
+            )
+            .join('');
         }
 
-        return `<div class="rb-options">` +
+        return (
+          `<div class="rb-options">` +
           `<div class="rb-options-head">` +
-            `<i class="rb-options-icon fa-solid fa-compass-drafting"></i>` +
-            `<span class="rb-options-title">行动方略</span>` +
-            `<span class="rb-options-hint">点击填入输入框</span>` +
+          `<i class="rb-options-icon fa-solid fa-compass-drafting"></i>` +
+          `<span class="rb-options-title">行动方略</span>` +
+          `<span class="rb-options-hint">点击填入输入框</span>` +
           `</div>` +
           `<div class="rb-options-body">${body}</div>` +
-        `</div>`;
+          `</div>`
+        );
       }
 
       function reincarnationHost(inner) {
@@ -4635,7 +5325,8 @@
 
       // AI 完全漏掉外层标签时，只在四个轮回段落和 Z/W 同时存在时才兜底识别，避免误伤普通正文。
       function extractLooseReincarnation(raw, wrap) {
-        const soul = /(?:\{|\[|【|(?:^|\n)\s*#{1,6}\s*)(?:亡魂信息|亡魂资料|亡魂档案|死者信息|逝者信息)(?:\}|\]|】)?/i.exec(raw);
+        const soul =
+          /(?:\{|\[|【|(?:^|\n)\s*#{1,6}\s*)(?:亡魂信息|亡魂资料|亡魂档案|死者信息|逝者信息)(?:\}|\]|】)?/i.exec(raw);
         if (!soul || soul.index == null) return raw;
         const segment = raw.slice(soul.index, soul.index + 20000);
         if (!/(?:\{|\[|【|#{1,6}\s*)?(?:善业|善行|善举|功德)(?:\}|\]|】)?/i.test(segment)) return raw;
@@ -4643,7 +5334,10 @@
         const adjust = /(?:功过修正|功德修正|善恶修正|业力修正)/i.exec(segment);
         if (!adjust || adjust.index == null) return raw;
         const adjustmentTail = segment.slice(adjust.index);
-        const values = /(?:^|[^A-Za-z0-9_])Z\s*(?:[:=]\s*)?(?:[\[（(【]\s*)?[+-]?\d+(?:\.\d+)?\s*[%％]?\s*[\]）)】]?\s*(?:[/,，|;；])?[\s\S]{0,160}?(?:^|[^A-Za-z0-9_])W\s*(?:[:=]\s*)?(?:[\[（(【]\s*)?[+-]?\d+(?:\.\d+)?\s*[\]）)】]?/i.exec(adjustmentTail);
+        const values =
+          /(?:^|[^A-Za-z0-9_])Z\s*(?:[:=]\s*)?(?:[\[（(【]\s*)?[+-]?\d+(?:\.\d+)?\s*[%％]?\s*[\]）)】]?\s*(?:[/,，|;；])?[\s\S]{0,160}?(?:^|[^A-Za-z0-9_])W\s*(?:[:=]\s*)?(?:[\[（(【]\s*)?[+-]?\d+(?:\.\d+)?\s*[\]）)】]?/i.exec(
+            adjustmentTail,
+          );
         if (!values || values.index == null) return raw;
         const end = soul.index + adjust.index + values.index + values[0].length;
         const payload = raw.slice(soul.index, end);
@@ -4654,30 +5348,41 @@
       // 顺序：内层（item/char/realm/battle）先于外层（action）；按 prompt 设计本不应嵌套
       function extractPanels(raw, stash) {
         const wrap = html => (html ? '\n\n' + stash(html) + '\n\n' : '\n\n');
-        raw = raw.replace(/<item_info>([\s\S]*?)<\/item_info>/gi, (m, inner) =>
+        // 面板开头标签要求位于行首，避免 AI 思维链/正文里出现的行内字面引用（如 `...`<item_info>`...`）被误当成面板
+        raw = raw.replace(/(?:^|\n)\s*<item_info>([\s\S]*?)<\/item_info>/gi, (m, inner) =>
           wrap(safeRenderPanel('item_info', parseTablePanel, renderItemHtml, inner)),
         );
-        raw = raw.replace(/<char_info>([\s\S]*?)<\/char_info>/gi, (m, inner) =>
+        raw = raw.replace(/(?:^|\n)\s*<char_info>([\s\S]*?)<\/char_info>/gi, (m, inner) =>
           wrap(safeRenderPanel('char_info', parseCharIndentedPanel, renderCharHtml, inner)),
         );
-        raw = raw.replace(/<battle_info>([\s\S]*?)<\/battle_info>/gi, (m, inner) =>
+        raw = raw.replace(/(?:^|\n)\s*<battle_info>([\s\S]*?)<\/battle_info>/gi, (m, inner) =>
           wrap(safeRenderPanel('battle_info', parseTablePanel, renderBattleHtml, inner)),
         );
-        raw = raw.replace(/<action_info>([\s\S]*?)<\/action_info>/gi, (m, inner) =>
+        raw = raw.replace(/(?:^|\n)\s*<action_info>([\s\S]*?)<\/action_info>/gi, (m, inner) =>
           wrap(safeRenderPanel('action_info', parseTablePanel, renderActionHtml, inner)),
         );
-        raw = raw.replace(/<time_info>([\s\S]*?)<\/time_info>/gi, (m, inner) =>
+        raw = raw.replace(/(?:^|\n)\s*<time_info>([\s\S]*?)<\/time_info>/gi, (m, inner) =>
           wrap(safeRenderPanel('time_info', parseTablePanel, renderTimeHtml, inner)),
         );
         // 兼容标准标签、连字符/空格标签以及全角尖括号。
-        raw = raw.replace(/＜\s*(\/?\s*reincarnation(?:[\s_-]*info)?)\s*＞/gi, '<$1>');
+        // 不能在此使用捕获组替换字符串：正文美化本身也是酒馆正则的 replacement，
+        // 外层替换会误把捕获组占位符展开成整段正文，导致脚本语法损坏。
+        raw = raw.replace(
+          /＜\s*(\/?\s*reincarnation(?:[\s_-]*info)?)\s*＞/gi,
+          (_match, tagName) => '<' + tagName + '>',
+        );
         const rcTag = 'reincarnation(?:[\\s_-]*info)?';
-        raw = raw.replace(new RegExp(`<\\s*${rcTag}\\b[^>]*>([\\s\\S]*?)<\\s*\\/\\s*${rcTag}\\s*>`, 'gi'), (m, inner) =>
-          wrap(reincarnationHost(inner)),
+        raw = raw.replace(
+          new RegExp(`(?:^|\\n)\\s*<\\s*${rcTag}\\b[^>]*>([\\s\\S]*?)<\\s*\\/\\s*${rcTag}\\s*>`, 'gi'),
+          (m, inner) => wrap(reincarnationHost(inner)),
         );
         // AI 漏写闭合标签时，轮回面板按规则位于回复末尾；遇到下一种结构化面板时也会及时截止。
-        raw = raw.replace(new RegExp(`<\\s*${rcTag}\\b[^>]*>([\\s\\S]*?)(?=<\\s*\\/?\\s*(?:action_info|battle_info|char_info|item_info|time_info|now_plot|gametxt)\\b|$)`, 'gi'), (m, inner) =>
-          wrap(reincarnationHost(inner)),
+        raw = raw.replace(
+          new RegExp(
+            `(?:^|\\n)\\s*<\\s*${rcTag}\\b[^>]*>([\\s\\S]*?)(?=<\\s*\\/?\\s*(?:action_info|battle_info|char_info|item_info|time_info|now_plot|gametxt)\\b|$)`,
+            'gi',
+          ),
+          (m, inner) => wrap(reincarnationHost(inner)),
         );
         raw = extractLooseReincarnation(raw, wrap);
         // 清理任何未配对的孤儿标签(AI 截断、写漏闭合等)
@@ -4704,41 +5409,33 @@
             },
           );
           // 角色卡 tab 切换:点 .char-card-tab 时切到对应内容
-          $('#readingContent').on(
-            'click',
-            '.char-panel .char-card-tab',
-            function (e) {
-              e.stopPropagation();
-              const $btn = $(this);
-              if ($btn.hasClass('active')) return;
-              const targetKey = $btn.attr('data-tab');
-              const $tabs = $btn.closest('.char-card-tabs');
-              const $panel = $tabs.closest('.char-panel');
-              $tabs.find('.char-card-tab').removeClass('active');
-              $btn.addClass('active');
-              $panel
-                .find('> .panel-content > .char-card-tab-content')
-                .removeClass('active')
-                .filter(`[data-tab="${targetKey}"]`)
-                .addClass('active');
-            },
-          );
+          $('#readingContent').on('click', '.char-panel .char-card-tab', function (e) {
+            e.stopPropagation();
+            const $btn = $(this);
+            if ($btn.hasClass('active')) return;
+            const targetKey = $btn.attr('data-tab');
+            const $tabs = $btn.closest('.char-card-tabs');
+            const $panel = $tabs.closest('.char-panel');
+            $tabs.find('.char-card-tab').removeClass('active');
+            $btn.addClass('active');
+            $panel
+              .find('> .panel-content > .char-card-tab-content')
+              .removeClass('active')
+              .filter(`[data-tab="${targetKey}"]`)
+              .addClass('active');
+          });
           // 行动选项点击 -> 把选项文本追加到酒馆输入框,不自动发送、不替换原值
-          $('#readingContent').on(
-            'click',
-            '.rb-options-item',
-            function () {
-              const text = $(this).attr('data-option-text') || $(this).find('.rb-options-text').text() || '';
-              if (!text.trim()) return;
-              fillSendTextarea(text);
-              const el = this;
-              el.classList.remove('is-sent');
-              // force reflow 触发动画重新播放
-              void el.offsetWidth;
-              el.classList.add('is-sent');
-              setTimeout(() => el.classList.remove('is-sent'), 700);
-            },
-          );
+          $('#readingContent').on('click', '.rb-options-item', function () {
+            const text = $(this).attr('data-option-text') || $(this).find('.rb-options-text').text() || '';
+            if (!text.trim()) return;
+            fillSendTextarea(text);
+            const el = this;
+            el.classList.remove('is-sent');
+            // force reflow 触发动画重新播放
+            void el.offsetWidth;
+            el.classList.add('is-sent');
+            setTimeout(() => el.classList.remove('is-sent'), 700);
+          });
         } catch (e) {
           console.warn('[正文美化] 折叠委托绑定失败:', e);
         }
@@ -4749,9 +5446,21 @@
       function fillSendTextarea(text) {
         if (!text) return;
         const candidates = [];
-        try { if (document) candidates.push(document); } catch (e) { /* ignore */ }
-        try { if (window.parent && window.parent !== window) candidates.push(window.parent.document); } catch (e) { /* cross-origin: ignore */ }
-        try { if (window.top && window.top !== window) candidates.push(window.top.document); } catch (e) { /* ignore */ }
+        try {
+          if (document) candidates.push(document);
+        } catch (e) {
+          /* ignore */
+        }
+        try {
+          if (window.parent && window.parent !== window) candidates.push(window.parent.document);
+        } catch (e) {
+          /* cross-origin: ignore */
+        }
+        try {
+          if (window.top && window.top !== window) candidates.push(window.top.document);
+        } catch (e) {
+          /* ignore */
+        }
 
         let inputArea = null;
         for (const doc of candidates) {
@@ -4764,23 +5473,31 @@
           return;
         }
         const cur = inputArea.value || '';
-        const sep = cur.length === 0 ? '' : (cur.endsWith('\n') ? '' : '\n');
+        const sep = cur.length === 0 ? '' : cur.endsWith('\n') ? '' : '\n';
         inputArea.value = cur + sep + text;
         try {
           inputArea.dispatchEvent(new Event('input', { bubbles: true }));
           inputArea.dispatchEvent(new Event('change', { bubbles: true }));
-        } catch (e) { /* ignore */ }
-        try { inputArea.focus(); } catch (e) { /* ignore */ }
+        } catch (e) {
+          /* ignore */
+        }
+        try {
+          inputArea.focus();
+        } catch (e) {
+          /* ignore */
+        }
         // 自动滚动到末尾
         try {
           inputArea.selectionStart = inputArea.selectionEnd = inputArea.value.length;
           inputArea.scrollTop = inputArea.scrollHeight;
-        } catch (e) { /* ignore */ }
+        } catch (e) {
+          /* ignore */
+        }
       }
 
       /** 轮回转生交互面板：串行注入，确保多楼层不会争用同一个兼容载荷。 */
-      const RC_APP_URL =
-        'https://testingcf.jsdelivr.net/gh/Awene/tavern_helper_template-main@v1.0.48/dist/轮回转生/index.html';
+      const RB_ASSET_BASE = String(window.__rb_asset_base || 'http://localhost:5500/dist').replace(/\/$/, '');
+      const RC_APP_URL = RB_ASSET_BASE + '/轮回转生/index.html';
       async function mountReincarnationApps() {
         if (typeof $ === 'undefined') return;
         const container = document.getElementById('readingContent');
@@ -4802,7 +5519,9 @@
                 } else {
                   this.classList && this.classList.add('rc-loaded');
                 }
-              } catch (e) { /* ignore */ }
+              } catch (e) {
+                /* ignore */
+              }
               resolve();
             });
           });
@@ -4818,6 +5537,10 @@
 
         // 1) 先解码实体（让 &lt;action_info&gt; 之类还原成真实标签）
         raw = decodeEntities(raw);
+
+        // 酒馆 Markdown 会将换行序列化为 <br>；面板仅接受行首标签，必须先还原换行。
+        // 否则 <br><char_info> 等真实面板会错过抽取，退化为普通正文。
+        raw = raw.replace(/<br\s*\/?>(?:\r?\n)?/gi, '\n');
 
         // 1.5) 剥离 HTML 注释 <!-- ... --> （AI 把子思维链放在注释里）
         raw = raw.replace(/<!--[\s\S]*?-->/g, '');
@@ -4836,6 +5559,7 @@
         // 2) 抽取 5 类面板，留 U+2063 包裹的 placeholder（不会被 escape/trim/split 破坏）
         const panelMap = new Map();
         let panelCounter = 0;
+        const optionPanelTokens = [];
         const stashPanel = htmlFragment => {
           const token = `⁣RB_PANEL_${panelCounter++}⁣`;
           panelMap.set(token, htmlFragment);
@@ -4843,8 +5567,9 @@
         };
         // 2.1) 抽取 <tp> 时空栏(在面板抽取前,因为它一般在正文开头)
         try {
-          raw = raw.replace(/<tp>([\s\S]*?)<\/tp>/gi, (m, inner) =>
-            '\n\n' + stashPanel(renderTimeSpaceHeader(inner.trim())) + '\n\n'
+          raw = raw.replace(
+            /<tp>([\s\S]*?)<\/tp>/gi,
+            (m, inner) => '\n\n' + stashPanel(renderTimeSpaceHeader(inner.trim())) + '\n\n',
           );
           // 清理孤儿 <tp>/<\/tp> 标签(AI 截断或写漏)
           raw = raw.replace(/<\/?tp\b[^>]*>?/gi, '');
@@ -4863,8 +5588,9 @@
             return '\n\n' + stashPanel(renderSummaryCard(title, body)) + '\n\n';
           });
           // 独立 <summary>...</summary>(<details> 已被上一行剥离，剩下的就是新格式)
-          raw = raw.replace(/<summary\b[^>]*>([\s\S]*?)<\/summary>/gi, (m, inner) =>
-            '\n\n' + stashPanel(renderSummaryCard('小总结', inner.trim())) + '\n\n'
+          raw = raw.replace(
+            /<summary\b[^>]*>([\s\S]*?)<\/summary>/gi,
+            (m, inner) => '\n\n' + stashPanel(renderSummaryCard('小总结', inner.trim())) + '\n\n',
           );
           // 清理孤儿 <details>/<summary> 标签
           raw = raw.replace(/<\/?(?:details|summary)\b[^>]*>?/gi, '');
@@ -4874,8 +5600,13 @@
 
         // 2.3) 抽取 <options>/<action_options> 行动选项 (两种命名兼容)
         try {
-          raw = raw.replace(/<(?:action_)?options\b[^>]*>([\s\S]*?)<\/(?:action_)?options>/gi, (m, inner) =>
-            '\n\n' + stashPanel(renderActionOptions(inner.trim())) + '\n\n'
+          raw = raw.replace(
+            /<(?:action_)?options\b[^>]*>([\s\S]*?)<\/(?:action_)?options>/gi,
+            (m, inner) => {
+              const token = stashPanel(renderActionOptions(inner.trim()));
+              optionPanelTokens.push(token);
+              return '\n\n' + token + '\n\n';
+            },
           );
           raw = raw.replace(/<\/?(?:action_)?options\b[^>]*>?/gi, '');
         } catch (e) {
@@ -4886,6 +5617,18 @@
           raw = extractPanels(raw, stashPanel);
         } catch (e) {
           console.warn('[正文美化] 面板抽取失败:', e);
+        }
+
+        // 轮回审判本身就是本回合唯一需要玩家处理的交互；若成功识别出轮回面板，
+        // 丢弃本楼全部行动方略，避免它与轮回选择同时出现并误导玩家。
+        const hasReincarnationPanel = [...panelMap.values()].some(htmlFragment =>
+          /class=["'][^"']*\brc-app\b/i.test(htmlFragment),
+        );
+        if (hasReincarnationPanel) {
+          optionPanelTokens.forEach(token => {
+            raw = raw.split(token).join('');
+            panelMap.delete(token);
+          });
         }
 
         // 2.4) 抽取 <img>(玩家手动插入 / SD 文生图插件生成)
@@ -4905,12 +5648,8 @@
           raw = raw.replace(/<source\b[^>]*\/?>/gi, '');
           // 抽出所有 img 走 stashPanel,只保留 src/alt,丢弃外部 inline style/class/onclick
           raw = raw.replace(/<img\b([^>]*)\/?>/gi, (_m, attrs) => {
-            const srcMatch =
-              attrs.match(/\bsrc\s*=\s*"([^"]*)"/i) ||
-              attrs.match(/\bsrc\s*=\s*'([^']*)'/i);
-            const altMatch =
-              attrs.match(/\balt\s*=\s*"([^"]*)"/i) ||
-              attrs.match(/\balt\s*=\s*'([^']*)'/i);
+            const srcMatch = attrs.match(/\bsrc\s*=\s*"([^"]*)"/i) || attrs.match(/\bsrc\s*=\s*'([^']*)'/i);
+            const altMatch = attrs.match(/\balt\s*=\s*"([^"]*)"/i) || attrs.match(/\balt\s*=\s*'([^']*)'/i);
             const src = srcMatch ? srcMatch[1] : '';
             const alt = altMatch ? altMatch[1] : '';
             if (!src) return ''; // 没 src 的空 img 直接丢
@@ -5095,7 +5834,9 @@
             fullscreenTarget = window.frameElement;
             fullscreenDocument = window.frameElement.ownerDocument || window.parent.document;
           }
-        } catch (e) { /* cross-origin: use the viewer itself */ }
+        } catch (e) {
+          /* cross-origin: use the viewer itself */
+        }
 
         const clampScale = value => Math.min(5, Math.max(1, value));
         const isOpen = () => viewer.classList.contains('active');
@@ -5171,7 +5912,11 @@
           if (!isOpen()) return;
           if (fallbackFullscreen) exitFallbackFullscreen();
           if (isNativeFullscreen() && fullscreenDocument.exitFullscreen) {
-            try { await fullscreenDocument.exitFullscreen(); } catch (e) { /* ignore */ }
+            try {
+              await fullscreenDocument.exitFullscreen();
+            } catch (e) {
+              /* ignore */
+            }
           }
           viewer.classList.remove('active');
           viewer.setAttribute('aria-hidden', 'true');
@@ -5221,9 +5966,7 @@
         };
         const imageFromEvent = event => {
           const target = event.target;
-          return target && target.closest
-            ? target.closest('.rb-img-wrap img')
-            : null;
+          return target && target.closest ? target.closest('.rb-img-wrap img') : null;
         };
 
         container.addEventListener('click', event => {
@@ -5241,18 +5984,32 @@
           const button = event.target.closest && event.target.closest('[data-viewer-action]');
           if (!button) return;
           switch (button.getAttribute('data-viewer-action')) {
-            case 'zoom-out': zoomFromCenter(1 / 1.2); break;
-            case 'reset': resetView(); break;
-            case 'zoom-in': zoomFromCenter(1.2); break;
-            case 'fullscreen': void toggleFullscreen(); break;
-            case 'close': void closeViewer(); break;
+            case 'zoom-out':
+              zoomFromCenter(1 / 1.2);
+              break;
+            case 'reset':
+              resetView();
+              break;
+            case 'zoom-in':
+              zoomFromCenter(1.2);
+              break;
+            case 'fullscreen':
+              void toggleFullscreen();
+              break;
+            case 'close':
+              void closeViewer();
+              break;
           }
         });
-        viewer.addEventListener('wheel', event => {
-          if (!isOpen()) return;
-          event.preventDefault();
-          zoomAt(scale * (event.deltaY < 0 ? 1.15 : 1 / 1.15), event.clientX, event.clientY);
-        }, { passive: false });
+        viewer.addEventListener(
+          'wheel',
+          event => {
+            if (!isOpen()) return;
+            event.preventDefault();
+            zoomAt(scale * (event.deltaY < 0 ? 1.15 : 1 / 1.15), event.clientX, event.clientY);
+          },
+          { passive: false },
+        );
         stage.addEventListener('dblclick', event => {
           if (scale > 1.01) resetView();
           else zoomAt(2, event.clientX, event.clientY);
@@ -5296,7 +6053,7 @@
             const midY = (a.clientY + b.clientY) / 2;
             const rect = stage.getBoundingClientRect();
             scale = clampScale(
-              pinchStart.scale * Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) / pinchStart.distance,
+              (pinchStart.scale * Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)) / pinchStart.distance,
             );
             offsetX = midX - (rect.left + rect.width / 2) - pinchStart.worldX * scale;
             offsetY = midY - (rect.top + rect.height / 2) - pinchStart.worldY * scale;
@@ -5538,7 +6295,10 @@
             try {
               const host = window.parent || window;
               if (host.toastr && typeof host.toastr.warning === 'function') {
-                host.toastr.warning('未能读取本楼 NSFW 路由结果，创意工坊将优先显示 SFW；若无 SFW 则显示现有图片。', '创意工坊');
+                host.toastr.warning(
+                  '未能读取本楼 NSFW 路由结果，创意工坊将优先显示 SFW；若无 SFW 则显示现有图片。',
+                  '创意工坊',
+                );
               } else showToast('未读取到 NSFW 路由，本楼将优先显示 SFW');
             } catch (e) {
               showToast('未读取到 NSFW 路由，本楼将优先显示 SFW');
@@ -5573,7 +6333,10 @@
           figure.append(media, controls, caption);
           gallery.appendChild(figure);
 
-          let packIndex = Math.max(0, player.packs.findIndex(pack => pack.id === player.preferredPackId));
+          let packIndex = Math.max(
+            0,
+            player.packs.findIndex(pack => pack.id === player.preferredPackId),
+          );
           let rating = player.initialRating;
           let imageIndex = 0;
           let autoplayTimer = null;
@@ -5592,8 +6355,11 @@
           };
           const updateButtons = () => {
             const group = currentImages();
-            controls.querySelectorAll('[data-workshop-action="previous"], [data-workshop-action="next"]')
-              .forEach(button => { button.disabled = group.length < 2; });
+            controls
+              .querySelectorAll('[data-workshop-action="previous"], [data-workshop-action="next"]')
+              .forEach(button => {
+                button.disabled = group.length < 2;
+              });
             const ratingButton = controls.querySelector('[data-workshop-action="rating"]');
             ratingButton.hidden = player.kind !== 'character';
             ratingButton.textContent = rating.toUpperCase();
@@ -5612,7 +6378,9 @@
             autoplayButton.classList.toggle('active', autoplayEnabled);
             autoplayButton.textContent = autoplayEnabled ? 'Ⅱ' : '▶';
             autoplayButton.title = autoplayEnabled
-              ? (currentImages().length > 1 ? `关闭 ${autoplayIntervalSeconds} 秒轮播` : '轮播已开启；当前仅有一张图片')
+              ? currentImages().length > 1
+                ? `关闭 ${autoplayIntervalSeconds} 秒轮播`
+                : '轮播已开启；当前仅有一张图片'
               : `开启 ${autoplayIntervalSeconds} 秒轮播`;
             autoplayButton.setAttribute('aria-pressed', String(autoplayEnabled));
             if (!autoplayEnabled || currentImages().length < 2) {
@@ -5628,7 +6396,11 @@
             syncAutoplay();
           };
           let autoplayEventTarget = window;
-          try { autoplayEventTarget = window.top || window.parent || window; } catch (e) { /* use current window */ }
+          try {
+            autoplayEventTarget = window.top || window.parent || window;
+          } catch (e) {
+            /* use current window */
+          }
           autoplayEventTarget.addEventListener(WORKSHOP_AUTOPLAY_INTERVAL_EVENT, handleAutoplayIntervalChange);
           gallery.__workshopCleanup = () => {
             stopAutoplayTimer();
@@ -5641,7 +6413,8 @@
             const image = group[imageIndex];
             media.className = 'rb-workshop-media loading';
             loadState.className = 'rb-workshop-load-state';
-            loadState.innerHTML = '<span class="rb-workshop-spinner" aria-hidden="true"></span><small>正在准备插图…</small>';
+            loadState.innerHTML =
+              '<span class="rb-workshop-spinner" aria-hidden="true"></span><small>正在准备插图…</small>';
             if (!loadState.isConnected) media.appendChild(loadState);
             img.alt = `${player.title} · ${currentPack().name} · ${rating.toUpperCase()}`;
             img.onload = () => {
@@ -5652,7 +6425,8 @@
             img.onerror = () => {
               media.className = 'rb-workshop-media failed';
               loadState.className = 'rb-workshop-load-state error';
-              loadState.innerHTML = '<span class="rb-workshop-spinner" aria-hidden="true"></span><small>图片无法显示</small>';
+              loadState.innerHTML =
+                '<span class="rb-workshop-spinner" aria-hidden="true"></span><small>图片无法显示</small>';
             };
             img.src = urlFor(image);
             caption.textContent = `${player.title} · ${currentPack().name}${currentPack().author ? ' · ' + currentPack().author : ''} · ${rating.toUpperCase()} · ${imageIndex + 1}/${group.length}`;
@@ -5664,7 +6438,10 @@
               void bridge.setPreferredPack(player.subjectKey, currentPack().id).catch(() => {});
             }
           };
-          const move = delta => { imageIndex += delta; render(); };
+          const move = delta => {
+            imageIndex += delta;
+            render();
+          };
           controls.addEventListener('click', event => {
             const button = event.target.closest && event.target.closest('[data-workshop-action]');
             if (!button || button.disabled) return;

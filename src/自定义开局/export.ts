@@ -114,7 +114,10 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
       if (Object.keys(skillMap).length) data.技能 = skillMap;
     }
     const synthetic = {
-      品质: c.品质, 境界: c.境界, 类型: c.类型, 五行: c.五行,
+      品质: c.品质,
+      境界: c.境界,
+      类型: c.类型,
+      五行: c.五行,
       data,
     };
     bucket(c.name, c.category, normalizeItemForMvu(synthetic));
@@ -144,9 +147,19 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
 
   // —— 境界 → L 系数 (按 [核心系数总表]) —— //
   const REALM_L_BASE: Record<string, number> = {
-    凡人: 0, 炼气: 1.0, 练气: 1.0, 筑基: 2.0, 金丹: 3.0,
-    元婴: 4.0, 化神: 5.0, 返虚: 6.0, 炼虚: 6.0,
-    合体: 7.0, 大乘: 8.0, 渡劫: 9.0, 飞升: 9.0,
+    凡人: 0,
+    炼气: 1.0,
+    练气: 1.0,
+    筑基: 2.0,
+    金丹: 3.0,
+    元婴: 4.0,
+    化神: 5.0,
+    返虚: 6.0,
+    炼虚: 6.0,
+    合体: 7.0,
+    大乘: 8.0,
+    渡劫: 9.0,
+    飞升: 9.0,
   };
   const SUB_L_OFFSET: Record<string, number> = { 初期: 0, 中期: 0.2, 后期: 0.4 };
   const baseL = REALM_L_BASE[大境界] ?? 1.0;
@@ -165,8 +178,19 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
 
   // —— 寿元.寿命:凡人 80 + 累积突破奖励 15×L^3 (跨大境界,小境界忽略) —— //
   const realmIndex: Record<string, number> = {
-    凡人: 0, 炼气: 1, 练气: 1, 筑基: 2, 金丹: 3, 元婴: 4,
-    化神: 5, 返虚: 6, 炼虚: 6, 合体: 7, 大乘: 8, 渡劫: 9, 飞升: 9,
+    凡人: 0,
+    炼气: 1,
+    练气: 1,
+    筑基: 2,
+    金丹: 3,
+    元婴: 4,
+    化神: 5,
+    返虚: 6,
+    炼虚: 6,
+    合体: 7,
+    大乘: 8,
+    渡劫: 9,
+    飞升: 9,
   };
   const realmIdx = realmIndex[大境界] ?? 0;
   let 寿命 = 80; // 凡人基础寿命
@@ -176,13 +200,13 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
   const 起始年龄 = 16;
 
   // 性别 / 元阳元阴：按角色生成规则保留对应键（已并入 体质，见下方 体质 对象）
-  // 其他性别：元阳与元阴均为 false（无概念）
-  const 元阴元阳: Record<string, boolean> = {};
+  // 其他性别：元阳与元阴均为 null，表示对应性征不存在/不适用。
+  const 元阴元阳: Record<string, boolean | null> = {};
   if (sel.性别 === '男') 元阴元阳.元阳 = sel.元阳元阴;
   else if (sel.性别 === '女') 元阴元阳.元阴 = sel.元阳元阴;
   else {
-    元阴元阳.元阳 = false;
-    元阴元阳.元阴 = false;
+    元阴元阳.元阳 = null;
+    元阴元阳.元阴 = null;
   }
 
   // —— 具体地点：按新格式「生态-[宗门|秘境|城市]-具体位置」组装（地域为独立字段，不入此串）——
@@ -190,13 +214,8 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
   // 则追加为中段「生态-宗门」；散修 / 泛称起点（如「入山待考之外门」）仅保留生态。
   const 生态名 = location?.生态 || location?.具体地点 || '';
   const 宗门清 = 宗门.replace(/[（(].*$/, '').trim();
-  const 是本生态宗门 =
-    !!宗门清 && 宗门清 !== '散修' && !!location?.sects?.some(s => s.name === 宗门清);
-  const 具体地点 = 生态名
-    ? 是本生态宗门
-      ? `${生态名}-${宗门清}`
-      : 生态名
-    : '某处村落';
+  const 是本生态宗门 = !!宗门清 && 宗门清 !== '散修' && !!location?.sects?.some(s => s.name === 宗门清);
+  const 具体地点 = 生态名 ? (是本生态宗门 ? `${生态名}-${宗门清}` : 生态名) : '某处村落';
 
   // —— 身份：由门派归属决定（''=无身份 / '散修'=散修 / 宗门名=「XX弟子」）——
   const 身份: string[] = [];
@@ -294,12 +313,8 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
  */
 export async function writeInitialStatData(data: Record<string, any>): Promise<boolean> {
   try {
-    const message_id =
-      typeof getCurrentMessageId === 'function' ? getCurrentMessageId() : -1;
-    await insertOrAssignVariables(
-      { stat_data: data },
-      { type: 'message', message_id },
-    );
+    const message_id = typeof getCurrentMessageId === 'function' ? getCurrentMessageId() : -1;
+    await insertOrAssignVariables({ stat_data: data }, { type: 'message', message_id });
     return true;
   } catch (err) {
     console.error('[自定义开局] 写入酒馆变量失败：', err);
@@ -385,9 +400,7 @@ export function generateAIPrompt(sel: Selection): string {
   }
 
   // —— 携带资材 ——
-  const presetCarry = sel.itemIds
-    .map(id => findItem(id))
-    .filter(Boolean) as NonNullable<ReturnType<typeof findItem>>[];
+  const presetCarry = sel.itemIds.map(id => findItem(id)).filter(Boolean) as NonNullable<ReturnType<typeof findItem>>[];
   if (presetCarry.length) {
     lines.push('');
     lines.push('【携带资材 · 预设】');
@@ -467,9 +480,7 @@ export function generateAIPrompt(sel: Selection): string {
  * 提交开局：写入 MVU 变量、生成 AI 提示词、发送给酒馆并触发回复。
  * 参考 src/custom_start/core/composables/use-journey.ts 的 executeJourney。
  */
-export async function commitJourney(
-  sel: Selection,
-): Promise<{ ok: boolean; reason?: string }> {
+export async function commitJourney(sel: Selection): Promise<{ ok: boolean; reason?: string }> {
   // 0) 按玩家选择的变量更新模式，确保世界书/预设条目为最终状态（幂等）
   await applyApiMode(sel.变量更新模式);
 

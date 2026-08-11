@@ -8,6 +8,15 @@
  */
 import './styles.css';
 import { parseReincarnation } from './parser';
+import {
+  PHYSIQUE_TIER_INTRO,
+  PHYSIQUE_TIER_S,
+  PHYSIQUE_TIERS,
+  findPhysique,
+  physiqueCategoriesByTier,
+  physiques,
+} from '../自定义开局/config/physiques';
+import type { PhysiqueCategory, PhysiqueTier } from '../自定义开局/types';
 
 // ======================================================================
 // 前端配置（点数可调）
@@ -61,35 +70,12 @@ const MUTATIONS = [
 ];
 const ROOT_COST: Record<string, number> = { 1: 60, 2: 30, 3: 0, 4: -30, 5: 0, 无: -100, 混沌: 60 };
 
-const PHY_TIERS = [
-  { id: '凡体', S: 30, cost: 0 },
-  { id: '灵体', S: 50, cost: 10 },
-  { id: '道体', S: 75, cost: 30 },
-  { id: '仙体', S: 100, cost: 60 },
-];
-const PHY_PRESETS: Record<string, { id: string; name: string; stat: string; sub: string; eff?: string }[]> = {
-  凡体: [
-    { id: 'fg', name: '凡骨', stat: '10/10/10', sub: '无特效' },
-    { id: 'fh', name: '灵慧凡躯', stat: '14/8/8', sub: '无特效·水' },
-    { id: 'fz', name: '朴拙凡躯', stat: '8/14/8', sub: '无特效·金' },
-    { id: 'fm', name: '灵敏凡躯', stat: '8/8/14', sub: '无特效·木' },
-  ],
-  灵体: [
-    { id: 'll', name: '蛮力之躯', stat: '14/22/14', sub: '战斗·土', eff: '近身攻击力+15%' },
-    { id: 'cy', name: '赤焰灵体', stat: '16/16/18', sub: '战斗·火', eff: '火系威力+10%' },
-    { id: 'hf', name: '寒霜灵体', stat: '18/14/18', sub: '修炼·水', eff: '凝气速度+10%' },
-    { id: 'lz', name: '灵植之躯', stat: '16/14/20', sub: '生产·木', eff: '灵植培育+15%' },
-  ],
-  道体: [
-    { id: 'dj', name: '道基道体', stat: '24/26/25', sub: '修炼·综合', eff: '所有修炼效果+12%' },
-    { id: 'tj', name: '通明道体', stat: '30/20/25', sub: '领悟·水', eff: '领悟效率+15%' },
-    { id: 'bf', name: '不灭道体', stat: '20/32/23', sub: '战斗·土', eff: '受到伤害-12%' },
-  ],
-  仙体: [
-    { id: 'hy', name: '鸿蒙仙体', stat: '34/34/32', sub: '综合·混沌', eff: '全属性大幅提升' },
-    { id: 'xz', name: '玄黄仙体', stat: '32/36/32', sub: '战斗·金', eff: '攻伐威力+20%' },
-  ],
-};
+/** 轮回面板沿用自身的业力成本，只共享自定义开局的体质清单与三维。 */
+const REINCARNATION_PHY_COST: Record<PhysiqueTier, number> = { 凡体: 0, 灵体: 10, 道体: 30, 仙体: 60 };
+const PHY_PICKER_PAGE_SIZE = 6;
+const NEWBORN_LIFESPAN = 80;
+
+type ReincarnationGender = '男' | '女' | '其他';
 
 const LOCATIONS = [
   { id: 'fanjie', name: '凡界', cost: 0 },
@@ -118,33 +104,35 @@ const CUS_STATUS_COST: Record<string, number> = { 增益: 20, 减益: -20, 特�
 // ======================================================================
 // 读取 MVU stat_data（tavern helper 全局；本地预览时可用 __reincarnation_stat 注入）
 // ======================================================================
-function readStat(key: string): any {
+const PREVIEW_STAT = (window as any).__reincarnation_stat;
+const IS_LOCAL_PREVIEW = !!PREVIEW_STAT && typeof PREVIEW_STAT === 'object';
+
+async function readWholeStat(timeoutMs = 8000): Promise<Record<string, any>> {
+  if (IS_LOCAL_PREVIEW) return PREVIEW_STAT;
+
   try {
-    if (typeof getMessageVar === 'function') {
-      return getMessageVar('stat_data.' + key, { defaults: {} }) || {};
+    await waitGlobalInitialized('Mvu');
+    const messageId = typeof getCurrentMessageId === 'function' ? getCurrentMessageId() : 'latest';
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < timeoutMs) {
+      const variables = Mvu.getMvuData({ type: 'message', message_id: messageId });
+      const stat = _.get(variables, 'stat_data');
+      if (stat && typeof stat === 'object') return stat as Record<string, any>;
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
-  } catch {
-    /* ignore */
-  }
-  return {};
-}
-function readWholeStat(): any {
-  try {
-    const t = (window as any).__reincarnation_stat;
-    if (t && typeof t === 'object') return t;
-    if (typeof getMessageVar === 'function') return getMessageVar('stat_data', { defaults: {} }) || {};
-  } catch {
-    /* ignore */
+    console.warn('[轮回转生] 等待当前楼层 MVU stat_data 超时，将以空数据渲染。');
+  } catch (error) {
+    console.warn('[轮回转生] 读取当前楼层 MVU stat_data 失败，将以空数据渲染：', error);
   }
   return {};
 }
 
-const STAT = readWholeStat();
-const 修炼 = STAT.修炼进度 || readStat('修炼进度');
-const 寿元 = STAT.寿元 || readStat('寿元');
-const 物品Raw = STAT.物品 || readStat('物品');
-const 功法Raw = STAT.功法 || readStat('功法');
-const 关系Raw = STAT.关系列表 || readStat('关系列表');
+const STAT = await readWholeStat();
+const 修炼 = STAT.修炼进度 || {};
+const 寿元 = STAT.寿元 || {};
+const 物品Raw = STAT.物品 || {};
+const 功法Raw = STAT.功法 || {};
+const 关系Raw = STAT.关系列表 || {};
 const 种族Raw = STAT.种族 || '';
 const 地点Raw = STAT.地点 || {};
 const 状态Raw = STAT.状态效果 || {};
@@ -157,10 +145,10 @@ const SAMPLE_ITEMS = [
   { id: '上古秘境残卷', name: '上古秘境残卷', meta: '地品 · 秘籍', 品质: '地', 数量: 1, 类型: '秘籍', 秘籍: true },
 ];
 
-// 保留物品清单：真实取自 stat_data.物品；本地预览/空数据用样例
+// 保留物品清单：正式环境只使用 stat_data.物品；样例只供显式本地预览。
 function buildItems(): any[] {
   const keys = Object.keys(物品Raw || {});
-  if (!keys.length) return SAMPLE_ITEMS;
+  if (!keys.length) return IS_LOCAL_PREVIEW ? SAMPLE_ITEMS : [];
   return keys.map(name => {
     const it = 物品Raw[name] || {};
     return {
@@ -215,14 +203,32 @@ let E = 0,
   penalty = 0,
   grade = GRADES[6],
   path = 'obey';
+const currentPhysique = STAT.体质 || {};
+const currentGender = (() => {
+  const hasYinMarker = Object.prototype.hasOwnProperty.call(currentPhysique, '元阴');
+  const hasYangMarker = Object.prototype.hasOwnProperty.call(currentPhysique, '元阳');
+  const hasYin = currentPhysique.元阴 === true || currentPhysique.元阴 === false;
+  const hasYang = currentPhysique.元阳 === true || currentPhysique.元阳 === false;
+  if (hasYin && !hasYang) return '女';
+  if (hasYang && !hasYin) return '男';
+  if (hasYinMarker || hasYangMarker) return '其他';
+  if (STAT.性别 === '男' || STAT.性别 === '女' || STAT.性别 === '其他') return STAT.性别;
+  return '男';
+})();
+let gender: ReincarnationGender = currentGender;
 let race = 'human',
   raceInput = '';
 let dest: string | null = null,
   destInput = '',
   destArea = '';
 let root = { elements: [] as string[], mutation: false, mutationId: null as string | null, customName: '' };
-let phyTier = '凡体',
-  phyPreset: string | null = null;
+let phyTier: PhysiqueTier = '凡体',
+  phyPreset: string | null = physiques.find(item => item.tier === '凡体')?.id ?? null;
+let phyPickerOpen = false,
+  phyPickerTier: PhysiqueTier = phyTier,
+  phyPickerCategory: PhysiqueCategory | null = null,
+  phyPickerQuery = '',
+  phyPickerPage = 1;
 const phyCustom = { name: '', 悟性: 10, 根骨: 10, 气感: 10, effects: [{ name: '', value: '' }] };
 let loc = 'fanjie',
   mem = 'no';
@@ -261,7 +267,7 @@ function rootCost() {
   return c === 0 ? 0 : (ROOT_COST[c] ?? 0);
 }
 function phyCost() {
-  return PHY_TIERS.find(t => t.id === phyTier)?.cost ?? 0;
+  return REINCARNATION_PHY_COST[phyTier];
 }
 function locCost() {
   return LOCATIONS.find(l => l.id === loc)?.cost ?? 0;
@@ -422,8 +428,12 @@ function renderGroups() {
   const host = $('rcGroups');
   host.innerHTML = '';
   const g = document.createElement('div');
-  g.innerHTML = `${renderRace()}${renderRoot()}${renderPhysique()}${race === 'human' ? renderDest() : ''}${renderLocation()}${renderMemory()}${renderItems()}${renderStatuses()}`;
+  g.innerHTML = renderFateGroups();
   host.appendChild(g);
+}
+
+function renderFateGroups() {
+  return `${renderRace()}${renderGender()}${renderRoot()}${renderPhysique()}${race === 'human' ? renderDest() : ''}${renderLocation()}${renderMemory()}${renderItems()}${renderStatuses()}`;
 }
 
 function renderRace() {
@@ -443,6 +453,23 @@ function renderRace() {
     '冥族/神族/域外异类灰置不可选',
     `<div class="rc-chips" id="raceChips">${chips}${inputExtra}</div>`,
   );
+}
+
+function renderGender() {
+  const options: Array<{ id: ReincarnationGender; glyph: string; title: string; detail: string }> = [
+    { id: '男', glyph: '阳', title: '男', detail: '元阳尚存' },
+    { id: '女', glyph: '阴', title: '女', detail: '元阴尚存' },
+    { id: '其他', glyph: '和', title: '其他', detail: '无元阴、元阳' },
+  ];
+  const cards = options
+    .map(
+      option => `<button type="button" class="rc-gender-card ${gender === option.id ? 'sel' : ''}" data-gender="${option.id}" aria-pressed="${gender === option.id}">
+        <span class="gc-glyph">${option.glyph}</span>
+        <span class="gc-copy"><b>${option.title}</b><small>${option.detail}</small></span>
+      </button>`,
+    )
+    .join('');
+  return groupShell('转世性别', '新生身体仅有男、女、其他三种选择', `<div class="rc-gender-grid">${cards}</div>`);
 }
 
 function renderRoot() {
@@ -485,31 +512,95 @@ function renderRoot() {
   return groupShell('改变灵根', '五→四→三→双→单：0/-30/0/30/60；无灵根 −100', body);
 }
 
+function resetPhyCustom(tier: PhysiqueTier) {
+  const total = PHYSIQUE_TIER_S[tier];
+  const base = Math.floor(total / 3);
+  phyCustom.name = '';
+  phyCustom.悟性 = base;
+  phyCustom.根骨 = base;
+  phyCustom.气感 = total - base * 2;
+  phyCustom.effects = tier === '凡体' ? [] : [{ name: '', value: '' }];
+}
+
+function renderPhysiquePicker() {
+  if (!phyPickerOpen) return '';
+  const tierItems = physiques.filter(item => item.tier === phyPickerTier);
+  const categories = physiqueCategoriesByTier(phyPickerTier);
+  if (phyPickerCategory && !categories.includes(phyPickerCategory)) phyPickerCategory = null;
+  const query = phyPickerQuery.trim().toLocaleLowerCase();
+  const filtered = tierItems.filter(item => {
+    if (phyPickerCategory && item.category !== phyPickerCategory) return false;
+    if (!query) return true;
+    return [
+      item.name,
+      item.subtitle,
+      item.category,
+      item.五行,
+      ...(item.tags || []),
+      ...(item.效果 || []).flatMap(x => [x.name, x.value]),
+    ]
+      .filter(Boolean)
+      .some(value => String(value).toLocaleLowerCase().includes(query));
+  });
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PHY_PICKER_PAGE_SIZE));
+  phyPickerPage = Math.min(Math.max(1, phyPickerPage), pageCount);
+  const pageItems = filtered.slice((phyPickerPage - 1) * PHY_PICKER_PAGE_SIZE, phyPickerPage * PHY_PICKER_PAGE_SIZE);
+  const tiers = PHYSIQUE_TIERS.map(tier => {
+    const count = physiques.filter(item => item.tier === tier).length;
+    const cost = REINCARNATION_PHY_COST[tier];
+    return `<button type="button" class="rc-picker-filter ${phyPickerTier === tier ? 'sel' : ''}" data-picker-tier="${tier}"><b>${tier}</b><span>${count}项 · ${cost ? `+${cost}` : '0'}业力</span></button>`;
+  }).join('');
+  const categoryButtons = [
+    `<button type="button" class="rc-chip ${phyPickerCategory === null ? 'sel' : ''}" data-picker-category="">全部 ${tierItems.length}</button>`,
+    ...categories.map(category => {
+      const count = tierItems.filter(item => item.category === category).length;
+      return `<button type="button" class="rc-chip ${phyPickerCategory === category ? 'sel' : ''}" data-picker-category="${category}">${category} ${count}</button>`;
+    }),
+  ].join('');
+  const cards = pageItems.length
+    ? pageItems
+        .map(item => {
+          const effects = (item.效果 || [])
+            .map(effect => `<div class="pc-effect"><b>${esc(effect.name)}</b><span>${esc(effect.value)}</span></div>`)
+            .join('');
+          return `<button type="button" class="rc-picker-card ${phyPreset === item.id ? 'sel' : ''}" data-picker-preset="${esc(item.id)}">
+            <span class="pc-head"><b>${esc(item.name)}</b><i>${esc(item.五行 || '无相')}</i></span>
+            <span class="pc-tags"><em>${item.tier}</em><em>${item.category}</em><em>悟 ${item.悟性} · 骨 ${item.根骨} · 感 ${item.气感}</em></span>
+            <span class="pc-effects">${effects || '<span class="pc-empty">无额外效果</span>'}</span>
+            ${item.desc ? `<span class="pc-desc">${esc(item.desc)}</span>` : ''}
+          </button>`;
+        })
+        .join('')
+    : `<div class="rc-picker-empty">没有符合当前条件的预设体质</div>`;
+  const pager =
+    pageCount > 1
+      ? `<div class="rc-picker-pager"><button type="button" data-picker-page="${phyPickerPage - 1}" ${phyPickerPage <= 1 ? 'disabled' : ''}>上一页</button><span>${phyPickerPage} / ${pageCount}</span><button type="button" data-picker-page="${phyPickerPage + 1}" ${phyPickerPage >= pageCount ? 'disabled' : ''}>下一页</button></div>`
+      : '';
+  return `<div class="rc-phy-picker">
+    <div class="rc-picker-head"><div><b>预设体质选择</b><span>数据与“自定义开局”完全共用；当前共 ${physiques.length} 项</span></div><button type="button" class="rc-picker-close" data-picker-close>收起</button></div>
+    <div class="rc-picker-tiers">${tiers}</div>
+    <div class="rc-picker-tools"><div class="rc-picker-search"><input id="phyPickerSearch" value="${esc(phyPickerQuery)}" placeholder="搜索名称、五行、分类或效果……" /><button type="button" data-picker-search>搜索</button></div><button type="button" class="rc-picker-custom" data-picker-custom>自创${phyPickerTier}</button></div>
+    <div class="rc-picker-categories">${categoryButtons}</div>
+    <div class="rc-picker-grid">${cards}</div>${pager}
+  </div>`;
+}
+
 function renderPhysique() {
-  const tabs = PHY_TIERS.map(
-    t =>
-      `<span class="rc-phy-tab ${phyTier === t.id ? 'sel' : ''}" data-tier="${t.id}">${t.id}<span style="font-size:0.72em;margin-left:4px;color:#93dca5">${t.cost === 0 ? '' : '+' + t.cost}</span></span>`,
-  ).join('');
-  const presets =
-    PHY_PRESETS[phyTier]
-      .map(
-        p =>
-          `<div class="rc-phy-card ${phyPreset === p.id ? 'sel' : ''}" data-preset="${p.id}"><div class="pc-name">${p.name}</div><div class="pc-sub">${p.sub}</div><div class="pc-stat">悟/根/气 ${p.stat}</div>${p.eff ? `<div class="pc-sub">${p.eff}</div>` : ''}</div>`,
-      )
-      .join('') +
-    `<div class="rc-phy-card ${phyPreset === null ? 'sel' : ''}" data-preset="custom"><div class="pc-name">自拟</div><div class="pc-sub">自定义三维与效果</div></div>`;
-  const t = PHY_TIERS.find(x => x.id === phyTier)!;
+  const preset = findPhysique(phyPreset);
+  const current = preset
+    ? `<div class="rc-phy-current"><div class="pc-main"><span class="pc-glyph">${esc(preset.glyph || preset.五行 || '体')}</span><span class="pc-copy"><b>${esc(preset.name)}</b><small>${preset.tier} · ${preset.category} · ${esc(preset.五行 || '无相')}</small></span><span class="pc-cost">${REINCARNATION_PHY_COST[preset.tier] ? `+${REINCARNATION_PHY_COST[preset.tier]}` : '0'}</span></div><div class="pc-stats"><span>悟性 <b>${preset.悟性}</b></span><span>根骨 <b>${preset.根骨}</b></span><span>气感 <b>${preset.气感}</b></span></div><div class="pc-detail">${(preset.效果 || []).map(effect => `<span><b>${esc(effect.name)}</b> ${esc(effect.value)}</span>`).join('') || '<span>无额外效果</span>'}</div></div>`
+    : `<div class="rc-phy-current"><div class="pc-main"><span class="pc-glyph">自</span><span class="pc-copy"><b>${esc(phyCustom.name || `${phyTier}（自创）`)}</b><small>${phyTier} · 自定义三维与效果</small></span><span class="pc-cost">${REINCARNATION_PHY_COST[phyTier] ? `+${REINCARNATION_PHY_COST[phyTier]}` : '0'}</span></div><div class="pc-stats"><span>悟性 <b>${phyCustom.悟性}</b></span><span>根骨 <b>${phyCustom.根骨}</b></span><span>气感 <b>${phyCustom.气感}</b></span></div></div>`;
   const editor =
     phyPreset === null
       ? `<div class="rc-phy-editor">
-    <div class="pe-row"><label>名号</label><input class="pe-name" id="phyName" value="${esc(phyCustom.name)}" /></div>
-    <div class="pe-row"><label>悟性</label><input id="phyWu" type="number" value="${phyCustom.悟性}" /><label>根骨</label><input id="phyGen" type="number" value="${phyCustom.根骨}" /><label>气感</label><input id="phyQi" type="number" value="${phyCustom.气感}" /><span style="color:#8a8070;font-size:0.76em">总和 ${phyCustom.悟性 + phyCustom.根骨 + phyCustom.气感} / ${t.S}</span></div>
-    <div id="phyEffects"></div>
-    <div class="pe-row"><span class="rc-chip" id="phyAddEff">+ 效果</span></div>
-  </div>`
+        <div class="pe-row pe-fields"><label><span>体质名号</span><input class="pe-name" id="phyName" placeholder="输入自创体质名称" value="${esc(phyCustom.name)}" /></label><label><span>悟性</span><input id="phyWu" type="number" min="1" value="${phyCustom.悟性}" /></label><label><span>根骨</span><input id="phyGen" type="number" min="1" value="${phyCustom.根骨}" /></label><label><span>气感</span><input id="phyQi" type="number" min="1" value="${phyCustom.气感}" /></label></div>
+        <div class="pe-sum">三维总和 <b>${phyCustom.悟性 + phyCustom.根骨 + phyCustom.气感}</b> / ${PHYSIQUE_TIER_S[phyTier]} · ${esc(PHYSIQUE_TIER_INTRO[phyTier])}</div>
+        <div id="phyEffects"></div>
+        <div class="pe-row"><button type="button" class="rc-mini-action" id="phyAddEff">＋ 添加效果</button></div>
+      </div>`
       : '';
-  const body = `<div class="rc-phy-tabs">${tabs}</div><div class="rc-phy-presets">${presets}</div>${editor}`;
-  return groupShell('改变体质', `凡0 / 灵+10 / 道+30 / 仙+60`, body);
+  const body = `${current}<div class="rc-phy-actions"><button type="button" class="rc-mini-action primary" data-open-phy-picker>${phyPickerOpen ? '收起体质选择器' : '更换体质'}</button></div>${renderPhysiquePicker()}${editor}`;
+  return groupShell('改变体质', '预设与自定义开局完全一致；凡0 / 灵+10 / 道+30 / 仙+60', body);
 }
 
 function renderDest() {
@@ -546,12 +637,15 @@ function renderMemory() {
 }
 
 function itemsGridHtml() {
+  if (!ITEMS.length) {
+    return `<div class="rc-empty-state"><b>当前没有可保留物品</b><span>已读取当前楼层的 MVU <code>stat_data.物品</code>，未发现具名物品。</span></div>`;
+  }
   return ITEMS.map(it => {
     const q = itemQty[it.id] || 0;
     const c = itemCost(it, q);
     return `<div class="rc-card ${q > 0 ? 'sel' : ''}" data-item="${it.id}">
       <span class="box">✓</span>
-      <span class="cd-info"><div class="cd-name">${esc(it.name)}</div><div class="cd-meta">${esc(it.品质)}品 · 拥有 ${it.数量}${it.秘籍 ? ' · 秘籍（阅读进度清零）' : ''}</div></span>
+      <span class="cd-info"><div class="cd-name">${esc(it.name)}</div><div class="cd-meta">${esc(it.品质)}品 · ${esc(it.类型)} · 拥有 ${it.数量}${it.秘籍 ? ' · 阅读进度清零' : ''}</div></span>
       <span class="rc-qty">
         <span class="rc-qty-btn" data-item-dec="${esc(it.id)}">−</span>
         <span class="rc-qty-num">${q}</span>
@@ -574,7 +668,7 @@ function renderStatuses() {
   const cusCard = `<div class="rc-card ${cusSt.on ? 'sel' : ''}" data-status="__custom__"><span class="box">✓</span><span class="cd-info"><div class="cd-name">自创状态</div><div class="cd-meta">自定义永久状态（叙述效果）</div></span><span class="cd-cost ${cusCost >= 0 ? 'pos' : 'neg'}">${cusCost > 0 ? '+' : ''}${cusCost}</span></div>`;
   const cards = STATUSES.map(x => {
     const cls = x.cost >= 0 ? 'pos' : 'neg';
-    return `<div class="rc-card ${selStatus.includes(x.id) ? 'sel' : ''}" data-status="${x.id}"><span class="box">✓</span><span class="cd-info"><div class="cd-name">${x.name} <span style="font-size:0.72em;color:#8a8070">${x.type}</span></div><div class="cd-meta">${x.desc}</div></span><span class="cd-cost ${cls}">${x.cost > 0 ? '+' : ''}${x.cost}</span></div>`;
+    return `<div class="rc-card ${selStatus.includes(x.id) ? 'sel' : ''}" data-status="${x.id}"><span class="box">✓</span><span class="cd-info"><div class="cd-name">${x.name} <span class="cd-type">${x.type}</span></div><div class="cd-meta">${x.desc}</div></span><span class="cd-cost ${cls}">${x.cost > 0 ? '+' : ''}${x.cost}</span></div>`;
   }).join('');
   const editor = cusSt.on
     ? `<div class="rc-phy-editor">
@@ -585,7 +679,7 @@ function renderStatuses() {
           `<span class="rc-chip ${cusSt.type === t ? 'sel' : ''}" data-cus-type="${t}">${t}（${CUS_STATUS_COST[t] > 0 ? '+' : ''}${CUS_STATUS_COST[t]}）</span>`,
       )
       .join('')}</div>
-    <div class="pe-row" style="align-items:flex-start"><label>效果</label><textarea class="rc-textarea rc-status-input" id="cusEff" placeholder="叙述性效果描述" style="flex:1;min-height:56px">${esc(cusSt.eff)}</textarea></div>
+    <div class="pe-row pe-effect-area"><label>效果</label><textarea class="rc-textarea rc-status-input" id="cusEff" placeholder="叙述性效果描述">${esc(cusSt.eff)}</textarea></div>
   </div>`
     : '';
   return groupShell(
@@ -599,7 +693,7 @@ function renderRootOnly() {
   const g = $('rcGroups');
   g.innerHTML = '';
   const d = document.createElement('div');
-  d.innerHTML = `${renderRace()}${renderRoot()}${renderPhysique()}${race === 'human' ? renderDest() : ''}${renderLocation()}${renderMemory()}${renderItems()}${renderStatuses()}`;
+  d.innerHTML = renderFateGroups();
   g.appendChild(d);
   renderPhyEffects();
 }
@@ -609,11 +703,10 @@ function renderPhyOnly() {
 function renderPhyEffects() {
   const box = $('phyEffects');
   if (!box) return;
-  const t = PHY_TIERS.find(x => x.id === phyTier)!;
   box.innerHTML = phyCustom.effects
     .map(
       (ef, i) =>
-        `<div class="pe-row"><label>效果</label><input class="pe-eff-name" data-eff="${i}" data-k="n" placeholder="效果名" value="${esc(ef.name)}" /><input class="pe-eff-val" data-eff="${i}" data-k="v" placeholder="数值/描述" value="${esc(ef.value)}" /><span class="rc-chip" data-del-eff="${i}" style="color:#fc8181">✕</span></div>`,
+        `<div class="pe-row"><label>效果</label><input class="pe-eff-name" data-eff="${i}" data-k="n" placeholder="效果名" value="${esc(ef.name)}" /><input class="pe-eff-val" data-eff="${i}" data-k="v" placeholder="数值/描述" value="${esc(ef.value)}" /><button type="button" class="rc-mini-action danger" data-del-eff="${i}">删除</button></div>`,
     )
     .join('');
   box.querySelectorAll('[data-del-eff]').forEach(x =>
@@ -735,18 +828,66 @@ function bindEvents() {
       updateSubmit();
       return;
     }
-    const tier = closest('[data-tier]');
-    if (tier) {
-      phyTier = tier.getAttribute('data-tier')!;
-      phyPreset = null;
+    const openPhyPicker = closest('[data-open-phy-picker]');
+    if (openPhyPicker) {
+      phyPickerOpen = !phyPickerOpen;
+      if (phyPickerOpen) {
+        phyPickerTier = phyTier;
+        phyPickerCategory = null;
+        phyPickerPage = 1;
+      }
+      renderPhyOnly();
+      return;
+    }
+    if (closest('[data-picker-close]')) {
+      phyPickerOpen = false;
+      renderPhyOnly();
+      return;
+    }
+    const pickerTier = closest('[data-picker-tier]');
+    if (pickerTier) {
+      phyPickerTier = pickerTier.getAttribute('data-picker-tier') as PhysiqueTier;
+      phyPickerCategory = null;
+      phyPickerPage = 1;
+      renderPhyOnly();
+      return;
+    }
+    const pickerCategory = closest('[data-picker-category]');
+    if (pickerCategory) {
+      phyPickerCategory = (pickerCategory.getAttribute('data-picker-category') || null) as PhysiqueCategory | null;
+      phyPickerPage = 1;
+      renderPhyOnly();
+      return;
+    }
+    const pickerPage = closest('[data-picker-page]');
+    if (pickerPage) {
+      phyPickerPage = Math.max(1, Number(pickerPage.getAttribute('data-picker-page')) || 1);
+      renderPhyOnly();
+      return;
+    }
+    if (closest('[data-picker-search]')) {
+      phyPickerQuery = (($('phyPickerSearch') as HTMLInputElement | null)?.value || '').trim();
+      phyPickerPage = 1;
+      renderPhyOnly();
+      return;
+    }
+    const pickerPreset = closest('[data-picker-preset]');
+    if (pickerPreset) {
+      const preset = findPhysique(pickerPreset.getAttribute('data-picker-preset'));
+      if (!preset) return;
+      phyTier = preset.tier;
+      phyPreset = preset.id;
+      phyPickerOpen = false;
       renderPhyOnly();
       updateBudget();
       updateSubmit();
       return;
     }
-    const preset = closest('[data-preset]');
-    if (preset) {
-      phyPreset = preset.getAttribute('data-preset') === 'custom' ? null : preset.getAttribute('data-preset');
+    if (closest('[data-picker-custom]')) {
+      phyTier = phyPickerTier;
+      phyPreset = null;
+      phyPickerOpen = false;
+      resetPhyCustom(phyTier);
       renderPhyOnly();
       updateBudget();
       updateSubmit();
@@ -760,6 +901,13 @@ function bindEvents() {
       raceInput = '';
       renderGroups();
       updateBudget();
+      updateSubmit();
+      return;
+    }
+    const genderCard = closest('[data-gender]');
+    if (genderCard) {
+      gender = genderCard.getAttribute('data-gender') as ReincarnationGender;
+      renderRootOnly();
       updateSubmit();
       return;
     }
@@ -863,6 +1011,10 @@ function bindEvents() {
 
   g.addEventListener('input', e => {
     const t = e.target as HTMLInputElement;
+    if (t.id === 'phyPickerSearch') {
+      phyPickerQuery = t.value;
+      return;
+    }
     if (t.id === 'raceInput') {
       raceInput = t.value;
       return;
@@ -909,6 +1061,15 @@ function bindEvents() {
       else phyCustom.effects[i].value = t.value;
     }
   });
+
+  g.addEventListener('keydown', e => {
+    const t = e.target as HTMLInputElement;
+    if (t.id !== 'phyPickerSearch' || e.key !== 'Enter') return;
+    e.preventDefault();
+    phyPickerQuery = t.value.trim();
+    phyPickerPage = 1;
+    renderPhyOnly();
+  });
 }
 
 // ======================================================================
@@ -939,7 +1100,7 @@ function rootDisplay(): string {
   return `${els.join('')}${map[els.length] || '灵根'}`;
 }
 function phyName(): string {
-  if (phyPreset) return PHY_PRESETS[phyTier].find(p => p.id === phyPreset)!.name;
+  if (phyPreset) return findPhysique(phyPreset)?.name || '未知体质';
   return phyCustom.name.trim() || '自拟体质';
 }
 
@@ -947,12 +1108,14 @@ function summarize(): string {
   const parts: string[] = [];
   const r = RACES.find(x => x.id === race)!;
   parts.push(`种族→${r.name}${r.input && raceInput ? `（${raceInput}）` : ''}[${r.cost > 0 ? '+' : ''}${r.cost}]`);
+  const essenceSummary = gender === '男' ? '元阳尚存' : gender === '女' ? '元阴尚存' : '元阴/元阳均无';
+  parts.push(`性别→${gender}（${essenceSummary}）`);
   if (root.elements.length)
     parts.push(
       `灵根→${rootDisplay()}${root.mutation && !root.customName ? '' : ''}[${rootCost() > 0 ? '+' : ''}${rootCost()}]`,
     );
-  const t = PHY_TIERS.find(x => x.id === phyTier)!;
-  parts.push(`体质→${t.id}·${phyName()}[+${t.cost}]`);
+  const physiquePoint = REINCARNATION_PHY_COST[phyTier];
+  parts.push(`体质→${phyTier}·${phyName()}[${physiquePoint > 0 ? '+' : ''}${physiquePoint}]`);
   if (race === 'human' && dest) {
     const d = DEST.find(x => x.id === dest)!;
     parts.push(
@@ -991,7 +1154,10 @@ function buildPrompt(): string {
       `判官宣判后，<user>折返忘川南岸【鬼域荒野】，种族变为冥族，保留记忆与修为，踏入幽冥生涯线。请据此展开后续。`,
     ].join('\n');
   }
-  const 秘籍 = (itemQty['上古秘境残卷'] || itemQty['it5'] || 0) > 0 ? '；上古秘境残卷阅读进度→0' : '';
+  const keptManuals = Object.entries(itemQty)
+    .filter(([id, qty]) => qty > 0 && ITEMS.find(item => item.id === id)?.秘籍)
+    .map(([id]) => id);
+  const 秘籍 = keptManuals.length ? `；所保留秘籍（${keptManuals.join('、')}）阅读进度→0` : '';
   const memTxt = mem === 'yes' ? '，保留已学会功法与全部记忆' : '，功法清空、记忆归零';
   return [
     `【转生定论 · 投胎轮回】`,
@@ -1001,6 +1167,7 @@ function buildPrompt(): string {
     `所择命途：${summarize()}`,
     `消耗 ${spent()} / 预算 ${E} 点，剩余 ${remaining()}。`,
     `---`,
+    `新生身体从 0 岁开始：修为重置为凡人，年龄与外观年龄均为 0，基础寿命为 ${NEWBORN_LIFESPAN} 年；请重新描写符合所选种族与性别的婴儿外貌。`,
     `请据此展开冥府宣判与投胎剧情，严格落实所选命途效果${秘籍}${memTxt}，并结合转生设定推进故事。`,
   ].join('\n');
 }
@@ -1013,6 +1180,8 @@ function buildPatch(): Record<string, any> {
     关系列表: JSON.parse(JSON.stringify(关系Raw || {})),
     灵根: JSON.parse(JSON.stringify(STAT.灵根 || {})),
     体质: JSON.parse(JSON.stringify(STAT.体质 || {})),
+    寿元: JSON.parse(JSON.stringify(STAT.寿元 || {})),
+    修炼进度: JSON.parse(JSON.stringify(STAT.修炼进度 || {})),
     地点: JSON.parse(JSON.stringify(地点Raw || {})),
     状态效果: JSON.parse(JSON.stringify(状态Raw || {})),
   };
@@ -1033,10 +1202,22 @@ function buildPatch(): Record<string, any> {
     if (!qty) continue;
     const it = ITEMS.find(i => i.id === id);
     if (!it) continue;
-    const entry: any = { 品质: it.品质 || '凡', 类型: it.秘籍 ? '秘籍' : it.类型 || '物品', 数量: qty };
+    const entry: any = JSON.parse(JSON.stringify(物品Raw[id] || {}));
+    entry.品质 = entry.品质 || it.品质 || '凡';
+    entry.类型 = entry.类型 || (it.秘籍 ? '秘籍' : it.类型 || '物品');
+    entry.数量 = qty;
     if (it.秘籍) {
-      entry.完整度 = '0%';
-      entry.阅读进度 = 0;
+      if ('阅读进度' in entry) entry.阅读进度 = 0;
+      if (Array.isArray(entry.标签)) {
+        entry.标签 = entry.标签.map((tag: unknown) =>
+          typeof tag === 'string'
+            ? tag.replace(
+                /^(阅读进度\s*[:：]\s*)\d+(\s*\/\s*\d+)$/u,
+                (_match, prefix: string, total: string) => `${prefix}0${total}`,
+              )
+            : tag,
+        );
+      }
     }
     cur.物品[id] = entry;
   }
@@ -1063,19 +1244,18 @@ function buildPatch(): Record<string, any> {
       };
     }
     // 体质
-    const t = PHY_TIERS.find(x => x.id === phyTier)!;
     if (phyPreset) {
-      const p = PHY_PRESETS[phyTier].find(x => x.id === phyPreset)!;
-      const [悟, 根, 气] = p.stat.split('/').map(Number);
+      const p = findPhysique(phyPreset)!;
+      const effects = Object.fromEntries((p.效果 || []).map(effect => [effect.name, effect.value]));
       cur.体质 = {
         ...cur.体质,
         名称: p.name,
-        品阶: t.id,
-        悟性: 悟,
-        根骨: 根,
-        气感: 气,
-        效果: p.eff ? { [p.name]: p.eff } : {},
-        描述: '',
+        品阶: p.tier,
+        悟性: p.悟性,
+        根骨: p.根骨,
+        气感: p.气感,
+        效果: effects,
+        描述: p.desc || '',
       };
     } else {
       const effs: Record<string, string> = {};
@@ -1083,7 +1263,7 @@ function buildPatch(): Record<string, any> {
       cur.体质 = {
         ...cur.体质,
         名称: phyCustom.name.trim() || '自拟体质',
-        品阶: t.id,
+        品阶: phyTier,
         悟性: phyCustom.悟性,
         根骨: phyCustom.根骨,
         气感: phyCustom.气感,
@@ -1091,6 +1271,24 @@ function buildPatch(): Record<string, any> {
         描述: '',
       };
     }
+    // 新生身体：元阴/元阳不能继承旧身体的“已损(false)”状态。
+    cur.体质.元阴 = gender === '女' ? true : null;
+    cur.体质.元阳 = gender === '男' ? true : null;
+    // 投胎后从凡人婴儿重新开始；寿命沿用自定义开局的凡人基础值。
+    cur.寿元 = {
+      ...cur.寿元,
+      年龄: 0,
+      寿命: NEWBORN_LIFESPAN,
+      外观年龄: 0,
+    };
+    cur.修炼进度 = {
+      ...cur.修炼进度,
+      境界: '凡人',
+      当前进度: 0,
+      进度上限: 100,
+      天谴: 0,
+      丹毒: 0,
+    };
     // 位置
     cur.地点 = { ...cur.地点, 世界: LOCATIONS.find(l => l.id === loc)!.name };
     // 转世状态

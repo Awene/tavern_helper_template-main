@@ -19,16 +19,7 @@ import {
   normalizeRootChoice,
   physiqueCost,
 } from './config';
-import type {
-  ApiMode,
-  CustomItem,
-  CustomStory,
-  Gender,
-  PhysiqueTier,
-  Preset,
-  RootChoice,
-  Selection,
-} from './types';
+import type { ApiMode, CustomItem, CustomStory, Gender, PhysiqueTier, Preset, RootChoice, Selection } from './types';
 
 const PRESETS_KEY = 'xs-presets-v1';
 
@@ -68,7 +59,7 @@ const normalizeSelection = (raw: any): Selection => {
     root: normalizeRootChoice(raw.root),
     physique: normalizePhysiqueChoice(raw.physique),
     性别: raw.性别 === '女' || raw.性别 === '其他' ? raw.性别 : '男',
-    元阳元阴: raw.性别 === '其他' ? false : (typeof raw.元阳元阴 === 'boolean' ? raw.元阳元阴 : true),
+    元阳元阴: raw.性别 === '其他' ? false : typeof raw.元阳元阴 === 'boolean' ? raw.元阳元阴 : true,
     门派归属: typeof raw.门派归属 === 'string' ? raw.门派归属 : '',
     itemIds: Array.isArray(raw.itemIds) ? raw.itemIds : [],
     customItems: Array.isArray(raw.customItems) ? raw.customItems : [],
@@ -337,7 +328,7 @@ export const useStartStore = defineStore('xs-start', () => {
   // ============ 性别 / 元阳元阴 ============
   function setGender(g: Gender) {
     selection.value.性别 = g;
-    // 其他性别强制 元阳/元阴 = false
+    // “其他”不显示尚存/已损选项；导出时会将元阳、元阴都写为 null。
     if (g === '其他') selection.value.元阳元阴 = false;
   }
   function setVirgin(v: boolean) {

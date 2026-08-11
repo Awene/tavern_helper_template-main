@@ -1,0 +1,32 @@
+<body>
+  <div id="rbPayload" hidden>$1</div>
+  <script>
+    (() => {
+      const payloadHost = document.getElementById('rbPayload');
+      const payload = payloadHost ? payloadHost.innerHTML : '';
+      window.__rb_content_payload = payload;
+      window.__rb_asset_base = '__RB_ASSET_BASE__';
+
+      const showRawFallback = message => {
+        document.body.innerHTML = '';
+        const notice = document.createElement('div');
+        notice.textContent = message;
+        notice.style.cssText =
+          'margin:10px 16px;padding:9px 12px;border:1px solid #b58b48;border-radius:8px;color:#8b5a2b;background:#fff8e8;font:13px/1.5 sans-serif;';
+        const content = document.createElement('div');
+        content.style.cssText = 'padding:12px 16px;white-space:normal;line-height:1.8;';
+        content.innerHTML = payload;
+        document.body.append(notice, content);
+      };
+
+      if (typeof $ !== 'function') {
+        showRawFallback('正文美化依赖未就绪，已显示原始正文。');
+        return;
+      }
+
+      $('body').load('__RB_APP_URL__', function (_response, status) {
+        if (status === 'error') showRawFallback('正文美化加载失败，已回退显示原始正文。');
+      });
+    })();
+  </script>
+</body>
