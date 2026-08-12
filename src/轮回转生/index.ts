@@ -89,15 +89,30 @@ const MEMORY = [
 const QUALITY_RANK: Record<string, number> = { 凡: 1, 黄: 2, 玄: 4, 地: 8, 天: 14 };
 
 const STATUSES = [
-  { id: 's1', name: '天人之姿', type: '增益', cost: 15, desc: '绝世容貌气度，众生倾慕' },
-  { id: 's2', name: '天生神力', type: '增益', cost: 12, desc: '力能扛鼎，体魄超人' },
-  { id: 's3', name: '通灵道种', type: '增益', cost: 20, desc: '灵觉敏锐，亲近大道' },
-  { id: 's4', name: '祥瑞缠身', type: '增益', cost: 18, desc: '气运绵长，祥瑞相随' },
-  { id: 's5', name: '体弱多病', type: '减益', cost: -15, desc: '自幼体弱，药不离口' },
-  { id: 's6', name: '先天残疾', type: '减益', cost: -25, desc: '肢体残缺或五官有损' },
-  { id: 's7', name: '无生育能力', type: '减益', cost: -10, desc: '天道夺其子嗣之缘' },
-  { id: 's8', name: '痴愚之症', type: '减益', cost: -20, desc: '神智迟滞，蒙昧难开' },
-  { id: 's9', name: '天煞孤星', type: '特殊', cost: -30, desc: '亲缘皆损，孤煞缠身' },
+  // 身世类（nar）：只在转生叙述文字里铺陈出生布景，不写入状态效果
+  { id: 's1', name: '青梅竹马', type: '增益', cost: 10, nar: true, desc: '与你同院或隔壁，有一名年岁相仿的孩童，两家素有往来，自幼两小无猜。' },
+  { id: 's2', name: '灵兽伴生', type: '增益', cost: 20, nar: true, desc: '降生之晨，院中落下一只雏灵兽，自此形影不离，通晓人性。' },
+  { id: 's3', name: '贵不可言', type: '增益', cost: 15, nar: true, desc: '降生时星落其宅、紫气东来，族中长者批曰“贵不可言”，门庭为之生光。' },
+  { id: 's4', name: '家道中落', type: '减益', cost: -15, nar: true, desc: '生于骤衰之家，家财散尽、债台高筑，生来便随家人避债，看尽冷眼。' },
+  { id: 's5', name: '克亲之名', type: '减益', cost: -18, nar: true, desc: '降生那日便有游方术士断言你命硬克亲，族中人人避讳疏远，亲缘淡薄。' },
+  { id: 's6', name: '血仇在身', type: '减益', cost: -30, nar: true, desc: '家族遭灭门之祸，你是劫后仅存的孤苗，仇家仍潜伏在暗处窥伺。' },
+  // 长期状态·增益（福泽）：写入状态效果
+  { id: 's7', name: '天生异香', type: '增益', cost: 10, desc: '初生即体蕴异香，百步可闻，惹灵禽异兽亲近流连，亦令凡俗侧目。' },
+  { id: 's8', name: '仙缘印', type: '增益', cost: 18, desc: '眉心生有一枚淡青仙印，有道之士见之皆惊，言其与上界有旧缘。' },
+  // 长期状态·减益（偿报）：先天残疾，分部位
+  { id: 's9', name: '瘸腿', type: '减益', cost: -25, desc: '左腿先天萎弱，行走跛行，多走几步便酸痛难忍，被人视作“天残”。' },
+  { id: 's10', name: '失明', type: '减益', cost: -25, desc: '双目失明，自幼仅凭耳力辨人识物；有人说，瞎子修灵觉，反而看得比常人更“远”。' },
+  { id: 's11', name: '聋哑', type: '减益', cost: -25, desc: '天生聋哑，听不见也说不出，只能以手语比划、以纸笔往来，世间言语如隔水相望。' },
+  { id: 's12', name: '独臂', type: '减益', cost: -25, desc: '右臂自肘以下畸形，几无用武之地，握笔执剑皆须另觅其法。' },
+  // 长期状态·减益（偿报）：恶疾，分病症
+  { id: 's13', name: '咳血之疾', type: '减益', cost: -20, desc: '自幼肺腑暗疾，逢天寒或动怒便咳血不止，药石从不敢断。' },
+  { id: 's14', name: '心脉有缺', type: '减益', cost: -20, desc: '天生心脉残缺，受惊或剧烈行气便心悸绞痛，医者叮嘱此生不可贪功冒进。' },
+  { id: 's15', name: '寒毒侵体', type: '减益', cost: -20, desc: '胎中便蕴一缕寒毒，入冬四肢僵痛，靠火属性之物续命。' },
+  { id: 's16', name: '骨蚀之症', type: '减益', cost: -20, desc: '骨骼天生酥软，动辄骨折，习武如同上刑。' },
+  // 长期状态·减益（偿报）：其他
+  { id: 's17', name: '奇相招灾', type: '减益', cost: -12, desc: '生有异相（白发、赤瞳或灵纹），初啼便惹来觊觎与指摘，是非不断。' },
+  // 长期状态·特殊
+  { id: 's18', name: '无生育能力', type: '特殊', cost: -10, desc: '天道夺其子嗣之缘。' },
 ];
 const CUS_STATUS_COST: Record<string, number> = { 增益: 20, 减益: -20, 特殊: -10 };
 
@@ -136,6 +151,8 @@ const 关系Raw = STAT.关系列表 || {};
 const 种族Raw = STAT.种族 || '';
 const 地点Raw = STAT.地点 || {};
 const 状态Raw = STAT.状态效果 || {};
+const 当前年份Raw = Number(STAT.时间?.年);
+const 当前年份 = Number.isFinite(当前年份Raw) ? Math.trunc(当前年份Raw) : null;
 
 const SAMPLE_ITEMS = [
   { id: '玄铁重剑', name: '玄铁重剑', meta: '玄品 · 装备', 品质: '玄', 数量: 1, 类型: '装备' },
@@ -684,7 +701,7 @@ function renderStatuses() {
     : '';
   return groupShell(
     '转世状态',
-    '永久 · 仅叙述效果；增益正分/减益负分；可自创',
+    '身世类→写入叙述文字；长期类→永久状态；增益正分/减益负分；可自创',
     `<div class="rc-grid">${cards}${cusCard}</div>${editor}`,
   );
 }
@@ -1131,9 +1148,23 @@ function summarize(): string {
         kept.map(([id, q]) => `${ITEMS.find(i => i.id === id)!.name}×${q}`).join('、') +
         `[+${itemsCost()}]`,
     );
-  if (selStatus.length)
+  const selNar = selStatus.filter(id => STATUSES.find(x => x.id === id)?.nar);
+  const selLong = selStatus.filter(id => !STATUSES.find(x => x.id === id)?.nar);
+  const sumCost = (ids: string[]) => ids.reduce((a, id) => a + (STATUSES.find(x => x.id === id)?.cost ?? 0), 0);
+  if (selNar.length)
     parts.push(
-      '转世状态→' + selStatus.map(id => STATUSES.find(x => x.id === id)!.name).join('、') + `[${statusCost()}]`,
+      '身世缘起→' +
+        selNar
+          .map(id => {
+            const s = STATUSES.find(x => x.id === id)!;
+            return `${s.name}：${s.desc}`;
+          })
+          .join('；') +
+        `[${signed(sumCost(selNar))}]`,
+    );
+  if (selLong.length)
+    parts.push(
+      '转世状态→' + selLong.map(id => STATUSES.find(x => x.id === id)!.name).join('、') + `[${signed(sumCost(selLong))}]`,
     );
   if (cusSt.on && cusSt.name.trim())
     parts.push(
@@ -1185,6 +1216,20 @@ function buildPatch(): Record<string, any> {
     地点: JSON.parse(JSON.stringify(地点Raw || {})),
     状态效果: JSON.parse(JSON.stringify(状态Raw || {})),
   };
+  // 生日只记录年份；冥族冻结年龄，离开冥族时用冻结年龄重新锚定生日。
+  if (path === 'ghost' || cur.种族 === '冥族') {
+    cur.寿元.冥族停龄 = true;
+  }
+  if (当前年份 !== null && path !== 'ghost') {
+    const ageRaw = Number(cur.寿元?.年龄);
+    const age = Number.isFinite(ageRaw) ? Math.max(0, Math.trunc(ageRaw)) : 0;
+    const birthYearRaw = Number(cur.寿元?.生日);
+    const resumedFromNether = cur.寿元?.冥族停龄 === true;
+    cur.寿元.生日 =
+      resumedFromNether || !Number.isFinite(birthYearRaw) ? 当前年份 - age : Math.trunc(birthYearRaw);
+    cur.寿元.年龄 = Math.max(0, 当前年份 - cur.寿元.生日);
+    if (resumedFromNether) delete cur.寿元.冥族停龄;
+  }
   const savedArts = mem === 'yes' ? JSON.parse(JSON.stringify(cur.功法)) : {};
   // 清空物品 / 功法
   cur.物品 = {};
@@ -1277,6 +1322,7 @@ function buildPatch(): Record<string, any> {
     // 投胎后从凡人婴儿重新开始；寿命沿用自定义开局的凡人基础值。
     cur.寿元 = {
       ...cur.寿元,
+      ...(当前年份 === null ? {} : { 生日: 当前年份 }),
       年龄: 0,
       寿命: NEWBORN_LIFESPAN,
       外观年龄: 0,
@@ -1291,9 +1337,10 @@ function buildPatch(): Record<string, any> {
     };
     // 位置
     cur.地点 = { ...cur.地点, 世界: LOCATIONS.find(l => l.id === loc)!.name };
-    // 转世状态
+    // 转世状态（nar 身世类只进叙述文字，不写入永久状态）
     for (const id of selStatus) {
       const s = STATUSES.find(x => x.id === id)!;
+      if (s.nar) continue;
       cur.状态效果[s.name] = { 类型: s.type, 效果: { 叙述: s.desc }, 层数: 1, 剩余时间: '永久', 来源: '转世' };
     }
     if (cusSt.on && cusSt.name.trim()) {

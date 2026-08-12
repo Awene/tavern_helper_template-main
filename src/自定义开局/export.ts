@@ -166,10 +166,10 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
   const L = baseL === 0 ? 0 : baseL + (SUB_L_OFFSET[小境界] ?? 0);
 
   // —— 资源公式(均按 [突破规则] 第三阶段·重新计算资源) —— //
-  // 凡人 L=0 时基础值取 1(10^0=1),保留最低实用下限避免开局太羸弱
+  // 严格采用 [突破规则]/[角色生成规则] 的资源公式，避免 MVU 核验后数值跳变。
   const tenPowL = Math.pow(10, L);
-  const baseHp = Math.max(L === 0 ? 20 : 1, Math.floor(tenPowL * (1 + 根骨 * 0.1)));
-  const baseMp = Math.max(L === 0 ? 10 : 1, Math.floor(tenPowL * (1 + 气感 * 0.1)));
+  const baseHp = Math.max(1, Math.floor(tenPowL * (1 + 根骨 * 0.1)));
+  const baseMp = Math.max(1, Math.floor(tenPowL * (1 + 气感 * 0.1)));
   // 遁速公式以 根骨 为准(与 [角色生成规则] / [突破规则] 一致)
   const baseDun = Math.max(L === 0 ? 2 : 1, Math.floor(tenPowL * (1 + 根骨 * 0.02)));
 
@@ -230,7 +230,7 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
     身份,
     性别: sel.性别,
     宗门,
-    寿元: { 年龄: 起始年龄, 寿命, 外观年龄: 起始年龄 },
+    寿元: { 生日: Number(起始时间.年) - 起始年龄, 年龄: 起始年龄, 寿命, 外观年龄: 起始年龄 },
     灵根: {
       名称: rootName,
       五行: rootElements,
