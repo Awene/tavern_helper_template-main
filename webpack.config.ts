@@ -27,6 +27,7 @@ interface Config {
 interface Entry {
   script: string;
   html?: string;
+<<<<<<< HEAD
   htmlFilename?: string;
 }
 
@@ -38,6 +39,11 @@ function parse_entry(script_file: string) {
       htmlFilename: 'index.html',
     };
   }
+=======
+}
+
+function parse_entry(script_file: string) {
+>>>>>>> c6777179271f97bed734047fcdd7a3d0067157ec
   const html = path.join(path.dirname(script_file), 'index.html');
   if (fs.existsSync(html)) {
     return { script: script_file, html };
@@ -91,7 +97,11 @@ let io: Server;
 function watch_tavern_helper(compiler: webpack.Compiler) {
   if (compiler.options.watch) {
     if (!io) {
+<<<<<<< HEAD
       const port = config.port ?? 6624;
+=======
+      const port = config.port ?? 6621;
+>>>>>>> c6777179271f97bed734047fcdd7a3d0067157ec
       io = new Server(port, { cors: { origin: '*' } });
       console.info(`\x1b[36m[tavern_helper]\x1b[0m 已启动酒馆监听服务`);
       io.on('connect', socket => {
@@ -195,7 +205,10 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
     .readFileSync(path.join(import.meta.dirname, entry.script), 'utf-8')
     .includes('@obfuscate');
   const script_filepath = path.parse(entry.script);
+<<<<<<< HEAD
   const should_concatenate_modules = !entry.script.replaceAll('\\', '/').endsWith('src/自定义开局/index.ts');
+=======
+>>>>>>> c6777179271f97bed734047fcdd7a3d0067157ec
 
   return (_env, argv) => ({
     experiments: {
@@ -432,7 +445,11 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       : [
           new HtmlWebpackPlugin({
             template: path.join(import.meta.dirname, entry.html),
+<<<<<<< HEAD
             filename: entry.htmlFilename ?? path.parse(entry.html).base,
+=======
+            filename: path.parse(entry.html).base,
+>>>>>>> c6777179271f97bed734047fcdd7a3d0067157ec
             scriptLoading: 'module',
             cache: false,
           }),
@@ -461,6 +478,10 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
             { from: 'klona', imports: ['klona'] },
             { from: 'vue-final-modal', imports: ['useModal'] },
             { from: 'zod', imports: ['z'] },
+<<<<<<< HEAD
+=======
+            { from: 'type-fest', imports: [['*', 'TypeFest']], type: true },
+>>>>>>> c6777179271f97bed734047fcdd7a3d0067157ec
           ],
         }),
         unpluginVueComponents({
@@ -491,9 +512,12 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
           : [],
       ),
     optimization: {
+<<<<<<< HEAD
       // 自定义开局只有一个 CommonJS 依赖（vue-loader 的 exportHelper）。webpack 在 outputModule
       // 与模块拼接同时启用时会生成孤立的 __webpack_require__.cjs 调用，导致页面在挂载前中断。
       concatenateModules: should_concatenate_modules,
+=======
+>>>>>>> c6777179271f97bed734047fcdd7a3d0067157ec
       minimize: true,
       minimizer: [
         argv.mode === 'production'
@@ -550,6 +574,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         return callback();
       }
 
+<<<<<<< HEAD
       // 创意工坊是由角色脚本动态导入的纯脚本模块，没有 index.html 可以预先声明
       // Pinia 的 Vue 编译期特性开关。将 Pinia 留在本包内，让 DefinePlugin 在构建时
       // 直接替换这些开关，避免 CDN ESM 求值时报 __VUE_PROD_DEVTOOLS__ 未定义。
@@ -557,6 +582,8 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         return callback();
       }
 
+=======
+>>>>>>> c6777179271f97bed734047fcdd7a3d0067157ec
       if (
         ['vue', 'vue-router'].every(key => request !== key) &&
         ['pixi', 'react', 'vue'].some(key => request.includes(key))
@@ -579,9 +606,23 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       const cdn = {
         sass: 'https://jspm.dev/sass',
       };
+<<<<<<< HEAD
       return callback(
         null,
         'module-import ' + (cdn[request as keyof typeof cdn] ?? `https://testingcf.jsdelivr.net/npm/${request}/+esm`),
+=======
+      const package_json = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, 'package.json'), 'utf-8')) as {
+        dependencies?: Record<string, string>;
+        devDependencies?: Record<string, string>;
+      };
+      const package_versions = { ...package_json.devDependencies, ...package_json.dependencies };
+      const version = package_versions[request]?.replace(/^[~^]/, '');
+      const versioned_request = /^[.\d]+$/.test(version) ? `${request}@${version}` : request;
+      return callback(
+        null,
+        'module-import ' +
+          (cdn[request as keyof typeof cdn] ?? `https://testingcf.jsdelivr.net/npm/${versioned_request}/+esm`),
+>>>>>>> c6777179271f97bed734047fcdd7a3d0067157ec
       );
     },
   });
