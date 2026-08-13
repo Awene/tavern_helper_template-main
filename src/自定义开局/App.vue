@@ -13,7 +13,10 @@
             <stop class="xs-mt-stop-4" offset="100%" />
           </linearGradient>
         </defs>
-        <path d="M0,200 Q120,80 220,140 T420,120 T620,160 T840,100 T1060,150 T1200,130 L1200,240 L0,240 Z" fill="url(#xsMt)" />
+        <path
+          d="M0,200 Q120,80 220,140 T420,120 T620,160 T840,100 T1060,150 T1200,130 L1200,240 L0,240 Z"
+          fill="url(#xsMt)"
+        />
         <path d="M0,220 Q150,150 280,200 T520,180 T780,210 T1020,170 T1200,200 L1200,240 L0,240 Z" fill="url(#xsMt2)" />
       </svg>
       <svg class="xs-crane xs-crane-1" viewBox="0 0 80 60">
@@ -52,8 +55,8 @@
         <button
           type="button"
           class="xs-btn xs-btn-ghost xs-theme-btn"
-          @click="toggleTheme"
           :title="isDark ? '切换日间' : '切换夜间'"
+          @click="toggleTheme"
         >
           {{ isDark ? '☀ 日' : '🌙 夜' }}
         </button>
@@ -82,19 +85,15 @@
     </transition>
 
     <!-- 主题悬浮切换按钮（封面页也可见） -->
-    <button
-      type="button"
-      class="xs-floating-theme"
-      :title="isDark ? '切换日间' : '切换夜间'"
-      @click="toggleTheme"
-    >
+    <button type="button" class="xs-floating-theme" :title="isDark ? '切换日间' : '切换夜间'" @click="toggleTheme">
       {{ isDark ? '☀' : '🌙' }}
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { publishSharedTheme, readSharedTheme, subscribeSharedTheme, type SharedTheme } from '../shared/theme';
 import { useStartStore } from './store';
 import StepCover from './steps/StepCover.vue';
 import StepApiMode from './steps/StepApiMode.vue';
@@ -121,31 +120,21 @@ const steps = [
 
 const currentStepComp = computed(() => steps[store.stepIndex]?.comp ?? StepCover);
 
-// 主题：日间 / 夜间，存 localStorage
-const THEME_KEY = 'xs-theme';
 const isDark = ref(false);
-function applyTheme(theme: 'light' | 'dark') {
+let stopThemeSync: (() => void) | undefined;
+function applyTheme(theme: SharedTheme, publish = false) {
   isDark.value = theme === 'dark';
   const el = document.documentElement;
   if (theme === 'dark') el.setAttribute('data-theme', 'dark');
   else el.removeAttribute('data-theme');
-  try {
-    localStorage.setItem(THEME_KEY, theme);
-  } catch {
-    /* ignore */
-  }
+  if (publish) publishSharedTheme(theme);
 }
 function toggleTheme() {
-  applyTheme(isDark.value ? 'light' : 'dark');
+  applyTheme(isDark.value ? 'light' : 'dark', true);
 }
 onMounted(() => {
-  let saved: 'light' | 'dark' = 'light';
-  try {
-    const v = localStorage.getItem(THEME_KEY);
-    if (v === 'dark' || v === 'light') saved = v;
-  } catch {
-    /* ignore */
-  }
-  applyTheme(saved);
+  applyTheme(readSharedTheme('dark'));
+  stopThemeSync = subscribeSharedTheme(theme => applyTheme(theme));
 });
+onBeforeUnmount(() => stopThemeSync?.());
 </script>

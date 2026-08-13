@@ -5657,14 +5657,11 @@
 
         // 2.3) 抽取 <options>/<action_options> 行动选项 (两种命名兼容)
         try {
-          raw = raw.replace(
-            /<(?:action_)?options\b[^>]*>([\s\S]*?)<\/(?:action_)?options>/gi,
-            (m, inner) => {
-              const token = stashPanel(renderActionOptions(inner.trim()));
-              optionPanelTokens.push(token);
-              return '\n\n' + token + '\n\n';
-            },
-          );
+          raw = raw.replace(/<(?:action_)?options\b[^>]*>([\s\S]*?)<\/(?:action_)?options>/gi, (m, inner) => {
+            const token = stashPanel(renderActionOptions(inner.trim()));
+            optionPanelTokens.push(token);
+            return '\n\n' + token + '\n\n';
+          });
           raw = raw.replace(/<\/?(?:action_)?options\b[^>]*>?/gi, '');
         } catch (e) {
           console.warn('[正文美化] <options> 抽取失败:', e);
@@ -5779,7 +5776,7 @@
       }
 
       // ============== 主题切换 ==============
-      function applyTheme(theme) {
+      function applyTheme(theme, shouldBroadcast = true) {
         const t = theme === 'light' ? 'light' : 'dark';
         document.body.setAttribute('data-theme', t);
         try {
@@ -5789,13 +5786,43 @@
         }
         // 广播给其它 realm（思维链美化等各自独立的 iframe）。它们据此即时同步主题，
         // 从而不必各自跑一个永不停止的轮询定时器。同源无沙盒 iframe 才能拿到 window.top。
-        try {
-          (window.top || window).dispatchEvent(new CustomEvent('rb-theme-change', { detail: t }));
-        } catch (e) {
-          /* 跨源或 top 不可达时忽略：接收方仍有 storage 事件兜底 */
+        if (shouldBroadcast) {
+          try {
+            (window.top || window).dispatchEvent(new CustomEvent('rb-theme-change', { detail: t }));
+          } catch (e) {
+            /* 跨源或 top 不可达时忽略：接收方仍有 storage 事件兜底 */
+          }
         }
         const btn = document.getElementById('themeToggle');
         if (btn) btn.textContent = t === 'dark' ? '🌙 夜' : '☀ 日';
+      }
+      function initThemeSync() {
+        const target = window.top || window;
+        const onThemeChange = event => {
+          const theme = event && event.detail;
+          if (theme === 'light' || theme === 'dark') applyTheme(theme, false);
+        };
+        const onStorage = event => {
+          if (event.key === THEME_KEY && (event.newValue === 'light' || event.newValue === 'dark')) {
+            applyTheme(event.newValue, false);
+          }
+        };
+        try {
+          target.addEventListener('rb-theme-change', onThemeChange);
+        } catch (e) {
+          /* top 不可达时仍监听 storage */
+        }
+        window.addEventListener('storage', onStorage);
+        window.addEventListener(
+          'pagehide',
+          () => {
+            try {
+              target.removeEventListener('rb-theme-change', onThemeChange);
+            } catch (e) {}
+            window.removeEventListener('storage', onStorage);
+          },
+          { once: true },
+        );
       }
       function initTheme() {
         let saved = 'dark';
@@ -6678,6 +6705,7 @@
         safeRun('initSettingsPanel', initSettingsPanel);
         safeRun('cleanupLegacyAvatarStorage', cleanupLegacyAvatarStorage);
         safeRun('initTheme', initTheme);
+        safeRun('initThemeSync', initThemeSync);
         safeRun('initFontSize', initFontSize);
         safeRun('initImageViewer', initImageViewer);
         safeRun('processContent', processContent);

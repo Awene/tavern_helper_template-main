@@ -42,14 +42,15 @@ const npcAvatars = reactive<Record<string, string>>({});
 // ============ 常量 ============
 export const tabs = [
   { label: '技艺', icon: '技' },
-  { label: '功法', icon: '卷' },
   { label: '储物', icon: '囊' },
   { label: '关系', icon: '缘' },
+  { label: '资产', icon: '产' },
   { label: '传闻', icon: '闻' },
   { label: '地图', icon: '舆' },
 ];
 
 export const storageTabs = [
+  { key: '功法', label: '功法' },
   { key: '物品', label: '物品' },
   { key: '装备', label: '装备' },
   { key: '傀儡', label: '傀儡' },
@@ -694,6 +695,9 @@ export const performDelete = () => {
     case 'beast':
       if (data.灵兽) delete data.灵兽[c.key];
       break;
+    case 'asset':
+      if (data.固定资产) delete data.固定资产[c.key];
+      break;
     case 'npc':
       if (data.关系列表) delete data.关系列表[c.key];
       clearNpcAvatar(c.key);
@@ -859,7 +863,7 @@ export function syncTimeline(): void {
   data.传闻 = visible;
 }
 
-export const storageCount = (key: '物品' | '装备' | '傀儡' | '灵兽') => {
+export const storageCount = (key: '功法' | '物品' | '装备' | '傀儡' | '灵兽') => {
   const store = useDataStore();
   return Object.keys((store.data as any)[key] || {}).length;
 };

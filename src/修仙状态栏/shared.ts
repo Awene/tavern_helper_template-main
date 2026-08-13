@@ -27,13 +27,15 @@ export const state = reactive({
 // =============== 静态常量 ===============
 export const tabs = [
   { label: '技艺', icon: '技' },
-  { label: '功法', icon: '卷' },
   { label: '储物', icon: '囊' },
   { label: '关系', icon: '缘' },
+  { label: '资产', icon: '产' },
   { label: '传闻', icon: '闻' },
+  { label: '地图', icon: '舆' },
 ];
 
 export const storageTabs = [
+  { key: '功法', label: '功法' },
   { key: '物品', label: '物品' },
   { key: '装备', label: '装备' },
   { key: '傀儡', label: '傀儡' },
@@ -425,5 +427,5 @@ export const openedBuffData = computed(() => {
   return buffs?.[state.openedBuff] || null;
 });
 
-export const storageCount = (key: '物品' | '装备' | '傀儡' | '灵兽') =>
+export const storageCount = (key: '功法' | '物品' | '装备' | '傀儡' | '灵兽') =>
   Object.keys((store.data as any)?.[key] || {}).length;

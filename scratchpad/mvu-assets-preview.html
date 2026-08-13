@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>修仙状态栏 · 资产页局部调整预览</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="../src/修仙状态栏/global.css" />
+    <link rel="stylesheet" href="../src/修仙状态栏/styles.css" />
+    <style>
+      body { padding: 18px 0 70px; }
+      .xy-preview-note { max-width: 840px; margin: 0 auto 10px; padding: 7px 12px; color: var(--xy-ink-mute); font-size: 12px; }
+      .xy-scroll { max-width: 840px; margin: 0 auto; }
+      .xy-preview-page[hidden] { display: none !important; }
+      .xy-assets-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 10px; }
+      .xy-asset-card { position: relative; padding: 14px; border: 1px solid var(--xy-line-gold); border-radius: 8px; background: var(--xy-glass); box-shadow: var(--xy-shadow); overflow: hidden; }
+      .xy-asset-card::after { content: attr(data-seal); position: absolute; right: 8px; top: -7px; color: var(--xy-tint-gold-glyph); font: 52px/1 var(--xy-font-title); pointer-events: none; }
+      .xy-asset-head { display: flex; align-items: center; gap: 7px; padding-right: 38px; margin-bottom: 8px; }
+      .xy-asset-name { min-width: 0; overflow-wrap: anywhere; color: var(--xy-ink); font: 18px/1.35 var(--xy-font-display); letter-spacing: 2px; }
+      .xy-asset-type { padding: 2px 7px; border: 1px solid var(--xy-line-gold); border-radius: 10px; color: var(--xy-gold-deep); background: var(--xy-paper-warm); font-size: 11px; }
+      .xy-asset-scale { margin-left: auto; color: var(--xy-cinnabar); font-size: 12px; }
+      .xy-asset-location, .xy-asset-status { color: var(--xy-ink-soft); font-size: 12px; line-height: 1.65; }
+      .xy-asset-location { padding-bottom: 7px; border-bottom: 1px dashed var(--xy-line-gold); }
+      .xy-asset-status { margin: 7px 0 10px; }
+      .xy-asset-section-title { margin: 8px 0 5px; color: var(--xy-gold-deep); font: 13px var(--xy-font-display); letter-spacing: 2px; }
+      .xy-facility { position: relative; padding: 7px 9px; border-left: 2px solid var(--xy-jade); background: var(--xy-paper-warm); border-radius: 0 5px 5px 0; overflow-wrap: anywhere; }
+      .xy-facility + .xy-facility { margin-top: 6px; }
+      .xy-facility-head { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--xy-ink); }
+      .xy-facility-yield { color: var(--xy-cinnabar); font-size: 11px; }
+      .xy-facility-effect, .xy-facility-date { margin-top: 3px; color: var(--xy-ink-mute); font-size: 11px; line-height: 1.5; }
+      .xy-asset-people { display: flex; flex-wrap: wrap; gap: 5px; }
+      .xy-asset-person { padding: 2px 7px; border-radius: 10px; background: var(--xy-tint-jade-soft); color: var(--xy-jade-deep); font-size: 11px; }
+      .xy-preview-placeholder { padding: 34px 16px; text-align: center; color: var(--xy-ink-mute); }
+      .xy-merged-hint { margin: 0 0 8px; color: var(--xy-ink-mute); font-size: 11px; }
+      .xy-asset-toolbar { display: none; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 9px; padding: 7px 9px; border: 1px dashed var(--xy-line-gold); border-radius: 7px; background: var(--xy-paper-warm); color: var(--xy-ink-mute); font-size: 11px; }
+      .xy-asset-toolbar > span { min-width: 0; }
+      .xy-asset-toolbar .xy-effect-add { flex: 0 0 auto; white-space: nowrap; }
+      .xy-app.is-editing .xy-asset-toolbar { display: flex; }
+      .xy-edit-only { display: none !important; }
+      .xy-app.is-editing .xy-edit-only { display: inline-flex !important; }
+      .xy-app.is-editing .xy-asset-card > .xy-trash,
+      .xy-app.is-editing .xy-facility > .xy-trash { opacity: .72; }
+      .xy-facility > .xy-trash { top: 5px; right: 5px; }
+      .xy-app.is-editing .xy-facility-head { padding-right: 20px; }
+      .xy-preview-pencil { margin-left: 3px; font-size: 11px; line-height: 1; }
+      .xy-asset-head .xy-preview-pencil { margin-left: -3px; }
+      .xy-preview-editable-row { display: flex; align-items: baseline; gap: 3px; min-width: 0; }
+      .xy-preview-editable-row > :first-child { min-width: 0; }
+      .xy-preview-editable-row:has(> .xy-asset-location) { padding-bottom: 7px; border-bottom: 1px dashed var(--xy-line-gold); }
+      .xy-preview-editable-row > .xy-asset-location { padding-bottom: 0; border-bottom: 0; }
+      .xy-preview-editing { min-width: 32px; padding: 1px 4px; border: 1px solid var(--xy-cinnabar); border-radius: 3px; outline: none; background: var(--xy-paper); box-shadow: 0 0 0 2px var(--xy-tint-cinnabar-soft); }
+      .xy-people-add { margin-top: 5px; }
+      .xy-asset-person { align-items: center; gap: 3px; }
+      .xy-person-del { border: 0; padding: 0; background: transparent; color: var(--xy-cinnabar); cursor: pointer; font-size: 10px; }
+      .xy-preview-toast { position: fixed; left: 50%; bottom: 22px; z-index: 20; transform: translateX(-50%) translateY(12px); padding: 7px 12px; border: 1px solid var(--xy-line-gold); border-radius: 14px; background: var(--xy-paper); color: var(--xy-ink-soft); box-shadow: var(--xy-shadow); font-size: 11px; opacity: 0; pointer-events: none; transition: .18s ease; }
+      .xy-preview-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+      .xy-storage-tabs { overflow-x: auto; scrollbar-width: none; }
+      .xy-storage-tabs::-webkit-scrollbar { display: none; }
+      @media (max-width: 640px) {
+        body { padding-top: 0; }
+        .xy-preview-note { display: none; }
+        .xy-assets-grid { grid-template-columns: 1fr; }
+        .xy-storage-tabs .xy-stab { flex: 0 0 72px; white-space: nowrap; }
+        .xy-asset-toolbar { align-items: flex-start; }
+        .xy-facility-head { flex-wrap: wrap; }
+        .xy-facility-yield { width: 100%; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="xy-preview-note">基于最新源码的局部预览：仅调整标签组织并新增固定资产页；角色头部、视觉风格和其余页面保持原样。</div>
+    <div class="xy-app">
+      <div class="xy-bg" aria-hidden="true">
+        <svg class="xy-bg-mountain" viewBox="0 0 1200 240" preserveAspectRatio="none">
+          <defs><linearGradient id="mtGrad" x1="0" y1="0" x2="0" y2="1"><stop class="xy-mt-stop-1" offset="0%"/><stop class="xy-mt-stop-2" offset="100%"/></linearGradient><linearGradient id="mtGrad2" x1="0" y1="0" x2="0" y2="1"><stop class="xy-mt-stop-3" offset="0%"/><stop class="xy-mt-stop-4" offset="100%"/></linearGradient></defs>
+          <path d="M0,200 Q120,80 220,140 T420,120 T620,160 T840,100 T1060,150 T1200,130 L1200,240 L0,240 Z" fill="url(#mtGrad)"/>
+          <path d="M0,220 Q150,150 280,200 T520,180 T780,210 T1020,170 T1200,200 L1200,240 L0,240 Z" fill="url(#mtGrad2)"/>
+        </svg>
+      </div>
+      <div class="xy-scroll">
+        <div class="xy-app-collapse-bar">
+          <button id="previewEditToggle" class="xy-edit-toggle"><span>编辑</span></button>
+          <button class="xy-summary-btn"><span>总结</span></button>
+          <button class="xy-settings-btn"><span>设置</span></button>
+          <button class="xy-app-collapse-btn"><span class="xy-app-collapse-caret">▾</span><span class="xy-app-collapse-label">收起</span></button>
+        </div>
+        <div class="xy-app-body">
+          <header class="xy-hero">
+            <div class="xy-hero-top">
+              <div class="xy-name-block">
+                <div class="xy-user-avatar"><span class="xy-user-avatar-char">白</span></div>
+                <div class="xy-name-meta"><h1 class="xy-name">白秋禾</h1><div class="xy-realm"><span class="xy-realm-label">境界</span><span class="xy-realm-value">筑基初期</span></div></div>
+              </div>
+              <div class="xy-meta-line"><span class="xy-meta-item"><i>种</i>人族</span><span class="xy-meta-item"><i>寿</i>28 / 180</span><span class="xy-meta-item"><i>貌</i>20</span><span class="xy-meta-item xy-time"><i>时</i>327 年 3 月 15 日 · 卯时</span></div>
+              <div class="xy-meta-line"><span class="xy-meta-item xy-loc"><i>地</i>凡界 · 东土 · 临渊城-青崖洞府</span><span class="xy-meta-item"><i>份</i>青云坊主</span></div>
+            </div>
+            <div class="xy-overview-grid">
+              <div class="xy-resources">
+                <div class="xy-bar xy-bar-cultivation"><div class="xy-bar-head"><span class="xy-bar-label">修为</span><span class="xy-bar-num">1362 / 2000</span></div><div class="xy-bar-track"><div class="xy-bar-fill" style="width:68%"></div></div></div>
+                <div class="xy-bar xy-bar-blood"><div class="xy-bar-head"><span class="xy-bar-label">气血</span><span class="xy-bar-num">180 / 200</span></div><div class="xy-bar-track"><div class="xy-bar-fill" style="width:90%"></div></div></div>
+                <div class="xy-bar xy-bar-spirit"><div class="xy-bar-head"><span class="xy-bar-label">灵气</span><span class="xy-bar-num">95 / 120</span></div><div class="xy-bar-track"><div class="xy-bar-fill" style="width:79%"></div></div></div>
+                <div class="xy-resource-extra"><span class="xy-extra-item"><i>遁速</i>32 m/s</span></div>
+              </div>
+              <section class="xy-traits-panel">
+                <div class="xy-trait-cards">
+                  <button class="xy-overview-trait xy-overview-root"><span class="xy-trait-kicker">灵根</span><strong>金水双灵根</strong><span class="xy-trait-rank">双灵根</span><span class="xy-trait-elements"><span class="xy-element xy-element-mini" style="--el:#b68b3a">金</span><span class="xy-element xy-element-mini" style="--el:#3a82b6">水</span></span></button>
+                  <button class="xy-overview-trait xy-overview-body"><span class="xy-trait-kicker">体质</span><strong>清虚剑体</strong><span class="xy-trait-effect-count">2 效</span><span class="xy-trait-attrs"><span>悟性<b>24</b></span><span>根骨<b>18</b></span><span>气感<b>22</b></span></span></button>
+                </div>
+              </section>
+            </div>
+          </header>
+
+          <nav class="xy-tabs">
+            <button class="xy-tab" data-page="skills"><span class="xy-tab-icon">技</span><span class="xy-tab-label">技艺</span></button>
+            <button class="xy-tab" data-page="storage"><span class="xy-tab-icon">囊</span><span class="xy-tab-label">储物</span></button>
+            <button class="xy-tab" data-page="relations"><span class="xy-tab-icon">缘</span><span class="xy-tab-label">关系</span></button>
+            <button class="xy-tab active" data-page="assets"><span class="xy-tab-icon">产</span><span class="xy-tab-label">资产</span></button>
+            <button class="xy-tab" data-page="rumors"><span class="xy-tab-icon">闻</span><span class="xy-tab-label">传闻</span></button>
+            <button class="xy-tab" data-page="map"><span class="xy-tab-icon">舆</span><span class="xy-tab-label">地图</span></button>
+          </nav>
+
+          <main class="xy-content">
+            <section class="xy-preview-page xy-page" data-page-panel="skills" hidden><div class="xy-preview-placeholder">技艺页保持最新源码原样</div></section>
+            <section class="xy-preview-page xy-page xy-page-storage" data-page-panel="storage" hidden>
+              <p class="xy-merged-hint">这里只调整分类层级：功法卡片本身沿用原 PageArts.vue 的内容与交互。</p>
+              <div class="xy-stone"><div class="xy-stone-label">灵石</div><div class="xy-stone-value">12,860</div></div>
+              <div class="xy-storage-tabs">
+                <button class="xy-stab active">功法 <em>2</em></button><button class="xy-stab">物品 <em>8</em></button><button class="xy-stab">装备 <em>3</em></button><button class="xy-stab">傀儡 <em>1</em></button><button class="xy-stab">灵兽 <em>1</em></button>
+              </div>
+              <div class="xy-rumor-filter"><button class="xy-chip active">全部 <em>2</em></button><button class="xy-chip">心法 <em>1</em></button><button class="xy-chip">攻击 <em>1</em></button></div>
+              <div class="xy-art-grid">
+                <article class="xy-art xy-art-active"><div class="xy-art-head"><div class="xy-art-title"><span class="xy-art-name">清虚剑诀</span><span class="xy-quality xy-q-玄">玄品</span></div><button class="xy-toggle on">运转中</button></div><div class="xy-art-meta"><span class="xy-pill">心法</span><span class="xy-pill xy-pill-soft">筑基初期</span><span class="xy-element xy-element-mini" style="--el:#b68b3a">金</span></div><div class="xy-art-desc">引清虚之气周行剑脉，心定则锋芒自生。</div><div class="xy-effect-line">剑诀威力 +18%</div></article>
+                <article class="xy-art"><div class="xy-art-head"><div class="xy-art-title"><span class="xy-art-name">烟雨剑诀</span><span class="xy-quality xy-q-黄">黄品</span></div><button class="xy-toggle">凝息</button></div><div class="xy-art-meta"><span class="xy-pill">攻击</span><span class="xy-pill xy-pill-soft">炼气后期</span><span class="xy-element xy-element-mini" style="--el:#3a82b6">水</span></div><div class="xy-art-desc">剑势如烟雨连绵，以虚实变化扰敌心神。</div><div class="xy-effect-line">命中 +2</div></article>
+              </div>
+            </section>
+            <section class="xy-preview-page xy-page" data-page-panel="relations" hidden><div class="xy-preview-placeholder">关系页保持最新源码原样</div></section>
+            <section class="xy-preview-page xy-page" data-page-panel="assets">
+              <div class="xy-asset-toolbar"><span>编辑模式：点击字段旁的铅笔就地修改；重命名会检查空名与重名。</span><button class="xy-effect-add" data-demo-action="新增资产">＋ 新增资产</button></div>
+              <div class="xy-assets-grid">
+                <article class="xy-asset-card" data-seal="洞">
+                  <div class="xy-asset-head"><span class="xy-asset-name">青崖洞府</span><span class="xy-asset-type">洞府</span><span class="xy-asset-scale">规模：3人</span></div>
+                  <div class="xy-asset-location">凡界 · 东土 · 临渊城外青崖</div>
+                  <div class="xy-asset-status">聚灵阵运转平稳，药圃已进入本月成熟期。</div>
+                  <div class="xy-asset-section-title">设施</div>
+                  <div class="xy-facility"><div class="xy-facility-head"><strong>小聚灵阵</strong><span class="xy-facility-yield">每月产出：无</span></div><div class="xy-facility-effect">修炼 · 洞府内吐纳效率提升</div><div class="xy-facility-date">上次收取：从未收取</div></div>
+                  <div class="xy-facility"><div class="xy-facility-head"><strong>三亩灵药圃</strong><span class="xy-facility-yield">每月产出：凝露草 ×12</span></div><div class="xy-facility-effect">培育 · 木属性灵植成活率提升</div><div class="xy-facility-date">上次收取：修仙历327年2月15日</div></div>
+                  <div class="xy-asset-section-title">所属人物</div><div class="xy-asset-people"><span class="xy-asset-person">白秋禾</span><span class="xy-asset-person">莫决云</span></div>
+                </article>
+                <article class="xy-asset-card" data-seal="铺">
+                  <div class="xy-asset-head"><span class="xy-asset-name">青云符铺</span><span class="xy-asset-type">店铺</span><span class="xy-asset-scale">规模：2人</span></div>
+                  <div class="xy-asset-location">凡界 · 东土 · 临渊城西市</div>
+                  <div class="xy-asset-status">客流稳定，本月护身符需求渐长，库存略显不足。</div>
+                  <div class="xy-asset-section-title">设施</div>
+                  <div class="xy-facility"><div class="xy-facility-head"><strong>前堂铺面</strong><span class="xy-facility-yield">每月产出：下品灵石 180</span></div><div class="xy-facility-effect">经营 · 可寄售凡、黄品符箓</div><div class="xy-facility-date">上次收取：修仙历327年2月15日</div></div>
+                  <div class="xy-facility"><div class="xy-facility-head"><strong>静符室</strong><span class="xy-facility-yield">每月产出：护身符 ×6</span></div><div class="xy-facility-effect">制符 · 制作黄品符箓时更加稳定</div><div class="xy-facility-date">上次收取：修仙历327年2月15日</div></div>
+                  <div class="xy-asset-section-title">所属人物</div><div class="xy-asset-people"><span class="xy-asset-person">白秋禾</span><span class="xy-asset-person">苏映雪</span></div>
+                </article>
+              </div>
+            </section>
+            <section class="xy-preview-page xy-page" data-page-panel="rumors" hidden><div class="xy-preview-placeholder">传闻页保持最新源码原样</div></section>
+            <section class="xy-preview-page xy-page" data-page-panel="map" hidden><div class="xy-preview-placeholder">地图页保持最新源码原样</div></section>
+          </main>
+        </div>
+      </div>
+      <button type="button" class="xy-floating-theme" title="切换日间/夜间">🌙</button>
+      <div class="xy-preview-toast" role="status"></div>
+    </div>
+    <script>
+      const root = document.documentElement;
+      const app = document.querySelector('.xy-app');
+      const editToggle = document.querySelector('#previewEditToggle');
+      const toast = document.querySelector('.xy-preview-toast');
+      let toastTimer;
+      const showToast = message => {
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+      };
+
+      const editableSelectors = [
+        '.xy-asset-name', '.xy-asset-type', '.xy-asset-scale', '.xy-asset-location', '.xy-asset-status',
+        '.xy-facility-head strong', '.xy-facility-yield', '.xy-facility-effect', '.xy-facility-date'
+      ];
+      document.querySelectorAll(editableSelectors.join(',')).forEach(target => {
+        const pencil = document.createElement('button');
+        pencil.type = 'button';
+        pencil.className = 'xy-edit-pencil xy-preview-pencil xy-edit-only';
+        pencil.title = '编辑此项';
+        pencil.textContent = '✎';
+        const needsRow = target.matches('.xy-asset-location, .xy-asset-status, .xy-facility-effect, .xy-facility-date');
+        if (needsRow) {
+          const row = document.createElement('div');
+          row.className = 'xy-preview-editable-row';
+          target.insertAdjacentElement('beforebegin', row);
+          row.append(target, pencil);
+        } else {
+          target.insertAdjacentElement('afterend', pencil);
+        }
+        pencil.addEventListener('click', () => {
+          if (target.isContentEditable) return;
+          target.contentEditable = 'true';
+          target.classList.add('xy-preview-editing');
+          target.focus();
+          const range = document.createRange();
+          range.selectNodeContents(target);
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+          const finish = event => {
+            if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== 'Escape') return;
+            event.preventDefault?.();
+            target.contentEditable = 'false';
+            target.classList.remove('xy-preview-editing');
+            target.removeEventListener('blur', finish);
+            target.removeEventListener('keydown', finish);
+          };
+          target.addEventListener('blur', finish);
+          target.addEventListener('keydown', finish);
+        });
+      });
+
+      document.querySelectorAll('.xy-asset-card').forEach(card => {
+        const trash = document.createElement('button');
+        trash.type = 'button';
+        trash.className = 'xy-trash xy-edit-only';
+        trash.title = '删除资产';
+        trash.textContent = '×';
+        trash.addEventListener('click', () => showToast('正式版删除整项资产时会二次确认'));
+        card.prepend(trash);
+
+        card.querySelectorAll('.xy-facility').forEach(facility => {
+          const facilityTrash = document.createElement('button');
+          facilityTrash.type = 'button';
+          facilityTrash.className = 'xy-trash xy-edit-only';
+          facilityTrash.title = '删除设施';
+          facilityTrash.textContent = '×';
+          facilityTrash.addEventListener('click', () => showToast('预览不实际删除设施'));
+          facility.prepend(facilityTrash);
+        });
+
+        const peopleTitle = [...card.querySelectorAll('.xy-asset-section-title')].at(-1);
+        const addFacility = document.createElement('button');
+        addFacility.type = 'button';
+        addFacility.className = 'xy-effect-add xy-edit-only';
+        addFacility.textContent = '＋ 新增设施';
+        addFacility.dataset.demoAction = '新增设施';
+        peopleTitle.insertAdjacentElement('beforebegin', addFacility);
+
+        const people = card.querySelector('.xy-asset-people');
+        people.querySelectorAll('.xy-asset-person').forEach(person => {
+          person.classList.add('xy-edit-only-person');
+          const del = document.createElement('button');
+          del.type = 'button';
+          del.className = 'xy-person-del xy-edit-only';
+          del.textContent = '×';
+          del.addEventListener('click', () => showToast('预览不实际删除所属人物'));
+          person.append(del);
+        });
+        const addPerson = document.createElement('button');
+        addPerson.type = 'button';
+        addPerson.className = 'xy-effect-add xy-people-add xy-edit-only';
+        addPerson.textContent = '＋ 所属人物';
+        addPerson.dataset.demoAction = '添加所属人物';
+        people.insertAdjacentElement('afterend', addPerson);
+      });
+
+      document.querySelectorAll('[data-demo-action]').forEach(button => button.addEventListener('click', () => showToast(`正式版将打开“${button.dataset.demoAction}”的就地录入项`)));
+      editToggle.addEventListener('click', () => {
+        const editing = app.classList.toggle('is-editing');
+        editToggle.classList.toggle('active', editing);
+        editToggle.querySelector('span').textContent = editing ? '完成' : '编辑';
+      });
+      document.querySelectorAll('[data-page]').forEach(button => button.addEventListener('click', () => {
+        document.querySelectorAll('[data-page]').forEach(x => x.classList.toggle('active', x === button));
+        document.querySelectorAll('[data-page-panel]').forEach(x => x.hidden = x.dataset.pagePanel !== button.dataset.page);
+      }));
+      document.querySelector('.xy-floating-theme').addEventListener('click', event => {
+        const dark = root.getAttribute('data-theme') === 'dark';
+        if (dark) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', 'dark');
+        event.currentTarget.textContent = dark ? '🌙' : '☀';
+      });
+    </script>
+  </body>
+</html>

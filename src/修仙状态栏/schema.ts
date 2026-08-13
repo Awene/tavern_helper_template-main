@@ -2,6 +2,45 @@ import { z } from 'zod';
 
 const clamp = (n: number, min: number, max: number): number => Math.max(min, Math.min(max, n));
 
+const normalizeStringArray = (input: unknown): string[] => {
+  if (input == null || input === '') return [];
+  let value = input;
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) value = parsed;
+    } catch {
+      /* 按普通分隔字符串处理 */
+    }
+  }
+  const source = Array.isArray(value) ? value.flat(Infinity) : String(value).split(/[,，、;；|]/);
+  return [...new Set(source.map(item => String(item).trim()).filter(Boolean))];
+};
+
+const normalizeStringRecord = (input: unknown): Record<string, string> => {
+  if (input == null || input === '') return {};
+  if (typeof input === 'string') return { 说明: input };
+  if (Array.isArray(input)) {
+    return Object.fromEntries(input.map((value, index) => [`效果${index + 1}`, String(value ?? '')]));
+  }
+  if (typeof input !== 'object') return { 说明: String(input) };
+  return Object.fromEntries(
+    Object.entries(input).map(([key, value]) => [
+      key,
+      typeof value === 'string' ? value : value == null ? '' : JSON.stringify(value),
+    ]),
+  );
+};
+
+const looseString = (fallback: string) =>
+  z.preprocess(value => (value == null ? fallback : typeof value === 'string' ? value : String(value)), z.string());
+
+const looseNonNegativeInteger = (input: unknown): number => {
+  if (typeof input === 'number' && Number.isFinite(input)) return Math.max(0, Math.trunc(input));
+  const matched = String(input ?? '').match(/-?\d+(?:\.\d+)?/);
+  return Math.max(0, Math.trunc(matched ? Number(matched[0]) : 0));
+};
+
 // ===== 公用枚举 =====
 const FiveElementValues = ['金', '木', '水', '火', '土', '阴', '阳', '混沌'] as const;
 type FiveElement = (typeof FiveElementValues)[number];
@@ -425,6 +464,48 @@ const LocationSchema = z
   .prefault({ 世界: '凡界', 地域: '中原', 具体地点: '荒野' });
 
 // ===== 时间 Schema =====
+const timePeriods = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'] as const;
+const timePeriodValues = [
+  '子时',
+  '丑时',
+  '寅时',
+  '卯时',
+  '辰时',
+  '巳时',
+  '午时',
+  '未时',
+  '申时',
+  '酉时',
+  '戌时',
+  '亥时',
+] as const;
+const timePeriodAliases: Record<string, (typeof timePeriods)[number]> = {
+  夜半: '子',
+  子夜: '子',
+  午夜: '子',
+  鸡鸣: '丑',
+  平旦: '寅',
+  日出: '卯',
+  食时: '辰',
+  隅中: '巳',
+  日中: '午',
+  日昳: '未',
+  晡时: '申',
+  日入: '酉',
+  黄昏: '戌',
+  人定: '亥',
+};
+
+const normalizeTimePeriod = (input: unknown) => {
+  const text = String(input ?? '').trim();
+  const period = timePeriods.find(
+    item => text === item || ['时', '初', '正', '刻', '中', '末', '半'].some(suffix => text.includes(`${item}${suffix}`)),
+  );
+  if (period) return `${period}时`;
+  const alias = Object.entries(timePeriodAliases).find(([name]) => text.includes(name));
+  return alias ? `${alias[1]}时` : '午时';
+};
+
 const TimeSchema = z
   .object({
     年: z.coerce.number().prefault(1),
@@ -436,11 +517,145 @@ const TimeSchema = z
       .number()
       .transform(n => clamp(n, 1, 30))
       .prefault(1),
-    时辰: z
-      .enum(['子时', '丑时', '寅时', '卯时', '辰时', '巳时', '午时', '未时', '申时', '酉时', '戌时', '亥时'])
-      .prefault('午时'),
+    // “子时中 / 子时三刻 / 子初 / 子正”等可理解写法统一收敛到所属时辰。
+    时辰: z.preprocess(normalizeTimePeriod, z.enum(timePeriodValues)).prefault('午时'),
   })
   .prefault({ 年: 1, 月: 1, 日: 1, 时辰: '午时' });
+
+// ===== 固定资产 Schema =====
+// 固定资产是 AI 高频增量更新字段：允许常见别名、带单位数字、字符串地点/日期与数组式设施，
+// 先归一化再校验，避免一个可理解的小格式错误拖垮整批 MVU 更新。
+const assetType = (input: unknown): '宗门' | '店铺' | '洞府' => {
+  const text = String(input ?? '')
+    .trim()
+    .toLowerCase();
+  if (/宗门|宗派|门派|宗族|sect/.test(text)) return '宗门';
+  if (/店铺|商铺|铺面|坊市|商行|商会|store|shop/.test(text)) return '店铺';
+  return '洞府';
+};
+
+const normalizeAssetLocation = (input: unknown) => {
+  if (typeof input === 'string') {
+    const parts = input.split(/\s*(?:[·•>＞/／|]|\s+-\s+)\s*/).filter(Boolean);
+    const hasWorld = !!parts[0] && /[凡灵仙]界/.test(parts[0]);
+    return {
+      世界: hasWorld ? parts[0] : '凡界',
+      地域: hasWorld ? parts[1] || '中原' : parts.length >= 2 ? parts[0] : '中原',
+      具体地点: hasWorld
+        ? parts.length >= 3
+          ? parts.slice(2).join('·')
+          : '荒野'
+        : parts.length >= 2
+          ? parts.slice(1).join('·')
+          : parts[0] || '荒野',
+    };
+  }
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return {};
+  const value = input as Record<string, unknown>;
+  return {
+    世界: value.世界 ?? value.界域 ?? value.位面 ?? '凡界',
+    地域: value.地域 ?? value.区域 ?? value.州域 ?? '中原',
+    具体地点: value.具体地点 ?? value.地点 ?? value.地址 ?? value.位置 ?? '荒野',
+  };
+};
+
+const AssetLocationSchema = z
+  .preprocess(
+    normalizeAssetLocation,
+    z.object({
+      世界: z.preprocess(
+        value => (/仙/.test(String(value)) ? '仙界' : /灵/.test(String(value)) ? '灵界' : '凡界'),
+        z.enum(['凡界', '灵界', '仙界']),
+      ),
+      地域: looseString('中原'),
+      具体地点: looseString('荒野'),
+    }),
+  )
+  .prefault({ 世界: '凡界', 地域: '中原', 具体地点: '荒野' });
+
+const normalizeAssetTime = (input: unknown) => {
+  if (input == null || ['无', '暂无', '从未', '未收取', 'null'].includes(String(input).trim())) return null;
+  if (typeof input === 'string') {
+    const numbers = input.match(/\d+/g)?.map(Number) ?? [];
+    if (numbers.length === 0) return null;
+    return { 年: numbers[0], 月: numbers[1] ?? 1, 日: numbers[2] ?? 1, 时辰: normalizeTimePeriod(input) };
+  }
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
+  const value = input as Record<string, unknown>;
+  return {
+    年: value.年 ?? value.year ?? 1,
+    月: value.月 ?? value.month ?? 1,
+    日: value.日 ?? value.day ?? 1,
+    时辰: value.时辰 ?? value.时间 ?? '午时',
+  };
+};
+
+const AssetTimeSchema = z.preprocess(normalizeAssetTime, TimeSchema.nullable()).prefault(null);
+
+const normalizeNamedRecord = (input: unknown, fallbackName: string): Record<string, unknown> => {
+  if (input == null || input === '') return {};
+  if (!Array.isArray(input)) return typeof input === 'object' ? (input as Record<string, unknown>) : {};
+  return Object.fromEntries(
+    input.map((entry, index) => {
+      const value =
+        entry && typeof entry === 'object'
+          ? ({ ...(entry as Record<string, unknown>) } as Record<string, unknown>)
+          : { 效果: entry };
+      const name = String(value.名称 ?? value.设施名 ?? value.资产名 ?? `${fallbackName}${index + 1}`).trim();
+      delete value.名称;
+      delete value.设施名;
+      delete value.资产名;
+      return [name || `${fallbackName}${index + 1}`, value];
+    }),
+  );
+};
+
+const AssetFacilitySchema = z.preprocess(
+  input => {
+    if (typeof input === 'string') return { 效果: input };
+    if (!input || typeof input !== 'object' || Array.isArray(input)) return {};
+    const value = input as Record<string, unknown>;
+    return {
+      效果: value.效果 ?? value.效用 ?? value.功能,
+      每月产出: value.每月产出 ?? value.月产出 ?? value.产出,
+      上次收取日期: value.上次收取日期 ?? value.上次收取 ?? value.收取日期,
+    };
+  },
+  z.object({
+    效果: z.preprocess(normalizeStringRecord, z.record(z.string(), z.string())).prefault({}),
+    每月产出: looseString('无').prefault('无'),
+    上次收取日期: AssetTimeSchema,
+  }),
+);
+
+const FixedAssetSchema = z.preprocess(
+  input => {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) return {};
+    const value = input as Record<string, unknown>;
+    return {
+      类型: value.类型 ?? value.分类 ?? value.资产类型,
+      人员规模: value.人员规模 ?? value.人数 ?? value.规模,
+      所在地: value.所在地 ?? value.地址 ?? value.位置,
+      现状: value.现状 ?? value.状态 ?? value.当前状态,
+      设施: normalizeNamedRecord(value.设施 ?? value.建筑 ?? value.功能区, '新设施'),
+      所属人物: value.所属人物 ?? value.人员 ?? value.归属人物 ?? value.成员,
+    };
+  },
+  z.object({
+    类型: z.preprocess(assetType, z.enum(['宗门', '店铺', '洞府'])).prefault('洞府'),
+    人员规模: z.preprocess(looseNonNegativeInteger, z.number().int().min(0)).prefault(0),
+    所在地: AssetLocationSchema,
+    现状: looseString('正常').prefault('正常'),
+    设施: z
+      .preprocess(value => normalizeNamedRecord(value, '新设施'), z.record(z.string(), AssetFacilitySchema))
+      .prefault({}),
+    所属人物: z.preprocess(normalizeStringArray, z.array(z.string())).prefault([]),
+  }),
+);
+
+const FixedAssetsSchema = z
+  .preprocess(value => normalizeNamedRecord(value, '新资产'), z.record(z.string(), FixedAssetSchema))
+  .prefault({});
 
 // ===== 传闻 Schema =====
 // 内容由前端引擎 src/修仙状态栏/timeline-engine.ts 生成并写回此字段,
@@ -495,6 +710,7 @@ export const CultivationStatusSchema = z.object({
   修炼进度: CultivationProgressSchema,
   技艺: SkillSchema,
   资源池: ResourcePoolSchema,
+  固定资产: FixedAssetsSchema,
   地点: LocationSchema,
   时间: TimeSchema,
   状态效果: z.record(z.string(), StatusEffectSchema).prefault({}),

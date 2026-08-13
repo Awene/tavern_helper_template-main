@@ -8,7 +8,7 @@
           type="number"
           label="灵石"
           :min="0"
-          :format="(v) => Number(v).toLocaleString()"
+          :format="v => Number(v).toLocaleString()"
           @update:model-value="store.data.灵石 = Number($event)"
         />
       </div>
@@ -26,8 +26,11 @@
       </button>
     </div>
 
+    <!-- 功法 -->
+    <PageArts v-if="state.storageTab === 0" embedded />
+
     <!-- 物品 -->
-    <div v-if="state.storageTab === 0">
+    <div v-else-if="state.storageTab === 1">
       <div v-if="_.isEmpty(store.data.物品)" class="xy-empty">
         <div class="xy-empty-mark">无</div>
         <p>储物空间空空如也</p>
@@ -57,12 +60,7 @@
           <p>该分类下暂无物品</p>
         </div>
         <div v-else class="xy-item-grid">
-          <article
-            v-for="(it, name) in filteredItems"
-            :key="name"
-            class="xy-item"
-            :class="['xy-q-bg-' + it.品质]"
-          >
+          <article v-for="(it, name) in filteredItems" :key="name" class="xy-item" :class="['xy-q-bg-' + it.品质]">
             <button
               type="button"
               class="xy-trash"
@@ -75,20 +73,31 @@
             </button>
             <div class="xy-item-head">
               <span class="xy-item-name">{{ name }}</span>
-              <span class="xy-item-qty">×<EditableValue v-model.number="it.数量" type="number" label="数量" :min="0" /></span>
+              <span class="xy-item-qty"
+                >×<EditableValue v-model.number="it.数量" type="number" label="数量" :min="0"
+              /></span>
             </div>
             <div class="xy-item-meta">
               <span :class="['xy-quality', 'xy-q-' + it.品质]">{{ it.品质 }}</span>
               <span class="xy-pill">{{ it.类型 }}</span>
               <span v-if="it.境界" class="xy-pill xy-pill-soft">{{ it.境界 }}</span>
-              <span v-if="it.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(it.五行) }">{{ it.五行 === '混沌' ? '混' : it.五行 }}</span>
+              <span v-if="it.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(it.五行) }">{{
+                it.五行 === '混沌' ? '混' : it.五行
+              }}</span>
             </div>
             <div v-if="parseItemTags(it.标签).length" class="xy-item-tags">
-              <span v-for="(t, i) in parseItemTags(it.标签)" :key="i" class="xy-item-tag" :class="'xy-item-tag-' + t.label">
+              <span
+                v-for="(t, i) in parseItemTags(it.标签)"
+                :key="i"
+                class="xy-item-tag"
+                :class="'xy-item-tag-' + t.label"
+              >
                 {{ t.label }} <b>{{ t.value }}</b>
               </span>
             </div>
-            <div v-if="it.描述 || state.editMode" class="xy-item-desc"><EditableValue v-model="it.描述" label="描述" multiline /></div>
+            <div v-if="it.描述 || state.editMode" class="xy-item-desc">
+              <EditableValue v-model="it.描述" label="描述" multiline />
+            </div>
             <div v-if="!_.isEmpty(it.效果) || state.editMode" class="xy-effect-list">
               <EffectList v-model="it.效果" />
             </div>
@@ -98,7 +107,7 @@
     </div>
 
     <!-- 装备 -->
-    <div v-else-if="state.storageTab === 1">
+    <div v-else-if="state.storageTab === 2">
       <div v-if="_.isEmpty(store.data.装备)" class="xy-empty">
         <div class="xy-empty-mark">无</div>
         <p>未持任何装备</p>
@@ -152,25 +161,41 @@
               <span :class="['xy-quality', 'xy-q-' + eq.品质]">{{ eq.品质 }}</span>
               <span class="xy-pill">{{ eq.类型 }}</span>
               <span v-if="eq.境界" class="xy-pill xy-pill-soft">{{ eq.境界 }}</span>
-              <span v-if="eq.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(eq.五行) }">{{ eq.五行 === '混沌' ? '混' : eq.五行 }}</span>
+              <span v-if="eq.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(eq.五行) }">{{
+                eq.五行 === '混沌' ? '混' : eq.五行
+              }}</span>
             </div>
             <div class="xy-eq-stats">
-              <span v-if="getEquipStat(eq, '攻击力') !== null || (state.editMode && eq.类型 === '法宝')" class="xy-eq-stat xy-stat-atk">
-                攻 <EditableValue
+              <span
+                v-if="getEquipStat(eq, '攻击力') !== null || (state.editMode && eq.类型 === '法宝')"
+                class="xy-eq-stat xy-stat-atk"
+              >
+                攻
+                <EditableValue
                   :model-value="getEquipStat(eq, '攻击力') ?? 0"
-                  type="number" label="攻击力" :min="0"
+                  type="number"
+                  label="攻击力"
+                  :min="0"
                   @update:model-value="setEquipStat(eq, '攻击力', Number($event))"
                 />
               </span>
-              <span v-if="getEquipStat(eq, '防御力') !== null || (state.editMode && eq.类型 === '护甲')" class="xy-eq-stat xy-stat-def">
-                防 <EditableValue
+              <span
+                v-if="getEquipStat(eq, '防御力') !== null || (state.editMode && eq.类型 === '护甲')"
+                class="xy-eq-stat xy-stat-def"
+              >
+                防
+                <EditableValue
                   :model-value="getEquipStat(eq, '防御力') ?? 0"
-                  type="number" label="防御力" :min="0"
+                  type="number"
+                  label="防御力"
+                  :min="0"
                   @update:model-value="setEquipStat(eq, '防御力', Number($event))"
                 />
               </span>
             </div>
-            <div v-if="eq.描述 || state.editMode" class="xy-item-desc"><EditableValue v-model="eq.描述" label="描述" multiline /></div>
+            <div v-if="eq.描述 || state.editMode" class="xy-item-desc">
+              <EditableValue v-model="eq.描述" label="描述" multiline />
+            </div>
             <div v-if="!_.isEmpty(eq.效果) || state.editMode" class="xy-effect-list">
               <EffectList v-model="eq.效果" />
             </div>
@@ -180,7 +205,7 @@
     </div>
 
     <!-- 傀儡 -->
-    <div v-else-if="state.storageTab === 2">
+    <div v-else-if="state.storageTab === 3">
       <div v-if="_.isEmpty(store.data.傀儡)" class="xy-empty">
         <div class="xy-empty-mark">无</div>
         <p>暂无傀儡</p>
@@ -275,6 +300,7 @@ import { useDataStore } from '../store';
 import CombatUnit from './CombatUnit.vue';
 import EditableValue from './EditableValue.vue';
 import EffectList from './EffectList.vue';
+import PageArts from './PageArts.vue';
 import {
   state,
   storageTabs,

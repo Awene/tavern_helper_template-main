@@ -576,14 +576,14 @@
               </div>
             </section>
 
-            <!-- ▼ 功法 ▼ -->
-            <PageArts v-else-if="state.currentTab === 1" />
-
             <!-- ▼ 储物 ▼ -->
-            <PageStorage v-else-if="state.currentTab === 2" />
+            <PageStorage v-else-if="state.currentTab === 1" />
 
             <!-- ▼ 关系 ▼ -->
-            <PageRelations v-else-if="state.currentTab === 3" />
+            <PageRelations v-else-if="state.currentTab === 2" />
+
+            <!-- ▼ 固定资产 ▼ -->
+            <PageAssets v-else-if="state.currentTab === 3" />
 
             <!-- ▼ 传闻 ▼ -->
             <PageRumors v-else-if="state.currentTab === 4" />
@@ -645,9 +645,10 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { publishSharedTheme, readSharedTheme, subscribeSharedTheme, type SharedTheme } from '../shared/theme';
 import { useDataStore } from './store';
-import PageArts from './pages/PageArts.vue';
+import PageAssets from './pages/PageAssets.vue';
 import PageStorage from './pages/PageStorage.vue';
 import PageRelations from './pages/PageRelations.vue';
 import PageRumors from './pages/PageRumors.vue';
@@ -725,22 +726,17 @@ function closeOverview() {
   state.openedBuff = null;
 }
 
-// 主题：日间 / 夜间
-const THEME_KEY = 'xy-theme';
 const isDark = ref(false);
-function applyTheme(theme: 'light' | 'dark') {
+let stopThemeSync: (() => void) | undefined;
+function applyTheme(theme: SharedTheme, publish = false) {
   isDark.value = theme === 'dark';
   const el = document.documentElement;
   if (theme === 'dark') el.setAttribute('data-theme', 'dark');
   else el.removeAttribute('data-theme');
-  try {
-    localStorage.setItem(THEME_KEY, theme);
-  } catch {
-    /* ignore */
-  }
+  if (publish) publishSharedTheme(theme);
 }
 function toggleTheme() {
-  applyTheme(isDark.value ? 'light' : 'dark');
+  applyTheme(isDark.value ? 'light' : 'dark', true);
 }
 
 // 打开「总结助手」面板：向总结脚本(主页面)广播事件。
@@ -758,15 +754,10 @@ function openSummary() {
   }
 }
 onMounted(() => {
-  let saved: 'light' | 'dark' = 'light';
-  try {
-    const v = localStorage.getItem(THEME_KEY);
-    if (v === 'dark' || v === 'light') saved = v;
-  } catch {
-    /* ignore */
-  }
-  applyTheme(saved);
+  applyTheme(readSharedTheme('dark'));
+  stopThemeSync = subscribeSharedTheme(theme => applyTheme(theme));
 });
+onBeforeUnmount(() => stopThemeSync?.());
 
 // 时间轴引擎：玩家时间/地点/境界变化时
 //   1) 生成/剪枝事件缓存（localStorage 保留跨地域暂存语义）

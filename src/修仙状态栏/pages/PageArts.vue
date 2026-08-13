@@ -1,5 +1,5 @@
 <template>
-  <section class="xy-page xy-page-arts">
+  <component :is="embedded ? 'div' : 'section'" class="xy-page-arts" :class="{ 'xy-page': !embedded }">
     <div v-if="_.isEmpty(store.data.功法)" class="xy-empty">
       <div class="xy-empty-mark">空</div>
       <p>未修任何功法</p>
@@ -50,21 +50,23 @@
               <span class="xy-art-name">{{ name }}</span>
               <span :class="['xy-quality', 'xy-q-' + art.品质]">{{ art.品质 }}品</span>
             </div>
-            <button
-              class="xy-toggle"
-              :class="{ on: art.使用中 }"
-              @click="toggleArt(name as string, !art.使用中)"
-            >
+            <button class="xy-toggle" :class="{ on: art.使用中 }" @click="toggleArt(name as string, !art.使用中)">
               {{ art.使用中 ? '运转中' : '凝息' }}
             </button>
           </div>
           <div class="xy-art-meta">
             <span class="xy-pill">{{ art.类型 }}</span>
             <span v-if="art.境界" class="xy-pill xy-pill-soft">{{ art.境界 }}</span>
-            <span v-if="art.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(art.五行) }">{{ art.五行 === '混沌' ? '混' : art.五行 }}</span>
-            <span v-if="art.消耗 || state.editMode" class="xy-pill xy-pill-cost">耗 <EditableValue v-model="art.消耗" label="消耗" /></span>
+            <span v-if="art.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(art.五行) }">{{
+              art.五行 === '混沌' ? '混' : art.五行
+            }}</span>
+            <span v-if="art.消耗 || state.editMode" class="xy-pill xy-pill-cost"
+              >耗 <EditableValue v-model="art.消耗" label="消耗"
+            /></span>
           </div>
-          <div v-if="art.描述 || state.editMode" class="xy-art-desc"><EditableValue v-model="art.描述" label="描述" multiline /></div>
+          <div v-if="art.描述 || state.editMode" class="xy-art-desc">
+            <EditableValue v-model="art.描述" label="描述" multiline />
+          </div>
           <div v-if="!_.isEmpty(art.效果) || state.editMode" class="xy-effect-list">
             <EffectList v-model="art.效果" />
           </div>
@@ -74,7 +76,7 @@
         </article>
       </div>
     </template>
-  </section>
+  </component>
 </template>
 
 <script setup lang="ts">
@@ -82,15 +84,8 @@ import _ from 'lodash';
 import { useDataStore } from '../store';
 import EditableValue from './EditableValue.vue';
 import EffectList from './EffectList.vue';
-import {
-  state,
-  artTypes,
-  filteredArts,
-  countField,
-  requestDelete,
-  toggleArt,
-  elColor,
-} from '../composables';
+import { state, artTypes, filteredArts, countField, requestDelete, toggleArt, elColor } from '../composables';
 
 const store = useDataStore();
+withDefaults(defineProps<{ embedded?: boolean }>(), { embedded: false });
 </script>
