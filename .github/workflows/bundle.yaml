@@ -1,12 +1,8 @@
-name: bundle
+name: manual bundle
 
+# 仅允许从 GitHub Actions 页面手动发版。
+# 普通 push 只提交源码，不再自动构建 dist、提交产物或递增 tag。
 on:
-  push:
-    branches:
-      - master
-      - main
-    paths-ignore:
-      - dist/**
   workflow_dispatch:
 
 permissions:
