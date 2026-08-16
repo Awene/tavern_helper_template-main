@@ -490,7 +490,13 @@
                   <h3 class="xy-skill-group-title">{{ group.label }}</h3>
                   <div class="xy-skill-grid">
                     <div v-for="(v, n) in group.values" :key="group.key + '-' + String(n)" class="xy-skill-wrap">
-                      <div class="xy-skill" :class="{ open: state.skillRecipeOpen[String(n)] }">
+                      <div
+                        class="xy-skill"
+                        :class="{
+                          open: state.skillRecipeOpen[String(n)] && recipesForSkill(store.data.物品, String(n)).length,
+                          'has-recipes': recipesForSkill(store.data.物品, String(n)).length,
+                        }"
+                      >
                         <button
                           type="button"
                           class="xy-skill-toggle"
@@ -499,7 +505,13 @@
                               ? '点击展开 ' + n + ' 配方'
                               : n + ' 暂无配方'
                           "
-                          @click="toggleSkillRecipes(String(n))"
+                          :aria-expanded="
+                            recipesForSkill(store.data.物品, String(n)).length
+                              ? Boolean(state.skillRecipeOpen[String(n)])
+                              : undefined
+                          "
+                          :aria-disabled="!recipesForSkill(store.data.物品, String(n)).length"
+                          @click="recipesForSkill(store.data.物品, String(n)).length && toggleSkillRecipes(String(n))"
                         >
                           <span
                             class="xy-skill-seal"
@@ -507,7 +519,7 @@
                           >
                             <span>{{ skillGlyph(String(n)) }}</span>
                           </span>
-                          <span class="xy-skill-name">{{ n }}</span>
+                          <span class="xy-skill-name" :title="String(n)">{{ n }}</span>
                           <span v-if="recipesForSkill(store.data.物品, String(n)).length" class="xy-skill-recipe-count">
                             配方 {{ recipesForSkill(store.data.物品, String(n)).length }}
                           </span>
@@ -534,7 +546,7 @@
                           :class="['xy-q-bg-' + rec.it.品质]"
                         >
                           <div class="xy-item-head">
-                            <span class="xy-item-name">{{ rec.name }}</span>
+                            <span class="xy-item-name" :title="rec.name">{{ rec.name }}</span>
                             <button
                               type="button"
                               class="xy-craft-btn"
