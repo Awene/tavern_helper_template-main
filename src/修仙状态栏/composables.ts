@@ -8,10 +8,12 @@ import {
   type GeneratedEvent,
   type TimelineDate,
 } from './timeline-engine';
+import { readSharedLayout, type SharedLayout } from '../shared/layout';
 export type { TimelineDate } from './timeline-engine';
 
 // ============ 共享 UI 状态（模块级单例）============
 export const state = reactive({
+  layoutMode: readSharedLayout('pc') as SharedLayout,
   currentTab: 0,
   storageTab: 0,
   openedNPC: null as string | null,
@@ -34,7 +36,19 @@ export const state = reactive({
   confirmDelete: null as null | { kind: string; key: string; label: string },
   // 人物细化弹窗当前对应的 NPC 名；null 表示关闭。
   characterRefinement: null as string | null,
+  // 手机排版下各长卡片默认折叠；key 使用「类型:名称」避免重名冲突。
+  mobileCardOpen: {} as Record<string, boolean>,
 });
+
+export function isMobileCardOpen(kind: string, name: string): boolean {
+  return state.mobileCardOpen[`${kind}:${name}`] === true;
+}
+
+export function toggleMobileCard(kind: string, name: string): void {
+  if (state.layoutMode !== 'mobile') return;
+  const key = `${kind}:${name}`;
+  state.mobileCardOpen[key] = !state.mobileCardOpen[key];
+}
 
 const npcSectionOpen = reactive<Record<string, Record<string, boolean>>>({});
 const npcAvatars = reactive<Record<string, string>>({});

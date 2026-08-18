@@ -15,6 +15,7 @@
         v-for="(asset, assetName) in assets"
         :key="assetName"
         class="xy-asset-card"
+        :class="{ 'xy-mobile-card-open': isMobileCardOpen('asset', String(assetName)) }"
         :data-seal="assetGlyph(asset.类型)"
       >
         <button
@@ -27,7 +28,11 @@
           ×
         </button>
 
-        <div class="xy-asset-head">
+        <div
+          class="xy-asset-head xy-mobile-card-head"
+          :aria-expanded="state.layoutMode === 'mobile' ? isMobileCardOpen('asset', String(assetName)) : undefined"
+          @click="toggleMobileCard('asset', String(assetName))"
+        >
           <span class="xy-asset-name">
             <EditableValue
               :model-value="String(assetName)"
@@ -35,7 +40,7 @@
               @update:model-value="renameKey(assets, String(assetName), String($event), '资产')"
             />
           </span>
-          <select v-if="state.editMode" v-model="asset.类型" class="xy-asset-select" title="资产类型">
+          <select v-if="state.editMode" v-model="asset.类型" class="xy-asset-select" title="资产类型" @click.stop>
             <option v-for="type in assetTypes" :key="type" :value="type">{{ type }}</option>
           </select>
           <span v-else class="xy-asset-type">{{ asset.类型 }}</span>
@@ -49,104 +54,110 @@
               @update:model-value="asset.人员规模 = normalizeScale($event)"
             />人
           </span>
+          <span class="xy-mobile-card-caret" aria-hidden="true">⌄</span>
         </div>
 
-        <div class="xy-asset-location">
-          <select
-            v-if="state.editMode"
-            v-model="asset.所在地.世界"
-            class="xy-asset-select xy-asset-select-world"
-            title="所在世界"
-          >
-            <option v-for="world in worlds" :key="world" :value="world">{{ world }}</option>
-          </select>
-          <span v-else>{{ asset.所在地.世界 }}</span>
-          <i>·</i>
-          <EditableValue v-model="asset.所在地.地域" label="地域" />
-          <i>·</i>
-          <EditableValue v-model="asset.所在地.具体地点" label="具体地点" />
-        </div>
-
-        <div class="xy-asset-status">
-          <EditableValue v-model="asset.现状" label="现状" multiline :rows="2" />
-        </div>
-
-        <div class="xy-asset-section-title">设施</div>
-        <div v-if="_.isEmpty(asset.设施) && !state.editMode" class="xy-asset-empty">暂无设施</div>
-        <div v-for="(facility, facilityName) in asset.设施" :key="facilityName" class="xy-facility">
-          <button
-            v-if="state.editMode"
-            type="button"
-            class="xy-trash"
-            title="删除此设施"
-            @click.stop="removeFacility(asset.设施, String(facilityName))"
-          >
-            ×
-          </button>
-          <div class="xy-facility-head">
-            <strong>
-              <EditableValue
-                :model-value="String(facilityName)"
-                label="设施名"
-                @update:model-value="renameKey(asset.设施, String(facilityName), String($event), '设施')"
-              />
-            </strong>
-            <span class="xy-facility-yield">
-              每月产出：<EditableValue v-model="facility.每月产出" label="每月产出" />
-            </span>
+        <div
+          v-show="state.layoutMode === 'pc' || state.editMode || isMobileCardOpen('asset', String(assetName))"
+          class="xy-mobile-card-body"
+        >
+          <div class="xy-asset-location">
+            <select
+              v-if="state.editMode"
+              v-model="asset.所在地.世界"
+              class="xy-asset-select xy-asset-select-world"
+              title="所在世界"
+            >
+              <option v-for="world in worlds" :key="world" :value="world">{{ world }}</option>
+            </select>
+            <span v-else>{{ asset.所在地.世界 }}</span>
+            <i>·</i>
+            <EditableValue v-model="asset.所在地.地域" label="地域" />
+            <i>·</i>
+            <EditableValue v-model="asset.所在地.具体地点" label="具体地点" />
           </div>
-          <div v-if="!_.isEmpty(facility.效果) || state.editMode" class="xy-facility-effect">
-            <EffectList v-model="facility.效果" />
+
+          <div class="xy-asset-status">
+            <EditableValue v-model="asset.现状" label="现状" multiline :rows="2" />
           </div>
-          <div class="xy-facility-date">
-            <span>上次收取：</span>
-            <template v-if="facility.上次收取日期">
-              <span v-if="!state.editMode">{{ formatTime(facility.上次收取日期) }}</span>
-              <span v-else class="xy-asset-date-fields">
-                <EditableValue v-model.number="facility.上次收取日期.年" type="number" label="年" :min="1" />年
+
+          <div class="xy-asset-section-title">设施</div>
+          <div v-if="_.isEmpty(asset.设施) && !state.editMode" class="xy-asset-empty">暂无设施</div>
+          <div v-for="(facility, facilityName) in asset.设施" :key="facilityName" class="xy-facility">
+            <button
+              v-if="state.editMode"
+              type="button"
+              class="xy-trash"
+              title="删除此设施"
+              @click.stop="removeFacility(asset.设施, String(facilityName))"
+            >
+              ×
+            </button>
+            <div class="xy-facility-head">
+              <strong>
                 <EditableValue
-                  v-model.number="facility.上次收取日期.月"
-                  type="number"
-                  label="月"
-                  :min="1"
-                  :max="12"
-                />月
-                <EditableValue
-                  v-model.number="facility.上次收取日期.日"
-                  type="number"
-                  label="日"
-                  :min="1"
-                  :max="30"
-                />日
-                <select v-model="facility.上次收取日期.时辰" class="xy-asset-select xy-asset-select-time">
-                  <option v-for="hour in hours" :key="hour" :value="hour">{{ hour }}</option>
-                </select>
-                <button type="button" class="xy-asset-date-clear" @click="facility.上次收取日期 = null">
-                  设为从未收取
-                </button>
+                  :model-value="String(facilityName)"
+                  label="设施名"
+                  @update:model-value="renameKey(asset.设施, String(facilityName), String($event), '设施')"
+                />
+              </strong>
+              <span class="xy-facility-yield">
+                每月产出：<EditableValue v-model="facility.每月产出" label="每月产出" />
               </span>
-            </template>
-            <template v-else>
-              <span>从未收取</span>
-              <button
-                v-if="state.editMode"
-                type="button"
-                class="xy-asset-date-clear"
-                @click="facility.上次收取日期 = newTime()"
-              >
-                填写日期
-              </button>
-            </template>
+            </div>
+            <div v-if="!_.isEmpty(facility.效果) || state.editMode" class="xy-facility-effect">
+              <EffectList v-model="facility.效果" />
+            </div>
+            <div class="xy-facility-date">
+              <span>上次收取：</span>
+              <template v-if="facility.上次收取日期">
+                <span v-if="!state.editMode">{{ formatTime(facility.上次收取日期) }}</span>
+                <span v-else class="xy-asset-date-fields">
+                  <EditableValue v-model.number="facility.上次收取日期.年" type="number" label="年" :min="1" />年
+                  <EditableValue
+                    v-model.number="facility.上次收取日期.月"
+                    type="number"
+                    label="月"
+                    :min="1"
+                    :max="12"
+                  />月
+                  <EditableValue
+                    v-model.number="facility.上次收取日期.日"
+                    type="number"
+                    label="日"
+                    :min="1"
+                    :max="30"
+                  />日
+                  <select v-model="facility.上次收取日期.时辰" class="xy-asset-select xy-asset-select-time">
+                    <option v-for="hour in hours" :key="hour" :value="hour">{{ hour }}</option>
+                  </select>
+                  <button type="button" class="xy-asset-date-clear" @click="facility.上次收取日期 = null">
+                    设为从未收取
+                  </button>
+                </span>
+              </template>
+              <template v-else>
+                <span>从未收取</span>
+                <button
+                  v-if="state.editMode"
+                  type="button"
+                  class="xy-asset-date-clear"
+                  @click="facility.上次收取日期 = newTime()"
+                >
+                  填写日期
+                </button>
+              </template>
+            </div>
           </div>
-        </div>
-        <button v-if="state.editMode" type="button" class="xy-effect-add" @click="addFacility(asset.设施)">
-          ＋ 新增设施
-        </button>
+          <button v-if="state.editMode" type="button" class="xy-effect-add" @click="addFacility(asset.设施)">
+            ＋ 新增设施
+          </button>
 
-        <div class="xy-asset-section-title">所属人物</div>
-        <div class="xy-asset-people">
-          <IdentityTags v-model="asset.所属人物" label="所属人物" />
-          <span v-if="!state.editMode && asset.所属人物.length === 0" class="xy-asset-empty">暂无</span>
+          <div class="xy-asset-section-title">所属人物</div>
+          <div class="xy-asset-people">
+            <IdentityTags v-model="asset.所属人物" label="所属人物" />
+            <span v-if="!state.editMode && asset.所属人物.length === 0" class="xy-asset-empty">暂无</span>
+          </div>
         </div>
       </article>
     </div>
@@ -157,7 +168,7 @@
 import _ from 'lodash';
 import { computed } from 'vue';
 import { useDataStore } from '../store';
-import { requestDelete, showToast, state } from '../composables';
+import { isMobileCardOpen, requestDelete, showToast, state, toggleMobileCard } from '../composables';
 import EditableValue from './EditableValue.vue';
 import EffectList from './EffectList.vue';
 import IdentityTags from './IdentityTags.vue';

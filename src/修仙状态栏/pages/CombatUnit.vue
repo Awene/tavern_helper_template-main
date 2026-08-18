@@ -3,21 +3,23 @@
     class="xy-item xy-unit"
     :class="[
       'xy-q-bg-' + (unit.品质 || '凡'),
-      { 'xy-unit-active': unit.使用中, 'xy-has-trash': deletable },
+      {
+        'xy-unit-active': unit.使用中,
+        'xy-has-trash': deletable,
+        'xy-mobile-card-open': isMobileCardOpen('unit', name),
+      },
     ]"
   >
-    <button
-      v-if="deletable"
-      type="button"
-      class="xy-trash"
-      title="删除"
-      @click.stop="$emit('delete')"
-    >
+    <button v-if="deletable" type="button" class="xy-trash" title="删除" @click.stop="$emit('delete')">
       <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true">
         <path d="M9 3v1H4v2h16V4h-5V3H9zM6 8l1 13h10l1-13H6zm3 2h2v9H9v-9zm4 0h2v9h-2v-9z" />
       </svg>
     </button>
-    <div class="xy-item-head">
+    <div
+      class="xy-item-head xy-mobile-card-head"
+      :aria-expanded="state.layoutMode === 'mobile' ? isMobileCardOpen('unit', name) : undefined"
+      @click="toggleMobileCard('unit', name)"
+    >
       <span class="xy-item-name">{{ name }}</span>
       <button
         v-if="!compact"
@@ -28,66 +30,93 @@
         {{ unit.使用中 ? '在身' : '入囊' }}
       </button>
       <span v-else-if="unit.使用中" class="xy-unit-badge">在身</span>
+      <span class="xy-mobile-card-caret" aria-hidden="true">⌄</span>
     </div>
 
-    <div class="xy-item-meta">
-      <span :class="['xy-quality', 'xy-q-' + (unit.品质 || '凡')]">{{ unit.品质 || '凡' }}</span>
-      <span v-if="unit.境界" class="xy-pill xy-pill-soft">{{ unit.境界 }}</span>
-      <span
-        v-if="unit.五行"
-        class="xy-element xy-element-mini"
-        :style="{ '--el': elColor(unit.五行) }"
-      >
-        {{ unit.五行 === '未知' ? '未' : unit.五行 }}
-      </span>
-      <span v-for="t in unit.标签 || []" :key="t" class="xy-tag">{{ t }}</span>
-    </div>
-
-    <div class="xy-unit-bars">
-      <div class="xy-unit-bar">
-        <span class="xy-unit-bar-label">气血</span>
-        <span class="xy-unit-bar-track">
-          <span class="xy-unit-bar-fill blood" :style="{ width: hpPct + '%' }" />
+    <div
+      v-show="state.layoutMode === 'pc' || state.editMode || isMobileCardOpen('unit', name)"
+      class="xy-mobile-card-body"
+    >
+      <div class="xy-item-meta">
+        <span :class="['xy-quality', 'xy-q-' + (unit.品质 || '凡')]">{{ unit.品质 || '凡' }}</span>
+        <span v-if="unit.境界" class="xy-pill xy-pill-soft">{{ unit.境界 }}</span>
+        <span v-if="unit.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(unit.五行) }">
+          {{ unit.五行 === '未知' ? '未' : unit.五行 }}
         </span>
-        <span class="xy-unit-bar-num">
-          <template v-if="unit.资源池?.气血">
-            <EditableValue v-model.number="unit.资源池.气血.现值" type="number" label="气血现值" :min="0" />/<EditableValue v-model.number="unit.资源池.气血.上限" type="number" label="气血上限" :min="1" />
-          </template>
-          <template v-else>{{ hp.现值 }}/{{ hp.上限 }}</template>
+        <span v-for="t in unit.标签 || []" :key="t" class="xy-tag">{{ t }}</span>
+      </div>
+
+      <div class="xy-unit-bars">
+        <div class="xy-unit-bar">
+          <span class="xy-unit-bar-label">气血</span>
+          <span class="xy-unit-bar-track">
+            <span class="xy-unit-bar-fill blood" :style="{ width: hpPct + '%' }" />
+          </span>
+          <span class="xy-unit-bar-num">
+            <template v-if="unit.资源池?.气血">
+              <EditableValue
+                v-model.number="unit.资源池.气血.现值"
+                type="number"
+                label="气血现值"
+                :min="0"
+              />/<EditableValue v-model.number="unit.资源池.气血.上限" type="number" label="气血上限" :min="1" />
+            </template>
+            <template v-else>{{ hp.现值 }}/{{ hp.上限 }}</template>
+          </span>
+        </div>
+        <div class="xy-unit-bar">
+          <span class="xy-unit-bar-label">灵气</span>
+          <span class="xy-unit-bar-track">
+            <span class="xy-unit-bar-fill spirit" :style="{ width: mpPct + '%' }" />
+          </span>
+          <span class="xy-unit-bar-num">
+            <template v-if="unit.资源池?.灵气">
+              <EditableValue
+                v-model.number="unit.资源池.灵气.现值"
+                type="number"
+                label="灵气现值"
+                :min="0"
+              />/<EditableValue v-model.number="unit.资源池.灵气.上限" type="number" label="灵气上限" :min="0" />
+            </template>
+            <template v-else>{{ mp.现值 }}/{{ mp.上限 }}</template>
+          </span>
+        </div>
+      </div>
+
+      <div class="xy-unit-stats">
+        <span class="xy-eq-stat xy-stat-def"
+          >防 <EditableValue v-model.number="unit.防御力" type="number" label="防御力" :min="0" :format="v => v ?? 0"
+        /></span>
+        <span class="xy-eq-stat">
+          遁
+          <EditableValue
+            v-if="unit.资源池"
+            v-model.number="unit.资源池.遁速"
+            type="number"
+            label="遁速"
+            :min="0"
+            :format="v => v ?? 0"
+          />
+          <template v-else>{{ unit.资源池?.遁速 ?? 0 }}</template>
         </span>
       </div>
-      <div class="xy-unit-bar">
-        <span class="xy-unit-bar-label">灵气</span>
-        <span class="xy-unit-bar-track">
-          <span class="xy-unit-bar-fill spirit" :style="{ width: mpPct + '%' }" />
-        </span>
-        <span class="xy-unit-bar-num">
-          <template v-if="unit.资源池?.灵气">
-            <EditableValue v-model.number="unit.资源池.灵气.现值" type="number" label="灵气现值" :min="0" />/<EditableValue v-model.number="unit.资源池.灵气.上限" type="number" label="灵气上限" :min="0" />
-          </template>
-          <template v-else>{{ mp.现值 }}/{{ mp.上限 }}</template>
-        </span>
+
+      <div v-if="unit.描述 || state.editMode" class="xy-item-desc">
+        <EditableValue v-model="unit.描述" label="描述" multiline />
       </div>
-    </div>
 
-    <div class="xy-unit-stats">
-      <span class="xy-eq-stat xy-stat-def">防 <EditableValue v-model.number="unit.防御力" type="number" label="防御力" :min="0" :format="(v) => v ?? 0" /></span>
-      <span class="xy-eq-stat">
-        遁
-        <EditableValue v-if="unit.资源池" v-model.number="unit.资源池.遁速" type="number" label="遁速" :min="0" :format="(v) => v ?? 0" />
-        <template v-else>{{ unit.资源池?.遁速 ?? 0 }}</template>
-      </span>
-    </div>
-
-    <div v-if="unit.描述 || state.editMode" class="xy-item-desc"><EditableValue v-model="unit.描述" label="描述" multiline /></div>
-
-    <div v-if="!isEmpty(unit.技能)" class="xy-skill-list">
-      <div v-for="(sv, sn) in unit.技能" :key="sn" class="xy-skill-line">
-        <span class="xy-skill-line-name">{{ sn }}</span>
-        <span class="xy-skill-line-atk">攻 <EditableValue v-model.number="sv.攻击力" type="number" label="攻击力" :min="0" :format="(v) => v ?? 0" /></span>
-        <span v-if="sv.消耗 || state.editMode" class="xy-pill xy-pill-cost">耗 <EditableValue v-model="sv.消耗" label="消耗" /></span>
-        <div v-if="!isEmpty(sv.效果) || state.editMode" class="xy-skill-line-effects">
-          <EffectList v-model="sv.效果" />
+      <div v-if="!isEmpty(unit.技能)" class="xy-skill-list">
+        <div v-for="(sv, sn) in unit.技能" :key="sn" class="xy-skill-line">
+          <span class="xy-skill-line-name">{{ sn }}</span>
+          <span class="xy-skill-line-atk"
+            >攻 <EditableValue v-model.number="sv.攻击力" type="number" label="攻击力" :min="0" :format="v => v ?? 0"
+          /></span>
+          <span v-if="sv.消耗 || state.editMode" class="xy-pill xy-pill-cost"
+            >耗 <EditableValue v-model="sv.消耗" label="消耗"
+          /></span>
+          <div v-if="!isEmpty(sv.效果) || state.editMode" class="xy-skill-line-effects">
+            <EffectList v-model="sv.效果" />
+          </div>
         </div>
       </div>
     </div>
@@ -99,7 +128,7 @@ import _ from 'lodash';
 import { computed } from 'vue';
 import EditableValue from './EditableValue.vue';
 import EffectList from './EffectList.vue';
-import { state } from '../composables';
+import { isMobileCardOpen, state, toggleMobileCard } from '../composables';
 
 const props = defineProps<{
   unit: any;
@@ -117,24 +146,22 @@ const isEmpty = _.isEmpty;
 
 const hp = computed(() => props.unit?.资源池?.气血 || { 现值: 0, 上限: 1 });
 const mp = computed(() => props.unit?.资源池?.灵气 || { 现值: 0, 上限: 1 });
-const hpPct = computed(() =>
-  Math.max(0, Math.min(100, (hp.value.现值 / Math.max(hp.value.上限, 1)) * 100)),
-);
-const mpPct = computed(() =>
-  Math.max(0, Math.min(100, (mp.value.现值 / Math.max(mp.value.上限, 1)) * 100)),
-);
+const hpPct = computed(() => Math.max(0, Math.min(100, (hp.value.现值 / Math.max(hp.value.上限, 1)) * 100)));
+const mpPct = computed(() => Math.max(0, Math.min(100, (mp.value.现值 / Math.max(mp.value.上限, 1)) * 100)));
 
 const elColor = (el: string) =>
-  ({
-    金: 'var(--xy-el-jin)',
-    木: 'var(--xy-el-mu)',
-    水: 'var(--xy-el-shui)',
-    火: 'var(--xy-el-huo)',
-    土: 'var(--xy-el-tu)',
-    阴: 'var(--xy-el-yin)',
-    阳: 'var(--xy-el-yang)',
-    混沌: 'var(--xy-el-hundun)',
-  } as Record<string, string>)[el] || 'var(--xy-ink)';
+  (
+    ({
+      金: 'var(--xy-el-jin)',
+      木: 'var(--xy-el-mu)',
+      水: 'var(--xy-el-shui)',
+      火: 'var(--xy-el-huo)',
+      土: 'var(--xy-el-tu)',
+      阴: 'var(--xy-el-yin)',
+      阳: 'var(--xy-el-yang)',
+      混沌: 'var(--xy-el-hundun)',
+    }) as Record<string, string>
+  )[el] || 'var(--xy-ink)';
 </script>
 
 <style scoped>

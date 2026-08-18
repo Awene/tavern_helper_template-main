@@ -4,6 +4,42 @@
       <div class="xy-settings-box" @click.stop>
         <div class="xy-confirm-title">设置</div>
 
+        <!-- ========== 排版模式 ========== -->
+        <section class="xy-set-section">
+          <div class="xy-set-label">排版模式</div>
+          <div class="xy-set-hint">PC 保留完整信息密度；手机会压缩间距，并将长卡片改为点按展开。</div>
+
+          <div class="xy-set-options xy-layout-options">
+            <button
+              type="button"
+              class="xy-set-opt xy-layout-opt"
+              :class="{ active: state.layoutMode === 'pc' }"
+              @click="switchLayout('pc')"
+            >
+              <span class="xy-layout-opt-icon" aria-hidden="true">▱</span>
+              <span class="xy-layout-opt-copy">
+                <span class="xy-set-opt-name">PC 排版</span>
+                <span class="xy-set-opt-tag">完整卡片 · 宽屏双列</span>
+              </span>
+              <span v-if="state.layoutMode === 'pc'" class="xy-set-opt-check">✓</span>
+            </button>
+            <button
+              type="button"
+              class="xy-set-opt xy-layout-opt"
+              :class="{ active: state.layoutMode === 'mobile' }"
+              @click="switchLayout('mobile')"
+            >
+              <span class="xy-layout-opt-icon is-phone" aria-hidden="true">▯</span>
+              <span class="xy-layout-opt-copy">
+                <span class="xy-set-opt-name">手机排版</span>
+                <span class="xy-set-opt-tag">紧凑单列 · 卡片折叠</span>
+              </span>
+              <span v-if="state.layoutMode === 'mobile'" class="xy-set-opt-check">✓</span>
+            </button>
+          </div>
+          <div class="xy-set-state">当前：{{ state.layoutMode === 'mobile' ? '手机排版' : 'PC 排版' }}</div>
+        </section>
+
         <!-- ========== 变量更新方式 ========== -->
         <section class="xy-set-section">
           <div class="xy-set-label">变量更新方式</div>
@@ -55,12 +91,20 @@
 import { onMounted, ref } from 'vue';
 import { state, showToast } from '../composables';
 import { applyApiMode, getApiMode, type ApiMode } from '../../shared/apiMode';
+import { publishSharedLayout, type SharedLayout } from '../../shared/layout';
 
 const mode = ref<ApiMode>('额外API');
 const loading = ref(true);
 
 function close() {
   state.settingsOpen = false;
+}
+
+function switchLayout(next: SharedLayout) {
+  if (state.layoutMode === next) return;
+  state.layoutMode = next;
+  publishSharedLayout(next);
+  showToast(`已切换为「${next === 'mobile' ? '手机排版' : 'PC 排版'}」`);
 }
 
 async function switchMode(next: ApiMode) {

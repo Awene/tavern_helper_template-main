@@ -1,6 +1,7 @@
 import App from './App.vue';
 import './global.css';
 import './styles.css';
+import './mobile-layout.css';
 
 let initialized = false;
 

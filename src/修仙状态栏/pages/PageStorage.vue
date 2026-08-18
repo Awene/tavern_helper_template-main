@@ -60,7 +60,12 @@
           <p>该分类下暂无物品</p>
         </div>
         <div v-else class="xy-item-grid">
-          <article v-for="(it, name) in filteredItems" :key="name" class="xy-item" :class="['xy-q-bg-' + it.品质]">
+          <article
+            v-for="(it, name) in filteredItems"
+            :key="name"
+            class="xy-item"
+            :class="['xy-q-bg-' + it.品质, { 'xy-mobile-card-open': isMobileCardOpen('item', String(name)) }]"
+          >
             <button
               type="button"
               class="xy-trash"
@@ -71,35 +76,45 @@
                 <path d="M9 3v1H4v2h16V4h-5V3H9zM6 8l1 13h10l1-13H6zm3 2h2v9H9v-9zm4 0h2v9h-2v-9z" />
               </svg>
             </button>
-            <div class="xy-item-head">
+            <div
+              class="xy-item-head xy-mobile-card-head"
+              :aria-expanded="state.layoutMode === 'mobile' ? isMobileCardOpen('item', String(name)) : undefined"
+              @click="toggleMobileCard('item', String(name))"
+            >
               <span class="xy-item-name">{{ name }}</span>
-              <span class="xy-item-qty"
+              <span class="xy-item-qty" @click.stop
                 >×<EditableValue v-model.number="it.数量" type="number" label="数量" :min="0"
               /></span>
+              <span class="xy-mobile-card-caret" aria-hidden="true">⌄</span>
             </div>
-            <div class="xy-item-meta">
-              <span :class="['xy-quality', 'xy-q-' + it.品质]">{{ it.品质 }}</span>
-              <span class="xy-pill">{{ it.类型 }}</span>
-              <span v-if="it.境界" class="xy-pill xy-pill-soft">{{ it.境界 }}</span>
-              <span v-if="it.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(it.五行) }">{{
-                it.五行 === '混沌' ? '混' : it.五行
-              }}</span>
-            </div>
-            <div v-if="parseItemTags(it.标签).length" class="xy-item-tags">
-              <span
-                v-for="(t, i) in parseItemTags(it.标签)"
-                :key="i"
-                class="xy-item-tag"
-                :class="'xy-item-tag-' + t.label"
-              >
-                {{ t.label }} <b>{{ t.value }}</b>
-              </span>
-            </div>
-            <div v-if="it.描述 || state.editMode" class="xy-item-desc">
-              <EditableValue v-model="it.描述" label="描述" multiline />
-            </div>
-            <div v-if="!_.isEmpty(it.效果) || state.editMode" class="xy-effect-list">
-              <EffectList v-model="it.效果" />
+            <div
+              v-show="state.layoutMode === 'pc' || state.editMode || isMobileCardOpen('item', String(name))"
+              class="xy-mobile-card-body"
+            >
+              <div class="xy-item-meta">
+                <span :class="['xy-quality', 'xy-q-' + it.品质]">{{ it.品质 }}</span>
+                <span class="xy-pill">{{ it.类型 }}</span>
+                <span v-if="it.境界" class="xy-pill xy-pill-soft">{{ it.境界 }}</span>
+                <span v-if="it.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(it.五行) }">{{
+                  it.五行 === '混沌' ? '混' : it.五行
+                }}</span>
+              </div>
+              <div v-if="parseItemTags(it.标签).length" class="xy-item-tags">
+                <span
+                  v-for="(t, i) in parseItemTags(it.标签)"
+                  :key="i"
+                  class="xy-item-tag"
+                  :class="'xy-item-tag-' + t.label"
+                >
+                  {{ t.label }} <b>{{ t.value }}</b>
+                </span>
+              </div>
+              <div v-if="it.描述 || state.editMode" class="xy-item-desc">
+                <EditableValue v-model="it.描述" label="描述" multiline />
+              </div>
+              <div v-if="!_.isEmpty(it.效果) || state.editMode" class="xy-effect-list">
+                <EffectList v-model="it.效果" />
+              </div>
             </div>
           </article>
         </div>
@@ -141,7 +156,7 @@
             v-for="(eq, name) in filteredEquips"
             :key="name"
             class="xy-item xy-equipment"
-            :class="['xy-q-bg-' + eq.品质]"
+            :class="['xy-q-bg-' + eq.品质, { 'xy-mobile-card-open': isMobileCardOpen('equip', String(name)) }]"
           >
             <button
               type="button"
@@ -153,51 +168,61 @@
                 <path d="M9 3v1H4v2h16V4h-5V3H9zM6 8l1 13h10l1-13H6zm3 2h2v9H9v-9zm4 0h2v9h-2v-9z" />
               </svg>
             </button>
-            <div class="xy-item-head">
+            <div
+              class="xy-item-head xy-mobile-card-head"
+              :aria-expanded="state.layoutMode === 'mobile' ? isMobileCardOpen('equip', String(name)) : undefined"
+              @click="toggleMobileCard('equip', String(name))"
+            >
               <span class="xy-item-name">{{ name }}</span>
               <span class="xy-item-pos">{{ eq.位置 }}</span>
+              <span class="xy-mobile-card-caret" aria-hidden="true">⌄</span>
             </div>
-            <div class="xy-item-meta">
-              <span :class="['xy-quality', 'xy-q-' + eq.品质]">{{ eq.品质 }}</span>
-              <span class="xy-pill">{{ eq.类型 }}</span>
-              <span v-if="eq.境界" class="xy-pill xy-pill-soft">{{ eq.境界 }}</span>
-              <span v-if="eq.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(eq.五行) }">{{
-                eq.五行 === '混沌' ? '混' : eq.五行
-              }}</span>
-            </div>
-            <div class="xy-eq-stats">
-              <span
-                v-if="getEquipStat(eq, '攻击力') !== null || (state.editMode && eq.类型 === '法宝')"
-                class="xy-eq-stat xy-stat-atk"
-              >
-                攻
-                <EditableValue
-                  :model-value="getEquipStat(eq, '攻击力') ?? 0"
-                  type="number"
-                  label="攻击力"
-                  :min="0"
-                  @update:model-value="setEquipStat(eq, '攻击力', Number($event))"
-                />
-              </span>
-              <span
-                v-if="getEquipStat(eq, '防御力') !== null || (state.editMode && eq.类型 === '护甲')"
-                class="xy-eq-stat xy-stat-def"
-              >
-                防
-                <EditableValue
-                  :model-value="getEquipStat(eq, '防御力') ?? 0"
-                  type="number"
-                  label="防御力"
-                  :min="0"
-                  @update:model-value="setEquipStat(eq, '防御力', Number($event))"
-                />
-              </span>
-            </div>
-            <div v-if="eq.描述 || state.editMode" class="xy-item-desc">
-              <EditableValue v-model="eq.描述" label="描述" multiline />
-            </div>
-            <div v-if="!_.isEmpty(eq.效果) || state.editMode" class="xy-effect-list">
-              <EffectList v-model="eq.效果" />
+            <div
+              v-show="state.layoutMode === 'pc' || state.editMode || isMobileCardOpen('equip', String(name))"
+              class="xy-mobile-card-body"
+            >
+              <div class="xy-item-meta">
+                <span :class="['xy-quality', 'xy-q-' + eq.品质]">{{ eq.品质 }}</span>
+                <span class="xy-pill">{{ eq.类型 }}</span>
+                <span v-if="eq.境界" class="xy-pill xy-pill-soft">{{ eq.境界 }}</span>
+                <span v-if="eq.五行" class="xy-element xy-element-mini" :style="{ '--el': elColor(eq.五行) }">{{
+                  eq.五行 === '混沌' ? '混' : eq.五行
+                }}</span>
+              </div>
+              <div class="xy-eq-stats">
+                <span
+                  v-if="getEquipStat(eq, '攻击力') !== null || (state.editMode && eq.类型 === '法宝')"
+                  class="xy-eq-stat xy-stat-atk"
+                >
+                  攻
+                  <EditableValue
+                    :model-value="getEquipStat(eq, '攻击力') ?? 0"
+                    type="number"
+                    label="攻击力"
+                    :min="0"
+                    @update:model-value="setEquipStat(eq, '攻击力', Number($event))"
+                  />
+                </span>
+                <span
+                  v-if="getEquipStat(eq, '防御力') !== null || (state.editMode && eq.类型 === '护甲')"
+                  class="xy-eq-stat xy-stat-def"
+                >
+                  防
+                  <EditableValue
+                    :model-value="getEquipStat(eq, '防御力') ?? 0"
+                    type="number"
+                    label="防御力"
+                    :min="0"
+                    @update:model-value="setEquipStat(eq, '防御力', Number($event))"
+                  />
+                </span>
+              </div>
+              <div v-if="eq.描述 || state.editMode" class="xy-item-desc">
+                <EditableValue v-model="eq.描述" label="描述" multiline />
+              </div>
+              <div v-if="!_.isEmpty(eq.效果) || state.editMode" class="xy-effect-list">
+                <EffectList v-model="eq.效果" />
+              </div>
             </div>
           </article>
         </div>
@@ -319,6 +344,8 @@ import {
   getEquipStat,
   setEquipStat,
   parseItemTags,
+  isMobileCardOpen,
+  toggleMobileCard,
 } from '../composables';
 
 const store = useDataStore();

@@ -1,5 +1,5 @@
 <template>
-  <div v-if="store.data" class="xy-app">
+  <div v-if="store.data" class="xy-app" :class="state.layoutMode === 'mobile' ? 'xy-layout-mobile' : 'xy-layout-pc'">
     <!-- 装饰背景：远山 + 仙鹤 + 印章 -->
     <div class="xy-bg" aria-hidden="true">
       <svg class="xy-bg-mountain" viewBox="0 0 1200 240" preserveAspectRatio="none">
@@ -659,6 +659,7 @@
 import _ from 'lodash';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { publishSharedTheme, readSharedTheme, subscribeSharedTheme, type SharedTheme } from '../shared/theme';
+import { readSharedLayout, subscribeSharedLayout } from '../shared/layout';
 import { useDataStore } from './store';
 import PageAssets from './pages/PageAssets.vue';
 import PageStorage from './pages/PageStorage.vue';
@@ -740,6 +741,7 @@ function closeOverview() {
 
 const isDark = ref(false);
 let stopThemeSync: (() => void) | undefined;
+let stopLayoutSync: (() => void) | undefined;
 function applyTheme(theme: SharedTheme, publish = false) {
   isDark.value = theme === 'dark';
   const el = document.documentElement;
@@ -768,8 +770,15 @@ function openSummary() {
 onMounted(() => {
   applyTheme(readSharedTheme('dark'));
   stopThemeSync = subscribeSharedTheme(theme => applyTheme(theme));
+  state.layoutMode = readSharedLayout('pc');
+  stopLayoutSync = subscribeSharedLayout(layout => {
+    state.layoutMode = layout;
+  });
 });
-onBeforeUnmount(() => stopThemeSync?.());
+onBeforeUnmount(() => {
+  stopThemeSync?.();
+  stopLayoutSync?.();
+});
 
 // 时间轴引擎：玩家时间/地点/境界变化时
 //   1) 生成/剪枝事件缓存（localStorage 保留跨地域暂存语义）
