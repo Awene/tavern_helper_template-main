@@ -35,7 +35,7 @@
           class="xy-art"
           :class="{
             'xy-art-active': art.使用中,
-            'xy-mobile-card-open': isMobileCardOpen('art', String(name)),
+            'xy-collapsible-open': state.editMode || isCardOpen('art', String(name)),
           }"
         >
           <button
@@ -49,9 +49,9 @@
             </svg>
           </button>
           <div
-            class="xy-art-head xy-mobile-card-head"
-            :aria-expanded="state.layoutMode === 'mobile' ? isMobileCardOpen('art', String(name)) : undefined"
-            @click="toggleMobileCard('art', String(name))"
+            class="xy-art-head xy-collapsible-head"
+            :aria-expanded="state.editMode || isCardOpen('art', String(name))"
+            @click="toggleCard('art', String(name))"
           >
             <div class="xy-art-title">
               <span class="xy-art-name">{{ name }}</span>
@@ -60,12 +60,9 @@
             <button class="xy-toggle" :class="{ on: art.使用中 }" @click.stop="toggleArt(name as string, !art.使用中)">
               {{ art.使用中 ? '运转中' : '凝息' }}
             </button>
-            <span class="xy-mobile-card-caret" aria-hidden="true">⌄</span>
+            <span class="xy-collapsible-caret" aria-hidden="true">⌄</span>
           </div>
-          <div
-            v-show="state.layoutMode === 'pc' || state.editMode || isMobileCardOpen('art', String(name))"
-            class="xy-mobile-card-body"
-          >
+          <div v-show="state.editMode || isCardOpen('art', String(name))" class="xy-collapsible-body">
             <div class="xy-art-meta">
               <span class="xy-pill">{{ art.类型 }}</span>
               <span v-if="art.境界" class="xy-pill xy-pill-soft">{{ art.境界 }}</span>
@@ -105,8 +102,8 @@ import {
   requestDelete,
   toggleArt,
   elColor,
-  isMobileCardOpen,
-  toggleMobileCard,
+  isCardOpen,
+  toggleCard,
 } from '../composables';
 
 const store = useDataStore();

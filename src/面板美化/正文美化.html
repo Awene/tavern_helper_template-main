@@ -409,6 +409,9 @@
       .action-panel.judge {
         --rb-panel-accent: #63b3ed;
       }
+      .action-panel.task-panel {
+        --rb-panel-accent: #d6ad62;
+      }
       .battle-panel {
         --rb-panel-accent: #fc8181;
       }
@@ -607,6 +610,81 @@
         font-weight: 700;
         margin-right: 4px;
         letter-spacing: 0.3px;
+      }
+
+      /* —— task_info 任务委托面板 —— */
+      .task-panel .task-status {
+        flex: 0 0 auto;
+        padding: 2px 9px;
+        border: 1px solid color-mix(in srgb, var(--rb-panel-accent) 48%, transparent);
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--rb-panel-accent) 14%, transparent);
+        color: var(--rb-panel-accent);
+        font-size: 0.75em;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+      }
+      .task-panel.task-status-active {
+        --rb-panel-accent: #63b3ed;
+      }
+      .task-panel.task-status-ready {
+        --rb-panel-accent: #68d391;
+      }
+      .task-panel.task-status-complete {
+        --rb-panel-accent: #9fdf9f;
+      }
+      .task-panel.task-status-failed {
+        --rb-panel-accent: #fc8181;
+      }
+      .task-panel .task-meta {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 7px;
+        margin-bottom: 8px;
+      }
+      .task-panel .task-meta-item {
+        min-width: 0;
+        padding: 6px 8px;
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 7px;
+        background: rgba(255, 255, 255, 0.035);
+        color: #e8d5b7;
+        font-size: 0.8em;
+        line-height: 1.45;
+        word-break: break-word;
+      }
+      .task-panel .task-meta-item i {
+        width: 1.15em;
+        margin-right: 4px;
+        color: var(--rb-panel-accent);
+        text-align: center;
+      }
+      .task-panel .task-detail {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+      .task-panel .task-detail-row {
+        min-width: 0;
+        padding: 7px 9px;
+        border-left: 3px solid color-mix(in srgb, var(--rb-panel-accent) 65%, transparent);
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.03);
+        color: #e8d5b7;
+        font-size: 0.84em;
+        line-height: 1.55;
+        word-break: break-word;
+      }
+      .task-panel .task-detail-row.task-goal {
+        grid-column: 1 / -1;
+        background: color-mix(in srgb, var(--rb-panel-accent) 9%, transparent);
+      }
+      .task-panel .task-detail-label {
+        margin-right: 6px;
+        color: var(--rb-panel-accent);
+        font-weight: 700;
+        white-space: nowrap;
       }
 
       /* —— 品质标签:渐变 + 发光 —— */
@@ -2265,6 +2343,15 @@
       [data-theme='light'] .item-panel .field-label {
         color: color-mix(in srgb, var(--rb-panel-accent) 70%, #2a1f10);
       }
+      [data-theme='light'] .task-panel .task-meta-item,
+      [data-theme='light'] .task-panel .task-detail-row {
+        border-color: rgba(160, 127, 72, 0.2);
+        background: rgba(168, 153, 104, 0.08);
+        color: #3a2f24;
+      }
+      [data-theme='light'] .task-panel .task-detail-row.task-goal {
+        background: color-mix(in srgb, var(--rb-panel-accent) 12%, #fffaf0);
+      }
 
       /* char_info 内部分节 */
       [data-theme='light'] .char-panel .section {
@@ -2443,6 +2530,13 @@
         .item-panel .data-row {
           font-size: 0.82em;
           padding: 4px 8px;
+        }
+        .task-panel .task-meta,
+        .task-panel .task-detail {
+          grid-template-columns: 1fr;
+        }
+        .task-panel .task-detail-row.task-goal {
+          grid-column: auto;
         }
       }
 
@@ -4002,6 +4096,56 @@
         return html;
       }
 
+      function renderTaskHtml(panel) {
+        const statusClass = {
+          待接取: 'pending',
+          进行中: 'active',
+          待结算: 'ready',
+          已完成: 'complete',
+          失败: 'failed',
+        };
+        let html = '';
+        _.forEach(panel.sections, section => {
+          const fields = {};
+          _.forEach(section.rows, row => {
+            _.forEach(_splitRowKv(row), pair => {
+              if (pair.key) fields[pair.key] = pair.value;
+            });
+          });
+
+          const title = section.title || fields.任务 || '未命名任务';
+          const status = fields.状态 || '待接取';
+          const statusType = statusClass[status] || 'pending';
+          const meta = [
+            ['fa-solid fa-user-tie', '委托方', fields.委托方 || '未说明'],
+            ['fa-solid fa-mountain-sun', '难度', fields.难度 || '未定'],
+            ['fa-solid fa-hourglass-half', '截止', fields.截止时间 || '无'],
+          ];
+          const metaHtml = meta
+            .map(
+              ([icon, label, value]) =>
+                `<div class="task-meta-item"><i class="${icon}"></i><span class="task-detail-label">${_.escape(label)}</span>${_.escape(value)}</div>`,
+            )
+            .join('');
+
+          const detailKeys = ['目标', '进展', '奖励', '交付'];
+          const detailHtml = detailKeys
+            .filter(key => fields[key])
+            .map(
+              key =>
+                `<div class="task-detail-row${key === '目标' ? ' task-goal' : ''}"><span class="task-detail-label">${_.escape(key)}</span>${_.escape(fields[key])}</div>`,
+            )
+            .join('');
+
+          html +=
+            `<div class="action-panel task-panel task-status-${statusType}">` +
+            `<div class="panel-header"><i class="panel-icon fa-solid fa-clipboard-list"></i><span class="panel-title">${_.escape(title)}</span><span class="task-status">${_.escape(status)}</span><i class="panel-toggle fa-solid fa-chevron-down"></i></div>` +
+            `<div class="panel-content"><div class="task-meta">${metaHtml}</div>${detailHtml ? `<div class="task-detail">${detailHtml}</div>` : ''}</div>` +
+            `</div>`;
+        });
+        return html;
+      }
+
       function renderBattleHtml(panel) {
         let html = '';
         _.forEach(panel.sections, section => {
@@ -4026,8 +4170,11 @@
         { key: '功法', label: '功法', match: ['功法'] },
         { key: '储物', label: '储物', match: ['储物', '物品', '装备', '灵石', '傀儡', '灵兽'] },
         { key: '形象', label: '形象', match: ['性格', '外貌', '着装', '气质', '言行'] },
-        { key: '背景', label: '背景', match: ['身份', '背景', '背景故事', '经历', '简介', '出身', '家世', '过往'] },
-        { key: '关系', label: '关系', match: ['关系', '人际', '亲属', '师承', '道侣', '好感度'] },
+        {
+          key: '背景',
+          label: '背景',
+          match: ['身份', '背景', '背景故事', '经历', '简介', '出身', '家世', '过往', '关系', '人际', '亲属', '师承', '道侣', '好感度'],
+        },
       ];
       function classifyCharItem(item) {
         const probe = item.kind === 'section' || item.kind === 'list-section' ? item.title : item.key;
@@ -5401,13 +5548,16 @@
         return raw.slice(0, soul.index) + wrap(reincarnationHost(payload)) + raw.slice(end);
       }
 
-      // 把 raw 中的 6 类面板抽走、留 placeholder（避免被 paragraph splitter 切碎）
+      // 把 raw 中的结构化面板抽走、留 placeholder（避免被 paragraph splitter 切碎）
       // 顺序：内层（item/char/realm/battle）先于外层（action）；按 prompt 设计本不应嵌套
       function extractPanels(raw, stash) {
         const wrap = html => (html ? '\n\n' + stash(html) + '\n\n' : '\n\n');
         // 面板开头标签要求位于行首，避免 AI 思维链/正文里出现的行内字面引用（如 `...`<item_info>`...`）被误当成面板
         raw = raw.replace(/(?:^|\n)\s*<item_info>([\s\S]*?)<\/item_info>/gi, (m, inner) =>
           wrap(safeRenderPanel('item_info', parseTablePanel, renderItemHtml, inner)),
+        );
+        raw = raw.replace(/(?:^|\n)\s*<task_info>([\s\S]*?)<\/task_info>/gi, (m, inner) =>
+          wrap(safeRenderPanel('task_info', parseTablePanel, renderTaskHtml, inner)),
         );
         raw = raw.replace(/(?:^|\n)\s*<char_info>([\s\S]*?)<\/char_info>/gi, (m, inner) =>
           wrap(safeRenderPanel('char_info', parseCharIndentedPanel, renderCharHtml, inner)),
@@ -5436,7 +5586,7 @@
         // AI 漏写闭合标签时，轮回面板按规则位于回复末尾；遇到下一种结构化面板时也会及时截止。
         raw = raw.replace(
           new RegExp(
-            `(?:^|\\n)\\s*<\\s*${rcTag}\\b[^>]*>([\\s\\S]*?)(?=<\\s*\\/?\\s*(?:action_info|battle_info|char_info|item_info|time_info|now_plot|gametxt)\\b|$)`,
+            `(?:^|\\n)\\s*<\\s*${rcTag}\\b[^>]*>([\\s\\S]*?)(?=<\\s*\\/?\\s*(?:action_info|battle_info|char_info|item_info|task_info|time_info|now_plot|gametxt)\\b|$)`,
             'gi',
           ),
           (m, inner) => wrap(reincarnationHost(inner)),
@@ -5444,7 +5594,7 @@
         raw = extractLooseReincarnation(raw, wrap);
         // 清理任何未配对的孤儿标签(AI 截断、写漏闭合等)
         raw = raw.replace(
-          /<\/?(?:action_info|battle_info|char_info|item_info|time_info|reincarnation(?:[\s_-]*info)?)\b[^>]*>?/gi,
+          /<\/?(?:action_info|battle_info|char_info|item_info|task_info|time_info|reincarnation(?:[\s_-]*info)?)\b[^>]*>?/gi,
           '',
         );
         return raw;

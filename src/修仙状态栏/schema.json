@@ -151,15 +151,7 @@
                   "type": "string"
                 },
                 "上次收取日期": {
-                  "default": null,
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/__schema7"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
+                  "$ref": "#/$defs/__schema7"
                 }
               }
             }
@@ -170,6 +162,53 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      }
+    },
+    "任务": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "状态": {
+            "default": "进行中",
+            "type": "string",
+            "enum": [
+              "进行中",
+              "待结算"
+            ]
+          },
+          "委托方": {
+            "default": "未知",
+            "type": "string"
+          },
+          "难度": {
+            "default": "未定",
+            "type": "string"
+          },
+          "目标": {
+            "default": "",
+            "type": "string"
+          },
+          "进展": {
+            "default": "",
+            "type": "string"
+          },
+          "奖励": {
+            "default": "无",
+            "type": "string"
+          },
+          "交付": {
+            "default": "无",
+            "type": "string"
+          },
+          "截止时间": {
+            "$ref": "#/$defs/__schema7"
           }
         }
       }
@@ -202,19 +241,9 @@
       }
     },
     "时间": {
-      "$ref": "#/$defs/__schema7"
+      "$ref": "#/$defs/__schema8"
     },
     "状态效果": {
-      "default": {},
-      "type": "object",
-      "propertyNames": {
-        "type": "string"
-      },
-      "additionalProperties": {
-        "$ref": "#/$defs/__schema8"
-      }
-    },
-    "功法": {
       "default": {},
       "type": "object",
       "propertyNames": {
@@ -224,20 +253,30 @@
         "$ref": "#/$defs/__schema9"
       }
     },
+    "功法": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/__schema10"
+      }
+    },
     "灵石": {
-      "$ref": "#/$defs/__schema12"
+      "$ref": "#/$defs/__schema13"
     },
     "物品": {
-      "$ref": "#/$defs/__schema14"
-    },
-    "装备": {
       "$ref": "#/$defs/__schema15"
     },
-    "傀儡": {
+    "装备": {
       "$ref": "#/$defs/__schema16"
     },
+    "傀儡": {
+      "$ref": "#/$defs/__schema17"
+    },
     "灵兽": {
-      "$ref": "#/$defs/__schema19"
+      "$ref": "#/$defs/__schema20"
     },
     "关系列表": {
       "default": {},
@@ -295,7 +334,7 @@
                   "type": "string"
                 },
                 "additionalProperties": {
-                  "$ref": "#/$defs/__schema8"
+                  "$ref": "#/$defs/__schema9"
                 }
               },
               "功法": {
@@ -305,23 +344,23 @@
                   "type": "string"
                 },
                 "additionalProperties": {
-                  "$ref": "#/$defs/__schema9"
+                  "$ref": "#/$defs/__schema10"
                 }
               },
               "灵石": {
-                "$ref": "#/$defs/__schema12"
+                "$ref": "#/$defs/__schema13"
               },
               "物品": {
-                "$ref": "#/$defs/__schema14"
-              },
-              "装备": {
                 "$ref": "#/$defs/__schema15"
               },
-              "傀儡": {
+              "装备": {
                 "$ref": "#/$defs/__schema16"
               },
+              "傀儡": {
+                "$ref": "#/$defs/__schema17"
+              },
               "灵兽": {
-                "$ref": "#/$defs/__schema19"
+                "$ref": "#/$defs/__schema20"
               },
               "性格": {
                 "default": "",
@@ -342,6 +381,10 @@
               "好感度": {
                 "default": 0,
                 "type": "number"
+              },
+              "关系": {
+                "default": "",
+                "type": "string"
               },
               "细节可见": {
                 "default": true,
@@ -367,37 +410,37 @@
                 "const": "傀儡"
               },
               "在场": {
-                "$ref": "#/$defs/__schema20"
-              },
-              "品质": {
                 "$ref": "#/$defs/__schema21"
               },
-              "境界": {
+              "品质": {
                 "$ref": "#/$defs/__schema22"
               },
-              "五行": {
+              "境界": {
                 "$ref": "#/$defs/__schema23"
               },
-              "标签": {
+              "五行": {
                 "$ref": "#/$defs/__schema24"
               },
-              "描述": {
+              "标签": {
                 "$ref": "#/$defs/__schema25"
+              },
+              "描述": {
+                "$ref": "#/$defs/__schema26"
               },
               "资源池": {
                 "$ref": "#/$defs/__schema5"
               },
               "防御力": {
-                "$ref": "#/$defs/__schema26"
-              },
-              "技能": {
                 "$ref": "#/$defs/__schema27"
               },
-              "状态效果": {
+              "技能": {
                 "$ref": "#/$defs/__schema28"
               },
-              "好感度": {
+              "状态效果": {
                 "$ref": "#/$defs/__schema29"
+              },
+              "好感度": {
+                "$ref": "#/$defs/__schema30"
               }
             },
             "required": [
@@ -412,37 +455,37 @@
                 "const": "灵兽"
               },
               "在场": {
-                "$ref": "#/$defs/__schema20"
-              },
-              "品质": {
                 "$ref": "#/$defs/__schema21"
               },
-              "境界": {
+              "品质": {
                 "$ref": "#/$defs/__schema22"
               },
-              "五行": {
+              "境界": {
                 "$ref": "#/$defs/__schema23"
               },
-              "标签": {
+              "五行": {
                 "$ref": "#/$defs/__schema24"
               },
-              "描述": {
+              "标签": {
                 "$ref": "#/$defs/__schema25"
+              },
+              "描述": {
+                "$ref": "#/$defs/__schema26"
               },
               "资源池": {
                 "$ref": "#/$defs/__schema5"
               },
               "防御力": {
-                "$ref": "#/$defs/__schema26"
-              },
-              "技能": {
                 "$ref": "#/$defs/__schema27"
               },
-              "状态效果": {
+              "技能": {
                 "$ref": "#/$defs/__schema28"
               },
-              "好感度": {
+              "状态效果": {
                 "$ref": "#/$defs/__schema29"
+              },
+              "好感度": {
+                "$ref": "#/$defs/__schema30"
               }
             },
             "required": [
@@ -465,10 +508,10 @@
             "type": "object",
             "properties": {
               "起": {
-                "$ref": "#/$defs/__schema30"
+                "$ref": "#/$defs/__schema31"
               },
               "止": {
-                "$ref": "#/$defs/__schema30"
+                "$ref": "#/$defs/__schema31"
               }
             },
             "required": [
@@ -794,6 +837,17 @@
       "type": "number"
     },
     "__schema7": {
+      "default": null,
+      "anyOf": [
+        {
+          "$ref": "#/$defs/__schema8"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "__schema8": {
       "default": {
         "年": 1,
         "月": 1,
@@ -834,7 +888,7 @@
         }
       }
     },
-    "__schema8": {
+    "__schema9": {
       "type": "object",
       "properties": {
         "类型": {
@@ -869,7 +923,7 @@
         }
       }
     },
-    "__schema9": {
+    "__schema10": {
       "type": "object",
       "properties": {
         "使用中": {
@@ -878,14 +932,14 @@
         },
         "品质": {
           "default": "凡",
-          "$ref": "#/$defs/__schema10"
+          "$ref": "#/$defs/__schema11"
         },
         "境界": {
           "default": "练气期",
           "type": "string"
         },
         "五行": {
-          "$ref": "#/$defs/__schema11"
+          "$ref": "#/$defs/__schema12"
         },
         "类型": {
           "default": "心法",
@@ -926,7 +980,7 @@
         }
       }
     },
-    "__schema10": {
+    "__schema11": {
       "type": "string",
       "enum": [
         "凡",
@@ -936,7 +990,7 @@
         "天"
       ]
     },
-    "__schema11": {
+    "__schema12": {
       "type": "string",
       "enum": [
         "金",
@@ -949,15 +1003,15 @@
         "混沌"
       ]
     },
-    "__schema12": {
+    "__schema13": {
       "default": 0,
       "description": "默认单位为下品灵石",
-      "$ref": "#/$defs/__schema13"
-    },
-    "__schema13": {
-      "type": "number"
+      "$ref": "#/$defs/__schema14"
     },
     "__schema14": {
+      "type": "number"
+    },
+    "__schema15": {
       "default": {},
       "type": "object",
       "propertyNames": {
@@ -968,7 +1022,7 @@
         "properties": {
           "品质": {
             "default": "凡",
-            "$ref": "#/$defs/__schema10"
+            "$ref": "#/$defs/__schema11"
           },
           "境界": {
             "type": "string"
@@ -989,7 +1043,7 @@
             "type": "string"
           },
           "五行": {
-            "$ref": "#/$defs/__schema11"
+            "$ref": "#/$defs/__schema12"
           },
           "标签": {
             "default": [],
@@ -1018,7 +1072,7 @@
         }
       }
     },
-    "__schema15": {
+    "__schema16": {
       "default": {},
       "type": "object",
       "propertyNames": {
@@ -1029,7 +1083,7 @@
         "properties": {
           "品质": {
             "default": "凡",
-            "$ref": "#/$defs/__schema10"
+            "$ref": "#/$defs/__schema11"
           },
           "境界": {
             "type": "string"
@@ -1047,7 +1101,7 @@
             "type": "string"
           },
           "五行": {
-            "$ref": "#/$defs/__schema11"
+            "$ref": "#/$defs/__schema12"
           },
           "标签": {
             "default": [],
@@ -1076,17 +1130,17 @@
         }
       }
     },
-    "__schema16": {
+    "__schema17": {
       "default": {},
       "type": "object",
       "propertyNames": {
         "type": "string"
       },
       "additionalProperties": {
-        "$ref": "#/$defs/__schema17"
+        "$ref": "#/$defs/__schema18"
       }
     },
-    "__schema17": {
+    "__schema18": {
       "type": "object",
       "properties": {
         "使用中": {
@@ -1095,14 +1149,14 @@
         },
         "品质": {
           "default": "凡",
-          "$ref": "#/$defs/__schema10"
+          "$ref": "#/$defs/__schema11"
         },
         "境界": {
           "default": "凡人",
           "type": "string"
         },
         "五行": {
-          "$ref": "#/$defs/__schema11"
+          "$ref": "#/$defs/__schema12"
         },
         "标签": {
           "default": [],
@@ -1129,12 +1183,12 @@
             "type": "string"
           },
           "additionalProperties": {
-            "$ref": "#/$defs/__schema18"
+            "$ref": "#/$defs/__schema19"
           }
         }
       }
     },
-    "__schema18": {
+    "__schema19": {
       "type": "object",
       "properties": {
         "攻击力": {
@@ -1155,47 +1209,7 @@
         }
       }
     },
-    "__schema19": {
-      "default": {},
-      "type": "object",
-      "propertyNames": {
-        "type": "string"
-      },
-      "additionalProperties": {
-        "$ref": "#/$defs/__schema17"
-      }
-    },
     "__schema20": {
-      "default": true,
-      "type": "boolean"
-    },
-    "__schema21": {
-      "default": "凡",
-      "$ref": "#/$defs/__schema10"
-    },
-    "__schema22": {
-      "default": "凡人",
-      "type": "string"
-    },
-    "__schema23": {
-      "$ref": "#/$defs/__schema11"
-    },
-    "__schema24": {
-      "default": [],
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "__schema25": {
-      "default": "",
-      "type": "string"
-    },
-    "__schema26": {
-      "default": 0,
-      "type": "number"
-    },
-    "__schema27": {
       "default": {},
       "type": "object",
       "propertyNames": {
@@ -1205,6 +1219,36 @@
         "$ref": "#/$defs/__schema18"
       }
     },
+    "__schema21": {
+      "default": true,
+      "type": "boolean"
+    },
+    "__schema22": {
+      "default": "凡",
+      "$ref": "#/$defs/__schema11"
+    },
+    "__schema23": {
+      "default": "凡人",
+      "type": "string"
+    },
+    "__schema24": {
+      "$ref": "#/$defs/__schema12"
+    },
+    "__schema25": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "__schema26": {
+      "default": "",
+      "type": "string"
+    },
+    "__schema27": {
+      "default": 0,
+      "type": "number"
+    },
     "__schema28": {
       "default": {},
       "type": "object",
@@ -1212,14 +1256,24 @@
         "type": "string"
       },
       "additionalProperties": {
-        "$ref": "#/$defs/__schema8"
+        "$ref": "#/$defs/__schema19"
       }
     },
     "__schema29": {
+      "default": {},
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/__schema9"
+      }
+    },
+    "__schema30": {
       "default": -50,
       "type": "number"
     },
-    "__schema30": {
+    "__schema31": {
       "type": "object",
       "properties": {
         "年": {

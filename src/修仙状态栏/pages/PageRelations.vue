@@ -117,6 +117,7 @@
               <span class="xy-npc-race">{{ npc.种族 }}</span>
               <span v-if="(npc.身份 && npc.身份.length) || state.editMode">·</span>
               <IdentityTags v-model="npc.身份" label="身份" />
+              <span v-if="npc.关系" class="xy-npc-relation" :title="npc.关系">{{ npc.关系 }}</span>
               <!-- 元阳(并入体质): null≡不存在 → 查看态仅在成立(true/false)时显示;编辑态恒显以便左键循环 -->
               <span
                 v-if="state.editMode || npc.体质?.元阳 != null"
@@ -188,6 +189,10 @@
         </div>
 
         <div v-if="state.openedNPC === name" class="xy-npc-body" @click.stop>
+          <div v-if="npc.关系 || state.editMode" class="xy-relation-summary">
+            <span class="xy-relation-summary-label">与主角</span>
+            <EditableValue v-model="npc.关系" label="与主角关系" :format="v => v || '尚未定义'" />
+          </div>
           <!-- 基础信息四宫 -->
           <div class="xy-npc-grid">
             <div class="xy-mini">
@@ -671,6 +676,37 @@ function toggleDetail(npc: any) {
 </script>
 
 <style scoped>
+.xy-npc-relation {
+  max-width: min(34vw, 240px);
+  overflow: hidden;
+  padding: 0 6px;
+  border: 1px solid var(--xy-line);
+  border-radius: 999px;
+  color: var(--xy-jade-deep, #3d6b54);
+  background: var(--xy-tint-jade-faint, rgba(91, 138, 114, 0.08));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.xy-relation-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--xy-line);
+  border-left: 3px solid var(--xy-jade, #5b8a72);
+  border-radius: 6px;
+  background: var(--xy-paper);
+  color: var(--xy-ink);
+  line-height: 1.55;
+}
+.xy-relation-summary-label {
+  flex: 0 0 auto;
+  color: var(--xy-jade-deep, #3d6b54);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
 /* 保证垃圾桶/眼睛这两个绝对定位小圆锚定在人物头栏右上（与 padding-right 预留列一致） */
 .xy-npc-head {
   position: relative;

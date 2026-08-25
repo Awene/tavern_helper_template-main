@@ -15,7 +15,7 @@
         v-for="(asset, assetName) in assets"
         :key="assetName"
         class="xy-asset-card"
-        :class="{ 'xy-mobile-card-open': isMobileCardOpen('asset', String(assetName)) }"
+        :class="{ 'xy-collapsible-open': state.editMode || isCardOpen('asset', String(assetName)) }"
         :data-seal="assetGlyph(asset.类型)"
       >
         <button
@@ -29,9 +29,9 @@
         </button>
 
         <div
-          class="xy-asset-head xy-mobile-card-head"
-          :aria-expanded="state.layoutMode === 'mobile' ? isMobileCardOpen('asset', String(assetName)) : undefined"
-          @click="toggleMobileCard('asset', String(assetName))"
+          class="xy-asset-head xy-collapsible-head"
+          :aria-expanded="state.editMode || isCardOpen('asset', String(assetName))"
+          @click="toggleCard('asset', String(assetName))"
         >
           <span class="xy-asset-name">
             <EditableValue
@@ -54,13 +54,10 @@
               @update:model-value="asset.人员规模 = normalizeScale($event)"
             />人
           </span>
-          <span class="xy-mobile-card-caret" aria-hidden="true">⌄</span>
+          <span class="xy-collapsible-caret" aria-hidden="true">⌄</span>
         </div>
 
-        <div
-          v-show="state.layoutMode === 'pc' || state.editMode || isMobileCardOpen('asset', String(assetName))"
-          class="xy-mobile-card-body"
-        >
+        <div v-show="state.editMode || isCardOpen('asset', String(assetName))" class="xy-collapsible-body">
           <div class="xy-asset-location">
             <select
               v-if="state.editMode"
@@ -168,7 +165,7 @@
 import _ from 'lodash';
 import { computed } from 'vue';
 import { useDataStore } from '../store';
-import { isMobileCardOpen, requestDelete, showToast, state, toggleMobileCard } from '../composables';
+import { isCardOpen, requestDelete, showToast, state, toggleCard } from '../composables';
 import EditableValue from './EditableValue.vue';
 import EffectList from './EffectList.vue';
 import IdentityTags from './IdentityTags.vue';

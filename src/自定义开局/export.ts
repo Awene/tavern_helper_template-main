@@ -264,6 +264,7 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
       灵气: { 现值: baseMp, 上限: baseMp },
       遁速: baseDun,
     },
+    任务: {},
     地点: {
       世界: location?.世界 || LOCATION_WORLD,
       地域: location?.地域 || '中原',

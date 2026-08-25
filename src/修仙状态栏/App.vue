@@ -1,5 +1,5 @@
 <template>
-  <div v-if="store.data" class="xy-app" :class="state.layoutMode === 'mobile' ? 'xy-layout-mobile' : 'xy-layout-pc'">
+  <div v-if="store.data" class="xy-app">
     <!-- 装饰背景：远山 + 仙鹤 + 印章 -->
     <div class="xy-bg" aria-hidden="true">
       <svg class="xy-bg-mountain" viewBox="0 0 1200 240" preserveAspectRatio="none">
@@ -484,7 +484,7 @@
         <transition name="xy-fade" mode="out-in">
           <main :key="state.currentTab" class="xy-content">
             <!-- ▼ 技艺 ▼ -->
-            <section v-if="state.currentTab === 0" class="xy-page xy-page-skills">
+            <section v-if="state.currentTab === 1" class="xy-page xy-page-skills">
               <div class="xy-skill-layout">
                 <section v-for="group in skillGroups" :key="group.key" class="xy-skill-panel">
                   <h3 class="xy-skill-group-title">{{ group.label }}</h3>
@@ -588,20 +588,23 @@
               </div>
             </section>
 
+            <!-- ▼ 任务 ▼ -->
+            <PageTasks v-else-if="state.currentTab === 0" />
+
             <!-- ▼ 储物 ▼ -->
-            <PageStorage v-else-if="state.currentTab === 1" />
+            <PageStorage v-else-if="state.currentTab === 2" />
 
             <!-- ▼ 关系 ▼ -->
-            <PageRelations v-else-if="state.currentTab === 2" />
+            <PageRelations v-else-if="state.currentTab === 3" />
 
             <!-- ▼ 固定资产 ▼ -->
-            <PageAssets v-else-if="state.currentTab === 3" />
+            <PageAssets v-else-if="state.currentTab === 4" />
 
             <!-- ▼ 传闻 ▼ -->
-            <PageRumors v-else-if="state.currentTab === 4" />
+            <PageRumors v-else-if="state.currentTab === 5" />
 
             <!-- ▼ 地图 ▼ -->
-            <PageMap v-else-if="state.currentTab === 5" />
+            <PageMap v-else-if="state.currentTab === 6" />
           </main>
         </transition>
       </div>
@@ -659,9 +662,9 @@
 import _ from 'lodash';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { publishSharedTheme, readSharedTheme, subscribeSharedTheme, type SharedTheme } from '../shared/theme';
-import { readSharedLayout, subscribeSharedLayout } from '../shared/layout';
 import { useDataStore } from './store';
 import PageAssets from './pages/PageAssets.vue';
+import PageTasks from './pages/PageTasks.vue';
 import PageStorage from './pages/PageStorage.vue';
 import PageRelations from './pages/PageRelations.vue';
 import PageRumors from './pages/PageRumors.vue';
@@ -741,7 +744,6 @@ function closeOverview() {
 
 const isDark = ref(false);
 let stopThemeSync: (() => void) | undefined;
-let stopLayoutSync: (() => void) | undefined;
 function applyTheme(theme: SharedTheme, publish = false) {
   isDark.value = theme === 'dark';
   const el = document.documentElement;
@@ -770,14 +772,9 @@ function openSummary() {
 onMounted(() => {
   applyTheme(readSharedTheme('dark'));
   stopThemeSync = subscribeSharedTheme(theme => applyTheme(theme));
-  state.layoutMode = readSharedLayout('pc');
-  stopLayoutSync = subscribeSharedLayout(layout => {
-    state.layoutMode = layout;
-  });
 });
 onBeforeUnmount(() => {
   stopThemeSync?.();
-  stopLayoutSync?.();
 });
 
 // 时间轴引擎：玩家时间/地点/境界变化时

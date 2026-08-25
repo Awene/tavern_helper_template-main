@@ -64,7 +64,10 @@
             v-for="(it, name) in filteredItems"
             :key="name"
             class="xy-item"
-            :class="['xy-q-bg-' + it.品质, { 'xy-mobile-card-open': isMobileCardOpen('item', String(name)) }]"
+            :class="[
+              'xy-q-bg-' + it.品质,
+              { 'xy-collapsible-open': state.editMode || isCardOpen('item', String(name)) },
+            ]"
           >
             <button
               type="button"
@@ -77,20 +80,17 @@
               </svg>
             </button>
             <div
-              class="xy-item-head xy-mobile-card-head"
-              :aria-expanded="state.layoutMode === 'mobile' ? isMobileCardOpen('item', String(name)) : undefined"
-              @click="toggleMobileCard('item', String(name))"
+              class="xy-item-head xy-collapsible-head"
+              :aria-expanded="state.editMode || isCardOpen('item', String(name))"
+              @click="toggleCard('item', String(name))"
             >
               <span class="xy-item-name">{{ name }}</span>
               <span class="xy-item-qty" @click.stop
                 >×<EditableValue v-model.number="it.数量" type="number" label="数量" :min="0"
               /></span>
-              <span class="xy-mobile-card-caret" aria-hidden="true">⌄</span>
+              <span class="xy-collapsible-caret" aria-hidden="true">⌄</span>
             </div>
-            <div
-              v-show="state.layoutMode === 'pc' || state.editMode || isMobileCardOpen('item', String(name))"
-              class="xy-mobile-card-body"
-            >
+            <div v-show="state.editMode || isCardOpen('item', String(name))" class="xy-collapsible-body">
               <div class="xy-item-meta">
                 <span :class="['xy-quality', 'xy-q-' + it.品质]">{{ it.品质 }}</span>
                 <span class="xy-pill">{{ it.类型 }}</span>
@@ -156,7 +156,10 @@
             v-for="(eq, name) in filteredEquips"
             :key="name"
             class="xy-item xy-equipment"
-            :class="['xy-q-bg-' + eq.品质, { 'xy-mobile-card-open': isMobileCardOpen('equip', String(name)) }]"
+            :class="[
+              'xy-q-bg-' + eq.品质,
+              { 'xy-collapsible-open': state.editMode || isCardOpen('equip', String(name)) },
+            ]"
           >
             <button
               type="button"
@@ -169,18 +172,15 @@
               </svg>
             </button>
             <div
-              class="xy-item-head xy-mobile-card-head"
-              :aria-expanded="state.layoutMode === 'mobile' ? isMobileCardOpen('equip', String(name)) : undefined"
-              @click="toggleMobileCard('equip', String(name))"
+              class="xy-item-head xy-collapsible-head"
+              :aria-expanded="state.editMode || isCardOpen('equip', String(name))"
+              @click="toggleCard('equip', String(name))"
             >
               <span class="xy-item-name">{{ name }}</span>
               <span class="xy-item-pos">{{ eq.位置 }}</span>
-              <span class="xy-mobile-card-caret" aria-hidden="true">⌄</span>
+              <span class="xy-collapsible-caret" aria-hidden="true">⌄</span>
             </div>
-            <div
-              v-show="state.layoutMode === 'pc' || state.editMode || isMobileCardOpen('equip', String(name))"
-              class="xy-mobile-card-body"
-            >
+            <div v-show="state.editMode || isCardOpen('equip', String(name))" class="xy-collapsible-body">
               <div class="xy-item-meta">
                 <span :class="['xy-quality', 'xy-q-' + eq.品质]">{{ eq.品质 }}</span>
                 <span class="xy-pill">{{ eq.类型 }}</span>
@@ -344,8 +344,8 @@ import {
   getEquipStat,
   setEquipStat,
   parseItemTags,
-  isMobileCardOpen,
-  toggleMobileCard,
+  isCardOpen,
+  toggleCard,
 } from '../composables';
 
 const store = useDataStore();

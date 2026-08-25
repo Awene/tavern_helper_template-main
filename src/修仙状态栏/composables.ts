@@ -8,12 +8,10 @@ import {
   type GeneratedEvent,
   type TimelineDate,
 } from './timeline-engine';
-import { readSharedLayout, type SharedLayout } from '../shared/layout';
 export type { TimelineDate } from './timeline-engine';
 
 // ============ 共享 UI 状态（模块级单例）============
 export const state = reactive({
-  layoutMode: readSharedLayout('pc') as SharedLayout,
   currentTab: 0,
   storageTab: 0,
   openedNPC: null as string | null,
@@ -36,18 +34,17 @@ export const state = reactive({
   confirmDelete: null as null | { kind: string; key: string; label: string },
   // 人物细化弹窗当前对应的 NPC 名；null 表示关闭。
   characterRefinement: null as string | null,
-  // 手机排版下各长卡片默认折叠；key 使用「类型:名称」避免重名冲突。
-  mobileCardOpen: {} as Record<string, boolean>,
+  // 长卡片默认折叠；key 使用「类型:名称」避免重名冲突。
+  cardOpen: {} as Record<string, boolean>,
 });
 
-export function isMobileCardOpen(kind: string, name: string): boolean {
-  return state.mobileCardOpen[`${kind}:${name}`] === true;
+export function isCardOpen(kind: string, name: string): boolean {
+  return state.cardOpen[`${kind}:${name}`] === true;
 }
 
-export function toggleMobileCard(kind: string, name: string): void {
-  if (state.layoutMode !== 'mobile') return;
+export function toggleCard(kind: string, name: string): void {
   const key = `${kind}:${name}`;
-  state.mobileCardOpen[key] = !state.mobileCardOpen[key];
+  state.cardOpen[key] = !state.cardOpen[key];
 }
 
 const npcSectionOpen = reactive<Record<string, Record<string, boolean>>>({});
@@ -55,6 +52,7 @@ const npcAvatars = reactive<Record<string, string>>({});
 
 // ============ 常量 ============
 export const tabs = [
+  { label: '任务', icon: '任' },
   { label: '技艺', icon: '技' },
   { label: '储物', icon: '囊' },
   { label: '关系', icon: '缘' },
@@ -711,6 +709,9 @@ export const performDelete = () => {
       break;
     case 'asset':
       if (data.固定资产) delete data.固定资产[c.key];
+      break;
+    case 'task':
+      if (data.任务) delete data.任务[c.key];
       break;
     case 'npc':
       if (data.关系列表) delete data.关系列表[c.key];

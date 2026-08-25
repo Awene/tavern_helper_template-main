@@ -6,7 +6,7 @@
       {
         'xy-unit-active': unit.使用中,
         'xy-has-trash': deletable,
-        'xy-mobile-card-open': isMobileCardOpen('unit', name),
+        'xy-collapsible-open': state.editMode || isCardOpen('unit', name),
       },
     ]"
   >
@@ -16,9 +16,9 @@
       </svg>
     </button>
     <div
-      class="xy-item-head xy-mobile-card-head"
-      :aria-expanded="state.layoutMode === 'mobile' ? isMobileCardOpen('unit', name) : undefined"
-      @click="toggleMobileCard('unit', name)"
+      class="xy-item-head xy-collapsible-head"
+      :aria-expanded="state.editMode || isCardOpen('unit', name)"
+      @click="toggleCard('unit', name)"
     >
       <span class="xy-item-name">{{ name }}</span>
       <button
@@ -30,13 +30,10 @@
         {{ unit.使用中 ? '在身' : '入囊' }}
       </button>
       <span v-else-if="unit.使用中" class="xy-unit-badge">在身</span>
-      <span class="xy-mobile-card-caret" aria-hidden="true">⌄</span>
+      <span class="xy-collapsible-caret" aria-hidden="true">⌄</span>
     </div>
 
-    <div
-      v-show="state.layoutMode === 'pc' || state.editMode || isMobileCardOpen('unit', name)"
-      class="xy-mobile-card-body"
-    >
+    <div v-show="state.editMode || isCardOpen('unit', name)" class="xy-collapsible-body">
       <div class="xy-item-meta">
         <span :class="['xy-quality', 'xy-q-' + (unit.品质 || '凡')]">{{ unit.品质 || '凡' }}</span>
         <span v-if="unit.境界" class="xy-pill xy-pill-soft">{{ unit.境界 }}</span>
@@ -128,7 +125,7 @@ import _ from 'lodash';
 import { computed } from 'vue';
 import EditableValue from './EditableValue.vue';
 import EffectList from './EffectList.vue';
-import { isMobileCardOpen, state, toggleMobileCard } from '../composables';
+import { isCardOpen, state, toggleCard } from '../composables';
 
 const props = defineProps<{
   unit: any;

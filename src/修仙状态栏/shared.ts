@@ -26,6 +26,7 @@ export const state = reactive({
 
 // =============== 静态常量 ===============
 export const tabs = [
+  { label: '任务', icon: '任' },
   { label: '技艺', icon: '技' },
   { label: '储物', icon: '囊' },
   { label: '关系', icon: '缘' },

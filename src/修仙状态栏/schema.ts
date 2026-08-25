@@ -407,6 +407,7 @@ const NPCSchema = z.object({
     .number()
     .transform(n => clamp(n, -100, 100))
     .prefault(0),
+  关系: z.string().prefault(''), // NPC 与 <user> 的当前双方关系，一句话描述
   // 细节可见（前端偏好）：默认 true；为 false 时，变量输出 EJS 会把该 NPC 的
   // 物品/功法/装备/傀儡/灵兽 从发送给 AI 的 <status_current_variable> 中隐去。
   细节可见: z.boolean().prefault(true),
@@ -446,10 +447,13 @@ const WildBeastSchema = WildPuppetSchema.extend({
 // preprocess: 老数据/AI遗漏 类型 字段时 默认补 '人物',保持向后兼容
 const RelationEntrySchema = z.preprocess(
   (val: any) => {
-    if (val && typeof val === 'object' && !val.类型) {
-      return { ...val, 类型: '人物' };
+    if (!val || typeof val !== 'object' || Array.isArray(val)) return val;
+    let normalized = val;
+    if (!normalized.类型) normalized = { ...normalized, 类型: '人物' };
+    if (normalized.类型 === '人物' && !('关系' in normalized) && typeof normalized.关系类型 === 'string') {
+      normalized = { ...normalized, 关系: normalized.关系类型 };
     }
-    return val;
+    return normalized;
   },
   z.discriminatedUnion('类型', [NPCSchema, WildPuppetSchema, WildBeastSchema]),
 );
@@ -499,7 +503,8 @@ const timePeriodAliases: Record<string, (typeof timePeriods)[number]> = {
 const normalizeTimePeriod = (input: unknown) => {
   const text = String(input ?? '').trim();
   const period = timePeriods.find(
-    item => text === item || ['时', '初', '正', '刻', '中', '末', '半'].some(suffix => text.includes(`${item}${suffix}`)),
+    item =>
+      text === item || ['时', '初', '正', '刻', '中', '末', '半'].some(suffix => text.includes(`${item}${suffix}`)),
   );
   if (period) return `${period}时`;
   const alias = Object.entries(timePeriodAliases).find(([name]) => text.includes(name));
@@ -657,6 +662,21 @@ const FixedAssetsSchema = z
   .preprocess(value => normalizeNamedRecord(value, '新资产'), z.record(z.string(), FixedAssetSchema))
   .prefault({});
 
+// ===== 任务 Schema =====
+// 任务只保存尚未结束的条目；完成、失败或放弃后直接移除，不保留履历。
+const TaskSchema = z.object({
+  状态: z.enum(['进行中', '待结算']).prefault('进行中'),
+  委托方: looseString('未知').prefault('未知'),
+  难度: looseString('未定').prefault('未定'),
+  目标: looseString('').prefault(''),
+  进展: looseString('').prefault(''),
+  奖励: looseString('无').prefault('无'),
+  交付: looseString('无').prefault('无'),
+  截止时间: AssetTimeSchema,
+});
+
+const TasksSchema = z.record(z.string(), TaskSchema).prefault({});
+
 // ===== 传闻 Schema =====
 // 内容由前端引擎 src/修仙状态栏/timeline-engine.ts 生成并写回此字段,
 // AI 仅读、不写。详见 [mvu_update]变量更新规则.yaml。
@@ -711,6 +731,7 @@ export const CultivationStatusSchema = z.object({
   技艺: SkillSchema,
   资源池: ResourcePoolSchema,
   固定资产: FixedAssetsSchema,
+  任务: TasksSchema,
   地点: LocationSchema,
   时间: TimeSchema,
   状态效果: z.record(z.string(), StatusEffectSchema).prefault({}),
