@@ -87,6 +87,36 @@ const config: Config = {
   entries: glob_script_files().map(parse_entry),
 };
 
+const QUICK_REPLY_PLACEHOLDER = '__RB_QUICK_REPLIES_URI__';
+
+/**
+ * 正文美化仍以单一 HTML 运行。把可维护的 JSON 在构建阶段内嵌进产物，
+ * 避免正式 CDN 与本地测试环境额外请求配置文件、产生路径或缓存差异。
+ */
+function inline_quick_reply_config(entry: Entry): webpack.WebpackPluginInstance[] {
+  if (!entry.script.replaceAll('\\', '/').endsWith('src/正文美化/index.ts')) return [];
+
+  const config_path = path.join(import.meta.dirname, 'src', '面板美化', '行动快捷回复.json');
+  return [
+    {
+      apply(compiler) {
+        compiler.hooks.thisCompilation.tap('InlineQuickReplyConfigPlugin', compilation => {
+          compilation.fileDependencies.add(config_path);
+          HtmlWebpackPlugin.getHooks(compilation).beforeEmit.tap('InlineQuickReplyConfigPlugin', data => {
+            const parsed = JSON.parse(fs.readFileSync(config_path, 'utf-8'));
+            const encoded = encodeURIComponent(JSON.stringify(parsed));
+            if (!data.html.includes(QUICK_REPLY_PLACEHOLDER)) {
+              throw new Error(`正文美化模板缺少快捷回复占位符 ${QUICK_REPLY_PLACEHOLDER}`);
+            }
+            data.html = data.html.replaceAll(QUICK_REPLY_PLACEHOLDER, encoded);
+            return data;
+          });
+        });
+      },
+    },
+  ];
+}
+
 let io: Server;
 function watch_tavern_helper(compiler: webpack.Compiler) {
   if (compiler.options.watch) {
@@ -446,6 +476,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         ]
     )
       .concat(
+        inline_quick_reply_config(entry),
         { apply: watch_tavern_helper },
         { apply: schema_dump },
         { apply: tavern_sync },

@@ -2995,11 +2995,129 @@
         text-shadow: 0 0 14px color-mix(in srgb, var(--rb-options-accent) 35%, transparent);
         word-break: break-word;
       }
-      .rb-options-hint {
+      .rb-quick-categories {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 4px;
+        max-width: 72%;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .rb-quick-categories::-webkit-scrollbar {
+        display: none;
+      }
+      .rb-quick-category {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        border: 1px solid rgba(212, 175, 55, 0.28);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.035);
+        color: rgba(232, 213, 183, 0.72);
+        font: inherit;
+        font-size: 0.75em;
+        line-height: 1.45;
+        white-space: nowrap;
+        cursor: pointer;
+        transition:
+          color 0.18s ease,
+          background 0.18s ease,
+          border-color 0.18s ease,
+          transform 0.18s ease;
+      }
+      .rb-quick-category:hover,
+      .rb-quick-category.active {
+        color: #fff8df;
+        background: color-mix(in srgb, var(--rb-options-accent) 22%, transparent);
+        border-color: color-mix(in srgb, var(--rb-options-accent) 72%, transparent);
+      }
+      .rb-quick-category:active {
+        transform: scale(0.96);
+      }
+      .rb-quick-panel {
+        padding: 9px 13px 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(0, 0, 0, 0.12);
+      }
+      .rb-quick-panel[hidden],
+      .rb-quick-group[hidden] {
+        display: none !important;
+      }
+      .rb-quick-panel-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 7px;
+        color: var(--rb-options-accent);
         font-size: 0.78em;
-        color: rgba(232, 213, 183, 0.55);
-        letter-spacing: 0.4px;
-        font-style: italic;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+      }
+      .rb-quick-panel-head small {
+        color: rgba(232, 213, 183, 0.48);
+        font-size: 0.88em;
+        font-weight: 400;
+        letter-spacing: 0;
+      }
+      .rb-quick-replies {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+      }
+      .rb-quick-reply {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        min-width: 0;
+        padding: 6px 9px;
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 7px;
+        background: rgba(255, 255, 255, 0.035);
+        color: #e8d5b7;
+        font: inherit;
+        font-size: 0.82em;
+        line-height: 1.4;
+        text-align: left;
+        cursor: pointer;
+        transition:
+          background 0.18s ease,
+          border-color 0.18s ease,
+          transform 0.18s ease,
+          box-shadow 0.18s ease;
+      }
+      .rb-quick-reply::before {
+        content: '›';
+        flex: 0 0 auto;
+        color: var(--rb-options-accent);
+        font-size: 1.25em;
+        line-height: 1;
+      }
+      .rb-quick-reply:hover {
+        background: color-mix(in srgb, var(--rb-options-accent) 12%, transparent);
+        border-color: color-mix(in srgb, var(--rb-options-accent) 45%, transparent);
+        transform: translateY(-1px);
+      }
+      .rb-quick-reply.is-sent {
+        animation: rb-options-flash 0.6s ease-out;
+      }
+      .rb-options-section-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 1px 0 2px;
+        color: rgba(232, 213, 183, 0.48);
+        font-size: 0.74em;
+        letter-spacing: 0.8px;
+      }
+      .rb-options-section-label::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.06);
       }
       .rb-options-body {
         padding: 10px 13px;
@@ -3113,8 +3231,36 @@
         color: color-mix(in srgb, var(--rb-options-accent) 75%, #1a0f00);
         text-shadow: 0 0 10px color-mix(in srgb, var(--rb-options-accent) 18%, transparent);
       }
-      [data-theme='light'] .rb-options-hint {
-        color: rgba(58, 47, 36, 0.55);
+      [data-theme='light'] .rb-quick-category {
+        border-color: rgba(160, 127, 72, 0.28);
+        background: rgba(255, 255, 255, 0.4);
+        color: rgba(58, 47, 36, 0.72);
+      }
+      [data-theme='light'] .rb-quick-category:hover,
+      [data-theme='light'] .rb-quick-category.active {
+        color: #5b3d16;
+        background: color-mix(in srgb, var(--rb-options-accent) 18%, white);
+        border-color: color-mix(in srgb, var(--rb-options-accent) 65%, transparent);
+      }
+      [data-theme='light'] .rb-quick-panel {
+        border-bottom-color: rgba(160, 127, 72, 0.18);
+        background: rgba(160, 127, 72, 0.045);
+      }
+      [data-theme='light'] .rb-quick-panel-head small,
+      [data-theme='light'] .rb-options-section-label {
+        color: rgba(58, 47, 36, 0.5);
+      }
+      [data-theme='light'] .rb-quick-reply {
+        border-color: rgba(160, 127, 72, 0.2);
+        background: rgba(255, 255, 255, 0.46);
+        color: #3a2f24;
+      }
+      [data-theme='light'] .rb-quick-reply:hover {
+        background: rgba(168, 153, 104, 0.14);
+        border-color: rgba(160, 127, 72, 0.42);
+      }
+      [data-theme='light'] .rb-options-section-label::after {
+        background: rgba(160, 127, 72, 0.18);
       }
       [data-theme='light'] .rb-options-item {
         background: rgba(168, 153, 104, 0.07);
@@ -3131,6 +3277,7 @@
           margin: 9px 0;
         }
         .rb-options-head {
+          flex-wrap: wrap;
           padding: 7px 11px;
         }
         .rb-options-title {
@@ -3147,8 +3294,30 @@
         .rb-options-text {
           font-size: 0.88em;
         }
-        .rb-options-hint {
-          display: none;
+        .rb-quick-categories {
+          flex: 1 0 100%;
+          justify-content: flex-start;
+          max-width: none;
+          padding-top: 2px;
+        }
+        .rb-quick-category {
+          padding: 3px 9px;
+          font-size: 0.72em;
+        }
+        .rb-quick-panel {
+          padding: 8px 10px;
+        }
+        .rb-quick-replies {
+          gap: 5px;
+        }
+        .rb-quick-reply {
+          padding: 6px 8px;
+          font-size: 0.78em;
+        }
+      }
+      @media (max-width: 380px) {
+        .rb-quick-replies {
+          grid-template-columns: 1fr;
         }
       }
 
@@ -3580,6 +3749,17 @@
       try {
         console.log('[正文美化] script loaded, readyState=', document.readyState);
       } catch (_) {}
+
+      // 由 webpack 从“行动快捷回复.json”构建时内嵌；运行时不额外请求配置文件。
+      const RB_QUICK_REPLY_CONFIG = (() => {
+        try {
+          const config = JSON.parse(decodeURIComponent('__RB_QUICK_REPLIES_URI__'));
+          return config && Array.isArray(config.categories) ? config : { categories: [] };
+        } catch (error) {
+          console.warn('[正文美化] 行动快捷回复配置解析失败:', error);
+          return { categories: [] };
+        }
+      })();
 
       // 轻量正则会在加载本页面前保存本楼层的捕获正文；每层消息 iframe 拥有独立 window，
       // 因此载荷不会在不同楼层之间串写。直接打开构建页时允许为空，方便独立调试。
@@ -5466,6 +5646,62 @@
         );
       }
 
+      function renderQuickReplyPanel() {
+        const categories = RB_QUICK_REPLY_CONFIG.categories
+          .map(category => {
+            const id = String(category && category.id ? category.id : '').trim();
+            const label = String(category && category.label ? category.label : '').trim();
+            const icon = String(category && category.icon ? category.icon : 'fa-solid fa-bolt').trim();
+            const prefix = String(category && category.prefix ? category.prefix : '');
+            const replies = Array.isArray(category && category.replies)
+              ? category.replies
+                  .map(reply => ({
+                    label: String(reply && reply.label ? reply.label : '').trim(),
+                    text: prefix + String(reply && reply.text ? reply.text : '').trim(),
+                  }))
+                  .filter(reply => reply.label && reply.text)
+              : [];
+            return { id, label, icon, replies };
+          })
+          .filter(category => category.id && category.label && category.replies.length > 0);
+
+        if (!categories.length) return { buttons: '', panel: '', hasCategories: false };
+
+        const buttons = categories
+          .map(
+            category =>
+              `<button type="button" class="rb-quick-category" data-quick-category="${_.escape(category.id)}" ` +
+              `aria-expanded="false" title="展开${_.escape(category.label)}快捷回复">` +
+              `<i class="${_.escape(category.icon)}" aria-hidden="true"></i>` +
+              `<span>${_.escape(category.label)}</span></button>`,
+          )
+          .join('');
+
+        const groups = categories
+          .map(category => {
+            const replies = category.replies
+              .map(
+                reply =>
+                  `<button type="button" class="rb-quick-reply" data-option-text="${_.escape(reply.text)}" ` +
+                  `title="${_.escape(reply.text)}"><span>${_.escape(reply.label)}</span></button>`,
+              )
+              .join('');
+            return (
+              `<div class="rb-quick-group" data-quick-group="${_.escape(category.id)}" hidden>` +
+              `<div class="rb-quick-panel-head"><span>${_.escape(category.label)}快捷回复</span>` +
+              `<small>点击填入输入框，不会自动发送</small></div>` +
+              `<div class="rb-quick-replies">${replies}</div></div>`
+            );
+          })
+          .join('');
+
+        return {
+          buttons: `<div class="rb-quick-categories" role="toolbar" aria-label="固定快捷回复分类">${buttons}</div>`,
+          panel: `<div class="rb-quick-panel" hidden>${groups}</div>`,
+          hasCategories: true,
+        };
+      }
+
       // —— 行动选项 <options>/<action_options> 渲染:解析 "1. xxx / 2. xxx / ..." 列表为可点击编号卡片 —— //
       // 点击会把选项文本追加到酒馆输入框,不自动发送、不替换原有输入
       function renderActionOptions(inner) {
@@ -5509,14 +5745,20 @@
             .join('');
         }
 
+        const quickReplies = renderQuickReplyPanel();
+        const sectionLabel = quickReplies.hasCategories
+          ? `<div class="rb-options-section-label"><span>本轮建议</span></div>`
+          : '';
+
         return (
           `<div class="rb-options">` +
           `<div class="rb-options-head">` +
           `<i class="rb-options-icon fa-solid fa-compass-drafting"></i>` +
           `<span class="rb-options-title">行动方略</span>` +
-          `<span class="rb-options-hint">点击填入输入框</span>` +
+          quickReplies.buttons +
           `</div>` +
-          `<div class="rb-options-body">${body}</div>` +
+          quickReplies.panel +
+          `<div class="rb-options-body">${sectionLabel}${body}</div>` +
           `</div>`
         );
       }
@@ -5631,8 +5873,30 @@
               .filter(`[data-tab="${targetKey}"]`)
               .addClass('active');
           });
-          // 行动选项点击 -> 把选项文本追加到酒馆输入框,不自动发送、不替换原值
-          $('#readingContent').on('click', '.rb-options-item', function () {
+          // 固定快捷回复分类：同一分类再次点击即收起，AI 本轮建议始终保留在下方。
+          $('#readingContent').on('click', '.rb-quick-category', function (event) {
+            event.stopPropagation();
+            const $button = $(this);
+            const $options = $button.closest('.rb-options');
+            const $panel = $options.find('.rb-quick-panel');
+            const targetKey = $button.attr('data-quick-category') || '';
+            const shouldClose = $button.hasClass('active');
+
+            $options.find('.rb-quick-category').removeClass('active').attr('aria-expanded', 'false');
+            $options.find('.rb-quick-group').prop('hidden', true);
+            if (shouldClose || !targetKey) {
+              $panel.prop('hidden', true);
+              return;
+            }
+
+            $button.addClass('active').attr('aria-expanded', 'true');
+            $options.find('.rb-quick-group').each(function () {
+              $(this).prop('hidden', $(this).attr('data-quick-group') !== targetKey);
+            });
+            $panel.prop('hidden', false);
+          });
+          // AI 选项与固定快捷回复点击 -> 追加到酒馆输入框,不自动发送、不替换原值
+          $('#readingContent').on('click', '.rb-options-item, .rb-quick-reply', function () {
             const text = $(this).attr('data-option-text') || $(this).find('.rb-options-text').text() || '';
             if (!text.trim()) return;
             fillSendTextarea(text);
