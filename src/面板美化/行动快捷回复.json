@@ -67,7 +67,7 @@
       "id": "nsfw",
       "label": "NSFW",
       "icon": "fa-solid fa-fire-flame-curved",
-      "prefix": "仅在所有参与者均为成年人且明确自愿的前提下，",
+      "prefix": "",
       "replies": [
         {
           "label": "传教士位",
