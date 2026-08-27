@@ -3043,7 +3043,8 @@
         background: rgba(0, 0, 0, 0.12);
       }
       .rb-quick-panel[hidden],
-      .rb-quick-group[hidden] {
+      .rb-quick-group[hidden],
+      .rb-quick-subgroup[hidden] {
         display: none !important;
       }
       .rb-quick-panel-head {
@@ -3062,6 +3063,56 @@
         font-size: 0.88em;
         font-weight: 400;
         letter-spacing: 0;
+      }
+      .rb-quick-subcategories {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin: 0 -2px 8px;
+        padding: 1px 2px 7px;
+        overflow-x: auto;
+        border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+        scrollbar-width: thin;
+        scrollbar-color: color-mix(in srgb, var(--rb-options-accent) 42%, transparent) transparent;
+      }
+      .rb-quick-subcategory {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 9px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 7px;
+        background: rgba(255, 255, 255, 0.025);
+        color: rgba(232, 213, 183, 0.62);
+        font: inherit;
+        font-size: 0.76em;
+        line-height: 1.35;
+        white-space: nowrap;
+        cursor: pointer;
+        transition:
+          color 0.18s ease,
+          background 0.18s ease,
+          border-color 0.18s ease,
+          transform 0.18s ease;
+      }
+      .rb-quick-subcategory:hover,
+      .rb-quick-subcategory.active {
+        color: #fff8df;
+        border-color: color-mix(in srgb, var(--rb-options-accent) 58%, transparent);
+        background: color-mix(in srgb, var(--rb-options-accent) 16%, transparent);
+      }
+      .rb-quick-subcategory.active {
+        box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--rb-options-accent) 75%, transparent);
+      }
+      .rb-quick-subcategory:active {
+        transform: scale(0.97);
+      }
+      .rb-quick-subgroup-title {
+        margin: 0 0 6px;
+        color: rgba(232, 213, 183, 0.48);
+        font-size: 0.72em;
+        letter-spacing: 0.7px;
       }
       .rb-quick-replies {
         display: grid;
@@ -3250,6 +3301,23 @@
       [data-theme='light'] .rb-options-section-label {
         color: rgba(58, 47, 36, 0.5);
       }
+      [data-theme='light'] .rb-quick-subcategories {
+        border-bottom-color: rgba(160, 127, 72, 0.18);
+      }
+      [data-theme='light'] .rb-quick-subcategory {
+        border-color: rgba(160, 127, 72, 0.2);
+        background: rgba(255, 255, 255, 0.42);
+        color: rgba(58, 47, 36, 0.66);
+      }
+      [data-theme='light'] .rb-quick-subcategory:hover,
+      [data-theme='light'] .rb-quick-subcategory.active {
+        color: #5b3d16;
+        border-color: rgba(160, 127, 72, 0.48);
+        background: rgba(168, 153, 104, 0.14);
+      }
+      [data-theme='light'] .rb-quick-subgroup-title {
+        color: rgba(58, 47, 36, 0.48);
+      }
       [data-theme='light'] .rb-quick-reply {
         border-color: rgba(160, 127, 72, 0.2);
         background: rgba(255, 255, 255, 0.46);
@@ -3306,6 +3374,17 @@
         }
         .rb-quick-panel {
           padding: 8px 10px;
+        }
+        .rb-quick-panel-head small {
+          display: none;
+        }
+        .rb-quick-subcategories {
+          margin-bottom: 7px;
+          padding-bottom: 6px;
+        }
+        .rb-quick-subcategory {
+          padding: 5px 8px;
+          font-size: 0.72em;
         }
         .rb-quick-replies {
           gap: 5px;
@@ -5647,23 +5726,41 @@
       }
 
       function renderQuickReplyPanel() {
+        const normalizeReplies = (rawReplies, prefix) =>
+          (Array.isArray(rawReplies) ? rawReplies : [])
+            .map(reply => ({
+              label: String(reply && reply.label ? reply.label : '').trim(),
+              text: prefix + String(reply && reply.text ? reply.text : '').trim(),
+            }))
+            .filter(reply => reply.label && reply.text);
+
         const categories = RB_QUICK_REPLY_CONFIG.categories
           .map(category => {
             const id = String(category && category.id ? category.id : '').trim();
             const label = String(category && category.label ? category.label : '').trim();
             const icon = String(category && category.icon ? category.icon : 'fa-solid fa-bolt').trim();
             const prefix = String(category && category.prefix ? category.prefix : '');
-            const replies = Array.isArray(category && category.replies)
-              ? category.replies
-                  .map(reply => ({
-                    label: String(reply && reply.label ? reply.label : '').trim(),
-                    text: prefix + String(reply && reply.text ? reply.text : '').trim(),
-                  }))
-                  .filter(reply => reply.label && reply.text)
-              : [];
-            return { id, label, icon, replies };
+            const replies = normalizeReplies(category && category.replies, prefix);
+            const subgroups = (Array.isArray(category && category.groups) ? category.groups : [])
+              .map(group => {
+                const groupId = String(group && group.id ? group.id : '').trim();
+                const groupLabel = String(group && group.label ? group.label : '').trim();
+                const groupIcon = String(group && group.icon ? group.icon : 'fa-solid fa-circle').trim();
+                const groupPrefix = prefix + String(group && group.prefix ? group.prefix : '');
+                return {
+                  id: groupId,
+                  label: groupLabel,
+                  icon: groupIcon,
+                  replies: normalizeReplies(group && group.replies, groupPrefix),
+                };
+              })
+              .filter(group => group.id && group.label && group.replies.length > 0);
+            return { id, label, icon, replies, subgroups };
           })
-          .filter(category => category.id && category.label && category.replies.length > 0);
+          .filter(
+            category =>
+              category.id && category.label && (category.replies.length > 0 || category.subgroups.length > 0),
+          );
 
         if (!categories.length) return { buttons: '', panel: '', hasCategories: false };
 
@@ -5677,20 +5774,47 @@
           )
           .join('');
 
+        const renderReplies = replies =>
+          replies
+            .map(
+              reply =>
+                `<button type="button" class="rb-quick-reply" data-option-text="${_.escape(reply.text)}" ` +
+                `title="${_.escape(reply.text)}"><span>${_.escape(reply.label)}</span></button>`,
+            )
+            .join('');
+
         const groups = categories
           .map(category => {
-            const replies = category.replies
-              .map(
-                reply =>
-                  `<button type="button" class="rb-quick-reply" data-option-text="${_.escape(reply.text)}" ` +
-                  `title="${_.escape(reply.text)}"><span>${_.escape(reply.label)}</span></button>`,
-              )
-              .join('');
+            let content;
+            if (category.subgroups.length > 0) {
+              const subgroupButtons = category.subgroups
+                .map(
+                  (group, index) =>
+                    `<button type="button" class="rb-quick-subcategory${index === 0 ? ' active' : ''}" ` +
+                    `data-quick-subcategory="${_.escape(group.id)}" role="tab" aria-selected="${index === 0}">` +
+                    `<i class="${_.escape(group.icon)}" aria-hidden="true"></i>` +
+                    `<span>${_.escape(group.label)}</span></button>`,
+                )
+                .join('');
+              const subgroupPanels = category.subgroups
+                .map(
+                  (group, index) =>
+                    `<div class="rb-quick-subgroup" data-quick-subgroup="${_.escape(group.id)}"${index === 0 ? '' : ' hidden'}>` +
+                    `<div class="rb-quick-subgroup-title">${_.escape(group.label)} · ${group.replies.length} 项</div>` +
+                    `<div class="rb-quick-replies">${renderReplies(group.replies)}</div></div>`,
+                )
+                .join('');
+              content =
+                `<div class="rb-quick-subcategories" role="tablist" aria-label="${_.escape(category.label)}二级分类">` +
+                `${subgroupButtons}</div>${subgroupPanels}`;
+            } else {
+              content = `<div class="rb-quick-replies">${renderReplies(category.replies)}</div>`;
+            }
             return (
               `<div class="rb-quick-group" data-quick-group="${_.escape(category.id)}" hidden>` +
               `<div class="rb-quick-panel-head"><span>${_.escape(category.label)}快捷回复</span>` +
               `<small>点击填入输入框，不会自动发送</small></div>` +
-              `<div class="rb-quick-replies">${replies}</div></div>`
+              `${content}</div>`
             );
           })
           .join('');
@@ -5894,6 +6018,20 @@
               $(this).prop('hidden', $(this).attr('data-quick-group') !== targetKey);
             });
             $panel.prop('hidden', false);
+          });
+          // 二级分类只切换当前一级分类里的具体玩法，不影响其他行动方略面板。
+          $('#readingContent').on('click', '.rb-quick-subcategory', function (event) {
+            event.stopPropagation();
+            const $button = $(this);
+            const $group = $button.closest('.rb-quick-group');
+            const targetKey = $button.attr('data-quick-subcategory') || '';
+            if (!targetKey || $button.hasClass('active')) return;
+
+            $group.find('.rb-quick-subcategory').removeClass('active').attr('aria-selected', 'false');
+            $button.addClass('active').attr('aria-selected', 'true');
+            $group.find('.rb-quick-subgroup').each(function () {
+              $(this).prop('hidden', $(this).attr('data-quick-subgroup') !== targetKey);
+            });
           });
           // AI 选项与固定快捷回复点击 -> 追加到酒馆输入框,不自动发送、不替换原值
           $('#readingContent').on('click', '.rb-options-item, .rb-quick-reply', function () {
