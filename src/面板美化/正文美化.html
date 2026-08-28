@@ -3064,6 +3064,96 @@
         font-weight: 400;
         letter-spacing: 0;
       }
+      .rb-quick-actors {
+        margin: 0 0 9px;
+        padding: 8px;
+        border: 1px solid color-mix(in srgb, var(--rb-options-accent) 24%, transparent);
+        border-radius: 8px;
+        background: color-mix(in srgb, var(--rb-options-accent) 5%, transparent);
+      }
+      .rb-quick-actors-head {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 7px;
+        color: var(--rb-options-accent);
+        font-size: 0.74em;
+        font-weight: 700;
+        letter-spacing: 0.7px;
+      }
+      .rb-quick-actors-head small {
+        flex: 1;
+        color: rgba(232, 213, 183, 0.46);
+        font-size: 0.9em;
+        font-weight: 400;
+        letter-spacing: 0;
+      }
+      .rb-quick-actor-clear {
+        flex: 0 0 auto;
+        padding: 2px 7px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 999px;
+        background: transparent;
+        color: rgba(232, 213, 183, 0.58);
+        font: inherit;
+        cursor: pointer;
+      }
+      .rb-quick-actor-clear:hover {
+        border-color: color-mix(in srgb, var(--rb-options-accent) 52%, transparent);
+        color: var(--rb-options-accent);
+      }
+      .rb-quick-actor-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+      }
+      .rb-quick-actor-field {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+        gap: 5px;
+        min-width: 0;
+        height: 30px;
+        padding: 3px 5px 3px 7px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 7px;
+        background: rgba(255, 255, 255, 0.025);
+      }
+      .rb-quick-actor-slot {
+        color: var(--rb-options-accent);
+        font: 700 0.66em/1.2 monospace;
+        white-space: nowrap;
+      }
+      .rb-quick-actor-user-name {
+        min-width: 0;
+        overflow: hidden;
+        color: rgba(232, 213, 183, 0.84);
+        font-size: 0.74em;
+        font-weight: 600;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .rb-quick-actor-select {
+        width: 100%;
+        min-width: 0;
+        height: 24px;
+        padding: 1px 22px 1px 5px;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: rgba(232, 213, 183, 0.88);
+        font: inherit;
+        font-size: 0.74em;
+        cursor: pointer;
+      }
+      .rb-quick-actor-select option {
+        background: #201a2d;
+        color: #eadcc4;
+      }
+      .rb-quick-actor-select:disabled {
+        cursor: not-allowed;
+        opacity: 0.48;
+      }
       .rb-quick-subcategories {
         display: flex;
         align-items: center;
@@ -3301,6 +3391,29 @@
       [data-theme='light'] .rb-options-section-label {
         color: rgba(58, 47, 36, 0.5);
       }
+      [data-theme='light'] .rb-quick-actors {
+        border-color: rgba(160, 127, 72, 0.24);
+        background: rgba(160, 127, 72, 0.055);
+      }
+      [data-theme='light'] .rb-quick-actors-head small {
+        color: rgba(58, 47, 36, 0.48);
+      }
+      [data-theme='light'] .rb-quick-actor-clear {
+        border-color: rgba(160, 127, 72, 0.22);
+        color: rgba(58, 47, 36, 0.62);
+      }
+      [data-theme='light'] .rb-quick-actor-field {
+        border-color: rgba(160, 127, 72, 0.2);
+        background: rgba(255, 255, 255, 0.46);
+      }
+      [data-theme='light'] .rb-quick-actor-user-name,
+      [data-theme='light'] .rb-quick-actor-select {
+        color: #3a2f24;
+      }
+      [data-theme='light'] .rb-quick-actor-select option {
+        background: #fffaf0;
+        color: #3a2f24;
+      }
       [data-theme='light'] .rb-quick-subcategories {
         border-bottom-color: rgba(160, 127, 72, 0.18);
       }
@@ -3377,6 +3490,12 @@
         }
         .rb-quick-panel-head small {
           display: none;
+        }
+        .rb-quick-actors-head small {
+          display: none;
+        }
+        .rb-quick-actor-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
         .rb-quick-subcategories {
           margin-bottom: 7px;
@@ -3839,6 +3958,179 @@
           return { categories: [] };
         }
       })();
+
+      const RB_QUICK_ACTOR_STORAGE_KEY = 'rb-quick-reply-actors-v1';
+      const RB_QUICK_NPC_SLOTS = ['npc1', 'npc2', 'npc3'];
+      let rbQuickActorState = {
+        user: '主角',
+        userIsFemale: false,
+        npc1: '',
+        npc2: '',
+        npc3: '',
+        npcNames: [],
+      };
+
+      function readQuickReplyStatData() {
+        try {
+          if (typeof getVariables !== 'function') return {};
+          const variables = getVariables({ type: 'message', message_id: -1 });
+          return variables && typeof variables.stat_data === 'object' ? variables.stat_data : {};
+        } catch (error) {
+          console.warn('[正文美化] 快捷回复读取 MVU 人物失败:', error);
+          return {};
+        }
+      }
+
+      function loadQuickReplyActorSelection() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(RB_QUICK_ACTOR_STORAGE_KEY) || '{}');
+          return saved && typeof saved === 'object' ? saved : {};
+        } catch (_) {
+          return {};
+        }
+      }
+
+      function saveQuickReplyActorSelection() {
+        try {
+          localStorage.setItem(
+            RB_QUICK_ACTOR_STORAGE_KEY,
+            JSON.stringify({
+              npc1: rbQuickActorState.npc1 || '',
+              npc2: rbQuickActorState.npc2 || '',
+              npc3: rbQuickActorState.npc3 || '',
+            }),
+          );
+        } catch (_) {
+          /* localStorage 不可用时只保留当前楼层选择 */
+        }
+      }
+
+      function syncQuickReplyActorsFromMvu() {
+        const statData = readQuickReplyStatData();
+        const userName = String(statData && statData.姓名 ? statData.姓名 : '').trim() || '主角';
+        const physique = statData && statData.体质 && typeof statData.体质 === 'object' ? statData.体质 : {};
+        const userIsFemale = physique.元阴 != null && physique.元阳 == null;
+        const relations = statData && statData.关系列表 && typeof statData.关系列表 === 'object' ? statData.关系列表 : {};
+        const relationNames = Object.entries(relations)
+          .filter(([name, value]) => {
+            if (!String(name || '').trim() || !value || typeof value !== 'object' || Array.isArray(value)) return false;
+            return !value.类型 || value.类型 === '人物';
+          })
+          .map(([name]) => String(name).trim())
+          .filter((name, index, list) => name !== userName && list.indexOf(name) === index);
+        const npcNames = [userName, ...relationNames];
+        const saved = loadQuickReplyActorSelection();
+        const nextState = { user: userName, userIsFemale, npcNames };
+        RB_QUICK_NPC_SLOTS.forEach(slot => {
+          const candidate = String(rbQuickActorState[slot] || saved[slot] || '').trim();
+          nextState[slot] = npcNames.includes(candidate) ? candidate : '';
+        });
+        rbQuickActorState = nextState;
+        return rbQuickActorState;
+      }
+
+      function quickReplyActorDisplayName(slot, rawName) {
+        const name = String(rawName || '').trim();
+        if (!name) return '';
+        const slotIndex = RB_QUICK_NPC_SLOTS.indexOf(slot);
+        let duplicateIndex = name === rbQuickActorState.user ? 1 : 0;
+        RB_QUICK_NPC_SLOTS.slice(0, Math.max(0, slotIndex)).forEach(previousSlot => {
+          if (rbQuickActorState[previousSlot] === name) duplicateIndex += 1;
+        });
+        return duplicateIndex > 0 ? `${name}分身${duplicateIndex}` : name;
+      }
+
+      function quickReplyActorDisplayValues() {
+        return Object.fromEntries(
+          RB_QUICK_NPC_SLOTS.map(slot => [slot, quickReplyActorDisplayName(slot, rbQuickActorState[slot])]),
+        );
+      }
+
+      function selectedQuickReplyNpcs() {
+        const displayValues = quickReplyActorDisplayValues();
+        return RB_QUICK_NPC_SLOTS.map(slot => displayValues[slot]).filter(Boolean);
+      }
+
+      // 模板：{{npc1|默认称呼}} / {{npc2|默认称呼}} / {{npc3|默认称呼}}
+      // 多人：{{npcs|默认称呼}} 会把非空 NPC 槽位按 npc1 → npc3 用“、”连接。
+      // 百合：女性主角时 yuri1/yuri2/yuri3 = user/npc1/npc2，否则 = npc1/npc2/npc3。
+      function resolveQuickReplyTemplate(template) {
+        const npcs = selectedQuickReplyNpcs();
+        const displayValues = quickReplyActorDisplayValues();
+        const yuriActors = rbQuickActorState.userIsFemale
+          ? [rbQuickActorState.user, displayValues.npc1, displayValues.npc2]
+          : [displayValues.npc1, displayValues.npc2, displayValues.npc3];
+        const values = {
+          user: rbQuickActorState.user || '主角',
+          npc1: displayValues.npc1 || '',
+          npc2: displayValues.npc2 || '',
+          npc3: displayValues.npc3 || '',
+          npcs: npcs.join('、'),
+          yuri1: yuriActors[0] || '',
+          yuri2: yuriActors[1] || '',
+          yuri3: yuriActors[2] || '',
+        };
+        const resolved = String(template || '').replace(
+          /\{\{(user|npc1|npc2|npc3|npcs|yuri1|yuri2|yuri3)(?:\|([^{}]*))?\}\}/g,
+          (_match, slot, fallback = '') => values[slot] || fallback,
+        );
+        const userName = rbQuickActorState.user && rbQuickActorState.user !== '主角' ? rbQuickActorState.user : '';
+        return userName ? resolved.replace(/主角/g, userName) : resolved;
+      }
+
+      function renderQuickReplyActorOptions(slot) {
+        const current = rbQuickActorState[slot] || '';
+        const emptyLabel = rbQuickActorState.npcNames.length ? '未指定' : '暂无人物';
+        const options = [`<option value="">${emptyLabel}</option>`];
+        rbQuickActorState.npcNames.forEach(name => {
+          const displayName = quickReplyActorDisplayName(slot, name);
+          options.push(
+            `<option value="${_.escape(name)}"${name === current ? ' selected' : ''}>${_.escape(displayName)}</option>`,
+          );
+        });
+        return options.join('');
+      }
+
+      function renderQuickReplyActorPanel() {
+        const disabled = rbQuickActorState.npcNames.length ? '' : ' disabled';
+        const selects = RB_QUICK_NPC_SLOTS.map(
+          slot =>
+            `<label class="rb-quick-actor-field"><span class="rb-quick-actor-slot">${slot}</span>` +
+            `<select class="rb-quick-actor-select" data-quick-actor-slot="${slot}"${disabled}>` +
+            `${renderQuickReplyActorOptions(slot)}</select></label>`,
+        ).join('');
+        return (
+          `<div class="rb-quick-actors">` +
+          `<div class="rb-quick-actors-head"><i class="fa-solid fa-user-pen" aria-hidden="true"></i>` +
+          `<span>人物指定</span><small>选择后替换快捷回复中的对应角色</small>` +
+          `<button type="button" class="rb-quick-actor-clear" title="清空 NPC 指定">清空</button></div>` +
+          `<div class="rb-quick-actor-grid">` +
+          `<div class="rb-quick-actor-field"><span class="rb-quick-actor-slot">user</span>` +
+          `<strong class="rb-quick-actor-user-name" title="${_.escape(rbQuickActorState.user)}">${_.escape(rbQuickActorState.user)}</strong></div>` +
+          `${selects}</div></div>`
+        );
+      }
+
+      function refreshQuickReplyActorBindings() {
+        document.querySelectorAll('.rb-quick-actor-user-name').forEach(element => {
+          element.textContent = rbQuickActorState.user;
+          element.title = rbQuickActorState.user;
+        });
+        document.querySelectorAll('.rb-quick-actor-select').forEach(select => {
+          const slot = select.getAttribute('data-quick-actor-slot') || '';
+          select.value = rbQuickActorState[slot] || '';
+          [...select.options].forEach(option => {
+            if (!option.value) return;
+            option.disabled = false;
+            option.textContent = quickReplyActorDisplayName(slot, option.value);
+          });
+        });
+        document.querySelectorAll('.rb-quick-reply[data-option-template]').forEach(button => {
+          const resolved = resolveQuickReplyTemplate(button.getAttribute('data-option-template') || '');
+          button.setAttribute('data-option-text', resolved);
+          button.setAttribute('title', resolved);
+        });
+      }
 
       // 轻量正则会在加载本页面前保存本楼层的捕获正文；每层消息 iframe 拥有独立 window，
       // 因此载荷不会在不同楼层之间串写。直接打开构建页时允许为空，方便独立调试。
@@ -5726,6 +6018,7 @@
       }
 
       function renderQuickReplyPanel() {
+        syncQuickReplyActorsFromMvu();
         const normalizeReplies = (rawReplies, prefix) =>
           (Array.isArray(rawReplies) ? rawReplies : [])
             .map(reply => ({
@@ -5776,11 +6069,14 @@
 
         const renderReplies = replies =>
           replies
-            .map(
-              reply =>
-                `<button type="button" class="rb-quick-reply" data-option-text="${_.escape(reply.text)}" ` +
-                `title="${_.escape(reply.text)}"><span>${_.escape(reply.label)}</span></button>`,
-            )
+            .map(reply => {
+              const resolvedText = resolveQuickReplyTemplate(reply.text);
+              return (
+                `<button type="button" class="rb-quick-reply" data-option-template="${_.escape(reply.text)}" ` +
+                `data-option-text="${_.escape(resolvedText)}" title="${_.escape(resolvedText)}">` +
+                `<span>${_.escape(reply.label)}</span></button>`
+              );
+            })
             .join('');
 
         const groups = categories
@@ -5821,7 +6117,7 @@
 
         return {
           buttons: `<div class="rb-quick-categories" role="toolbar" aria-label="固定快捷回复分类">${buttons}</div>`,
-          panel: `<div class="rb-quick-panel" hidden>${groups}</div>`,
+          panel: `<div class="rb-quick-panel" hidden>${renderQuickReplyActorPanel()}${groups}</div>`,
           hasCategories: true,
         };
       }
@@ -5997,6 +6293,24 @@
               .filter(`[data-tab="${targetKey}"]`)
               .addClass('active');
           });
+          // 快捷回复人物槽位：候选来自主角与 MVU 关系列表；允许重复，重复项自动显示为“分身N”。
+          $('#readingContent').on('change', '.rb-quick-actor-select', function (event) {
+            event.stopPropagation();
+            const slot = $(this).attr('data-quick-actor-slot') || '';
+            if (!RB_QUICK_NPC_SLOTS.includes(slot)) return;
+            const value = String($(this).val() || '').trim();
+            rbQuickActorState[slot] = value;
+            saveQuickReplyActorSelection();
+            refreshQuickReplyActorBindings();
+          });
+          $('#readingContent').on('click', '.rb-quick-actor-clear', function (event) {
+            event.stopPropagation();
+            RB_QUICK_NPC_SLOTS.forEach(slot => {
+              rbQuickActorState[slot] = '';
+            });
+            saveQuickReplyActorSelection();
+            refreshQuickReplyActorBindings();
+          });
           // 固定快捷回复分类：同一分类再次点击即收起，AI 本轮建议始终保留在下方。
           $('#readingContent').on('click', '.rb-quick-category', function (event) {
             event.stopPropagation();
@@ -6035,7 +6349,10 @@
           });
           // AI 选项与固定快捷回复点击 -> 追加到酒馆输入框,不自动发送、不替换原值
           $('#readingContent').on('click', '.rb-options-item, .rb-quick-reply', function () {
-            const text = $(this).attr('data-option-text') || $(this).find('.rb-options-text').text() || '';
+            const template = $(this).attr('data-option-template') || '';
+            const text = template
+              ? resolveQuickReplyTemplate(template)
+              : $(this).attr('data-option-text') || $(this).find('.rb-options-text').text() || '';
             if (!text.trim()) return;
             fillSendTextarea(text);
             const el = this;
