@@ -643,7 +643,15 @@ const FixedAssetSchema = z.preprocess(
       所在地: value.所在地 ?? value.地址 ?? value.位置,
       现状: value.现状 ?? value.状态 ?? value.当前状态,
       设施: normalizeNamedRecord(value.设施 ?? value.建筑 ?? value.功能区, '新设施'),
-      所属人物: value.所属人物 ?? value.人员 ?? value.归属人物 ?? value.成员,
+      // “所属人物”为旧版正式字段：兼容旧存档，但输出统一使用“分配人物”。
+      分配人物:
+        value.分配人物 ??
+        value.所属人物 ??
+        value.工作人员 ??
+        value.工作者 ??
+        value.人员 ??
+        value.归属人物 ??
+        value.成员,
     };
   },
   z.object({
@@ -654,7 +662,7 @@ const FixedAssetSchema = z.preprocess(
     设施: z
       .preprocess(value => normalizeNamedRecord(value, '新设施'), z.record(z.string(), AssetFacilitySchema))
       .prefault({}),
-    所属人物: z.preprocess(normalizeStringArray, z.array(z.string())).prefault([]),
+    分配人物: z.preprocess(normalizeStringArray, z.array(z.string())).prefault([]),
   }),
 );
 

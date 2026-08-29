@@ -46,6 +46,26 @@ export interface RootChoice {
   customName: string;
 }
 
+// =============== 种族 ===============
+/** 与《世界设定-生命种族》一致的主种族名。 */
+export type RaceName = '人族' | '神族' | '巫族' | '妖族' | '灵族' | '冥族' | '物化生灵' | '魔族' | '域外异类';
+
+export interface RaceOption {
+  id: string;
+  name: RaceName;
+  glyph: string;
+  brief: string;
+  selectable: boolean;
+  /** 需要补充血脉、本体或所化物种时显示的输入项。 */
+  detailLabel?: string;
+  detailPlaceholder?: string;
+  /** 是否允许玩家决定开局时能否化为人形。 */
+  canChooseTransformation?: boolean;
+  /** 不可化形时用于提示词的本体称呼。 */
+  originalFormLabel?: string;
+  disabledNote?: string;
+}
+
 // =============== 体质 ===============
 /** 体质等级：参考世界设定 凡 / 灵 / 道 / 仙(神)四阶 */
 export type PhysiqueTier = '凡体' | '灵体' | '道体' | '仙体';
@@ -295,6 +315,16 @@ export interface StoryConstraints {
   性别禁止?: Gender[];
   /** 元阳/元阴必须尚存 */
   元阳元阴必须?: boolean;
+  /** 精确要求元阳/元阴状态：true=尚存，false=已损。 */
+  元阳元阴状态?: boolean;
+  /** 主种族必须为其中之一。 */
+  种族?: RaceName[];
+  /** 妖族、灵族、物化生灵必须开启可化形；天然人形种族自动满足。 */
+  必须人形?: boolean;
+  /** 种族类型输入必须为空，由剧本正文决定具体本体。 */
+  种族细分必须为空?: boolean;
+  /** 供界面与管理清单显示的剧本固定本体，不直接写入玩家输入。 */
+  剧本指定种类?: string;
   /** 灵根至少含以下任一五行 */
   灵根五行任意?: string[];
   /** 灵根品阶子串匹配（如「单灵根」「双灵根」） */
@@ -354,6 +384,12 @@ import type { ApiMode } from '../shared/apiMode';
 // =============== 玩家选择快照 ===============
 export interface Selection {
   difficultyId: string | null;
+  /** 玩家初始主种族；写入 stat_data.种族。 */
+  种族: RaceName;
+  /** 妖/灵/物化/魔的可选细分，仅参与开局叙述。 */
+  种族细分: string;
+  /** 妖/灵/物化生灵是否能够化为人形；其他种族忽略。 */
+  种族可化形: boolean;
   /** 自定义灵根：多选属性 + 可选变异 */
   root: RootChoice;
   /** 自定义体质：等级 + 预设或自拟 */

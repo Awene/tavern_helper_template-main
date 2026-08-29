@@ -15,16 +15,30 @@ import {
   isPhysiqueChoiceValid,
   makeDefaultPhysiqueChoice,
   mutationsByElement,
+  normalizeRaceName,
   normalizePhysiqueChoice,
   normalizeRootChoice,
   physiqueCost,
 } from './config';
-import type { ApiMode, CustomItem, CustomStory, Gender, PhysiqueTier, Preset, RootChoice, Selection } from './types';
+import type {
+  ApiMode,
+  CustomItem,
+  CustomStory,
+  Gender,
+  PhysiqueTier,
+  Preset,
+  RaceName,
+  RootChoice,
+  Selection,
+} from './types';
 
 const PRESETS_KEY = 'xs-presets-v1';
 
 const emptySelection = (): Selection => ({
   difficultyId: null,
+  种族: '人族',
+  种族细分: '',
+  种族可化形: true,
   root: emptyRootChoice(),
   physique: emptyPhysiqueChoice(),
   性别: '男',
@@ -56,6 +70,9 @@ const normalizeSelection = (raw: any): Selection => {
   return {
     ...base,
     ...raw,
+    种族: normalizeRaceName(raw.种族),
+    种族细分: typeof raw.种族细分 === 'string' ? raw.种族细分.slice(0, 30) : '',
+    种族可化形: typeof raw.种族可化形 === 'boolean' ? raw.种族可化形 : true,
     root: normalizeRootChoice(raw.root),
     physique: normalizePhysiqueChoice(raw.physique),
     性别: raw.性别 === '女' || raw.性别 === '其他' ? raw.性别 : '男',
@@ -175,6 +192,21 @@ export const useStartStore = defineStore('xs-start', () => {
   // ============ 选择助手 ============
   function selectDifficulty(id: string) {
     selection.value.difficultyId = id;
+  }
+
+  function setRace(race: RaceName) {
+    if (selection.value.种族 === race) return;
+    selection.value.种族 = normalizeRaceName(race);
+    selection.value.种族细分 = '';
+    selection.value.种族可化形 = true;
+  }
+
+  function setRaceDetail(detail: string) {
+    selection.value.种族细分 = detail.slice(0, 30);
+  }
+
+  function setRaceTransformation(enabled: boolean) {
+    selection.value.种族可化形 = enabled;
   }
 
   /** 切换某个属性的选中状态；自动处理互斥与变异联动 */
@@ -425,6 +457,9 @@ export const useStartStore = defineStore('xs-start', () => {
     prev,
     goto,
     selectDifficulty,
+    setRace,
+    setRaceDetail,
+    setRaceTransformation,
     toggleRootElement,
     setMutation,
     setMutationId,

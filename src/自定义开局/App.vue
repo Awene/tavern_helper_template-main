@@ -111,7 +111,7 @@ const steps = [
   { title: '封面', comp: StepCover },
   { title: '配置', comp: StepApiMode },
   { title: '难度', comp: StepDifficulty },
-  { title: '灵根 · 体质', comp: StepRoot },
+  { title: '种族 · 灵根 · 体质', comp: StepRoot },
   { title: '出生地', comp: StepLocation },
   { title: '开局故事', comp: StepStory },
   { title: '初始资材', comp: StepInventory },

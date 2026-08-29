@@ -60,7 +60,9 @@
             <button class="xy-toggle" :class="{ on: art.使用中 }" @click.stop="toggleArt(name as string, !art.使用中)">
               {{ art.使用中 ? '运转中' : '凝息' }}
             </button>
-            <span class="xy-collapsible-caret" aria-hidden="true">⌄</span>
+            <span class="xy-collapsible-hint" aria-hidden="true">
+              {{ state.editMode ? '编辑' : isCardOpen('art', String(name)) ? '收起' : '详情' }}
+            </span>
           </div>
           <div v-show="state.editMode || isCardOpen('art', String(name))" class="xy-collapsible-body">
             <div class="xy-art-meta">

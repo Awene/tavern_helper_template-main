@@ -84,11 +84,20 @@
               :aria-expanded="state.editMode || isCardOpen('item', String(name))"
               @click="toggleCard('item', String(name))"
             >
-              <span class="xy-item-name">{{ name }}</span>
+              <span class="xy-item-heading">
+                <span class="xy-item-name">{{ name }}</span>
+                <span v-if="!state.editMode && !isCardOpen('item', String(name))" class="xy-item-summary">
+                  <b :class="'xy-summary-quality xy-summary-quality-' + it.品质">{{ it.品质 }}品</b>
+                  <span>{{ it.类型 }}</span>
+                  <span v-if="it.境界">{{ it.境界 }}</span>
+                </span>
+              </span>
               <span class="xy-item-qty" @click.stop
                 >×<EditableValue v-model.number="it.数量" type="number" label="数量" :min="0"
               /></span>
-              <span class="xy-collapsible-caret" aria-hidden="true">⌄</span>
+              <span class="xy-collapsible-hint" aria-hidden="true">
+                {{ state.editMode ? '编辑' : isCardOpen('item', String(name)) ? '收起' : '详情' }}
+              </span>
             </div>
             <div v-show="state.editMode || isCardOpen('item', String(name))" class="xy-collapsible-body">
               <div class="xy-item-meta">
@@ -176,9 +185,18 @@
               :aria-expanded="state.editMode || isCardOpen('equip', String(name))"
               @click="toggleCard('equip', String(name))"
             >
-              <span class="xy-item-name">{{ name }}</span>
+              <span class="xy-item-heading">
+                <span class="xy-item-name">{{ name }}</span>
+                <span v-if="!state.editMode && !isCardOpen('equip', String(name))" class="xy-item-summary">
+                  <b :class="'xy-summary-quality xy-summary-quality-' + eq.品质">{{ eq.品质 }}品</b>
+                  <span>{{ eq.类型 }}</span>
+                  <span v-if="eq.境界">{{ eq.境界 }}</span>
+                </span>
+              </span>
               <span class="xy-item-pos">{{ eq.位置 }}</span>
-              <span class="xy-collapsible-caret" aria-hidden="true">⌄</span>
+              <span class="xy-collapsible-hint" aria-hidden="true">
+                {{ state.editMode ? '编辑' : isCardOpen('equip', String(name)) ? '收起' : '详情' }}
+              </span>
             </div>
             <div v-show="state.editMode || isCardOpen('equip', String(name))" class="xy-collapsible-body">
               <div class="xy-item-meta">

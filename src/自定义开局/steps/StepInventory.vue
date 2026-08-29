@@ -665,12 +665,10 @@ function setFieldValue(def: FieldDef, value: any) {
     } else {
       draft.资源池[def.key] = value;
     }
+  } else if (value === undefined || value === null || value === '') {
+    delete draft.top[def.key];
   } else {
-    if (value === undefined || value === null || value === '') {
-      delete draft.top[def.key];
-    } else {
-      draft.top[def.key] = value;
-    }
+    draft.top[def.key] = value;
   }
 }
 

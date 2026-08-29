@@ -1331,6 +1331,46 @@
   border-top: 1px dashed var(--xy-line);
   animation: xy-collapse-in 0.18s ease-out;
 }
+.xy-collapsible-hint {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 40px;
+  margin-left: 2px;
+  padding: 2px 8px;
+  color: var(--xy-gold-deep);
+  background: color-mix(in srgb, var(--xy-paper-warm) 88%, transparent);
+  border: 1px solid var(--xy-line-gold);
+  border-radius: 999px;
+  font: 10px/1.5 var(--xy-font-display);
+  letter-spacing: 1px;
+  white-space: nowrap;
+  transition:
+    color 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.xy-collapsible-hint::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 12%, transparent);
+}
+.xy-collapsible-head:hover .xy-collapsible-hint {
+  color: var(--xy-cinnabar-deep);
+  border-color: color-mix(in srgb, var(--xy-cinnabar) 45%, var(--xy-line-gold));
+  box-shadow: 0 2px 8px var(--xy-tint-gold-glow);
+}
+.xy-collapsible-open > .xy-collapsible-head .xy-collapsible-hint {
+  color: var(--xy-cinnabar-deep);
+  background: var(--xy-tint-cinnabar-soft);
+  border-color: var(--xy-tint-cinnabar-border);
+}
 
 /* ============ 任务页 ============ */
 .xy-task-summary {
@@ -2213,6 +2253,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
 .xy-art-grid {
   display: grid;
   grid-template-columns: 1fr;
+  align-items: start;
   gap: 10px;
 }
 @media (min-width: 580px) {
@@ -2243,15 +2284,29 @@ button.xy-card-title-clickable.open .xy-card-summary {
     0 0 0 1px var(--xy-tint-gold-glow),
     0 4px 16px -4px var(--xy-tint-gold-glow);
 }
-.xy-art-active::after {
+.xy-page-arts .xy-art-active::after {
   content: '运';
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 9px;
+  left: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--xy-tint-cinnabar-border);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--xy-paper-soft) 86%, transparent);
   font-family: var(--xy-font-title);
-  font-size: 28px;
-  color: var(--xy-tint-cinnabar-glyph);
+  font-size: 12px;
+  line-height: 1;
+  color: var(--xy-cinnabar);
+  box-shadow: 0 0 0 3px var(--xy-tint-cinnabar-soft);
   pointer-events: none;
+  z-index: 2;
+}
+.xy-page-arts .xy-art-active .xy-art-title {
+  padding-left: 28px;
 }
 .xy-art-head {
   display: flex;
@@ -2453,6 +2508,14 @@ button.xy-card-title-clickable.open .xy-card-summary {
   color: var(--xy-cinnabar-deep);
   box-shadow: 0 0 0 1px var(--xy-line-gold);
 }
+.xy-page-storage .xy-rumor-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 12px;
+  padding: 1px 0;
+}
 
 /* ============ 固定资产 ============ */
 .xy-asset-toolbar {
@@ -2496,6 +2559,20 @@ button.xy-card-title-clickable.open .xy-card-summary {
   border: 1px solid var(--xy-line-gold);
   border-radius: 8px;
   box-shadow: var(--xy-shadow);
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+.xy-asset-card:not(.xy-collapsible-open) {
+  background: linear-gradient(105deg, var(--xy-tint-gold-faint), transparent 42%), var(--xy-glass);
+  box-shadow: 0 4px 14px -9px rgba(42, 37, 32, 0.35);
+}
+.xy-asset-card:not(.xy-collapsible-open):hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--xy-gold) 68%, var(--xy-line-gold));
+  box-shadow: 0 8px 20px -12px rgba(42, 37, 32, 0.42);
 }
 .xy-asset-card::after {
   content: attr(data-seal);
@@ -2517,15 +2594,58 @@ button.xy-card-title-clickable.open .xy-card-summary {
 .xy-asset-head {
   position: relative;
   z-index: 1;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 7px;
   min-width: 0;
   padding-right: 34px;
-  margin-bottom: 8px;
+  margin-bottom: 0;
+}
+.xy-asset-card:not(.xy-collapsible-open) > .xy-asset-head {
+  min-height: 52px;
+  padding-block: 4px;
+}
+.xy-asset-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.xy-asset-title-line {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.xy-asset-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px 10px;
+  min-width: 0;
+  color: var(--xy-ink-mute);
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+.xy-asset-summary > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.xy-asset-summary > span + span::before {
+  content: '◆';
+  margin-right: 7px;
+  color: var(--xy-gold);
+  font-size: 6px;
 }
 .xy-asset-name {
+  display: block;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   overflow-wrap: anywhere;
   color: var(--xy-ink);
   font: 18px/1.35 var(--xy-font-display);
@@ -2547,7 +2667,6 @@ button.xy-card-title-clickable.open .xy-card-summary {
 }
 .xy-asset-scale {
   flex: 0 0 auto;
-  margin-left: auto;
   color: var(--xy-cinnabar);
   font-size: 12px;
   white-space: nowrap;
@@ -2657,6 +2776,7 @@ button.xy-card-title-clickable.open .xy-card-summary {
 .xy-item-grid {
   display: grid;
   grid-template-columns: 1fr;
+  align-items: start;
   gap: 8px;
 }
 @media (min-width: 580px) {
@@ -2665,6 +2785,8 @@ button.xy-card-title-clickable.open .xy-card-summary {
   }
 }
 .xy-item {
+  position: relative;
+  overflow: hidden;
   background: var(--xy-glass);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -2674,6 +2796,21 @@ button.xy-card-title-clickable.open .xy-card-summary {
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
+}
+.xy-page-storage .xy-item:not(.xy-collapsible-open),
+.xy-page-storage .xy-art:not(.xy-collapsible-open) {
+  background: linear-gradient(112deg, var(--xy-tint-gold-faint), transparent 46%), var(--xy-glass);
+  box-shadow: 0 3px 12px -9px rgba(42, 37, 32, 0.38);
+}
+.xy-page-storage .xy-item:not(.xy-collapsible-open) > .xy-item-head,
+.xy-page-storage .xy-art:not(.xy-collapsible-open) > .xy-art-head {
+  min-height: 44px;
+  padding-block: 4px;
+}
+.xy-page-storage .xy-item:not(.xy-collapsible-open):hover,
+.xy-page-storage .xy-art:not(.xy-collapsible-open):hover {
+  border-color: color-mix(in srgb, var(--xy-gold) 58%, var(--xy-line));
+  box-shadow: 0 7px 18px -12px rgba(42, 37, 32, 0.45);
 }
 .xy-item:hover {
   transform: translateY(-1px);
@@ -2694,15 +2831,56 @@ button.xy-card-title-clickable.open .xy-card-summary {
 }
 .xy-item-head {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  justify-content: flex-start;
+  align-items: center;
   gap: 8px;
   margin-bottom: 4px;
 }
+.xy-item-heading {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
 .xy-item-name {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: var(--xy-font-display);
   font-size: 15px;
   letter-spacing: 1px;
+}
+.xy-item-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px 8px;
+  min-width: 0;
+  color: var(--xy-ink-mute);
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+.xy-item-summary > span + span::before {
+  content: '·';
+  margin-right: 8px;
+  color: var(--xy-gold);
+}
+.xy-summary-quality {
+  padding: 0 5px;
+  border: 1px solid var(--xy-line-gold);
+  border-radius: 999px;
+  color: var(--xy-gold-deep);
+  background: var(--xy-paper-warm);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.xy-summary-quality-玄,
+.xy-summary-quality-地,
+.xy-summary-quality-天 {
+  color: var(--xy-cinnabar-deep);
 }
 .xy-item-qty {
   font-size: 12px;
@@ -2710,11 +2888,40 @@ button.xy-card-title-clickable.open .xy-card-summary {
   font-variant-numeric: tabular-nums;
 }
 .xy-item-pos {
+  flex: 0 1 auto;
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 11px;
   padding: 1px 6px;
   border: 1px dashed var(--xy-line-gold);
   color: var(--xy-gold-deep);
   border-radius: 2px;
+}
+
+@media (max-width: 430px) {
+  .xy-asset-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .xy-asset-heading {
+    grid-column: 1 / -1;
+  }
+  .xy-asset-scale {
+    grid-column: 1;
+  }
+  .xy-asset-head > .xy-collapsible-hint {
+    grid-column: 2;
+  }
+  .xy-page-storage .xy-item:not(.xy-collapsible-open) > .xy-item-head,
+  .xy-page-storage .xy-art:not(.xy-collapsible-open) > .xy-art-head {
+    min-height: 40px;
+    padding-block: 3px;
+  }
+  .xy-collapsible-hint {
+    min-width: 36px;
+    padding-inline: 6px;
+  }
 }
 .xy-item-meta {
   display: flex;

@@ -21,6 +21,16 @@
           <span style="color: var(--xs-ink-mute);">{{ difficulty.subtitle }} · 共 {{ difficulty.points }} 点</span>
         </span>
       </div>
+      <div class="xs-summary-row">
+        <span class="xs-summary-label">种族</span>
+        <span class="xs-summary-value">
+          <strong>{{ selectedRace?.name || '人族' }}</strong>
+          <span v-if="raceDetail" style="color: var(--xs-ink-mute);">{{ raceDetail }}</span>
+          <span v-if="selectedRace?.canChooseTransformation" style="color: var(--xs-ink-mute);">
+            {{ store.selection.种族可化形 ? '已化人形' : '开智本体 · 不可化形' }}
+          </span>
+        </span>
+      </div>
       <div class="xs-summary-row" v-if="store.rootChosen">
         <span class="xs-summary-label">灵根</span>
         <span class="xs-summary-value">
@@ -135,6 +145,7 @@ import {
   findDifficulty,
   findItem,
   findLocation,
+  findRace,
   findStory,
   physiqueResolved,
   plotItemsForStory,
@@ -147,6 +158,8 @@ import { commitJourney } from '../export';
 const store = useStartStore();
 
 const difficulty = computed(() => findDifficulty(store.selection.difficultyId));
+const selectedRace = computed(() => findRace(store.selection.种族));
+const raceDetail = computed(() => (selectedRace.value?.detailLabel ? store.selection.种族细分.trim() : ''));
 const rootName = computed(() => rootDisplayName(store.selection.root));
 const rootTier = computed(() => rootTierLabel(store.selection.root));
 const rootElements = computed(() => store.selection.root.elements);

@@ -67,7 +67,9 @@
         font-family: 'Noto Serif SC', 'STKaiti', 'KaiTi', serif;
         color: var(--rb-text);
         background: var(--rb-bg);
-        min-height: 100vh;
+        /* 消息 iframe 的高度由酒馆助手按 body.scrollHeight 自动同步。
+         * 100vh 会引用“上一次较高的 iframe 高度”，导致面板收起后高度只能增不能减。 */
+        min-height: 0;
         line-height: 1.9;
         font-size: 16px;
         -webkit-text-size-adjust: 100%;
@@ -3002,6 +3004,7 @@
         gap: 4px;
         max-width: 72%;
         overflow-x: auto;
+        overscroll-behavior-x: contain;
         scrollbar-width: none;
       }
       .rb-quick-categories::-webkit-scrollbar {
@@ -3119,6 +3122,16 @@
         border-radius: 7px;
         background: rgba(255, 255, 255, 0.025);
       }
+      .rb-quick-actor-field--select {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+      }
+      .rb-quick-actor-field--select::after {
+        content: '⌄';
+        align-self: center;
+        color: rgba(232, 213, 183, 0.5);
+        font: 700 0.82em/1 sans-serif;
+        pointer-events: none;
+      }
       .rb-quick-actor-slot {
         color: var(--rb-options-accent);
         font: 700 0.66em/1.2 monospace;
@@ -3137,7 +3150,7 @@
         width: 100%;
         min-width: 0;
         height: 24px;
-        padding: 1px 22px 1px 5px;
+        padding: 1px 2px 1px 5px;
         border: 0;
         outline: 0;
         background: transparent;
@@ -3145,6 +3158,8 @@
         font: inherit;
         font-size: 0.74em;
         cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
       }
       .rb-quick-actor-select option {
         background: #201a2d;
@@ -3164,6 +3179,7 @@
         border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
         scrollbar-width: thin;
         scrollbar-color: color-mix(in srgb, var(--rb-options-accent) 42%, transparent) transparent;
+        overscroll-behavior-x: contain;
       }
       .rb-quick-subcategory {
         flex: 0 0 auto;
@@ -3208,6 +3224,14 @@
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 6px;
+        max-height: 238px;
+        padding-right: 3px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        align-content: start;
+        overscroll-behavior-y: contain;
+        scrollbar-width: thin;
+        scrollbar-color: color-mix(in srgb, var(--rb-options-accent) 42%, transparent) transparent;
       }
       .rb-quick-reply {
         display: flex;
@@ -3245,6 +3269,130 @@
       .rb-quick-reply.is-sent {
         animation: rb-options-flash 0.6s ease-out;
       }
+      .rb-custom-tool,
+      .rb-custom-action,
+      .rb-custom-submit {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.035);
+        color: rgba(232, 213, 183, 0.72);
+        font: inherit;
+        cursor: pointer;
+      }
+      .rb-custom-manager {
+        display: grid;
+        gap: 8px;
+      }
+      .rb-custom-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .rb-custom-toolbar-note {
+        flex: 1;
+        min-width: 0;
+        color: rgba(232, 213, 183, 0.46);
+        font-size: 0.7em;
+      }
+      .rb-custom-tool,
+      .rb-custom-action {
+        padding: 3px 8px;
+        font-size: 0.7em;
+        white-space: nowrap;
+      }
+      .rb-custom-editor {
+        display: grid;
+        grid-template-columns: minmax(90px, 0.38fr) minmax(0, 1fr) auto;
+        gap: 6px;
+      }
+      .rb-custom-input,
+      .rb-custom-text {
+        min-width: 0;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 7px;
+        outline: 0;
+        background: rgba(0, 0, 0, 0.12);
+        color: #e8d5b7;
+        font: inherit;
+        font-size: 0.78em;
+      }
+      .rb-custom-input {
+        padding: 5px 7px;
+      }
+      .rb-custom-text {
+        height: 31px;
+        padding: 5px 7px;
+        line-height: 1.35;
+        resize: vertical;
+      }
+      .rb-custom-input:focus,
+      .rb-custom-text:focus {
+        border-color: color-mix(in srgb, var(--rb-options-accent) 58%, transparent);
+      }
+      .rb-custom-submit {
+        padding: 4px 11px;
+        border-color: color-mix(in srgb, var(--rb-options-accent) 42%, transparent);
+        color: var(--rb-options-accent);
+      }
+      .rb-custom-list {
+        display: grid;
+        gap: 5px;
+        max-height: 238px;
+        padding-right: 3px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        align-content: start;
+        overscroll-behavior-y: contain;
+        scrollbar-width: thin;
+        scrollbar-color: color-mix(in srgb, var(--rb-options-accent) 42%, transparent) transparent;
+      }
+
+      .rb-quick-replies::-webkit-scrollbar,
+      .rb-custom-list::-webkit-scrollbar,
+      .rb-options-body::-webkit-scrollbar {
+        width: 5px;
+      }
+      .rb-quick-replies::-webkit-scrollbar-track,
+      .rb-custom-list::-webkit-scrollbar-track,
+      .rb-options-body::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .rb-quick-replies::-webkit-scrollbar-thumb,
+      .rb-custom-list::-webkit-scrollbar-thumb,
+      .rb-options-body::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--rb-options-accent) 42%, transparent);
+      }
+      .rb-custom-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 5px;
+      }
+      .rb-custom-row[hidden] {
+        display: none !important;
+      }
+      .rb-custom-row .rb-quick-reply {
+        width: 100%;
+      }
+      .rb-custom-row-actions {
+        display: flex;
+        gap: 3px;
+      }
+      .rb-custom-action {
+        width: 27px;
+        height: 27px;
+        padding: 0;
+        border-radius: 7px;
+      }
+      .rb-custom-empty {
+        padding: 7px 9px;
+        border: 1px dashed rgba(255, 255, 255, 0.1);
+        border-radius: 7px;
+        color: rgba(232, 213, 183, 0.46);
+        font-size: 0.76em;
+        text-align: center;
+      }
       .rb-options-section-label {
         display: flex;
         align-items: center;
@@ -3265,6 +3413,20 @@
         display: flex;
         flex-direction: column;
         gap: 6px;
+        max-height: min(42vh, 360px);
+        overflow-x: hidden;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: color-mix(in srgb, var(--rb-options-accent) 42%, transparent) transparent;
+      }
+      .rb-options-count {
+        flex: 0 0 auto;
+        padding: 1px 7px;
+        border: 1px solid color-mix(in srgb, var(--rb-options-accent) 34%, transparent);
+        border-radius: 999px;
+        color: rgba(232, 213, 183, 0.56);
+        font: 0.68em/1.55 sans-serif;
+        white-space: nowrap;
       }
       .rb-options-item {
         display: flex;
@@ -3410,6 +3572,9 @@
       [data-theme='light'] .rb-quick-actor-select {
         color: #3a2f24;
       }
+      [data-theme='light'] .rb-quick-actor-field--select::after {
+        color: rgba(58, 47, 36, 0.5);
+      }
       [data-theme='light'] .rb-quick-actor-select option {
         background: #fffaf0;
         color: #3a2f24;
@@ -3439,6 +3604,26 @@
       [data-theme='light'] .rb-quick-reply:hover {
         background: rgba(168, 153, 104, 0.14);
         border-color: rgba(160, 127, 72, 0.42);
+      }
+      [data-theme='light'] .rb-custom-tool,
+      [data-theme='light'] .rb-custom-action,
+      [data-theme='light'] .rb-custom-submit {
+        border-color: rgba(160, 127, 72, 0.24);
+        background: rgba(255, 255, 255, 0.46);
+        color: rgba(58, 47, 36, 0.72);
+      }
+      [data-theme='light'] .rb-custom-toolbar-note,
+      [data-theme='light'] .rb-custom-empty {
+        color: rgba(58, 47, 36, 0.5);
+      }
+      [data-theme='light'] .rb-custom-input,
+      [data-theme='light'] .rb-custom-text {
+        border-color: rgba(160, 127, 72, 0.22);
+        background: rgba(255, 255, 255, 0.5);
+        color: #3a2f24;
+      }
+      [data-theme='light'] .rb-custom-empty {
+        border-color: rgba(160, 127, 72, 0.2);
       }
       [data-theme='light'] .rb-options-section-label::after {
         background: rgba(160, 127, 72, 0.18);
@@ -3511,6 +3696,12 @@
         .rb-quick-reply {
           padding: 6px 8px;
           font-size: 0.78em;
+        }
+        .rb-custom-editor {
+          grid-template-columns: minmax(0, 1fr) auto;
+        }
+        .rb-custom-input {
+          grid-column: 1 / -1;
         }
       }
       @media (max-width: 380px) {
@@ -3960,6 +4151,7 @@
       })();
 
       const RB_QUICK_ACTOR_STORAGE_KEY = 'rb-quick-reply-actors-v1';
+      const RB_CUSTOM_REPLY_STORAGE_KEY = 'rb-custom-quick-replies-v1';
       const RB_QUICK_NPC_SLOTS = ['npc1', 'npc2', 'npc3'];
       let rbQuickActorState = {
         user: '主角',
@@ -4002,6 +4194,121 @@
           );
         } catch (_) {
           /* localStorage 不可用时只保留当前楼层选择 */
+        }
+      }
+
+      function normalizeCustomQuickReply(reply, index = 0) {
+        if (!reply || typeof reply !== 'object' || Array.isArray(reply)) return null;
+        const label = String(reply.label || reply.name || reply.title || '')
+          .trim()
+          .slice(0, 60);
+        const text = String(reply.text || reply.content || reply.value || '')
+          .trim()
+          .slice(0, 6000);
+        if (!label || !text) return null;
+        const rawId = String(reply.id || '').trim();
+        const fallbackId = `custom-${Date.now().toString(36)}-${index}-${Math.random().toString(36).slice(2, 7)}`;
+        return {
+          id: (rawId || fallbackId).replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 90),
+          label,
+          text,
+        };
+      }
+
+      function loadCustomQuickReplies() {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(RB_CUSTOM_REPLY_STORAGE_KEY) || '[]');
+          const replies = Array.isArray(parsed) ? parsed : Array.isArray(parsed && parsed.replies) ? parsed.replies : [];
+          return replies.map(normalizeCustomQuickReply).filter(Boolean).slice(0, 300);
+        } catch (_) {
+          return [];
+        }
+      }
+
+      function saveCustomQuickReplies(replies) {
+        const normalized = (Array.isArray(replies) ? replies : [])
+          .map(normalizeCustomQuickReply)
+          .filter(Boolean)
+          .slice(0, 300);
+        localStorage.setItem(RB_CUSTOM_REPLY_STORAGE_KEY, JSON.stringify(normalized));
+        return normalized;
+      }
+
+      function createCustomQuickReplyId() {
+        try {
+          if (crypto && typeof crypto.randomUUID === 'function') return `custom-${crypto.randomUUID()}`;
+        } catch (_) {}
+        return `custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+      }
+
+      function importedCustomReplies(payload) {
+        if (Array.isArray(payload)) return payload;
+        if (!payload || typeof payload !== 'object') return [];
+        if (Array.isArray(payload.replies)) return payload.replies;
+        if (!Array.isArray(payload.categories)) return [];
+        const flattened = [];
+        payload.categories.forEach(category => {
+          const categoryLabel = String((category && category.label) || '').trim();
+          const collect = (replies, groupLabel = '') => {
+            (Array.isArray(replies) ? replies : []).forEach(reply => {
+              if (!reply || typeof reply !== 'object') return;
+              const sourceLabel = String(reply.label || reply.name || '').trim();
+              flattened.push({
+                ...reply,
+                label: [categoryLabel, groupLabel, sourceLabel].filter(Boolean).join(' · '),
+              });
+            });
+          };
+          collect(category && category.replies);
+          (Array.isArray(category && category.groups) ? category.groups : []).forEach(group => {
+            collect(group && group.replies, String((group && group.label) || '').trim());
+          });
+        });
+        return flattened;
+      }
+
+      function exportCustomQuickReplies() {
+        const replies = loadCustomQuickReplies();
+        const payload = {
+          format: 'rb-custom-quick-replies',
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          replies,
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = '正文美化-自定义快捷回复.json';
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast(replies.length ? `已导出 ${replies.length} 条自定义回复` : '已导出空白自定义回复配置');
+      }
+
+      async function importCustomQuickReplies(file) {
+        if (!file) return;
+        try {
+          const payload = JSON.parse(await file.text());
+          const incoming = importedCustomReplies(payload).map(normalizeCustomQuickReply).filter(Boolean);
+          if (!incoming.length) throw new Error('JSON 中没有可用的回复条目');
+          const merged = new Map(loadCustomQuickReplies().map(reply => [reply.id, reply]));
+          incoming.forEach(reply => {
+            const duplicate = [...merged.values()].find(
+              current => current.id === reply.id || (current.label === reply.label && current.text === reply.text),
+            );
+            merged.set(duplicate ? duplicate.id : reply.id || createCustomQuickReplyId(), {
+              ...reply,
+              id: duplicate ? duplicate.id : reply.id || createCustomQuickReplyId(),
+            });
+          });
+          const saved = saveCustomQuickReplies([...merged.values()]);
+          refreshCustomQuickReplyPanels();
+          showToast(`已合并导入 ${incoming.length} 条，共 ${saved.length} 条`);
+        } catch (error) {
+          console.warn('[正文美化] 自定义快捷回复导入失败:', error);
+          showToast(`导入失败：${error && error.message ? error.message : 'JSON 格式不正确'}`);
         }
       }
 
@@ -4095,7 +4402,7 @@
         const disabled = rbQuickActorState.npcNames.length ? '' : ' disabled';
         const selects = RB_QUICK_NPC_SLOTS.map(
           slot =>
-            `<label class="rb-quick-actor-field"><span class="rb-quick-actor-slot">${slot}</span>` +
+            `<label class="rb-quick-actor-field rb-quick-actor-field--select"><span class="rb-quick-actor-slot">${slot}</span>` +
             `<select class="rb-quick-actor-select" data-quick-actor-slot="${slot}"${disabled}>` +
             `${renderQuickReplyActorOptions(slot)}</select></label>`,
         ).join('');
@@ -6017,6 +6324,62 @@
         );
       }
 
+      function renderQuickReplyItems(replies) {
+        const buttons = replies
+          .map(reply => {
+            const resolvedText = resolveQuickReplyTemplate(reply.text);
+            return (
+              `<button type="button" class="rb-quick-reply" ` +
+              `data-option-template="${_.escape(reply.text)}" data-option-text="${_.escape(resolvedText)}" ` +
+              `title="${_.escape(resolvedText)}"><span>${_.escape(reply.label)}</span></button>`
+            );
+          })
+          .join('');
+        return `<div class="rb-quick-replies" tabindex="0" aria-label="快捷回复列表，共 ${replies.length} 项">${buttons}</div>`;
+      }
+
+      function renderCustomQuickReplyGroupContent() {
+        const replies = loadCustomQuickReplies();
+        const rows = replies
+          .map(reply => {
+            const resolvedText = resolveQuickReplyTemplate(reply.text);
+            return (
+              `<div class="rb-custom-row" data-custom-reply-id="${_.escape(reply.id)}">` +
+              `<button type="button" class="rb-quick-reply" data-option-template="${_.escape(reply.text)}" ` +
+              `data-option-text="${_.escape(resolvedText)}" title="${_.escape(resolvedText)}">` +
+              `<span>${_.escape(reply.label)}</span></button>` +
+              `<span class="rb-custom-row-actions">` +
+              `<button type="button" class="rb-custom-action" data-custom-action="edit" title="编辑">✎</button>` +
+              `<button type="button" class="rb-custom-action" data-custom-action="delete" title="删除">×</button>` +
+              `</span></div>`
+            );
+          })
+          .join('');
+        return (
+          `<div class="rb-quick-panel-head"><span>自定义快捷回复</span><small>支持角色模板，例如 {{npc1|某人}}</small></div>` +
+          `<div class="rb-custom-manager">` +
+          `<div class="rb-custom-toolbar"><span class="rb-custom-toolbar-note">仅保存在本浏览器；导入采用合并模式</span>` +
+          `<button type="button" class="rb-custom-tool" data-custom-action="import">导入</button>` +
+          `<button type="button" class="rb-custom-tool" data-custom-action="export">导出</button>` +
+          `<input type="file" class="rb-custom-file" accept="application/json,.json" hidden></div>` +
+          `<div class="rb-custom-editor">` +
+          `<input class="rb-custom-input" data-custom-field="label" maxlength="60" placeholder="按钮名称，如：继续探索">` +
+          `<textarea class="rb-custom-text" data-custom-field="text" maxlength="6000" placeholder="填入输入框的完整内容"></textarea>` +
+          `<button type="button" class="rb-custom-submit" data-custom-action="save">添加</button>` +
+          `<input type="hidden" data-custom-field="id"></div>` +
+          `<div class="rb-custom-list" tabindex="0" aria-label="自定义回复列表，共 ${replies.length} 项">` +
+          `${rows || '<div class="rb-custom-empty">还没有自定义回复，在上方添加第一条吧</div>'}</div></div>`
+        );
+      }
+
+      function refreshCustomQuickReplyPanels() {
+        document.querySelectorAll('.rb-quick-group[data-quick-group="custom"]').forEach(group => {
+          group.innerHTML = renderCustomQuickReplyGroupContent();
+        });
+        refreshQuickReplyActorBindings();
+        scheduleIframeHeightRefresh();
+      }
+
       function renderQuickReplyPanel() {
         syncQuickReplyActorsFromMvu();
         const normalizeReplies = (rawReplies, prefix) =>
@@ -6054,8 +6417,14 @@
             category =>
               category.id && category.label && (category.replies.length > 0 || category.subgroups.length > 0),
           );
-
-        if (!categories.length) return { buttons: '', panel: '', hasCategories: false };
+        categories.push({
+          id: 'custom',
+          label: '自定',
+          icon: 'fa-solid fa-plus',
+          replies: [],
+          subgroups: [],
+          isCustom: true,
+        });
 
         const buttons = categories
           .map(
@@ -6067,20 +6436,14 @@
           )
           .join('');
 
-        const renderReplies = replies =>
-          replies
-            .map(reply => {
-              const resolvedText = resolveQuickReplyTemplate(reply.text);
-              return (
-                `<button type="button" class="rb-quick-reply" data-option-template="${_.escape(reply.text)}" ` +
-                `data-option-text="${_.escape(resolvedText)}" title="${_.escape(resolvedText)}">` +
-                `<span>${_.escape(reply.label)}</span></button>`
-              );
-            })
-            .join('');
-
         const groups = categories
           .map(category => {
+            if (category.isCustom) {
+              return (
+                `<div class="rb-quick-group" data-quick-group="custom" hidden>` +
+                `${renderCustomQuickReplyGroupContent()}</div>`
+              );
+            }
             let content;
             if (category.subgroups.length > 0) {
               const subgroupButtons = category.subgroups
@@ -6097,14 +6460,14 @@
                   (group, index) =>
                     `<div class="rb-quick-subgroup" data-quick-subgroup="${_.escape(group.id)}"${index === 0 ? '' : ' hidden'}>` +
                     `<div class="rb-quick-subgroup-title">${_.escape(group.label)} · ${group.replies.length} 项</div>` +
-                    `<div class="rb-quick-replies">${renderReplies(group.replies)}</div></div>`,
+                    `${renderQuickReplyItems(group.replies)}</div>`,
                 )
                 .join('');
               content =
                 `<div class="rb-quick-subcategories" role="tablist" aria-label="${_.escape(category.label)}二级分类">` +
                 `${subgroupButtons}</div>${subgroupPanels}`;
             } else {
-              content = `<div class="rb-quick-replies">${renderReplies(category.replies)}</div>`;
+              content = renderQuickReplyItems(category.replies);
             }
             return (
               `<div class="rb-quick-group" data-quick-group="${_.escape(category.id)}" hidden>` +
@@ -6175,6 +6538,7 @@
           `<div class="rb-options-head">` +
           `<i class="rb-options-icon fa-solid fa-compass-drafting"></i>` +
           `<span class="rb-options-title">行动方略</span>` +
+          `<span class="rb-options-count">本轮 ${Math.max(1, options.length)} 项</span>` +
           quickReplies.buttons +
           `</div>` +
           quickReplies.panel +
@@ -6262,6 +6626,34 @@
         return raw;
       }
 
+      let rbIframeResizeTimer = 0;
+      function fitMessageIframeHeight() {
+        try {
+          const frame = window.frameElement;
+          if (!frame || !document.body || !document.documentElement) return;
+          /* 不能先把 iframe 压到 1px 再读 scrollHeight：选项列表使用 vh 限高，
+           * 那样会令它按 1px 视口重新排版并得到严重偏小的高度，造成正文被裁切。
+           * 直接读取所有正常文档流子元素的实际底边；fixed/absolute 浮层不参与楼层高度。 */
+          const flowBottom = [...document.body.children].reduce((bottom, element) => {
+            const style = getComputedStyle(element);
+            if (style.display === 'none' || style.position === 'fixed' || style.position === 'absolute') return bottom;
+            const rect = element.getBoundingClientRect();
+            const marginBottom = Number.parseFloat(style.marginBottom) || 0;
+            return Math.max(bottom, rect.bottom + window.scrollY + marginBottom);
+          }, 0);
+          const height = Math.max(flowBottom, 1);
+          frame.style.height = `${Math.ceil(height)}px`;
+        } catch (_) {
+          /* 独立预览页或浏览器限制 frameElement 时，仍由酒馆助手 ResizeObserver 处理。 */
+        }
+      }
+
+      function scheduleIframeHeightRefresh() {
+        fitMessageIframeHeight();
+        clearTimeout(rbIframeResizeTimer);
+        rbIframeResizeTimer = setTimeout(fitMessageIframeHeight, 480);
+      }
+
       // 折叠点击事件委托（只挂一次）
       let _rbPanelDelegated = false;
       function ensurePanelClickDelegation() {
@@ -6275,6 +6667,7 @@
             function () {
               $(this).toggleClass('collapsed');
               $(this).next('.panel-content').toggleClass('collapsed');
+              scheduleIframeHeightRefresh();
             },
           );
           // 角色卡 tab 切换:点 .char-card-tab 时切到对应内容
@@ -6324,6 +6717,7 @@
             $options.find('.rb-quick-group').prop('hidden', true);
             if (shouldClose || !targetKey) {
               $panel.prop('hidden', true);
+              scheduleIframeHeightRefresh();
               return;
             }
 
@@ -6332,6 +6726,7 @@
               $(this).prop('hidden', $(this).attr('data-quick-group') !== targetKey);
             });
             $panel.prop('hidden', false);
+            scheduleIframeHeightRefresh();
           });
           // 二级分类只切换当前一级分类里的具体玩法，不影响其他行动方略面板。
           $('#readingContent').on('click', '.rb-quick-subcategory', function (event) {
@@ -6346,6 +6741,99 @@
             $group.find('.rb-quick-subgroup').each(function () {
               $(this).prop('hidden', $(this).attr('data-quick-subgroup') !== targetKey);
             });
+            const activeList = $group
+              .find(`.rb-quick-subgroup[data-quick-subgroup="${CSS.escape(targetKey)}"] .rb-quick-replies`)
+              .get(0);
+            if (activeList) activeList.scrollTop = 0;
+            scheduleIframeHeightRefresh();
+          });
+          // 纵向列表直接响应滚轮；一级/二级分类横条把普通滚轮转换为横向滚动。
+          // 只有容器确实还能继续滚动时才拦截事件，抵达边界后仍可滚动酒馆页面。
+          document.getElementById('readingContent').addEventListener(
+            'wheel',
+            event => {
+              const source = event.target instanceof Element ? event.target : null;
+              if (!source) return;
+
+              const horizontal = source.closest('.rb-quick-categories, .rb-quick-subcategories');
+              if (horizontal && horizontal.scrollWidth > horizontal.clientWidth) {
+                const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
+                const before = horizontal.scrollLeft;
+                const maximum = horizontal.scrollWidth - horizontal.clientWidth;
+                horizontal.scrollLeft = Math.max(0, Math.min(maximum, before + delta));
+                if (horizontal.scrollLeft !== before) {
+                  event.preventDefault();
+                  event.stopPropagation();
+                }
+                return;
+              }
+
+              const vertical = source.closest('.rb-quick-replies, .rb-custom-list, .rb-options-body');
+              if (!vertical || vertical.scrollHeight <= vertical.clientHeight) return;
+              const delta = event.deltaY || event.deltaX;
+              const before = vertical.scrollTop;
+              const maximum = vertical.scrollHeight - vertical.clientHeight;
+              vertical.scrollTop = Math.max(0, Math.min(maximum, before + delta));
+              if (vertical.scrollTop !== before) {
+                event.preventDefault();
+                event.stopPropagation();
+              }
+            },
+            { passive: false },
+          );
+          $('#readingContent').on('click', '[data-custom-action]', function (event) {
+            event.stopPropagation();
+            const action = $(this).attr('data-custom-action') || '';
+            const $group = $(this).closest('.rb-quick-group[data-quick-group="custom"]');
+            if (action === 'export') {
+              exportCustomQuickReplies();
+              return;
+            }
+            if (action === 'import') {
+              $group.find('.rb-custom-file').trigger('click');
+              return;
+            }
+            if (action === 'edit') {
+              const id = String($(this).closest('.rb-custom-row').attr('data-custom-reply-id') || '');
+              const reply = loadCustomQuickReplies().find(item => item.id === id);
+              if (!reply) return;
+              $group.find('[data-custom-field="id"]').val(reply.id);
+              $group.find('[data-custom-field="label"]').val(reply.label).trigger('focus');
+              $group.find('[data-custom-field="text"]').val(reply.text);
+              $group.find('[data-custom-action="save"]').text('保存');
+              return;
+            }
+            if (action === 'delete') {
+              const id = String($(this).closest('.rb-custom-row').attr('data-custom-reply-id') || '');
+              const replies = loadCustomQuickReplies().filter(item => item.id !== id);
+              saveCustomQuickReplies(replies);
+              refreshCustomQuickReplyPanels();
+              showToast('已删除自定义回复');
+              return;
+            }
+            if (action === 'save') {
+              const id = String($group.find('[data-custom-field="id"]').val() || '').trim();
+              const label = String($group.find('[data-custom-field="label"]').val() || '').trim();
+              const text = String($group.find('[data-custom-field="text"]').val() || '').trim();
+              if (!label || !text) {
+                showToast('请同时填写按钮名称和回复内容');
+                return;
+              }
+              const replies = loadCustomQuickReplies();
+              const next = normalizeCustomQuickReply({ id: id || createCustomQuickReplyId(), label, text });
+              const index = replies.findIndex(item => item.id === id);
+              if (index >= 0) replies[index] = next;
+              else replies.push(next);
+              saveCustomQuickReplies(replies);
+              refreshCustomQuickReplyPanels();
+              showToast(index >= 0 ? '已保存自定义回复' : '已添加自定义回复');
+            }
+          });
+          $('#readingContent').on('change', '.rb-custom-file', async function (event) {
+            event.stopPropagation();
+            const file = this.files && this.files[0];
+            this.value = '';
+            await importCustomQuickReplies(file);
           });
           // AI 选项与固定快捷回复点击 -> 追加到酒馆输入框,不自动发送、不替换原值
           $('#readingContent').on('click', '.rb-options-item, .rb-quick-reply', function () {
@@ -6361,6 +6849,18 @@
             void el.offsetWidth;
             el.classList.add('is-sent');
             setTimeout(() => el.classList.remove('is-sent'), 700);
+          });
+          document.addEventListener(
+            'toggle',
+            event => {
+              if (event.target && event.target.matches && event.target.matches('details.rb-summary')) {
+                scheduleIframeHeightRefresh();
+              }
+            },
+            true,
+          );
+          window.addEventListener('storage', event => {
+            if (event.key === RB_CUSTOM_REPLY_STORAGE_KEY) refreshCustomQuickReplyPanels();
           });
         } catch (e) {
           console.warn('[正文美化] 折叠委托绑定失败:', e);

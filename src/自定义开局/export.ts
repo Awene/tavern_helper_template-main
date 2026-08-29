@@ -8,6 +8,7 @@ import {
   findDifficulty,
   findItem,
   findLocation,
+  findRace,
   findStory,
   physiqueResolved,
   plotItemsForStory,
@@ -38,6 +39,7 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
   const rootTier = rootTierCanonical(sel.root);
   const rootElements = sel.root.elements.length ? sel.root.elements.slice() : ['无'];
   const rootDesc = rootDescription(sel.root);
+  const race = findRace(sel.种族) ?? findRace('人族')!;
 
   // 资材归类（含玩家自创）
   const stones = sel.itemIds
@@ -226,7 +228,7 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
   return {
     // —— 原 基本信息.* (扁平化:升至根级) ——
     姓名: sel.道号 || '无名',
-    种族: '人族',
+    种族: race.name,
     身份,
     性别: sel.性别,
     宗门,
@@ -300,6 +302,8 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
       difficulty: difficulty?.id,
       story: story?.id,
       story_body: story?.body,
+      race_detail: race.detailLabel ? sel.种族细分.trim() : '',
+      race_can_transform: race.canChooseTransformation ? sel.种族可化形 : null,
       points_total: difficulty?.points ?? 0,
       created_at: new Date().toISOString(),
       // 供世界书 EJS 做开局专属分支；与剧本 id 分开，便于一个开局挂载多个语义标记。
@@ -337,12 +341,22 @@ export function generateAIPrompt(sel: Selection): string {
   const rootTier = rootTierCanonical(sel.root);
   const rootElements = sel.root.elements.length ? sel.root.elements.slice() : ['无'];
   const rootDesc = rootDescription(sel.root);
+  const race = findRace(sel.种族) ?? findRace('人族')!;
+  const raceDetail = race.detailLabel ? sel.种族细分.trim() : '';
 
   const lines: string[] = [];
 
   // —— 角色信息 ——
   lines.push('【角色信息】');
   lines.push(`道号：${sel.道号 || '无名'}`);
+  lines.push(`种族：${race.name}${raceDetail ? `（${raceDetail}）` : ''}`);
+  if (race.canChooseTransformation) {
+    lines.push(
+      sel.种族可化形
+        ? '形态：主角已经开智、可以化形；开局叙述中主角已经化为人形。'
+        : `形态：主角已经开智但不可化形；开局叙述中保持${race.originalFormLabel || '本体'}，不能变身为人。`,
+    );
+  }
   const mp = (sel.门派归属 || '').trim();
   const 身份文本 = mp === '散修' ? '散修' : mp ? `${mp}弟子` : '（无）';
   lines.push(`身份：${身份文本}`);

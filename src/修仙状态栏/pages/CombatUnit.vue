@@ -20,7 +20,14 @@
       :aria-expanded="state.editMode || isCardOpen('unit', name)"
       @click="toggleCard('unit', name)"
     >
-      <span class="xy-item-name">{{ name }}</span>
+      <span class="xy-item-heading">
+        <span class="xy-item-name">{{ name }}</span>
+        <span v-if="!state.editMode && !isCardOpen('unit', name)" class="xy-item-summary">
+          <b :class="'xy-summary-quality xy-summary-quality-' + (unit.品质 || '凡')">{{ unit.品质 || '凡' }}品</b>
+          <span v-if="unit.境界">{{ unit.境界 }}</span>
+          <span v-if="unit.五行">{{ unit.五行 }}</span>
+        </span>
+      </span>
       <button
         v-if="!compact"
         class="xy-toggle"
@@ -30,7 +37,9 @@
         {{ unit.使用中 ? '在身' : '入囊' }}
       </button>
       <span v-else-if="unit.使用中" class="xy-unit-badge">在身</span>
-      <span class="xy-collapsible-caret" aria-hidden="true">⌄</span>
+      <span class="xy-collapsible-hint" aria-hidden="true">
+        {{ state.editMode ? '编辑' : isCardOpen('unit', name) ? '收起' : '详情' }}
+      </span>
     </div>
 
     <div v-show="state.editMode || isCardOpen('unit', name)" class="xy-collapsible-body">
@@ -52,11 +61,16 @@
           <span class="xy-unit-bar-num">
             <template v-if="unit.资源池?.气血">
               <EditableValue
-                v-model.number="unit.资源池.气血.现值"
+                v-model.number="editableUnit.资源池.气血.现值"
                 type="number"
                 label="气血现值"
                 :min="0"
-              />/<EditableValue v-model.number="unit.资源池.气血.上限" type="number" label="气血上限" :min="1" />
+              />/<EditableValue
+                v-model.number="editableUnit.资源池.气血.上限"
+                type="number"
+                label="气血上限"
+                :min="1"
+              />
             </template>
             <template v-else>{{ hp.现值 }}/{{ hp.上限 }}</template>
           </span>
@@ -69,11 +83,16 @@
           <span class="xy-unit-bar-num">
             <template v-if="unit.资源池?.灵气">
               <EditableValue
-                v-model.number="unit.资源池.灵气.现值"
+                v-model.number="editableUnit.资源池.灵气.现值"
                 type="number"
                 label="灵气现值"
                 :min="0"
-              />/<EditableValue v-model.number="unit.资源池.灵气.上限" type="number" label="灵气上限" :min="0" />
+              />/<EditableValue
+                v-model.number="editableUnit.资源池.灵气.上限"
+                type="number"
+                label="灵气上限"
+                :min="0"
+              />
             </template>
             <template v-else>{{ mp.现值 }}/{{ mp.上限 }}</template>
           </span>
@@ -82,13 +101,18 @@
 
       <div class="xy-unit-stats">
         <span class="xy-eq-stat xy-stat-def"
-          >防 <EditableValue v-model.number="unit.防御力" type="number" label="防御力" :min="0" :format="v => v ?? 0"
+          >防 <EditableValue
+            v-model.number="editableUnit.防御力"
+            type="number"
+            label="防御力"
+            :min="0"
+            :format="v => v ?? 0"
         /></span>
         <span class="xy-eq-stat">
           遁
           <EditableValue
             v-if="unit.资源池"
-            v-model.number="unit.资源池.遁速"
+            v-model.number="editableUnit.资源池.遁速"
             type="number"
             label="遁速"
             :min="0"
@@ -99,7 +123,7 @@
       </div>
 
       <div v-if="unit.描述 || state.editMode" class="xy-item-desc">
-        <EditableValue v-model="unit.描述" label="描述" multiline />
+        <EditableValue v-model="editableUnit.描述" label="描述" multiline />
       </div>
 
       <div v-if="!isEmpty(unit.技能)" class="xy-skill-list">
@@ -140,6 +164,9 @@ defineEmits<{
 }>();
 
 const isEmpty = _.isEmpty;
+// 通过本地计算引用承接编辑控件，避免模板直接对 prop 路径使用 v-model；
+// unit 本身由上层 MVU store 提供响应式对象，嵌套字段修改仍会同步回原数据。
+const editableUnit = computed(() => props.unit);
 
 const hp = computed(() => props.unit?.资源池?.气血 || { 现值: 0, 上限: 1 });
 const mp = computed(() => props.unit?.资源池?.灵气 || { 现值: 0, 上限: 1 });

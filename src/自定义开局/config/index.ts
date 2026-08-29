@@ -1,5 +1,6 @@
 export * from './difficulties';
 export * from './roots';
+export * from './races';
 export * from './physiques';
 export * from './locations';
 export * from './items';

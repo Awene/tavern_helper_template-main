@@ -33,17 +33,25 @@
           :aria-expanded="state.editMode || isCardOpen('asset', String(assetName))"
           @click="toggleCard('asset', String(assetName))"
         >
-          <span class="xy-asset-name">
-            <EditableValue
-              :model-value="String(assetName)"
-              label="资产名"
-              @update:model-value="renameKey(assets, String(assetName), String($event), '资产')"
-            />
+          <span class="xy-asset-heading">
+            <span class="xy-asset-title-line">
+              <span class="xy-asset-name">
+                <EditableValue
+                  :model-value="String(assetName)"
+                  label="资产名"
+                  @update:model-value="renameKey(assets, String(assetName), String($event), '资产')"
+                />
+              </span>
+              <select v-if="state.editMode" v-model="asset.类型" class="xy-asset-select" title="资产类型" @click.stop>
+                <option v-for="type in assetTypes" :key="type" :value="type">{{ type }}</option>
+              </select>
+              <span v-else class="xy-asset-type">{{ asset.类型 }}</span>
+            </span>
+            <span v-if="!state.editMode && !isCardOpen('asset', String(assetName))" class="xy-asset-summary">
+              <span>{{ asset.所在地.世界 }} · {{ asset.所在地.地域 }}</span>
+              <span>{{ Object.keys(asset.设施 || {}).length }} 处设施</span>
+            </span>
           </span>
-          <select v-if="state.editMode" v-model="asset.类型" class="xy-asset-select" title="资产类型" @click.stop>
-            <option v-for="type in assetTypes" :key="type" :value="type">{{ type }}</option>
-          </select>
-          <span v-else class="xy-asset-type">{{ asset.类型 }}</span>
           <span class="xy-asset-scale">
             规模：<EditableValue
               :model-value="asset.人员规模"
@@ -54,7 +62,9 @@
               @update:model-value="asset.人员规模 = normalizeScale($event)"
             />人
           </span>
-          <span class="xy-collapsible-caret" aria-hidden="true">⌄</span>
+          <span class="xy-collapsible-hint" aria-hidden="true">
+            {{ state.editMode ? '编辑' : isCardOpen('asset', String(assetName)) ? '收起' : '详情' }}
+          </span>
         </div>
 
         <div v-show="state.editMode || isCardOpen('asset', String(assetName))" class="xy-collapsible-body">
@@ -150,10 +160,10 @@
             ＋ 新增设施
           </button>
 
-          <div class="xy-asset-section-title">所属人物</div>
+          <div class="xy-asset-section-title">分配人物</div>
           <div class="xy-asset-people">
-            <IdentityTags v-model="asset.所属人物" label="所属人物" />
-            <span v-if="!state.editMode && asset.所属人物.length === 0" class="xy-asset-empty">暂无</span>
+            <IdentityTags v-model="asset.分配人物" label="分配人物" />
+            <span v-if="!state.editMode && asset.分配人物.length === 0" class="xy-asset-empty">暂无</span>
           </div>
         </div>
       </article>
@@ -218,7 +228,7 @@ function addAsset() {
     所在地: { ...store.data.地点 },
     现状: '正常',
     设施: {},
-    所属人物: [],
+    分配人物: [],
   };
 }
 

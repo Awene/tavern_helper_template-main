@@ -1,10 +1,64 @@
 <template>
   <div>
-    <h2 class="xs-step-title">择 · 性别 · 灵根 · 体质</h2>
-    <p class="xs-step-subtitle">先定性别与阴阳，再择灵根与体质——三者皆为修行根本，需综合点数与道途权衡。</p>
+    <h2 class="xs-step-title">择 · 种族 · 灵根 · 体质</h2>
+    <p class="xs-step-subtitle">先定种族与性别，再择灵根、体质，落定此世修行根基。</p>
+
+    <!-- 初始种族：范围与轮回转生面板一致 -->
+    <h3 class="xs-section-title">初始种族</h3>
+    <div class="xs-race-builder">
+      <div class="xs-race-grid">
+        <button
+          v-for="race in races"
+          :key="race.id"
+          type="button"
+          class="xs-race-card"
+          :class="{ active: store.selection.种族 === race.name, disabled: !race.selectable }"
+          :disabled="!race.selectable"
+          :aria-pressed="store.selection.种族 === race.name"
+          @click="store.setRace(race.name)"
+        >
+          <span class="xs-race-glyph">{{ race.glyph }}</span>
+          <span class="xs-race-copy">
+            <span class="xs-race-name">{{ race.name }}</span>
+            <small>{{ race.selectable ? race.brief : race.disabledNote }}</small>
+          </span>
+        </button>
+      </div>
+      <div v-if="selectedRace?.detailLabel" class="xs-race-controls">
+        <div class="xs-race-detail">
+          <label :for="`xs-race-detail-${selectedRace.id}`">{{ selectedRace.detailLabel }}</label>
+          <div class="xs-race-detail-body">
+            <input
+              :id="`xs-race-detail-${selectedRace.id}`"
+              type="text"
+              maxlength="30"
+              :value="store.selection.种族细分"
+              :placeholder="selectedRace.detailPlaceholder"
+              @input="store.setRaceDetail(($event.target as HTMLInputElement).value)"
+            />
+            <small>选择剧本开局时建议留空；留空视为由剧本决定。</small>
+          </div>
+        </div>
+        <button
+          v-if="selectedRace.canChooseTransformation"
+          type="button"
+          class="xs-race-shape-toggle"
+          :class="{ active: store.selection.种族可化形 }"
+          role="switch"
+          :aria-checked="store.selection.种族可化形"
+          @click="store.setRaceTransformation(!store.selection.种族可化形)"
+        >
+          <span class="xs-race-switch-track"><span class="xs-race-switch-thumb"></span></span>
+          <span class="xs-race-shape-copy">
+            <strong>可化形</strong>
+            <small>{{ store.selection.种族可化形 ? '开局时已开智并化为人形' : '已开智但保持本体，不能变身为人' }}</small>
+          </span>
+        </button>
+      </div>
+    </div>
 
     <!-- 性别 / 元阳元阴（置于灵根之前） -->
-    <h3 class="xs-section-title">性别 · 元阳元阴</h3>
+    <h3 class="xs-section-title" style="margin-top: 22px">性别 · 元阳元阴</h3>
     <div class="xs-yy-builder">
       <div class="xs-yy-row">
         <span class="xs-yy-label">性别</span>
@@ -396,6 +450,8 @@ import {
   customPhysiqueSum,
   elementGlyph,
   mutationsByElement,
+  findRace,
+  races,
   physiqueCategoriesByTier,
   physiquesByTier,
   physiquesByTierAndCategory,
@@ -407,6 +463,7 @@ import type { PhysiqueCategory, PhysiqueTier } from '../types';
 import { useStartStore } from '../store';
 
 const store = useStartStore();
+const selectedRace = computed(() => findRace(store.selection.种族));
 const choice = computed(() => store.selection.root);
 const physique = computed(() => store.selection.physique);
 
@@ -577,6 +634,250 @@ const virginHint = computed(() => {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   margin-bottom: 18px;
+}
+
+/* —— 初始种族 —— */
+.xs-race-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--xs-line-gold);
+  border-radius: 10px;
+  background: var(--xs-glass);
+}
+.xs-race-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+.xs-race-card {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 1px solid var(--xs-line);
+  border-radius: 9px;
+  background: var(--xs-paper-warm);
+  color: var(--xs-ink);
+  text-align: left;
+  transition: all 0.18s ease;
+}
+.xs-race-card:hover:not(:disabled):not(.active) {
+  border-color: var(--xs-gold);
+  transform: translateY(-1px);
+}
+.xs-race-card.active {
+  border-color: var(--xs-cinnabar);
+  background: linear-gradient(180deg, var(--xs-tint-cinnabar-soft), var(--xs-paper-warm));
+  box-shadow: 0 0 0 1px var(--xs-cinnabar) inset;
+}
+.xs-race-card.disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  filter: grayscale(0.35);
+}
+.xs-race-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--xs-tint-gold-soft);
+  color: var(--xs-gold-deep);
+  font-family: var(--xs-font-display);
+  font-size: 13px;
+}
+.xs-race-card.active .xs-race-glyph {
+  background: var(--xs-cinnabar);
+  color: #fff;
+}
+.xs-race-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+.xs-race-name {
+  font-family: var(--xs-font-display);
+  font-size: 13.5px;
+  letter-spacing: 2px;
+}
+.xs-race-copy small {
+  overflow: hidden;
+  color: var(--xs-ink-mute);
+  font-size: 10.5px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.xs-race-detail {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.xs-race-detail label {
+  flex: 0 0 74px;
+  color: var(--xs-ink-mute);
+  font-family: var(--xs-font-display);
+  font-size: 12.5px;
+  letter-spacing: 2px;
+}
+.xs-race-detail input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--xs-line-gold);
+  border-radius: 6px;
+  background: var(--xs-paper-warm);
+  color: var(--xs-ink);
+}
+.xs-race-detail-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+.xs-race-detail-body small {
+  color: var(--xs-ink-mute);
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+.xs-race-detail input:focus {
+  border-color: var(--xs-cinnabar);
+  box-shadow: 0 0 0 3px var(--xs-tint-cinnabar-strong);
+  outline: none;
+}
+.xs-race-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  padding-top: 2px;
+}
+.xs-race-shape-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  align-self: start;
+  min-width: 240px;
+  padding: 7px 11px;
+  border: 1px solid var(--xs-line);
+  border-radius: 9px;
+  background: var(--xs-paper-warm);
+  color: var(--xs-ink);
+  text-align: left;
+  transition: all 0.18s ease;
+}
+.xs-race-shape-toggle:hover {
+  border-color: var(--xs-gold);
+}
+.xs-race-shape-toggle.active {
+  border-color: var(--xs-cinnabar);
+  background: var(--xs-tint-cinnabar-soft);
+}
+.xs-race-switch-track {
+  position: relative;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 18px;
+  border-radius: 10px;
+  background: var(--xs-line);
+  transition: background 0.18s ease;
+}
+.xs-race-switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--xs-paper);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.18s ease;
+}
+.xs-race-shape-toggle.active .xs-race-switch-track {
+  background: var(--xs-cinnabar);
+}
+.xs-race-shape-toggle.active .xs-race-switch-thumb {
+  transform: translateX(16px);
+}
+.xs-race-shape-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.xs-race-shape-copy strong {
+  font-family: var(--xs-font-display);
+  font-size: 12.5px;
+  letter-spacing: 2px;
+}
+.xs-race-shape-copy small {
+  color: var(--xs-ink-mute);
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+@media (max-width: 760px) {
+  .xs-race-builder {
+    gap: 7px;
+    padding: 8px;
+  }
+  .xs-race-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .xs-race-controls {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+  .xs-race-shape-toggle {
+    justify-self: stretch;
+    min-width: 0;
+  }
+}
+@media (max-width: 430px) {
+  .xs-race-card {
+    gap: 6px;
+    padding: 6px 7px;
+  }
+  .xs-race-glyph {
+    flex-basis: 26px;
+    width: 26px;
+    height: 26px;
+    font-size: 11.5px;
+  }
+  .xs-race-name {
+    font-size: 12.5px;
+    letter-spacing: 1px;
+  }
+  .xs-race-copy small {
+    font-size: 9.5px;
+  }
+  .xs-race-detail {
+    gap: 7px;
+  }
+  .xs-race-detail label {
+    flex-basis: 64px;
+    width: 64px;
+    font-size: 11.5px;
+    letter-spacing: 1px;
+  }
+  .xs-race-detail input {
+    width: 100%;
+    padding: 6px 8px;
+  }
+  .xs-race-shape-toggle {
+    gap: 8px;
+    padding: 6px 9px;
+  }
+  .xs-race-shape-copy small {
+    white-space: normal;
+  }
 }
 
 .xs-root-pickers {
