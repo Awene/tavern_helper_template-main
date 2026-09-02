@@ -1,7 +1,9 @@
 <template>
   <div>
     <h2 class="xs-step-title">择 · 初始资材</h2>
-    <p class="xs-step-subtitle">取舍之间见性情；可同时携带数件，所选条目独立计费。可按境界、品质、类型筛选；亦可自创资材。</p>
+    <p class="xs-step-subtitle">
+      取舍之间见性情；可同时携带数件，所选条目独立计费。可按境界、品质、类型筛选；亦可自创资材。
+    </p>
     <p class="xs-realm-cap-hint">
       <span class="xs-pill xs-pill-jade">境界上限</span>
       仅可选择 <b>{{ realmCapLabel }}</b> 及以下境界的资材（由开局故事决定）。
@@ -33,14 +35,7 @@
         <span class="xs-custom-count">
           已创 {{ store.selection.customItems.length }} 件 · 计 {{ store.customItemsCost }} 点
         </span>
-        <button
-          v-if="!editorOpen"
-          type="button"
-          class="xs-btn xs-btn-ghost"
-          @click="openCreate()"
-        >
-          + 添加
-        </button>
+        <button v-if="!editorOpen" type="button" class="xs-btn xs-btn-ghost" @click="openCreate()">+ 添加</button>
       </div>
 
       <!-- 自创条目卡片 -->
@@ -55,7 +50,9 @@
         >
           <template #actions>
             <button type="button" class="xs-btn xs-btn-ghost xs-mini-btn" @click="openEdit(c)">编辑</button>
-            <button type="button" class="xs-btn xs-btn-ghost xs-mini-btn" @click="store.removeCustomItem(c.id)">删除</button>
+            <button type="button" class="xs-btn xs-btn-ghost xs-mini-btn" @click="store.removeCustomItem(c.id)">
+              删除
+            </button>
           </template>
         </ItemCard>
       </div>
@@ -64,12 +61,7 @@
       <div v-if="editorOpen" class="xs-custom-editor">
         <div class="xs-custom-edit-row">
           <label>名号</label>
-          <input
-            type="text"
-            v-model="draft.name"
-            maxlength="30"
-            placeholder="请为这件资材命名（如：紫电雷符）"
-          />
+          <input type="text" v-model="draft.name" maxlength="30" placeholder="请为这件资材命名（如：紫电雷符）" />
         </div>
         <div class="xs-custom-edit-row">
           <label>大类</label>
@@ -78,11 +70,7 @@
           </select>
           <label>类型</label>
           <select v-model="draft.类型" @change="onDraftKindChange">
-            <option
-              v-for="k in ITEM_KINDS_BY_CATEGORY[draft.category]"
-              :key="k"
-              :value="k"
-            >
+            <option v-for="k in ITEM_KINDS_BY_CATEGORY[draft.category]" :key="k" :value="k">
               {{ k }}
             </option>
           </select>
@@ -103,12 +91,7 @@
         </div>
         <div class="xs-custom-edit-row">
           <label>描述</label>
-          <input
-            type="text"
-            v-model="draft.desc"
-            maxlength="200"
-            placeholder="一句话描述其作用（可空）"
-          />
+          <input type="text" v-model="draft.desc" maxlength="200" placeholder="一句话描述其作用（可空）" />
         </div>
 
         <!-- 按 schema 渲染的字段（数值/select/toggle/string，按类型变化） -->
@@ -198,29 +181,15 @@
         <div v-if="draftSupportsSkill" class="xs-custom-edit-row xs-custom-edit-skill-row">
           <label>技能</label>
           <div class="xs-custom-edit-skill-wrap">
-            <SkillEditor
-              v-model="draft.技能"
-              :quality="draft.品质"
-              :realm="draft.境界"
-            />
+            <SkillEditor v-model="draft.技能" :quality="draft.品质" :realm="draft.境界" />
           </div>
         </div>
 
         <!-- 效果（仅支持该结构的子类型才显示） -->
         <div v-if="draftSupportsEffect" class="xs-custom-edit-effects">
-          <div
-            v-for="(eff, idx) in draft.effects"
-            :key="idx"
-            class="xs-custom-edit-row xs-custom-edit-effect"
-          >
+          <div v-for="(eff, idx) in draft.effects" :key="idx" class="xs-custom-edit-row xs-custom-edit-effect">
             <label>{{ idx === 0 ? '效果' : '' }}</label>
-            <input
-              type="text"
-              class="xs-effect-name-input"
-              v-model="eff.name"
-              maxlength="24"
-              placeholder="效果名"
-            />
+            <input type="text" class="xs-effect-name-input" v-model="eff.name" maxlength="24" placeholder="效果名" />
             <input
               type="text"
               class="xs-effect-desc-input"
@@ -234,7 +203,9 @@
               :title="draft.effects.length === 1 ? '至少保留 1 条' : '删除此条效果'"
               :disabled="draft.effects.length === 1"
               @click="removeDraftEffect(idx)"
-            >×</button>
+            >
+              ×
+            </button>
           </div>
           <div class="xs-custom-edit-row xs-custom-edit-effect-add">
             <label></label>
@@ -245,12 +216,7 @@
         <div class="xs-custom-edit-actions">
           <span class="xs-custom-cost-preview">将耗费 {{ draftCost }} 点</span>
           <button type="button" class="xs-btn xs-btn-ghost" @click="closeEditor">取消</button>
-          <button
-            type="button"
-            class="xs-btn xs-btn-primary"
-            :disabled="!canSave"
-            @click="onSave"
-          >
+          <button type="button" class="xs-btn xs-btn-primary" :disabled="!canSave" @click="onSave">
             {{ editingId ? '保存改动' : '加入' }}
           </button>
         </div>
@@ -312,43 +278,31 @@
 
         <!-- 分页 -->
         <div v-if="totalPages > 1" class="xs-pager">
-          <button
-            type="button"
-            class="xs-pager-btn"
-            :disabled="currentPage <= 1"
-            @click="currentPage = 1"
-          >« 首页</button>
-          <button
-            type="button"
-            class="xs-pager-btn"
-            :disabled="currentPage <= 1"
-            @click="currentPage--"
-          >‹ 上一页</button>
+          <button type="button" class="xs-pager-btn" :disabled="currentPage <= 1" @click="currentPage = 1">
+            « 首页
+          </button>
+          <button type="button" class="xs-pager-btn" :disabled="currentPage <= 1" @click="currentPage--">
+            ‹ 上一页
+          </button>
           <span class="xs-pager-info">第 {{ currentPage }} / {{ totalPages }} 页</span>
-          <button
-            type="button"
-            class="xs-pager-btn"
-            :disabled="currentPage >= totalPages"
-            @click="currentPage++"
-          >下一页 ›</button>
+          <button type="button" class="xs-pager-btn" :disabled="currentPage >= totalPages" @click="currentPage++">
+            下一页 ›
+          </button>
           <button
             type="button"
             class="xs-pager-btn"
             :disabled="currentPage >= totalPages"
             @click="currentPage = totalPages"
-          >末页 »</button>
+          >
+            末页 »
+          </button>
         </div>
       </div>
     </section>
 
     <div class="xs-actions">
       <button type="button" class="xs-btn" @click="store.prev">返回</button>
-      <button
-        type="button"
-        class="xs-btn xs-btn-primary"
-        :disabled="store.overBudget"
-        @click="store.next"
-      >
+      <button type="button" class="xs-btn xs-btn-primary" :disabled="store.overBudget" @click="store.next">
         继续 ▸
       </button>
     </div>
@@ -357,15 +311,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue';
-import type {
-  CustomItem,
-  CustomSkill,
-  ItemCategory,
-  ItemKind,
-  ItemOption,
-  ItemQuality,
-  ItemRealm,
-} from '../types';
+import type { CustomItem, CustomSkill, ItemCategory, ItemKind, ItemOption, ItemQuality, ItemRealm } from '../types';
 import {
   ALL_ITEM_KINDS,
   EFFECT_SUPPORTED_KINDS,
@@ -399,32 +345,44 @@ const FIVE_ELEMENTS = ['金', '木', '水', '火', '土', '阴', '阳', '混沌'
 const store = useStartStore();
 
 // —— 剧情物品（随所选剧本解锁，固定携带、0 点、锁定） ——
-const activePlotItems = computed<PlotItem[]>(() =>
-  plotItemsForStory(store.selection.storyId),
-);
+const activePlotItems = computed<PlotItem[]>(() => plotItemsForStory(store.selection.storyId));
 
 // —— CardView 构建（预设 / 剧情 / 自创，统一交给 ItemCard 渲染） ——
 function presetView(it: ItemOption): CardView {
   return itemToCardView(it);
 }
 function plotView(p: PlotItem): CardView {
-  return dataToCardView(
-    p.name,
-    p.category,
-    { 品质: p.品质, 境界: p.境界, 类型: p.类型, 五行: p.五行 },
-    p.data,
-  );
+  return dataToCardView(p.name, p.category, { 品质: p.品质, 境界: p.境界, 类型: p.类型, 五行: p.五行 }, p.data);
 }
 const STAT_SUFFIX: Record<string, string> = { 穿透: '%', 减免: '%' };
 function customView(c: CustomItem): CardView {
   const stats: CardStat[] = [];
   const clsMap: Record<string, string> = {
-    攻击力: 'atk', 防御力: 'def', 命中: 'hit', 闪避: 'hit',
-    修行速度: 'spd', 遁速: 'spd', 灵气消耗: 'mana', 灵气容量: 'mana',
-    穿透: 'buff', 减免: 'buff',
+    攻击力: 'atk',
+    防御力: 'def',
+    命中: 'hit',
+    闪避: 'hit',
+    修行速度: 'spd',
+    遁速: 'spd',
+    灵气消耗: 'mana',
+    灵气容量: 'mana',
+    穿透: 'buff',
+    减免: 'buff',
   };
   if (c.数值) {
-    const order = ['攻击力', '防御力', '命中', '闪避', '穿透', '减免', '修行速度', '遁速', '灵气消耗', '灵气容量', '炼制难度'];
+    const order = [
+      '攻击力',
+      '防御力',
+      '命中',
+      '闪避',
+      '穿透',
+      '减免',
+      '修行速度',
+      '遁速',
+      '灵气消耗',
+      '灵气容量',
+      '炼制难度',
+    ];
     for (const k of order) {
       const v = (c.数值 as any)[k];
       if (typeof v === 'number') stats.push({ label: k, value: `${v}${STAT_SUFFIX[k] || ''}`, cls: clsMap[k] || '' });
@@ -436,9 +394,7 @@ function customView(c: CustomItem): CardView {
     if (typeof c.资源池.灵气 === 'number') resources.push({ name: '灵气', cur: c.资源池.灵气, max: c.资源池.灵气 });
     if (typeof c.资源池.遁速 === 'number') stats.push({ label: '遁', value: String(c.资源池.遁速), cls: 'spd' });
   }
-  const effects = c.效果
-    ? Object.entries(c.效果).map(([name, val]) => ({ name, val: String(val) }))
-    : [];
+  const effects = c.效果 ? Object.entries(c.效果).map(([name, val]) => ({ name, val: String(val) })) : [];
   const skills = (c.技能 || []).map(s => ({
     name: s.name,
     攻击力: typeof s.攻击力 === 'number' ? String(s.攻击力) : undefined,
@@ -447,7 +403,7 @@ function customView(c: CustomItem): CardView {
   }));
   return {
     name: c.name,
-    category: c.category,
+    category: c.类型 === '工具' ? '物品' : c.category,
     类型: c.类型,
     品质: c.品质,
     境界: c.境界,
@@ -471,13 +427,18 @@ function costText(it: ItemOption): string {
 
 // —— 当前开局故事决定的大境界(决定了资材境界上限) ——
 const REALM_RANK_MAP: Record<string, number> = {
-  炼气: 1, 练气: 1, 筑基: 2, 金丹: 3, 元婴: 4, 化神: 5,
+  炼气: 1,
+  练气: 1,
+  筑基: 2,
+  金丹: 3,
+  元婴: 4,
+  化神: 5,
 };
 const playerRealmRank = computed<number>(() => {
   const id = store.selection.storyId;
   if (!id) return 1; // 未选剧本时默认炼气,允许低阶资材
   const custom = store.selection.customStory;
-  const story = (custom && custom.id === id) ? customStoryToOption(custom) : findStory(id);
+  const story = custom && custom.id === id ? customStoryToOption(custom) : findStory(id);
   const big = story?.settings?.初始境界?.大境界 ?? '炼气';
   return REALM_RANK_MAP[big] ?? 1;
 });
@@ -495,9 +456,7 @@ const realmCapLabel = computed<string>(() => {
   const r = playerRealmRank.value;
   return ITEM_REALMS[Math.max(0, Math.min(ITEM_REALMS.length - 1, r - 1))] ?? '炼气';
 });
-const allowedRealms = computed<ItemRealm[]>(() =>
-  ITEM_REALMS.filter(r => realmRankOf(r) <= playerRealmRank.value),
-);
+const allowedRealms = computed<ItemRealm[]>(() => ITEM_REALMS.filter(r => realmRankOf(r) <= playerRealmRank.value));
 
 // —— 进入本步骤时,清理已选/自创但超出当前境界上限的资材 ——
 function pruneOverCapSelections() {
@@ -551,11 +510,7 @@ const filteredItems = computed(() =>
 );
 
 const hasFilters = computed(
-  () =>
-    !!realmFilter.value ||
-    !!qualityFilter.value ||
-    !!categoryFilter.value ||
-    !!kindFilter.value,
+  () => !!realmFilter.value || !!qualityFilter.value || !!categoryFilter.value || !!kindFilter.value,
 );
 
 function onCategoryChange() {
@@ -577,9 +532,7 @@ function clearFilters() {
 // —— 分页 ——
 const PAGE_SIZE = 12;
 const currentPage = ref(1);
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(filteredItems.value.length / PAGE_SIZE)),
-);
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredItems.value.length / PAGE_SIZE)));
 const pageItems = computed(() => {
   const start = (currentPage.value - 1) * PAGE_SIZE;
   return filteredItems.value.slice(start, start + PAGE_SIZE);
@@ -598,7 +551,10 @@ function canAfford(it: ItemOption): boolean {
 const editorOpen = ref(false);
 const editingId = ref<string | null>(null);
 
-interface EffectPair { name: string; value: string }
+interface EffectPair {
+  name: string;
+  value: string;
+}
 
 interface Draft {
   name: string;
@@ -706,10 +662,7 @@ function fieldHintText(def: FieldDef): string {
 /** string 字段动态 placeholder：placeholderCoef 优先，否则用静态 placeholder */
 function stringPlaceholder(def: FieldDef): string {
   if (typeof def.placeholderCoef === 'number') {
-    const n = Math.max(
-      1,
-      Math.floor(Math.pow(10, draftL.value) * def.placeholderCoef * (1 + draftQ.value)),
-    );
+    const n = Math.max(1, Math.floor(Math.pow(10, draftL.value) * def.placeholderCoef * (1 + draftQ.value)));
     return `如:灵气${n}，留空则无消耗`;
   }
   return def.placeholder || '';
@@ -749,14 +702,13 @@ function openEdit(c: CustomItem) {
   editingId.value = c.id;
   draft.name = c.name;
   draft.desc = c.desc || '';
-  draft.category = c.category;
+  // 兼容旧版本地存档中错误保存为“装备/工具”的自创资材。
+  draft.category = c.类型 === '工具' ? '物品' : c.category;
   draft.类型 = c.类型;
   draft.品质 = c.品质;
   draft.境界 = c.境界;
   draft.五行 = c.五行 || '金';
-  draft.effects = c.效果
-    ? Object.entries(c.效果).map(([name, value]) => ({ name, value }))
-    : [{ name: '', value: '' }];
+  draft.effects = c.效果 ? Object.entries(c.效果).map(([name, value]) => ({ name, value })) : [{ name: '', value: '' }];
   if (draft.effects.length === 0) draft.effects = [{ name: '', value: '' }];
   // 数值 / 资源池
   draft.数值 = c.数值 ? { ...c.数值 } : {};
@@ -827,9 +779,7 @@ function removeDraftEffect(idx: number) {
   if (draft.effects.length === 0) draft.effects.push({ name: '', value: '' });
 }
 
-const draftCost = computed(() =>
-  computeCustomItemCost({ 品质: draft.品质, 境界: draft.境界 }),
-);
+const draftCost = computed(() => computeCustomItemCost({ 品质: draft.品质, 境界: draft.境界 }));
 
 const canSave = computed(() => {
   if (!draft.name.trim()) return false;
@@ -844,9 +794,7 @@ function onSave() {
   // —— 效果 —— //
   let 效果: Record<string, string> | undefined;
   if (draftSupportsEffect.value) {
-    const valid = draft.effects
-      .map(e => ({ name: e.name.trim(), value: e.value.trim() }))
-      .filter(e => e.name);
+    const valid = draft.effects.map(e => ({ name: e.name.trim(), value: e.value.trim() })).filter(e => e.name);
     if (valid.length) {
       效果 = {};
       for (const e of valid) 效果[e.name] = e.value;
@@ -863,9 +811,7 @@ function onSave() {
   }
   // —— 技能：过滤无名技能 —— //
   const 技能 = draftSupportsSkill.value
-    ? draft.技能
-        .filter(s => s.name && s.name.trim())
-        .map(s => ({ ...s, name: s.name.trim() }))
+    ? draft.技能.filter(s => s.name && s.name.trim()).map(s => ({ ...s, name: s.name.trim() }))
     : [];
 
   const payload: Omit<CustomItem, 'id'> = {
@@ -911,7 +857,9 @@ function customCost(c: CustomItem): number {
   padding-left: 8px;
 }
 
-.xs-inv-section { margin-bottom: 22px; }
+.xs-inv-section {
+  margin-bottom: 22px;
+}
 /* 卡片操作插槽（自创：编辑/删除） */
 .xs-mini-btn {
   padding: 2px 10px;
@@ -959,10 +907,14 @@ function customCost(c: CustomItem): number {
   margin-bottom: 10px;
 }
 @media (min-width: 600px) {
-  .xs-custom-list { grid-template-columns: repeat(2, 1fr); }
+  .xs-custom-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 @media (min-width: 880px) {
-  .xs-custom-list { grid-template-columns: repeat(3, 1fr); }
+  .xs-custom-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 .xs-custom-card {
   display: flex;
@@ -1314,22 +1266,22 @@ function customCost(c: CustomItem): number {
   color: var(--xs-ink);
 }
 .xs-stat-chip.xs-stat-attack {
-  background: linear-gradient(135deg, rgba(229, 62, 62, 0.10), rgba(197, 48, 48, 0.06));
-  border-color: rgba(197, 48, 48, 0.30);
+  background: linear-gradient(135deg, rgba(229, 62, 62, 0.1), rgba(197, 48, 48, 0.06));
+  border-color: rgba(197, 48, 48, 0.3);
   color: #b03030;
 }
 .xs-stat-chip.xs-stat-defense {
-  background: linear-gradient(135deg, rgba(66, 153, 225, 0.10), rgba(44, 82, 130, 0.06));
-  border-color: rgba(44, 82, 130, 0.30);
+  background: linear-gradient(135deg, rgba(66, 153, 225, 0.1), rgba(44, 82, 130, 0.06));
+  border-color: rgba(44, 82, 130, 0.3);
   color: #2c5282;
 }
 .xs-stat-chip.xs-stat-hp {
-  background: linear-gradient(135deg, rgba(245, 101, 101, 0.10), rgba(155, 44, 44, 0.06));
+  background: linear-gradient(135deg, rgba(245, 101, 101, 0.1), rgba(155, 44, 44, 0.06));
   border-color: rgba(155, 44, 44, 0.28);
   color: #9b2c2c;
 }
 .xs-stat-chip.xs-stat-speed {
-  background: linear-gradient(135deg, rgba(56, 161, 105, 0.10), rgba(47, 133, 90, 0.06));
+  background: linear-gradient(135deg, rgba(56, 161, 105, 0.1), rgba(47, 133, 90, 0.06));
   border-color: rgba(47, 133, 90, 0.28);
   color: #2f855a;
 }
@@ -1339,17 +1291,17 @@ function customCost(c: CustomItem): number {
   color: #b7791f;
 }
 .xs-stat-chip.xs-stat-mana {
-  background: linear-gradient(135deg, rgba(99, 179, 237, 0.10), rgba(43, 108, 176, 0.06));
-  border-color: rgba(43, 108, 176, 0.30);
+  background: linear-gradient(135deg, rgba(99, 179, 237, 0.1), rgba(43, 108, 176, 0.06));
+  border-color: rgba(43, 108, 176, 0.3);
   color: #2b6cb0;
 }
 .xs-stat-chip.xs-stat-heal {
-  background: linear-gradient(135deg, rgba(159, 122, 234, 0.10), rgba(85, 60, 154, 0.06));
+  background: linear-gradient(135deg, rgba(159, 122, 234, 0.1), rgba(85, 60, 154, 0.06));
   border-color: rgba(85, 60, 154, 0.28);
   color: #6b46c1;
 }
 .xs-stat-chip.xs-stat-bonus {
-  background: linear-gradient(135deg, rgba(72, 187, 120, 0.10), rgba(38, 132, 70, 0.06));
+  background: linear-gradient(135deg, rgba(72, 187, 120, 0.1), rgba(38, 132, 70, 0.06));
   border-color: rgba(38, 132, 70, 0.28);
   color: #276749;
 }
@@ -1501,8 +1453,7 @@ function customCost(c: CustomItem): number {
   padding: 12px 14px 14px;
   border: 1px solid rgba(124, 58, 143, 0.45);
   border-radius: 12px;
-  background:
-    linear-gradient(180deg, rgba(124, 58, 143, 0.10), rgba(124, 58, 143, 0.03));
+  background: linear-gradient(180deg, rgba(124, 58, 143, 0.1), rgba(124, 58, 143, 0.03));
 }
 .xs-plot-title {
   border-left-color: #7c3a8f;
@@ -1519,10 +1470,14 @@ function customCost(c: CustomItem): number {
   margin-top: 10px;
 }
 @media (min-width: 600px) {
-  .xs-plot-grid { grid-template-columns: repeat(2, 1fr); }
+  .xs-plot-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 @media (min-width: 880px) {
-  .xs-plot-grid { grid-template-columns: repeat(3, 1fr); }
+  .xs-plot-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 .xs-plot-card {
   position: relative;
@@ -1532,9 +1487,10 @@ function customCost(c: CustomItem): number {
   padding: 12px 14px;
   border: 1px solid rgba(124, 58, 143, 0.5);
   border-radius: 10px;
-  background:
-    linear-gradient(180deg, rgba(124, 58, 143, 0.14), rgba(124, 58, 143, 0.05));
-  box-shadow: 0 0 0 1px rgba(124, 58, 143, 0.25) inset, 0 6px 18px -10px rgba(124, 58, 143, 0.5);
+  background: linear-gradient(180deg, rgba(124, 58, 143, 0.14), rgba(124, 58, 143, 0.05));
+  box-shadow:
+    0 0 0 1px rgba(124, 58, 143, 0.25) inset,
+    0 6px 18px -10px rgba(124, 58, 143, 0.5);
   overflow: hidden;
 }
 .xs-plot-glyph {

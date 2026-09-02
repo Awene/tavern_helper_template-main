@@ -45,15 +45,7 @@
           ×
         </button>
 
-        <div
-          class="xy-task-head xy-collapsible-head"
-          role="button"
-          tabindex="0"
-          :aria-expanded="state.editMode || isCardOpen('task', String(taskName))"
-          @click="toggleCard('task', String(taskName))"
-          @keydown.enter="toggleCard('task', String(taskName))"
-          @keydown.space.prevent="toggleCard('task', String(taskName))"
-        >
+        <div class="xy-task-head xy-collapsible-head">
           <span class="xy-task-seal" aria-hidden="true">{{ task.状态 === '待结算' ? '成' : '令' }}</span>
           <span class="xy-task-title">
             <EditableValue
@@ -61,6 +53,7 @@
               label="任务名"
               @update:model-value="renameTask(String(taskName), String($event))"
             />
+            <CopyNameButton :text="String(taskName)" label="任务名" />
           </span>
           <select v-if="state.editMode" v-model="task.状态" class="xy-task-status-select" @click.stop>
             <option value="进行中">进行中</option>
@@ -73,7 +66,14 @@
           <span v-if="task.截止时间" class="xy-task-deadline-brief" :class="{ overdue: isOverdue(task.截止时间) }">
             {{ isOverdue(task.截止时间) ? '已逾期 · ' : '' }}{{ formatTime(task.截止时间, true) }}
           </span>
-          <span class="xy-collapsible-caret" aria-hidden="true">⌄</span>
+          <button
+            type="button"
+            class="xy-collapsible-hint"
+            :aria-expanded="state.editMode || isCardOpen('task', String(taskName))"
+            @click.stop="toggleCard('task', String(taskName))"
+          >
+            {{ state.editMode ? '编辑' : isCardOpen('task', String(taskName)) ? '收起' : '详情' }}
+          </button>
         </div>
 
         <div v-show="state.editMode || isCardOpen('task', String(taskName))" class="xy-task-body xy-collapsible-body">
@@ -141,6 +141,7 @@ import _ from 'lodash';
 import { computed } from 'vue';
 import { isCardOpen, requestDelete, showToast, state, toggleCard } from '../composables';
 import { useDataStore } from '../store';
+import CopyNameButton from './CopyNameButton.vue';
 import EditableValue from './EditableValue.vue';
 
 const store = useDataStore();

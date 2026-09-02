@@ -53,6 +53,9 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
   const beasts: Record<string, any> = {};
 
   function bucket(name: string, category: string, data: Record<string, any>) {
+    // 兼容旧版本地存档：旧 UI 曾把“工具”错误归为“装备”。
+    // MVU schema 规定工具属于物品，因此以实际类型为最终归类依据。
+    if (data.类型 === '工具') category = '物品';
     if (category === '功法') arts[name] = data;
     else if (category === '物品') items[name] = data;
     else if (category === '装备') equips[name] = data;

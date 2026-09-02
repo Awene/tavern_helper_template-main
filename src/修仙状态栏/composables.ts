@@ -429,6 +429,34 @@ export const showToast = (msg: string) => {
   }, 2800);
 };
 
+/** 将名称写入剪贴板；非安全上下文下回退到浏览器复制命令。 */
+export const copyText = async (text: string, label = '名称') => {
+  const value = String(text ?? '');
+  if (!value) return;
+
+  try {
+    await navigator.clipboard.writeText(value);
+  } catch {
+    const doc = (window as any).top?.document || document;
+    const textarea = doc.createElement('textarea');
+    textarea.value = value;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    textarea.style.pointerEvents = 'none';
+    doc.body.appendChild(textarea);
+    textarea.select();
+    const copied = doc.execCommand('copy');
+    textarea.remove();
+    if (!copied) {
+      showToast(`复制${label}失败，请手动框选复制`);
+      return;
+    }
+  }
+
+  showToast(`已复制${label}：${value}`);
+};
+
 // ============ 人物细化弹窗 ============
 export const openCharacterRefinement = (name: string) => {
   state.characterRefinement = name;

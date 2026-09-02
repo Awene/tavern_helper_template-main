@@ -1303,8 +1303,8 @@
   align-items: center;
   min-width: 0;
   margin-bottom: 0;
-  cursor: pointer;
-  user-select: none;
+  cursor: default;
+  user-select: text;
 }
 .xy-collapsible-head:focus-visible {
   outline: 1px solid var(--xy-cinnabar);
@@ -1347,11 +1347,49 @@
   font: 10px/1.5 var(--xy-font-display);
   letter-spacing: 1px;
   white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
   transition:
     color 0.18s ease,
     background 0.18s ease,
     border-color 0.18s ease,
     box-shadow 0.18s ease;
+}
+
+.xy-name-copy-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  max-width: 100%;
+}
+.xy-copy-name {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  color: var(--xy-ink-mute);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0.68;
+  transition:
+    color 0.16s ease,
+    background 0.16s ease,
+    border-color 0.16s ease,
+    opacity 0.16s ease;
+}
+.xy-copy-name:hover,
+.xy-copy-name:focus-visible {
+  color: var(--xy-cinnabar-deep);
+  background: var(--xy-paper-warm);
+  border-color: var(--xy-line-gold);
+  opacity: 1;
+  outline: none;
 }
 .xy-collapsible-hint::before {
   content: '';
@@ -1435,7 +1473,7 @@
 }
 .xy-task-head {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
   gap: 7px;
 }
 .xy-task-seal {
@@ -1455,6 +1493,9 @@
   border-color: var(--xy-jade);
 }
 .xy-task-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   align-self: center;
   min-width: 0;
   overflow-wrap: anywhere;
@@ -1487,8 +1528,13 @@
 }
 .xy-task-deadline-brief {
   grid-column: 2 / -1;
+  grid-row: 2;
   color: var(--xy-ink-mute);
   font-size: 10.5px;
+}
+.xy-task-head > .xy-collapsible-hint {
+  grid-column: 5;
+  grid-row: 1;
 }
 .xy-task-deadline-brief.overdue,
 .xy-task-deadline .overdue {
@@ -1573,14 +1619,19 @@
     font-size: 15px;
   }
   .xy-task-head {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+  }
+  .xy-task-head > .xy-collapsible-hint {
+    grid-column: 4;
   }
   .xy-task-difficulty {
     grid-column: 2 / 3;
+    grid-row: 2;
     justify-self: start;
   }
   .xy-task-deadline-brief {
     grid-column: 2 / -1;
+    grid-row: 3;
   }
 }
 .xy-card-title {

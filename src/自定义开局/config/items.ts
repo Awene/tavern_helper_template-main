@@ -1,30 +1,16 @@
-import type {
-  CustomItem,
-  ItemCategory,
-  ItemKind,
-  ItemOption,
-  ItemQuality,
-  ItemRealm,
-} from '../types';
+import type { CustomItem, ItemCategory, ItemKind, ItemOption, ItemQuality, ItemRealm } from '../types';
 
 export const ITEM_QUALITIES: ItemQuality[] = ['凡', '黄', '玄', '地', '天'];
 /** 凡人在本游戏中是非修仙者；境界从炼气起 */
 export const ITEM_REALMS: ItemRealm[] = ['炼气', '筑基', '金丹', '元婴', '化神'];
 
-export const ITEM_CATEGORIES: ItemCategory[] = [
-  '功法',
-  '装备',
-  '物品',
-  '灵石',
-  '傀儡',
-  '灵兽',
-];
+export const ITEM_CATEGORIES: ItemCategory[] = ['功法', '装备', '物品', '灵石', '傀儡', '灵兽'];
 
 /** 按大类组织的子类型；用于二级筛选 */
 export const ITEM_KINDS_BY_CATEGORY: Record<ItemCategory, ItemKind[]> = {
   功法: ['心法', '攻击', '咒法', '身法', '护体', '阵法'],
-  装备: ['法宝', '护甲', '饰品', '工具'],
-  物品: ['丹药', '符箓', '秘籍', '素材'],
+  装备: ['法宝', '护甲', '饰品'],
+  物品: ['丹药', '符箓', '秘籍', '素材', '工具'],
   灵石: ['灵石'],
   傀儡: ['傀儡'],
   灵兽: ['灵兽'],
@@ -37,9 +23,20 @@ export const ITEM_KINDS_BY_CATEGORY: Record<ItemCategory, ItemKind[]> = {
  * 排除：傀儡/灵兽（效果嵌套在「技能」字典内，由 SkillEditor 处理）、灵石（不进编辑器）。
  */
 export const EFFECT_SUPPORTED_KINDS: ReadonlySet<ItemKind> = new Set<ItemKind>([
-  '心法', '攻击', '咒法', '身法', '护体', '阵法',  // 全部功法
-  '法宝', '护甲', '饰品', '工具',                 // 全部装备
-  '丹药', '符箓', '秘籍', '素材',                 // 全部物品
+  '心法',
+  '攻击',
+  '咒法',
+  '身法',
+  '护体',
+  '阵法', // 全部功法
+  '法宝',
+  '护甲',
+  '饰品',
+  '工具', // 全部装备
+  '丹药',
+  '符箓',
+  '秘籍',
+  '素材', // 全部物品
 ]);
 
 export const ALL_ITEM_KINDS: ItemKind[] = [
@@ -82,10 +79,7 @@ const REALM_RANK: Record<ItemRealm, number> = {
  * 自创物品点数 = ceil((品质秩 + 境界秩) × 1.3) + 1
  * 比同档预设大致贵 30%~50%，以体现"自定"溢价。
  */
-export function computeCustomItemCost(input: {
-  品质: ItemQuality;
-  境界: ItemRealm;
-}): number {
+export function computeCustomItemCost(input: { 品质: ItemQuality; 境界: ItemRealm }): number {
   const q = QUALITY_RANK[input.品质] ?? 1;
   const r = REALM_RANK[input.境界] ?? 1;
   return Math.ceil((q + r) * 1.3) + 1;
@@ -722,7 +716,7 @@ export const items: ItemOption[] = [
     subtitle: '玄品 · 工具',
     desc: '小型炼丹炉，火力稳定，适合炼气至筑基期丹师。',
     cost: 7,
-    category: '装备',
+    category: '物品',
     类型: '工具',
     品质: '玄',
     境界: '筑基',
@@ -736,7 +730,7 @@ export const items: ItemOption[] = [
     subtitle: '玄品 · 工具',
     desc: '炼器师起步常用之鼎；千机门所制，机巧精良。',
     cost: 7,
-    category: '装备',
+    category: '物品',
     类型: '工具',
     品质: '玄',
     境界: '筑基',
@@ -1131,5 +1125,4 @@ export const items: ItemOption[] = [
 
 export const findItem = (id: string) => items.find(it => it.id === id);
 
-export const itemsByCategory = (cat: ItemOption['category']) =>
-  items.filter(it => it.category === cat);
+export const itemsByCategory = (cat: ItemOption['category']) => items.filter(it => it.category === cat);
