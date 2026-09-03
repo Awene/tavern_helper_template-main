@@ -79,13 +79,22 @@
                 <path d="M9 3v1H4v2h16V4h-5V3H9zM6 8l1 13h10l1-13H6zm3 2h2v9H9v-9zm4 0h2v9h-2v-9z" />
               </svg>
             </button>
-            <div class="xy-item-head xy-collapsible-head">
+            <div
+              class="xy-item-head xy-collapsible-head"
+              role="button"
+              tabindex="0"
+              :aria-expanded="state.editMode || isCardOpen('item', String(name))"
+              :title="isCardOpen('item', String(name)) ? '点击收起物品详情' : '点击展开物品详情'"
+              @click="toggleCard('item', String(name))"
+              @keydown.enter.self.prevent="toggleCard('item', String(name))"
+              @keydown.space.self.prevent="toggleCard('item', String(name))"
+            >
               <span class="xy-item-heading">
                 <span class="xy-name-copy-row">
                   <span class="xy-item-name">{{ name }}</span>
                   <CopyNameButton :text="String(name)" label="物品名" />
                 </span>
-                <span v-if="!state.editMode && !isCardOpen('item', String(name))" class="xy-item-summary">
+                <span v-if="!state.editMode" class="xy-item-summary">
                   <b :class="'xy-summary-quality xy-summary-quality-' + it.品质">{{ it.品质 }}品</b>
                   <span>{{ it.类型 }}</span>
                   <span v-if="it.境界">{{ it.境界 }}</span>
@@ -94,14 +103,6 @@
               <span class="xy-item-qty" @click.stop
                 >×<EditableValue v-model.number="it.数量" type="number" label="数量" :min="0"
               /></span>
-              <button
-                type="button"
-                class="xy-collapsible-hint"
-                :aria-expanded="state.editMode || isCardOpen('item', String(name))"
-                @click.stop="toggleCard('item', String(name))"
-              >
-                {{ state.editMode ? '编辑' : isCardOpen('item', String(name)) ? '收起' : '详情' }}
-              </button>
             </div>
             <div v-show="state.editMode || isCardOpen('item', String(name))" class="xy-collapsible-body">
               <div class="xy-item-meta">
@@ -184,24 +185,28 @@
                 <path d="M9 3v1H4v2h16V4h-5V3H9zM6 8l1 13h10l1-13H6zm3 2h2v9H9v-9zm4 0h2v9h-2v-9z" />
               </svg>
             </button>
-            <div class="xy-item-head xy-collapsible-head">
+            <div
+              class="xy-item-head xy-collapsible-head"
+              role="button"
+              tabindex="0"
+              :aria-expanded="state.editMode || isCardOpen('equip', String(name))"
+              :title="isCardOpen('equip', String(name)) ? '点击收起装备详情' : '点击展开装备详情'"
+              @click="toggleCard('equip', String(name))"
+              @keydown.enter.self.prevent="toggleCard('equip', String(name))"
+              @keydown.space.self.prevent="toggleCard('equip', String(name))"
+            >
               <span class="xy-item-heading">
-                <span class="xy-item-name">{{ name }}</span>
-                <span v-if="!state.editMode && !isCardOpen('equip', String(name))" class="xy-item-summary">
+                <span class="xy-name-copy-row">
+                  <span class="xy-item-name">{{ name }}</span>
+                  <CopyNameButton :text="String(name)" label="装备名" />
+                </span>
+                <span v-if="!state.editMode" class="xy-item-summary">
                   <b :class="'xy-summary-quality xy-summary-quality-' + eq.品质">{{ eq.品质 }}品</b>
                   <span>{{ eq.类型 }}</span>
                   <span v-if="eq.境界">{{ eq.境界 }}</span>
                 </span>
               </span>
               <span class="xy-item-pos">{{ eq.位置 }}</span>
-              <button
-                type="button"
-                class="xy-collapsible-hint"
-                :aria-expanded="state.editMode || isCardOpen('equip', String(name))"
-                @click.stop="toggleCard('equip', String(name))"
-              >
-                {{ state.editMode ? '编辑' : isCardOpen('equip', String(name)) ? '收起' : '详情' }}
-              </button>
             </div>
             <div v-show="state.editMode || isCardOpen('equip', String(name))" class="xy-collapsible-body">
               <div class="xy-item-meta">

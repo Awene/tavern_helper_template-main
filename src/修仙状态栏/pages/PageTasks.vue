@@ -5,19 +5,16 @@
       <button type="button" class="xy-effect-add" @click="addTask">＋ 新增任务</button>
     </div>
 
-    <div v-if="!_.isEmpty(tasks)" class="xy-task-summary">
-      <div class="xy-task-stat">
-        <span>全部任务</span>
-        <strong>{{ Object.keys(tasks).length }}</strong>
-      </div>
-      <div class="xy-task-stat">
-        <span>进行中</span>
-        <strong>{{ runningCount }}</strong>
-      </div>
-      <div class="xy-task-stat is-ready">
-        <span>待结算</span>
-        <strong>{{ settlementCount }}</strong>
-      </div>
+    <div v-if="!_.isEmpty(tasks)" class="xy-rumor-filter">
+      <button type="button" :class="['xy-chip', { active: taskFilter === 'all' }]" @click="taskFilter = 'all'">
+        全部 <em>{{ Object.keys(tasks).length }}</em>
+      </button>
+      <button type="button" :class="['xy-chip', { active: taskFilter === '进行中' }]" @click="taskFilter = '进行中'">
+        进行中 <em>{{ runningCount }}</em>
+      </button>
+      <button type="button" :class="['xy-chip', { active: taskFilter === '待结算' }]" @click="taskFilter = '待结算'">
+        待结算 <em>{{ settlementCount }}</em>
+      </button>
     </div>
 
     <div v-if="_.isEmpty(tasks) && !state.editMode" class="xy-empty">
@@ -25,9 +22,14 @@
       <p>当前没有已接取的任务</p>
     </div>
 
+    <div v-else-if="_.isEmpty(filteredTasks)" class="xy-empty xy-empty-soft">
+      <div class="xy-empty-mark">·</div>
+      <p>该状态下暂无任务</p>
+    </div>
+
     <div v-else class="xy-task-grid">
       <article
-        v-for="(task, taskName) in tasks"
+        v-for="(task, taskName) in filteredTasks"
         :key="taskName"
         class="xy-task-card"
         :class="{
@@ -36,16 +38,26 @@
         }"
       >
         <button
-          v-if="state.editMode"
           type="button"
           class="xy-trash"
           title="删除此任务"
           @click.stop="requestDelete('task', String(taskName), String(taskName))"
         >
-          ×
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true">
+            <path d="M9 3v1H4v2h16V4h-5V3H9zM6 8l1 13h10l1-13H6zm3 2h2v9H9v-9zm4 0h2v9h-2v-9z" />
+          </svg>
         </button>
 
-        <div class="xy-task-head xy-collapsible-head">
+        <div
+          class="xy-task-head xy-collapsible-head"
+          role="button"
+          tabindex="0"
+          :aria-expanded="state.editMode || isCardOpen('task', String(taskName))"
+          :title="isCardOpen('task', String(taskName)) ? '点击收起任务详情' : '点击展开任务详情'"
+          @click="toggleCard('task', String(taskName))"
+          @keydown.enter.self.prevent="toggleCard('task', String(taskName))"
+          @keydown.space.self.prevent="toggleCard('task', String(taskName))"
+        >
           <span class="xy-task-seal" aria-hidden="true">{{ task.状态 === '待结算' ? '成' : '令' }}</span>
           <span class="xy-task-title">
             <EditableValue
@@ -66,14 +78,6 @@
           <span v-if="task.截止时间" class="xy-task-deadline-brief" :class="{ overdue: isOverdue(task.截止时间) }">
             {{ isOverdue(task.截止时间) ? '已逾期 · ' : '' }}{{ formatTime(task.截止时间, true) }}
           </span>
-          <button
-            type="button"
-            class="xy-collapsible-hint"
-            :aria-expanded="state.editMode || isCardOpen('task', String(taskName))"
-            @click.stop="toggleCard('task', String(taskName))"
-          >
-            {{ state.editMode ? '编辑' : isCardOpen('task', String(taskName)) ? '收起' : '详情' }}
-          </button>
         </div>
 
         <div v-show="state.editMode || isCardOpen('task', String(taskName))" class="xy-task-body xy-collapsible-body">
@@ -138,7 +142,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { isCardOpen, requestDelete, showToast, state, toggleCard } from '../composables';
 import { useDataStore } from '../store';
 import CopyNameButton from './CopyNameButton.vue';
@@ -146,8 +150,12 @@ import EditableValue from './EditableValue.vue';
 
 const store = useDataStore();
 const tasks = computed(() => store.data.任务);
+const taskFilter = ref<'all' | '进行中' | '待结算'>('all');
 const runningCount = computed(() => Object.values(tasks.value).filter(task => task.状态 === '进行中').length);
 const settlementCount = computed(() => Object.values(tasks.value).filter(task => task.状态 === '待结算').length);
+const filteredTasks = computed(() =>
+  taskFilter.value === 'all' ? tasks.value : _.pickBy(tasks.value, task => task.状态 === taskFilter.value),
+);
 const hours = ['子时', '丑时', '寅时', '卯时', '辰时', '巳时', '午时', '未时', '申时', '酉时', '戌时', '亥时'] as const;
 
 type TaskEntry = (typeof store.data.任务)[string];

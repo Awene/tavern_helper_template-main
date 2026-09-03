@@ -125,7 +125,6 @@
               <span class="xy-npc-race">{{ npc.种族 }}</span>
               <span v-if="(npc.身份 && npc.身份.length) || state.editMode">·</span>
               <IdentityTags v-model="npc.身份" label="身份" />
-              <span v-if="npc.关系" class="xy-npc-relation" :title="npc.关系">{{ npc.关系 }}</span>
               <!-- 元阳(并入体质): null≡不存在 → 查看态仅在成立(true/false)时显示;编辑态恒显以便左键循环 -->
               <span
                 v-if="state.editMode || npc.体质?.元阳 != null"
@@ -785,17 +784,6 @@ function toggleDetail(npc: any) {
 </script>
 
 <style scoped>
-.xy-npc-relation {
-  max-width: min(34vw, 240px);
-  overflow: hidden;
-  padding: 0 6px;
-  border: 1px solid var(--xy-line);
-  border-radius: 999px;
-  color: var(--xy-jade-deep, #3d6b54);
-  background: var(--xy-tint-jade-faint, rgba(91, 138, 114, 0.08));
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .xy-relation-summary {
   display: flex;
   align-items: baseline;
@@ -816,11 +804,12 @@ function toggleDetail(npc: any) {
   font-weight: 700;
   letter-spacing: 1px;
 }
-/* 保证垃圾桶/眼睛这两个绝对定位小圆锚定在人物头栏右上（与 padding-right 预留列一致） */
+/* 右侧常驻操作列：为垃圾桶、细节可见和人物细化按钮预留空间。 */
 .xy-npc-head {
   position: relative;
+  padding-right: 30px;
 }
-/* 细节可见开关：右侧、垃圾桶正下方的小圆，悬停人物条目时显示。 */
+/* 细节可见开关：右侧、垃圾桶正下方的小圆。 */
 .xy-vis-eye {
   position: absolute;
   top: 26px;
@@ -836,13 +825,9 @@ function toggleDetail(npc: any) {
   background: var(--xy-paper);
   color: var(--xy-jade-deep, #3d6b54);
   cursor: pointer;
-  opacity: 0;
+  opacity: 1;
   transition: all 0.16s ease;
   z-index: 4;
-}
-.xy-npc:hover > .xy-npc-head > .xy-vis-eye,
-.xy-vis-eye:focus-visible {
-  opacity: 1;
 }
 .xy-vis-eye:hover {
   border-color: var(--xy-jade, #5b8a72);
@@ -856,7 +841,7 @@ function toggleDetail(npc: any) {
   border-color: var(--xy-cinnabar, #b13a3a);
   background: var(--xy-tint-cinnabar-faint, rgba(177, 58, 58, 0.06));
 }
-/* 人物细化 / 世界书生成入口：位于详情可见开关下方，与删除按钮一样仅在人物条目悬停时显示。 */
+/* 人物细化 / 世界书生成入口：位于详情可见开关下方。 */
 .xy-character-refine {
   position: absolute;
   top: 48px;
@@ -872,13 +857,9 @@ function toggleDetail(npc: any) {
   background: var(--xy-paper);
   color: var(--xy-gold-deep, #8a682b);
   cursor: pointer;
-  opacity: 0;
+  opacity: 1;
   transition: all 0.16s ease;
   z-index: 4;
-}
-.xy-npc:hover > .xy-npc-head > .xy-character-refine,
-.xy-character-refine:focus-visible {
-  opacity: 1;
 }
 .xy-character-refine:hover {
   color: var(--xy-cinnabar, #b13a3a);
@@ -899,11 +880,6 @@ function toggleDetail(npc: any) {
   align-items: center;
   gap: 10px;
   padding: 8px 36px 8px 12px; /* 右侧留出 trash + caret 的空间 */
-}
-/* 垃圾桶: 默认隐藏,hover wild 卡片时显示(对齐 NPC) */
-.xy-wild-unit:hover > .xy-wild-head > .xy-trash,
-.xy-wild-unit > .xy-wild-head > .xy-trash:focus-visible {
-  opacity: 1;
 }
 /* 让 trash 与 caret 不重叠: trash 置于右上角(类型 NPC),caret 置于行内 flex */
 .xy-wild-head > .xy-trash-npc {

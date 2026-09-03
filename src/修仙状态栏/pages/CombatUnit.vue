@@ -17,12 +17,20 @@
     </button>
     <div
       class="xy-item-head xy-collapsible-head"
+      role="button"
+      tabindex="0"
       :aria-expanded="state.editMode || isCardOpen('unit', name)"
+      :title="isCardOpen('unit', name) ? '点击收起详情' : '点击展开详情'"
       @click="toggleCard('unit', name)"
+      @keydown.enter.self.prevent="toggleCard('unit', name)"
+      @keydown.space.self.prevent="toggleCard('unit', name)"
     >
       <span class="xy-item-heading">
-        <span class="xy-item-name">{{ name }}</span>
-        <span v-if="!state.editMode && !isCardOpen('unit', name)" class="xy-item-summary">
+        <span class="xy-name-copy-row">
+          <span class="xy-item-name">{{ name }}</span>
+          <CopyNameButton :text="name" label="名称" />
+        </span>
+        <span v-if="!state.editMode" class="xy-item-summary">
           <b :class="'xy-summary-quality xy-summary-quality-' + (unit.品质 || '凡')">{{ unit.品质 || '凡' }}品</b>
           <span v-if="unit.境界">{{ unit.境界 }}</span>
           <span v-if="unit.五行">{{ unit.五行 }}</span>
@@ -37,9 +45,6 @@
         {{ unit.使用中 ? '在身' : '入囊' }}
       </button>
       <span v-else-if="unit.使用中" class="xy-unit-badge">在身</span>
-      <span class="xy-collapsible-hint" aria-hidden="true">
-        {{ state.editMode ? '编辑' : isCardOpen('unit', name) ? '收起' : '详情' }}
-      </span>
     </div>
 
     <div v-show="state.editMode || isCardOpen('unit', name)" class="xy-collapsible-body">
@@ -101,7 +106,8 @@
 
       <div class="xy-unit-stats">
         <span class="xy-eq-stat xy-stat-def"
-          >防 <EditableValue
+          >防
+          <EditableValue
             v-model.number="editableUnit.防御力"
             type="number"
             label="防御力"
@@ -147,6 +153,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { computed } from 'vue';
+import CopyNameButton from './CopyNameButton.vue';
 import EditableValue from './EditableValue.vue';
 import EffectList from './EffectList.vue';
 import { isCardOpen, state, toggleCard } from '../composables';
@@ -213,13 +220,9 @@ const elColor = (el: string) =>
   border: 1px solid var(--xy-line);
   border-radius: 50%;
   cursor: pointer;
-  opacity: 0;
+  opacity: 1;
   transition: all 0.18s ease;
   z-index: 2;
-}
-.xy-item:hover .xy-trash,
-.xy-trash:focus-visible {
-  opacity: 1;
 }
 .xy-trash:hover {
   color: var(--xy-cinnabar);

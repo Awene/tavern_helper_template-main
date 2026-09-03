@@ -1,5 +1,5 @@
 <template>
-  <div v-if="store.data" class="xy-app">
+  <div v-if="store.data" class="xy-app" :style="`--xy-ui-scale: ${uiScale}`">
     <!-- 装饰背景：远山 + 仙鹤 + 印章 -->
     <div class="xy-bg" aria-hidden="true">
       <svg class="xy-bg-mountain" viewBox="0 0 1200 240" preserveAspectRatio="none">
@@ -42,6 +42,29 @@
     <div class="xy-scroll" :class="{ 'xy-scroll-collapsed': state.appCollapsed }">
       <!-- ============ 总折叠条（始终可见） ============ -->
       <div class="xy-app-collapse-bar">
+        <div v-if="!state.appCollapsed" class="xy-scale-control" title="整体缩放状态栏界面">
+          <button
+            type="button"
+            class="xy-scale-btn"
+            title="缩小状态栏"
+            aria-label="缩小状态栏"
+            :disabled="uiScale <= MIN_UI_SCALE"
+            @click="adjustUiScale(-UI_SCALE_STEP)"
+          >
+            −
+          </button>
+          <output class="xy-scale-value" aria-live="polite">{{ uiScalePercent }}%</output>
+          <button
+            type="button"
+            class="xy-scale-btn"
+            title="放大状态栏"
+            aria-label="放大状态栏"
+            :disabled="uiScale >= MAX_UI_SCALE"
+            @click="adjustUiScale(UI_SCALE_STEP)"
+          >
+            ＋
+          </button>
+        </div>
         <button
           v-if="!state.appCollapsed"
           type="button"
@@ -707,6 +730,38 @@ import {
 
 const store = useDataStore();
 
+const UI_SCALE_STORAGE_KEY = 'xiuxian-statusbar-ui-scale';
+const MIN_UI_SCALE = 0.7;
+const MAX_UI_SCALE = 1.2;
+const UI_SCALE_STEP = 0.1;
+const uiScale = ref(1);
+const uiScalePercent = computed(() => Math.round(uiScale.value * 100));
+
+function normalizeUiScale(value: number): number {
+  const normalized = Math.round(value * 10) / 10;
+  return Math.min(MAX_UI_SCALE, Math.max(MIN_UI_SCALE, normalized));
+}
+
+function setUiScale(value: number, persist = true) {
+  uiScale.value = normalizeUiScale(value);
+  if (!persist) return;
+  try {
+    localStorage.setItem(UI_SCALE_STORAGE_KEY, String(uiScale.value));
+  } catch {
+    /* localStorage 不可用时仍保留本次页面内的缩放。 */
+  }
+}
+
+function adjustUiScale(delta: number) {
+  setUiScale(uiScale.value + delta);
+}
+
+function onUiScaleStorage(event: StorageEvent) {
+  if (event.key !== UI_SCALE_STORAGE_KEY || event.newValue == null) return;
+  const saved = Number(event.newValue);
+  if (Number.isFinite(saved)) setUiScale(saved, false);
+}
+
 type SkillGroupKey = '生产类' | '战斗类';
 const skillGroups = computed(() => [
   { key: '生产类' as const, label: '生产', values: store.data?.技艺?.生产类 ?? {} },
@@ -770,10 +825,18 @@ function openSummary() {
   }
 }
 onMounted(() => {
+  try {
+    const saved = Number(localStorage.getItem(UI_SCALE_STORAGE_KEY));
+    if (Number.isFinite(saved) && saved > 0) setUiScale(saved, false);
+  } catch {
+    /* 使用默认缩放。 */
+  }
+  window.addEventListener('storage', onUiScaleStorage);
   applyTheme(readSharedTheme('dark'));
   stopThemeSync = subscribeSharedTheme(theme => applyTheme(theme));
 });
 onBeforeUnmount(() => {
+  window.removeEventListener('storage', onUiScaleStorage);
   stopThemeSync?.();
 });
 

@@ -50,19 +50,24 @@
           </button>
           <div
             class="xy-art-head xy-collapsible-head"
+            role="button"
+            tabindex="0"
             :aria-expanded="state.editMode || isCardOpen('art', String(name))"
+            :title="isCardOpen('art', String(name)) ? '点击收起功法详情' : '点击展开功法详情'"
             @click="toggleCard('art', String(name))"
+            @keydown.enter.self.prevent="toggleCard('art', String(name))"
+            @keydown.space.self.prevent="toggleCard('art', String(name))"
           >
             <div class="xy-art-title">
-              <span class="xy-art-name">{{ name }}</span>
+              <span class="xy-name-copy-row">
+                <span class="xy-art-name">{{ name }}</span>
+                <CopyNameButton :text="String(name)" label="功法名" />
+              </span>
               <span :class="['xy-quality', 'xy-q-' + art.品质]">{{ art.品质 }}品</span>
             </div>
             <button class="xy-toggle" :class="{ on: art.使用中 }" @click.stop="toggleArt(name as string, !art.使用中)">
               {{ art.使用中 ? '运转中' : '凝息' }}
             </button>
-            <span class="xy-collapsible-hint" aria-hidden="true">
-              {{ state.editMode ? '编辑' : isCardOpen('art', String(name)) ? '收起' : '详情' }}
-            </span>
           </div>
           <div v-show="state.editMode || isCardOpen('art', String(name))" class="xy-collapsible-body">
             <div class="xy-art-meta">
@@ -94,6 +99,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { useDataStore } from '../store';
+import CopyNameButton from './CopyNameButton.vue';
 import EditableValue from './EditableValue.vue';
 import EffectList from './EffectList.vue';
 import {
