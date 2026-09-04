@@ -121,7 +121,12 @@
               "具体地点": {
                 "type": "string"
               }
-            }
+            },
+            "required": [
+              "世界",
+              "地域",
+              "具体地点"
+            ]
           },
           "现状": {
             "default": "正常",
@@ -659,23 +664,15 @@
           "type": "number"
         },
         "元阴": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            }
+          "type": [
+            "boolean",
+            "null"
           ]
         },
         "元阳": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            }
+          "type": [
+            "boolean",
+            "null"
           ]
         }
       }

@@ -6,7 +6,12 @@
         :label="`${labelName}名`"
         @update:model-value="renameKey(String(n), String($event))"
       />
-    </span>：<EditableValue v-model="modelValue[String(n)]" :label="String(n)" multiline />
+    </span>：<EditableValue
+      :model-value="String(_v)"
+      :label="String(n)"
+      multiline
+      @update:model-value="updateValue(String(n), String($event))"
+    />
     <button
       v-if="state.editMode"
       type="button"
@@ -44,17 +49,22 @@ function renameKey(oldKey: string, newKey: string) {
   newKey = newKey.trim();
   if (!newKey || newKey === oldKey || !props.modelValue) return;
   if (newKey in props.modelValue) return; // 避免覆盖已有键
-  const obj = props.modelValue;
   // 重建以保持插入顺序
-  const entries = Object.entries(obj).map(
+  const entries = Object.entries(props.modelValue).map(
     ([k, v]) => [k === oldKey ? newKey : k, v] as [string, any],
   );
-  for (const k of Object.keys(obj)) delete obj[k];
-  for (const [k, v] of entries) obj[k] = v;
+  emit('update:modelValue', Object.fromEntries(entries));
+}
+
+function updateValue(key: string, value: string) {
+  emit('update:modelValue', { ...(props.modelValue ?? {}), [key]: value });
 }
 
 function removeKey(key: string) {
-  if (props.modelValue) delete props.modelValue[key];
+  if (!props.modelValue) return;
+  const nextValue = { ...props.modelValue };
+  delete nextValue[key];
+  emit('update:modelValue', nextValue);
 }
 
 function uniqueName(): string {
@@ -70,6 +80,6 @@ function addEntry() {
     emit('update:modelValue', { [`新${props.labelName}`]: '' });
     return;
   }
-  props.modelValue[uniqueName()] = '';
+  emit('update:modelValue', { ...props.modelValue, [uniqueName()]: '' });
 }
 </script>
