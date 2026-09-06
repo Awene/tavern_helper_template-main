@@ -518,6 +518,7 @@
                         :class="{
                           open: state.skillRecipeOpen[String(n)] && recipesForSkill(store.data.物品, String(n)).length,
                           'has-recipes': recipesForSkill(store.data.物品, String(n)).length,
+                          'is-untrained': Number(v) <= 0,
                         }"
                       >
                         <button
@@ -536,18 +537,24 @@
                           :aria-disabled="!recipesForSkill(store.data.物品, String(n)).length"
                           @click="recipesForSkill(store.data.物品, String(n)).length && toggleSkillRecipes(String(n))"
                         >
-                          <span
-                            class="xy-skill-seal"
-                            :style="{ '--skill-pct': skillPct(v, store.data.修炼进度.境界) + '%' }"
-                          >
+                          <span class="xy-skill-seal">
                             <span>{{ skillGlyph(String(n)) }}</span>
                           </span>
-                          <span class="xy-skill-name" :title="String(n)">{{ n }}</span>
-                          <span v-if="recipesForSkill(store.data.物品, String(n)).length" class="xy-skill-recipe-count">
-                            配方 {{ recipesForSkill(store.data.物品, String(n)).length }}
+                          <span class="xy-skill-copy">
+                            <span class="xy-skill-name" :title="String(n)">{{ n }}</span>
+                            <span
+                              v-if="recipesForSkill(store.data.物品, String(n)).length"
+                              class="xy-skill-recipe-count"
+                            >
+                              配方 {{ recipesForSkill(store.data.物品, String(n)).length }}
+                            </span>
                           </span>
                         </button>
-                        <span class="xy-skill-num">
+                        <span
+                          class="xy-skill-num"
+                          :class="skillNumSizeClass(Number(v))"
+                          :title="String(n) + '：' + String(v)"
+                        >
                           <EditableValue
                             :model-value="v"
                             type="number"
@@ -704,8 +711,8 @@ import {
   avatarFileInput,
   openedBuffData,
   barPct,
-  skillPct,
   formatSkillNum,
+  skillNumSizeClass,
   elColor,
   avatarChar,
   getNpcAvatar,

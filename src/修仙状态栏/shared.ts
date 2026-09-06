@@ -95,7 +95,6 @@ export const elColor = (el: string) =>
     }) as Record<string, string>
   )[el] || 'var(--xy-ink)';
 
-export const skillPct = (v: number) => Math.max(2, Math.min(100, v));
 export const barPct = (cur: number, total: number) => Math.max(0, Math.min(100, (cur / Math.max(total, 1)) * 100));
 
 export const npcBarPct = (pool?: { 现值?: number; 上限?: number }) => {

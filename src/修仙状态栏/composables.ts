@@ -104,31 +104,35 @@ const EXCLUSIVE_ART_TYPES = ['心法', '护体', '身法'] as const;
 // ============ 通用辅助函数（不依赖 store）============
 export const barPct = (cur: number, total: number) => Math.max(0, Math.min(100, (cur / Math.max(total, 1)) * 100));
 
-// 主境界 L (0~9)：用于按《领悟规则》计算技艺上限 Max_S = 10^(L+1)
-export const realmLevel = (realm: string): number => Math.floor(realmScore(realm) / 10);
-
-export const skillCap = (realm: string): number => Math.pow(10, realmLevel(realm) + 1);
-
-// 技艺进度条百分比：log 刻度，每个数量级占 1/(L+1) 条；v 达到 10^(L+1) 时填满
-export const skillPct = (v: number, realm = ''): number => {
-  if (v == null || v <= 0) return 2;
-  const L = realmLevel(realm);
-  return Math.max(2, Math.min(100, (Math.log10(v + 1) / (L + 1)) * 100));
-};
-
-// 紧凑数字格式：< 1万 原样；< 1亿 用万；其他用亿，避免溢出
+// 技艺紧凑数字格式：按四位一级使用 万 / 亿 / 万亿 / 兆。
+// 这里将“兆”作为万亿之后的 UI 单位（10^16）；再大的数不继续追加单位。
 export const formatSkillNum = (v: number): string => {
   if (v == null) return '0';
   const n = Number(v);
   if (!isFinite(n)) return '0';
   const abs = Math.abs(n);
   if (abs < 10000) return String(n);
-  if (abs < 100000000) {
-    const x = n / 10000;
-    return (abs < 100000 ? x.toFixed(1) : Math.round(x).toString()) + '万';
-  }
-  const x = n / 100000000;
-  return (abs < 1000000000 ? x.toFixed(2) : x.toFixed(1)) + '亿';
+
+  const compact = (divisor: number, unit: string): string => {
+    const scaled = n / divisor;
+    const scaledAbs = Math.abs(scaled);
+    const precision = scaledAbs < 10 ? 2 : scaledAbs < 100 ? 1 : 0;
+    // Number(...) 去掉无意义的末尾 0，避免“100.0亿”在窄卡片中白占宽度。
+    return `${Number(scaled.toFixed(precision))}${unit}`;
+  };
+
+  if (abs < 100000000) return compact(10000, '万');
+  if (abs < 1000000000000) return compact(100000000, '亿');
+  if (abs < 10000000000000000) return compact(1000000000000, '万亿');
+  return compact(10000000000000000, '兆');
+};
+
+// 数字徽章按最终显示长度收紧字号和内边距，避免临界宽度下被卡片裁切。
+export const skillNumSizeClass = (v: number): string => {
+  const length = Array.from(formatSkillNum(v)).length;
+  if (length >= 9) return 'is-very-long';
+  if (length >= 6) return 'is-long';
+  return '';
 };
 
 export const npcBarPct = (pool?: { 现值?: number; 上限?: number }) => {

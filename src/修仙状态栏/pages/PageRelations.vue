@@ -344,8 +344,8 @@
                   v-for="(v, n) in npc.技艺?.生产类"
                   :key="'p-' + n"
                   class="xy-npc-skill"
-                  :class="{ dim: !v }"
-                  :title="`${n}：${v} / ${formatSkillNum(skillCap(npc.修炼进度?.境界 || ''))}`"
+                  :class="[{ dim: !v }, skillNumSizeClass(Number(v))]"
+                  :title="`${n}：${v}`"
                 >
                   {{ n
                   }}<em>
@@ -366,8 +366,8 @@
                   v-for="(v, n) in npc.技艺?.战斗类"
                   :key="'c-' + n"
                   class="xy-npc-skill"
-                  :class="{ dim: !v }"
-                  :title="`${n}：${v} / ${formatSkillNum(skillCap(npc.修炼进度?.境界 || ''))}`"
+                  :class="[{ dim: !v }, skillNumSizeClass(Number(v))]"
+                  :title="`${n}：${v}`"
                 >
                   {{ n
                   }}<em>
@@ -758,8 +758,8 @@ import {
   isArtEffectivelyActive,
   toggleNpcArt,
   npcBarPct,
-  skillCap,
   formatSkillNum,
+  skillNumSizeClass,
   elColor,
   npcGender,
   cycleEssence,
