@@ -873,6 +873,15 @@
         font-family: 'Noto Serif SC', 'Songti SC', serif;
         position: relative;
       }
+      .time-paper.time-person-vignette { padding: 12px 14px; margin: 14px 0; border-radius: 10px; }
+      .time-paper.time-person-vignette .tp-masthead { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 0 8px; margin-bottom: 8px; text-align: left; }
+      .time-paper.time-person-vignette .tp-paper-title { font-size: 1em; letter-spacing: 2px; }
+      .time-paper.time-person-vignette .tp-paper-rule,
+      .time-paper.time-person-vignette .tp-paper-sub { display: none; }
+      .time-paper.time-person-vignette .tp-section { margin-top: 8px; }
+      .time-paper.time-person-vignette .tp-section-people > .tp-section-title { display: none; }
+      .time-paper.time-person-vignette .tp-people-grid { grid-template-columns: minmax(0, 1fr); }
+      .time-paper.time-person-vignette .tp-person-line { overflow-wrap: anywhere; }
       .time-paper::before,
       .time-paper::after {
         content: '';
@@ -6155,7 +6164,7 @@
                 }
               }
             } else if (cat === 'people') {
-              people = _groupPeople(section.rows);
+              people.push(..._groupPeople(section.rows));
             } else if (cat === 'civ' || cat === 'world' || cat === 'rumor' || cat === 'other' || cat === 'unknown') {
               const targetKey = cat === 'unknown' || cat === 'other' ? 'other' : cat;
               buckets[targetKey].push({ title: section.title || '其他', rows: section.rows });
@@ -6164,9 +6173,10 @@
         }
 
         // —— 拼 HTML ——
-        let html = '<div class="time-paper">';
+        const singlePerson = people.length === 1;
+        let html = `<div class="time-paper${singlePerson ? ' time-person-vignette' : ''}">`;
         html += '<div class="tp-masthead">';
-        html += '<div class="tp-paper-title">修 真 月 报</div>';
+        html += `<div class="tp-paper-title">${singlePerson ? '人物纪事' : '世间纪事'}</div>`;
         html += '<div class="tp-paper-rule"></div>';
         if (span)
           html += `<div class="tp-paper-sub"><i class="fa-solid fa-hourglass-half"></i> 时光流转 · ${_.escape(span)}</div>`;

@@ -732,7 +732,6 @@ import {
   cycleEssence,
   essenceState,
   essenceMark,
-  syncTimeline,
 } from './composables';
 
 const store = useDataStore();
@@ -847,19 +846,5 @@ onBeforeUnmount(() => {
   stopThemeSync?.();
 });
 
-// 时间轴引擎：玩家时间/地点/境界变化时
-//   1) 生成/剪枝事件缓存（localStorage 保留跨地域暂存语义）
-//   2) 把当前可见子集写回 store.data.传闻
-//   3) store 自身的 watchEffect 把 store.data.传闻 同步到酒馆 mvu 变量
-//   4) 下一轮 <status_current_variable> 自然带出，AI 能读到
-watch(
-  () => {
-    const t = store.data?.时间;
-    const loc = store.data?.地点;
-    const realm = store.data?.修炼进度?.境界;
-    return [t?.年, t?.月, t?.日, loc?.世界, loc?.地域, realm];
-  },
-  () => syncTimeline(),
-  { immediate: true },
-);
+// 传闻由玩家发起世界推进后交给 AI 更新，不再自动生成或覆盖。
 </script>

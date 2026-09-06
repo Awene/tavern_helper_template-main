@@ -1,14 +1,6 @@
 import _ from 'lodash';
 import { computed, reactive, ref } from 'vue';
 import { useDataStore } from './store';
-import {
-  displayableEvents,
-  ensureTimeline,
-  timelineEventsRef,
-  type GeneratedEvent,
-  type TimelineDate,
-} from './timeline-engine';
-export type { TimelineDate } from './timeline-engine';
 
 // ============ 共享 UI 状态（模块级单例）============
 export const state = reactive({
@@ -877,38 +869,8 @@ export const openedBuffData = computed(() => {
   return buffs?.[state.openedBuff] || null;
 });
 
-// 传闻渲染源：直接读 MVU 变量树。引擎把 displayable 子集写到此处后，
-// PageRumors 自然看到；同时 <status_current_variable> 也会带它进 AI 提示词。
-export const activeTimelineEvents = computed<GeneratedEvent[]>(() => {
-  const store = useDataStore();
-  const data = store.data as { 传闻?: GeneratedEvent[] } | undefined;
-  return data?.传闻 ?? [];
-});
-
-// 引擎同步入口：被 App.vue watch 调用。
-// 流程：剪枝 + 补足缓存 → 取当前可见子集 → 浅比较后写回 store.data.传闻。
-// 一切 mvu 写入由 store 自身的 watchEffect 自动同步到酒馆变量。
-export function syncTimeline(): void {
-  const store = useDataStore();
-  const t = store.data?.时间;
-  const loc = store.data?.地点;
-  const realm = store.data?.修炼进度?.境界;
-  if (!t || !loc || !realm) return;
-  if (t.年 == null || !loc.世界 || !loc.地域) return;
-
-  const now: TimelineDate = { 年: t.年, 月: t.月, 日: t.日 };
-  ensureTimeline(now, loc.世界, loc.地域, realm);
-  void timelineEventsRef().value;
-  const visible = displayableEvents(now, loc.世界, loc.地域, realm);
-
-  const data = store.data as { 传闻?: GeneratedEvent[] };
-  const prev = data.传闻 ?? [];
-  // 浅比较 id 序列，避免无变化时多次触发 mvu 写入
-  if (prev.length === visible.length && prev.every((e, i) => e.id === visible[i].id)) {
-    return;
-  }
-  data.传闻 = visible;
-}
+// 只读 MVU 传闻，禁止从旧 localStorage 缓存重新生成/覆盖。
+export const activeTimelineEvents = computed(() => useDataStore().data.传闻.条目);
 
 export const storageCount = (key: '功法' | '物品' | '装备' | '傀儡' | '灵兽') => {
   const store = useDataStore();

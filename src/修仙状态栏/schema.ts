@@ -686,8 +686,7 @@ const TaskSchema = z.object({
 const TasksSchema = z.record(z.string(), TaskSchema).prefault({});
 
 // ===== 传闻 Schema =====
-// 内容由前端引擎 src/修仙状态栏/timeline-engine.ts 生成并写回此字段,
-// AI 仅读、不写。详见 [mvu_update]变量更新规则.yaml。
+// 单条传闻结构不变；世界推进回合由 AI 更新，普通回合只读。
 const TimelineDateSchema = z.object({
   年: z.coerce.number(),
   月: z.coerce.number(),
@@ -753,8 +752,14 @@ export const CultivationStatusSchema = z.object({
   // —— 关系列表 (NPC + 无主 傀儡/灵兽) ——
   关系列表: z.record(z.string(), RelationEntrySchema).prefault({}),
 
-  // —— 传闻 (前端引擎写,AI 仅读) ——
-  传闻: z.array(RumorEntrySchema).prefault([]),
+  // 保留旧数组中的全部条目；核验脚本负责初始化推进时间。
+  传闻: z.preprocess(
+    value => Array.isArray(value) ? { 条目: value } : value == null ? {} : value,
+    z.object({
+      上次世界推进时间点: z.preprocess(value => _.isEmpty(value) ? null : value, TimeSchema.nullable()).prefault(null),
+      条目: z.array(RumorEntrySchema).prefault([]),
+    }).prefault({}),
+  ),
 });
 
 export type CultivationStatusData = z.infer<typeof CultivationStatusSchema>;

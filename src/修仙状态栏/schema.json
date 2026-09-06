@@ -121,12 +121,7 @@
               "具体地点": {
                 "type": "string"
               }
-            },
-            "required": [
-              "世界",
-              "地域",
-              "具体地点"
-            ]
+            }
           },
           "现状": {
             "default": "正常",
@@ -501,58 +496,75 @@
       }
     },
     "传闻": {
-      "default": [],
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "时间区间": {
+      "default": {},
+      "type": "object",
+      "properties": {
+        "上次世界推进时间点": {
+          "default": null,
+          "anyOf": [
+            {
+              "$ref": "#/$defs/__schema8"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "条目": {
+          "default": [],
+          "type": "array",
+          "items": {
             "type": "object",
             "properties": {
-              "起": {
-                "$ref": "#/$defs/__schema31"
+              "id": {
+                "type": "string"
               },
-              "止": {
-                "$ref": "#/$defs/__schema31"
+              "时间区间": {
+                "type": "object",
+                "properties": {
+                  "起": {
+                    "$ref": "#/$defs/__schema31"
+                  },
+                  "止": {
+                    "$ref": "#/$defs/__schema31"
+                  }
+                },
+                "required": [
+                  "起",
+                  "止"
+                ]
+              },
+              "世界": {
+                "type": "string"
+              },
+              "地域": {
+                "type": "string"
+              },
+              "地点": {
+                "type": "string"
+              },
+              "类别": {
+                "type": "string"
+              },
+              "内容": {
+                "type": "string"
+              },
+              "难度": {
+                "type": "string"
               }
             },
             "required": [
-              "起",
-              "止"
+              "id",
+              "时间区间",
+              "世界",
+              "地域",
+              "地点",
+              "类别",
+              "内容",
+              "难度"
             ]
-          },
-          "世界": {
-            "type": "string"
-          },
-          "地域": {
-            "type": "string"
-          },
-          "地点": {
-            "type": "string"
-          },
-          "类别": {
-            "type": "string"
-          },
-          "内容": {
-            "type": "string"
-          },
-          "难度": {
-            "type": "string"
           }
-        },
-        "required": [
-          "id",
-          "时间区间",
-          "世界",
-          "地域",
-          "地点",
-          "类别",
-          "内容",
-          "难度"
-        ]
+        }
       }
     }
   },
@@ -664,15 +676,23 @@
           "type": "number"
         },
         "元阴": {
-          "type": [
-            "boolean",
-            "null"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "元阳": {
-          "type": [
-            "boolean",
-            "null"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
           ]
         }
       }
