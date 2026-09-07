@@ -28,9 +28,12 @@
   "typescript.inlayHints.variableTypes.suppressWhenTypeMatchesName": true,
   "css.lint.unknownAtRules": "ignore",
   "scss.lint.unknownAtRules": "ignore",
+<<<<<<< HEAD
   "liveServer.settings.host": "127.0.0.1",
   "liveServer.settings.port": 5500,
   "liveServer.settings.cors": true,
+=======
+>>>>>>> c3dda85b40baa6188b2eff4e263cb20fedabcecf
   "files.associations": {
     "*.css": "tailwindcss"
   },
@@ -52,6 +55,7 @@
   "[vue]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+<<<<<<< HEAD
   "typescript.tsdk": "node_modules/typescript/lib",
   "python-envs.pythonProjects": [
     {
@@ -60,4 +64,7 @@
       "packageManager": "ms-python.python:pip"
     }
   ]
+=======
+  "typescript.tsdk": "node_modules/typescript/lib"
+>>>>>>> c3dda85b40baa6188b2eff4e263cb20fedabcecf
 }
