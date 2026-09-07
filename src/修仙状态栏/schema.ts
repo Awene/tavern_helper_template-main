@@ -500,32 +500,58 @@ const timePeriodAliases: Record<string, (typeof timePeriods)[number]> = {
   人定: '亥',
 };
 
-const normalizeTimePeriod = (input: unknown) => {
-  const text = String(input ?? '').trim();
-  const period = timePeriods.find(
-    item =>
-      text === item || ['时', '初', '正', '刻', '中', '末', '半'].some(suffix => text.includes(`${item}${suffix}`)),
+function normalizeTimePeriod(input: unknown) {
+  const text = String(input ?? "").normalize('NFKC').replace(/\s/g, '');
+  const period = timePeriods.find((item) =>
+    text === item || ["时", "初", "正", "刻", "中", "末", "半"].some((suffix) => text.includes(`${item}${suffix}`)),
   );
   if (period) return `${period}时`;
+  const clock = text.match(/^(凌晨|清晨|早上|上午|中午|下午|傍晚|晚上|晚间|夜间)?(\d{1,2}|[零〇一二两三四五六七八九十]+)(?:点|时|:)(?:(\d{1,2})分?|半|整)?$/);
+  if (clock) {
+    let hour = parseCalendarNumber(clock[2]);
+    if (clock[3] && Number(clock[3]) > 59) return undefined;
+    if (hour < 0 || hour > 23) return undefined;
+    if (/下午|傍晚|晚上|晚间|夜间/.test(clock[1] ?? '') && hour < 12) hour += 12;
+    if (/晚上|晚间|夜间/.test(clock[1] ?? '') && hour === 12) hour = 0;
+    if (/凌晨|上午|早上/.test(clock[1] ?? '') && hour === 12) hour = 0;
+    if (clock[1] === '中午' && hour < 11) hour += 12;
+    return `${timePeriods[Math.floor((hour + 1) / 2) % 12]}时`;
+  }
   const alias = Object.entries(timePeriodAliases).find(([name]) => text.includes(name));
-  return alias ? `${alias[1]}时` : '午时';
-};
+  if (alias) return `${alias[1]}时`;
+  const vague: Record<string, string> = { 凌晨:'丑', 清晨:'卯', 早:'卯', 早上:'卯', 上午:'巳', 中午:'午', 白天:'午', 日间:'午', 下午:'申', 傍晚:'酉', 晚:'戌', 晚间:'戌', 晚上:'戌', 夜间:'戌', 深夜:'亥' };
+  return vague[text] ? `${vague[text]}时` : undefined;
+}
+
+// 接受中文数字及月份别名；无法理解时返回 NaN，由命令钩子保留原值。
+function parseCalendarNumber(input: unknown): number {
+  if (typeof input === 'number') return Number.isFinite(input) ? Math.trunc(input) : NaN;
+  let text = String(input ?? '').normalize('NFKC').trim().replace(/[年月日号]$/, '').replace(/^初/, '');
+  text = ({ 正:'一', 冬:'十一', 腊:'十二', 臘:'十二' } as Record<string,string>)[text] ?? text;
+  if (/^\d+$/.test(text)) return Number(text);
+  const digits = '零一二三四五六七八九';
+  text = text.replace(/〇/g,'零').replace(/两/g,'二').replace(/廿/g,'二十').replace(/卅/g,'三十');
+  if (!/^[零一二三四五六七八九十百千万]+$/.test(text)) return NaN;
+  if (!/[十百千万]/.test(text)) return Number([...text].map(c=>digits.indexOf(c)).join(''));
+  let total=0, section=0, n=0;
+  for (const c of text) {
+    const digit=digits.indexOf(c);
+    if (digit>=0) n=digit;
+    else if(c==='万') { total+=(section+n)*10000; section=0; n=0; }
+    else { section+=(n||1)*({十:10,百:100,千:1000} as Record<string,number>)[c]; n=0; }
+  }
+  return total+section+n;
+}
 
 const TimeSchema = z
   .object({
-    年: z.coerce.number().prefault(1),
-    月: z.coerce
-      .number()
-      .transform(n => clamp(n, 1, 12))
-      .prefault(1),
-    日: z.coerce
-      .number()
-      .transform(n => clamp(n, 1, 30))
-      .prefault(1),
+    年: z.preprocess(parseCalendarNumber, z.number().min(1).catch(1)).prefault(1),
+    月: z.preprocess(parseCalendarNumber, z.number().transform(n=>clamp(n,1,12)).catch(1)).prefault(1),
+    日: z.preprocess(parseCalendarNumber, z.number().transform(n=>clamp(n,1,30)).catch(1)).prefault(1),
     // “子时中 / 子时三刻 / 子初 / 子正”等可理解写法统一收敛到所属时辰。
-    时辰: z.preprocess(normalizeTimePeriod, z.enum(timePeriodValues)).prefault('午时'),
+    时辰: z.preprocess(normalizeTimePeriod, z.enum(timePeriodValues).catch('午时')).prefault("午时"),
   })
-  .prefault({ 年: 1, 月: 1, 日: 1, 时辰: '午时' });
+  .prefault({ 年: 1, 月: 1, 日: 1, 时辰: "午时" });
 
 // ===== 固定资产 Schema =====
 // 固定资产是 AI 高频增量更新字段：允许常见别名、带单位数字、字符串地点/日期与数组式设施，
@@ -686,24 +712,29 @@ const TaskSchema = z.object({
 const TasksSchema = z.record(z.string(), TaskSchema).prefault({});
 
 // ===== 传闻 Schema =====
-// 单条传闻结构不变；世界推进回合由 AI 更新，普通回合只读。
-const TimelineDateSchema = z.object({
-  年: z.coerce.number(),
-  月: z.coerce.number(),
-  日: z.coerce.number(),
-});
+// 旧数组/旧类别兼容；新条目只保留类别、内容、难度。重名加序号，避免覆盖。
+function migrateRumorEntries(value: unknown) {
+  if (value == null) return {};
+  if (typeof value !== 'object') return value;
+  const array = Array.isArray(value);
+  const result: Record<string, unknown> = Object.create(null);
+  for (const [key, raw] of Object.entries(value)) {
+    if (!raw || typeof raw !== 'object') { result[key] = raw; continue; }
+    const item = raw as Record<string, unknown>;
+    const content = String(item.内容 ?? '');
+    const base = array ? String(item.标题 || content.split(/[，。；\n]/)[0].slice(0,24) || item.类别 || ('旧传闻' + key)) : key;
+    let title = base, suffix = 2;
+    while (Object.hasOwn(result, title)) title = base + '（' + suffix++ + '）';
+    const location = String(item.地点 || [item.世界, item.地域].filter(Boolean).join('·'));
+    const category = item.类别 === '通缉魔修' ? '通缉逃犯' : item.类别 === '灵植奇遇' ? '素材奇遇' : item.类别;
+    result[title] = { 类别: category ?? '', 内容: location && !content.includes(location) ? location + '：' + content : content, 难度: item.难度 ?? item.境界 ?? '待查' };
+  }
+  return result;
+}
 const RumorEntrySchema = z.object({
-  id: z.string(),
-  时间区间: z.object({
-    起: TimelineDateSchema,
-    止: TimelineDateSchema,
-  }),
-  世界: z.string(),
-  地域: z.string(),
-  地点: z.string(),
-  类别: z.string(),
-  内容: z.string(),
-  难度: z.string(),
+  类别: z.preprocess(v=>String(v ?? '待分类'), z.string()).prefault('待分类'),
+  内容: z.preprocess(v=>String(v ?? '暂无详情'), z.string()).prefault('暂无详情'),
+  难度: z.preprocess(v=>Array.isArray(v) ? v.map(x=>String(x ?? '待查')).join('—') : String(v ?? '待查'), z.string()).prefault('待查'),
 });
 
 // ===== 自定义开局元数据 =====
@@ -757,7 +788,7 @@ export const CultivationStatusSchema = z.object({
     value => Array.isArray(value) ? { 条目: value } : value == null ? {} : value,
     z.object({
       上次世界推进时间点: z.preprocess(value => _.isEmpty(value) ? null : value, TimeSchema.nullable()).prefault(null),
-      条目: z.array(RumorEntrySchema).prefault([]),
+      条目: z.preprocess(migrateRumorEntries, z.record(z.string(), RumorEntrySchema)).prefault({}),
     }).prefault({}),
   ),
 });

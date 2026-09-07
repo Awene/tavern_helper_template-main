@@ -14,8 +14,8 @@
 
     <div v-else class="xy-rumor-list">
       <article
-        v-for="(r, i) in activeTimelineEvents"
-        :key="i"
+        v-for="r in activeTimelineEvents"
+        :key="r.标题"
         class="xy-rumor"
       >
         <div class="xy-rumor-head">
@@ -23,8 +23,7 @@
             <span>{{ r.类别 }}</span>
           </div>
           <div class="xy-rumor-meta">
-            <div class="xy-rumor-time">{{ formatRange(r.时间区间) }}</div>
-            <div class="xy-rumor-source">— {{ r.地点 || '不知何处' }}</div>
+            <div class="xy-rumor-title">{{ r.标题 }}</div>
           </div>
           <div class="xy-rumor-difficulty" :title="`适配境界：${r.难度}`">
             <i>难</i>{{ r.难度 }}
@@ -41,7 +40,7 @@ import { computed, ref } from 'vue';
 import { activeTimelineEvents } from '../composables';
 import { useDataStore } from '../store';
 
-type TimelineDate = { 年: number; 月: number; 日: number };
+
 const store = useDataStore();
 const sending = ref(false);
 const lastAdvance = computed(() => {
@@ -68,15 +67,21 @@ async function advanceWorld() {
   }
 }
 
-function formatRange(range: { 起: TimelineDate; 止: TimelineDate }): string {
-  const s = range.起;
-  const e = range.止;
-  const fmt = (d: TimelineDate) => `${d.年}年${d.月}月${d.日}日`;
-  if (s.年 === e.年 && s.月 === e.月 && s.日 === e.日) return fmt(s);
-  return `${fmt(s)} ~ ${fmt(e)}`;
-}
+
 </script>
 <style scoped>
+.xy-rumor-title {
+  font-family: var(--xy-font-display);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--xy-gold-deep);
+  line-height: 1.55;
+  letter-spacing: .045em;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+.xy-rumor-head { column-gap: 12px; margin-bottom: 8px; }
+.xy-rumor-meta { min-width: 0; }
 .world-advance-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; padding: 10px 12px; border: 1px solid var(--xy-line-gold); border-radius: 9px; }
 .world-advance-times { display: flex; flex: 1 1 260px; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; min-width: 0; color: var(--xy-ink-mute); font-size: 12px; }
 .world-advance-times > span { overflow-wrap: anywhere; }
@@ -89,8 +94,7 @@ function formatRange(range: { 起: TimelineDate; 止: TimelineDate }): string {
   .xy-rumor-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
   .xy-rumor-seal { position: static; grid-column: 1; grid-row: 1; justify-self: start; width: auto; height: auto; max-width: 100%; padding: 4px 8px; font-size: 11px; writing-mode: horizontal-tb; transform: none; box-shadow: none; }
   .xy-rumor-meta { grid-column: 1 / -1; grid-row: 2; min-width: 0; flex-direction: column; align-items: flex-start; gap: 2px; }
-  .xy-rumor-time { font-size: 11px; letter-spacing: 0; overflow-wrap: anywhere; }
-  .xy-rumor-source { overflow-wrap: anywhere; }
+  .xy-rumor-title { font-size: 15px; letter-spacing: .025em; }
   .xy-rumor-difficulty { grid-column: 2; grid-row: 1; align-self: center; margin: 0; font-size: 10px; }
   .xy-rumor-body { text-indent: 0; }
 }

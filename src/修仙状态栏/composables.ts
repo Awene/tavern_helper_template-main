@@ -870,7 +870,7 @@ export const openedBuffData = computed(() => {
 });
 
 // 只读 MVU 传闻，禁止从旧 localStorage 缓存重新生成/覆盖。
-export const activeTimelineEvents = computed(() => useDataStore().data.传闻.条目);
+export const activeTimelineEvents = computed(() => Object.entries(useDataStore().data.传闻.条目).map(([标题, entry]) => ({ ...entry, 标题 })));
 
 export const storageCount = (key: '功法' | '物品' | '装备' | '傀儡' | '灵兽') => {
   const store = useDataStore();

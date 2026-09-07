@@ -299,7 +299,7 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
     // —— 不变 ——
     关系列表: {},
     // MVU 核验用开局当前时间补齐起点，此后仅世界推进回合由 AI 更新。
-    传闻: { 上次世界推进时间点: null, 条目: [] },
+    传闻: { 上次世界推进时间点: null, 条目: {} },
     // 附加信息：自定义开局元数据
     __custom_start__: {
       difficulty: difficulty?.id,
