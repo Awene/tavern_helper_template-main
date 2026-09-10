@@ -922,7 +922,7 @@
           "$ref": "#/$defs/__schema11"
         },
         "境界": {
-          "default": "练气期",
+          "default": "炼气初期",
           "type": "string"
         },
         "五行": {
@@ -1139,7 +1139,7 @@
           "$ref": "#/$defs/__schema11"
         },
         "境界": {
-          "default": "凡人",
+          "default": "炼气初期",
           "type": "string"
         },
         "五行": {
@@ -1215,7 +1215,7 @@
       "$ref": "#/$defs/__schema11"
     },
     "__schema23": {
-      "default": "凡人",
+      "default": "炼气初期",
       "type": "string"
     },
     "__schema24": {

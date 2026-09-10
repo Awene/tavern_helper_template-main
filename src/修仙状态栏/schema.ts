@@ -2,6 +2,14 @@ import { z } from 'zod';
 
 const clamp = (n: number, min: number, max: number): number => Math.max(min, Math.min(max, n));
 
+const normalizeCultivationRealm = (value: string): string => {
+  const text = value.trim();
+  return /^凡人(?:初期|前期|中期|后期)$/.test(text) ? '凡人' : text;
+};
+
+const normalizeEntityRealm = (value: string): string =>
+  normalizeCultivationRealm(value) === '凡人' ? '炼气初期' : value;
+
 const normalizeStringArray = (input: unknown): string[] => {
   if (input == null || input === '') return [];
   let value = input;
@@ -174,7 +182,7 @@ const PhysiqueSchema = z
 // ===== 修炼进度 Schema =====
 const CultivationProgressSchema = z
   .object({
-    境界: z.string().prefault('凡人'),
+    境界: z.string().transform(normalizeCultivationRealm).prefault('凡人'),
     当前进度: z.coerce
       .number()
       .transform(n => clamp(n, 0, Infinity))
@@ -307,7 +315,7 @@ const StatusEffectSchema = z.object({
 const CultivationArtSchema = z.object({
   使用中: z.boolean().prefault(false),
   品质: QualityEnum.prefault('凡'),
-  境界: z.string().prefault('练气期'),
+  境界: z.string().transform(normalizeEntityRealm).prefault('炼气初期'),
   五行: FiveElementsEnum.optional(),
   类型: z.enum(['心法', '攻击', '幻术', '神识', '咒法', '身法', '护体', '阵法']).prefault('心法'),
   消耗: z.string().optional(),
@@ -319,7 +327,7 @@ const CultivationArtSchema = z.object({
 // ===== 物品 Schema =====
 const ItemSchema = z.object({
   品质: QualityEnum.prefault('凡'),
-  境界: z.string().optional(),
+  境界: z.string().transform(normalizeEntityRealm).optional(),
   类型: z.enum(['秘籍', '配方', '符箓', '丹药', '素材', '工具']).prefault('素材'),
   消耗: z.string().optional(),
   五行: FiveElementsEnum.optional(),
@@ -335,7 +343,7 @@ const ItemSchema = z.object({
 // ===== 装备 Schema (法宝/护甲/饰品 合并;攻击力/防御力 在 标签中表示) =====
 const EquipmentSchema = z.object({
   品质: QualityEnum.prefault('凡'),
-  境界: z.string().optional(),
+  境界: z.string().transform(normalizeEntityRealm).optional(),
   类型: z.enum(['法宝', '护甲', '饰品']).prefault('法宝'),
   消耗: z.string().optional(),
   五行: FiveElementsEnum.optional(),
@@ -359,7 +367,7 @@ const CombatSkillSchema = z.object({
 const CombatUnitSchema = z.object({
   使用中: z.boolean().prefault(false),
   品质: QualityEnum.prefault('凡'),
-  境界: z.string().prefault('凡人'),
+  境界: z.string().transform(normalizeEntityRealm).prefault('炼气初期'),
   五行: FiveElementsEnum.optional(),
   标签: z.array(z.string()).prefault([]),
   描述: z.string().prefault(''),
@@ -422,7 +430,7 @@ const WildPuppetSchema = z.object({
   类型: z.literal('傀儡'),
   在场: z.boolean().prefault(true),
   品质: QualityEnum.prefault('凡'),
-  境界: z.string().prefault('凡人'),
+  境界: z.string().transform(normalizeEntityRealm).prefault('炼气初期'),
   五行: FiveElementsEnum.optional(),
   标签: z.array(z.string()).prefault([]),
   描述: z.string().prefault(''),

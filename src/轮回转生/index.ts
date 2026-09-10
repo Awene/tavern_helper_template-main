@@ -73,7 +73,7 @@ const ROOT_COST: Record<string, number> = { 1: 60, 2: 30, 3: 0, 4: -30, 5: 0, �
 /** 轮回面板沿用自身的业力成本，只共享自定义开局的体质清单与三维。 */
 const REINCARNATION_PHY_COST: Record<PhysiqueTier, number> = { 凡体: 0, 灵体: 10, 道体: 30, 仙体: 60 };
 const PHY_PICKER_PAGE_SIZE = 6;
-const NEWBORN_LIFESPAN = 80;
+const NEWBORN_LIFESPAN = 100;
 
 type ReincarnationGender = '男' | '女' | '其他';
 
