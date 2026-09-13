@@ -1,6 +1,7 @@
 import type { EcoEntity, LocationNode, LocationOption } from '../types';
+import spiritRegions from './spiritLocations.json';
 
-/** 当前世界（凡界为主修界域；灵界/仙界暂未开放） */
+/** 旧存档默认世界；仙界尚未开放。 */
 export const LOCATION_WORLD = '凡界';
 export const LOCATION_WORLD_DESC =
   '凡人为主，修士极少。化神之后修行极难，灵界通道在上古已关闭。';
@@ -232,7 +233,7 @@ export const LOCATION_REGIONS: LocationNode[] = [
           {
             name: '沧澜王朝',
             brief: '海上世袭王朝，公孙氏以鲸语者血脉立国；都鲸髓城。',
-            tags: ['王朝', '鲛人血脉'],
+            tags: ['王朝', '鱼人血脉'],
           },
         ],
         sects: [],
@@ -663,19 +664,25 @@ export const LOCATION_REGIONS: LocationNode[] = [
 ];
 
 // ============ 树形遍历助手 ============
+export const LOCATION_WORLDS = [
+  { name: LOCATION_WORLD, description: LOCATION_WORLD_DESC, regions: LOCATION_REGIONS },
+  { name: '灵界', description: '生于灵界，从当地开始修行；不视为飞升，不额外提升初始境界或赠送资源。', regions: spiritRegions as LocationNode[] },
+];
+export const ALL_LOCATION_REGIONS = LOCATION_WORLDS.flatMap(w => w.regions);
+export const worldForRegion = (id: string) => LOCATION_WORLDS.find(w => w.regions.some(r => r.id === id));
 /** 扁平化所有可选地点（仅生态叶节点） */
 export const locations: LocationOption[] = (() => {
   const out: LocationOption[] = [];
-  for (const region of LOCATION_REGIONS) {
+  for (const region of ALL_LOCATION_REGIONS) {
     for (const eco of region.children || []) {
       out.push({
         id: eco.id,
         name: eco.name,
         desc: eco.description,
-        世界: LOCATION_WORLD,
+        世界: worldForRegion(region.id)!.name,
         地域: region.name,
         生态: eco.name,
-        具体地点: eco.name,
+        具体地点: region.name === '殒落大陆' ? `殒落大陆-${eco.name}` : eco.name,
         kingdoms: eco.kingdoms,
         sects: eco.sects,
         tags: eco.tags,
@@ -702,7 +709,7 @@ export interface SectRef {
 /** 展开凡界全部宗门（按地域→生态顺序），用于门派归属的自由选择。 */
 export const allSects: SectRef[] = (() => {
   const out: SectRef[] = [];
-  for (const region of LOCATION_REGIONS) {
+  for (const region of ALL_LOCATION_REGIONS) {
     for (const eco of region.children || []) {
       for (const s of eco.sects || []) {
         out.push({ name: s.name, brief: s.brief, region: region.name, eco: eco.name, tags: s.tags });
@@ -715,7 +722,7 @@ export const allSects: SectRef[] = (() => {
 /** 按地域分组的宗门列表，用于门派归属 UI 的分组展示。 */
 export const sectsByRegion: Array<{ region: string; sects: SectRef[] }> = (() => {
   const out: Array<{ region: string; sects: SectRef[] }> = [];
-  for (const region of LOCATION_REGIONS) {
+  for (const region of ALL_LOCATION_REGIONS) {
     const sects: SectRef[] = [];
     for (const eco of region.children || []) {
       for (const s of eco.sects || []) {
@@ -728,14 +735,14 @@ export const sectsByRegion: Array<{ region: string; sects: SectRef[] }> = (() =>
 })();
 
 export const findRegionById = (id: string): LocationNode | undefined =>
-  LOCATION_REGIONS.find(r => r.id === id);
+  ALL_LOCATION_REGIONS.find(r => r.id === id);
 
 /** 通过生态叶 id 反查所属 region 节点 */
 export function findLocationPath(leafId: string): {
   region?: LocationNode;
   leaf?: LocationNode;
 } {
-  for (const region of LOCATION_REGIONS) {
+  for (const region of ALL_LOCATION_REGIONS) {
     const leaf = region.children?.find(l => l.id === leafId);
     if (leaf) return { region, leaf };
   }

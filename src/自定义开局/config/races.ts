@@ -3,7 +3,7 @@ import type { RaceName, RaceOption } from '../types';
 /**
  * 初始种族清单。
  *
- * 名称与《世界设定-生命种族》保持一致；可选范围与轮回转生面板一致。
+ * 名称与《世界设定-生命种族》保持一致；自定义开局开放全部九种种族。
  * 妖族、灵族、物化生灵与魔族允许补充具体血脉/本体，主种族仍写入 MVU 的 `种族` 字段。
  */
 export const races: RaceOption[] = [
@@ -55,25 +55,22 @@ export const races: RaceOption[] = [
     id: 'gui',
     name: '冥族',
     glyph: '冥',
-    brief: '死后转化、阴气滋养之族',
-    selectable: false,
-    disabledNote: '仅由死亡转化',
+    brief: '死后转化，阴气滋养，年龄不随时间增长',
+    selectable: true,
   },
   {
     id: 'shen',
     name: '神族',
     glyph: '神',
-    brief: '上古神格血脉的延续者',
-    selectable: false,
-    disabledNote: '暂不可选',
+    brief: '延续上古神格血脉，神识强大，擅长幻术',
+    selectable: true,
   },
   {
     id: 'yuwai',
     name: '域外异类',
     glyph: '外',
-    brief: '游离于世界壁垒之外的危险生命',
-    selectable: false,
-    disabledNote: '暂不可选',
+    brief: '来自虚空，多具高智，受吞噬本能驱使',
+    selectable: true,
   },
 ];
 

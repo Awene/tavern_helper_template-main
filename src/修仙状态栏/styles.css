@@ -4513,14 +4513,37 @@ html[data-theme='dark'] .xy-npc-name--male {
   top: calc(100% + 6px);
   left: 0;
   min-width: 220px;
-  max-height: 60vh;
+  /* iframe 高度随楼层增长，不能用 vh 作为菜单高度上限。 */
+  max-height: 360px;
+  box-sizing: border-box;
+  overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--xy-ink-mute) var(--xy-paper-soft);
   padding: 8px;
   background: var(--xy-paper-soft);
   border: 1px solid var(--xy-line-gold);
   border-radius: 10px;
   box-shadow: 0 12px 32px -10px rgba(42, 37, 32, 0.35);
   z-index: 30;
+}
+.xy-map-tree::-webkit-scrollbar {
+  width: 7px;
+}
+.xy-map-tree::-webkit-scrollbar-track {
+  background: var(--xy-paper-soft);
+}
+.xy-map-tree::-webkit-scrollbar-thumb {
+  background: var(--xy-ink-mute);
+  border: 2px solid var(--xy-paper-soft);
+  border-radius: 8px;
+}
+@media (max-width: 600px) {
+  .xy-map-tree {
+    max-height: 280px;
+  }
 }
 .xy-map-tree-world + .xy-map-tree-world {
   margin-top: 4px;

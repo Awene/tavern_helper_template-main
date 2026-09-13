@@ -10,6 +10,7 @@ import {
   findLocation,
   findRace,
   findStory,
+  isStoryAvailable,
   physiqueResolved,
   plotItemsForStory,
   rootDescription,
@@ -25,7 +26,9 @@ function resolveStory(sel: Selection): StoryOption | undefined {
   if (!id) return undefined;
   const custom = sel.customStory;
   if (custom && custom.id === id) return customStoryToOption(custom);
-  return findStory(id);
+  const story = findStory(id);
+  if (story && !isStoryAvailable(story, sel)) throw new Error('当前出生地或人物条件与剧本不符，请重新选择开局剧本。');
+  return story;
 }
 
 // 物品规范化逻辑已抽到 ./itemNormalizer.ts(UI 卡片与此处共用)
@@ -219,7 +222,7 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
   // —— 具体地点：按新格式「生态-[宗门|秘境|城市]-具体位置」组装（地域为独立字段，不入此串）——
   // 首段取所选生态；若开局即身处该生态的某真实宗门（剧本宗门去掉「（外门杂役）」之类后缀后能对上），
   // 则追加为中段「生态-宗门」；散修 / 泛称起点（如「入山待考之外门」）仅保留生态。
-  const 生态名 = location?.生态 || location?.具体地点 || '';
+  const 生态名 = location?.具体地点 || location?.生态 || '';
   const 宗门清 = 宗门.replace(/[（(].*$/, '').trim();
   const 是本生态宗门 = !!宗门清 && 宗门清 !== '散修' && !!location?.sects?.some(s => s.name === 宗门清);
   const 具体地点 = 生态名 ? (是本生态宗门 ? `${生态名}-${宗门清}` : 生态名) : '某处村落';
@@ -393,6 +396,7 @@ export function generateAIPrompt(sel: Selection): string {
     lines.push('');
     lines.push('【出生地】');
     lines.push(`${location.世界} · ${location.地域} · ${location.生态}`);
+    if (location.世界 === '灵界') lines.push('主角生于灵界，在所选地点开局，并非从凡界飞升；初始境界、年龄、物品仍按所选开局设定，不因出生世界额外提升。宗门地位与入门条件以当地世界书为准。');
     if (location.desc) lines.push(`说明：${location.desc}`);
     if (location.kingdoms?.length) {
       lines.push(`凡国：${location.kingdoms.map(k => `${k.name}（${k.brief}）`).join('；')}`);

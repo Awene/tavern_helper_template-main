@@ -23,6 +23,7 @@ jobs:
       - name: Checkout Cultivation-Card-Game build inputs
         run:
           git clone --depth 1 --branch main https://github.com/Awene/Cultivation-Card-Game.git ../Cultivation-Card-Game
+          git -C ../Cultivation-Card-Game rev-parse HEAD
 
       - uses: JesseTG/rm@v1.0.3
         with:

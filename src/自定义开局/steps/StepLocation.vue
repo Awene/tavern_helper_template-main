@@ -7,17 +7,18 @@
       <!-- 世界 -->
       <div class="xs-loc-row xs-loc-row-world">
         <span class="xs-loc-row-label">世界</span>
-        <button type="button" class="xs-loc-chip world active" disabled>
-          {{ LOCATION_WORLD }}
+        <button v-for="world in LOCATION_WORLDS" :key="world.name" type="button"
+          class="xs-loc-chip" :class="{ active: worldName === world.name }" @click="pickWorld(world.name)">
+          {{ world.name }}
         </button>
-        <span class="xs-loc-row-hint">{{ LOCATION_WORLD_DESC }}</span>
+        <span class="xs-loc-row-hint">{{ currentWorld.description }}</span>
       </div>
 
       <!-- 大地域 -->
       <div class="xs-loc-row">
         <span class="xs-loc-row-label">地域</span>
         <button
-          v-for="r in LOCATION_REGIONS"
+          v-for="r in currentWorld.regions"
           :key="r.id"
           type="button"
           class="xs-loc-chip"
@@ -146,8 +147,8 @@
 import { computed, ref, watch } from 'vue';
 import {
   LOCATION_REGIONS,
-  LOCATION_WORLD,
-  LOCATION_WORLD_DESC,
+  LOCATION_WORLDS,
+  worldForRegion,
   findLocation,
   findLocationPath,
   findRegionById,
@@ -160,6 +161,8 @@ const store = useStartStore();
 // 根据当前选中的生态反推 region，初始展开
 const initialPath = findLocationPath(store.selection.locationId || '');
 const regionId = ref<string>(initialPath.region?.id || LOCATION_REGIONS[0].id);
+const worldName = ref(worldForRegion(regionId.value)?.name || '凡界');
+const currentWorld = computed(() => LOCATION_WORLDS.find(w => w.name === worldName.value)!);
 
 const currentRegion = computed(() => findRegionById(regionId.value));
 
@@ -170,22 +173,22 @@ const baseMenpai = [
   { value: '', label: '无' },
   { value: '散修', label: '散修' },
 ];
-const sectGroups = sectsByRegion;
+const sectGroups = computed(() => sectsByRegion.filter(g => currentWorld.value.regions.some(r => r.name === g.region)));
 // 当前选中门派所属的地域（用于一级 chip 高亮 & 初始展开）
 const pickedSectRegion = computed(() => {
   const mp = store.selection.门派归属;
   if (!mp || mp === '散修') return '';
-  return sectGroups.find(g => g.sects.some(s => s.name === mp))?.region || '';
+  return sectGroups.value.find(g => g.sects.some(s => s.name === mp))?.region || '';
 });
 // 二级展开的地域：默认落在已选门派所属地域，否则出生地地域，再否则第一项
 const menpaiRegion = ref<string>(
   pickedSectRegion.value ||
-    (selectedLocation.value?.地域 && sectGroups.some(g => g.region === selectedLocation.value!.地域)
+    (selectedLocation.value?.地域 && sectGroups.value.some(g => g.region === selectedLocation.value!.地域)
       ? selectedLocation.value!.地域
-      : sectGroups[0]?.region || ''),
+      : sectGroups.value[0]?.region || ''),
 );
 const currentRegionSects = computed(
-  () => sectGroups.find(g => g.region === menpaiRegion.value)?.sects || [],
+  () => sectGroups.value.find(g => g.region === menpaiRegion.value)?.sects || [],
 );
 const currentMenpaiLabel = computed(() => {
   const mp = store.selection.门派归属;
@@ -197,6 +200,15 @@ const currentMenpaiLabel = computed(() => {
 function pickRegion(id: string) {
   regionId.value = id;
 }
+function pickWorld(name: string) {
+  if (name === worldName.value) return;
+  worldName.value = name;
+  regionId.value = currentWorld.value.regions[0].id;
+  store.selection.locationId = null;
+  store.selection.storyId = null;
+  if (store.selection.门派归属 !== '散修') store.selectMenpai('');
+  menpaiRegion.value = sectGroups.value[0]?.region || '';
+}
 
 // 已选生态变化时同步展开地域
 watch(
@@ -204,7 +216,9 @@ watch(
   newId => {
     const p = findLocationPath(newId || '');
     if (p.region) {
+      worldName.value = worldForRegion(p.region.id)!.name;
       regionId.value = p.region.id;
+      if (!sectGroups.value.some(g => g.region === menpaiRegion.value)) menpaiRegion.value = sectGroups.value[0]?.region || '';
     }
   },
 );
@@ -289,6 +303,8 @@ watch(
   .xs-loc-leaf-grid { grid-template-columns: repeat(3, 1fr); }
 }
 .xs-loc-leaf-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
   display: flex;
   flex-direction: column;
   gap: 8px;

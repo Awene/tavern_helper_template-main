@@ -552,6 +552,7 @@ import ItemCard from '../../自定义开局/components/ItemCard.vue';
 import { dataToCardView } from '../../自定义开局/itemNormalizer';
 import { CultivationStatusSchema } from '../schema';
 import { useDataStore } from '../store';
+import { refinementConnectionKey, requestRefinementJson } from '../refinementApi';
 import { closeCharacterRefinement, showToast, state } from '../composables';
 
 // 与「【本格修仙】总结」脚本共用的聊天世界书绑定。
@@ -940,23 +941,39 @@ async function refineCharacter() {
     const current = _.cloneDeep(npc.value);
     if (!current) throw new Error(`未找到「${characterName.value}」的人物变量。`);
     const systemPrompt = `你是修仙人物变量细化器。遵循下方列出的规则条目与变量格式样例。\n\n${refinementReferences()}\n\n任务：细化用户给出的一个 NPC 变量。只返回 JSON 对象中的 npc；不得输出推理、Markdown、EJS、剧情正文或代码。\n\n允许读取和更新的字段仅限：名称、寿元、体质、灵根、修炼进度（其中包含境界）、物品、功法、装备、傀儡、灵兽、资源池、技艺、性格、外貌、着装。名称只用于识别人物；境界只能写入修炼进度.境界，不能另建境界字段。\n\n硬性要求：\n1. 不得返回或改动其他字段。\n2. 物品、功法、装备、傀儡、灵兽必须是以名称为键的对象，不能是数组；根据规则补足合理的新条目。\n3. 输入中已有的物品、功法、装备、傀儡、灵兽必须完整保留：不得删除、改名、改数量或改字段。仅可新增不重名的条目。\n4. 输出严格遵循上方 MVU 变量格式样例；资源池不得超过上限，物品数量为合理非负数。\n5. 输出前必须自行验算所有数值：境界与进度上限、资源池当前值与上限、寿元、技艺数值、物品数量及新增条目数量均须符合所给规则与系数表；发现不一致时修正后再输出。\n6. 必须核验体质.效果：它必须是以效果名为键、数值化加成为值的对象，且至少有一条合规效果。每个值只能是明确的数值修正词条，如 "+25%"、"-10%"、"+3"、"+500 年"；禁止“恢复更快”“体魄强健”等无量化的自然语言描述。若效果缺失、为空、不是对象、含任一不合规值，或与体质不相称，则结合体质名称、三维、灵根及规则中的既有词条，为该体质确定并输出合规效果；不得重复悟性、根骨、气感本身已经表达的加成，也不得凭空编造规则外的机制。\n7. 只输出一个可被 JSON.parse 直接解析的对象，形如 {"npc":{"寿元":{...},"修炼进度":{"境界":"..."},...}}，禁止代码块。`;
-    const cancelRouteBypass = requestRuleRouterBypass('人物细化');
-    let result: string;
-    try {
-      result = assertTextResult(
-        await generateRaw({
-          user_input: `请细化以下人物变量：\n${refinementCharacterInput()}`,
-          ordered_prompts: refinementPrompts(systemPrompt),
-          // 保持酒馆停止按钮可中断；路由跳过由上方的一次性桥接标记处理。
-          should_silence: false,
-          max_chat_history: 0,
-          json_schema: characterVariableSchema,
-        }),
-      );
-    } finally {
-      cancelRouteBypass?.();
-    }
-    const generated = parseGeneratedJson(result).npc;
+    const connectionKey = await refinementConnectionKey();
+    const userInput = `请细化以下人物变量：\n${refinementCharacterInput()}`;
+    let storage: Storage | undefined;
+    try { storage = window.localStorage; } catch { /* 禁用本地存储时仍可生成。 */ }
+    const response = await requestRefinementJson({
+      key: connectionKey,
+      storage,
+      onFallback: () => {
+        progress.value = '接口返回参数错误，正在移除结构化参数重试一次…';
+        console.info('[人物细化] 移除 JSON Schema，尝试一次兼容请求。');
+      },
+      request: async structured => {
+        if (await refinementConnectionKey() !== connectionKey)
+          throw new Error('主 API 连接已切换，请重新发起人物细化。');
+        // 一次性路由绕过标记必须为每次请求重新申请。
+        const cancelRouteBypass = requestRuleRouterBypass('人物细化');
+        try {
+          return assertTextResult(
+            await generateRaw({
+              user_input: userInput,
+              ordered_prompts: refinementPrompts(systemPrompt),
+              // 保持酒馆停止按钮可中断；每次请求单独绕过路由。
+              should_silence: false,
+              max_chat_history: 0,
+              ...(structured ? { json_schema: characterVariableSchema } : {}),
+            }),
+          );
+        } finally {
+          cancelRouteBypass?.();
+        }
+      },
+    });
+    const generated = parseGeneratedJson(response.text).npc;
     if (!generated || typeof generated !== 'object' || Array.isArray(generated))
       throw new Error('主 API 没有返回 npc 对象。');
     const generatedFields = _.pick(_.cloneDeep(generated), REFINEMENT_NPC_FIELDS);
@@ -970,6 +987,7 @@ async function refineCharacter() {
     next.关系列表 = { ...next.关系列表, [characterName.value]: candidate };
     const checked = CultivationStatusSchema.safeParse(next);
     if (!checked.success) throw new Error('细化结果不符合人物变量结构，已取消写入。');
+    response.remember();
     refinementBaseline.value = current;
     refinementPreview.value = checked.data.关系列表[characterName.value] as Record<string, any>;
     refinementAdditions.value = additions;

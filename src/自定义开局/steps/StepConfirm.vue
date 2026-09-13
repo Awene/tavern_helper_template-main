@@ -147,6 +147,7 @@ import {
   findLocation,
   findRace,
   findStory,
+  isStoryAvailable,
   physiqueResolved,
   plotItemsForStory,
   rootDisplayName,
@@ -189,8 +190,8 @@ const canConfirm = computed(() => {
     !!store.selection.difficultyId &&
     store.rootChosen &&
     store.physiqueChosen &&
-    !!store.selection.locationId &&
-    !!store.selection.storyId &&
+      !!location.value &&
+      !!story.value && isStoryAvailable(story.value, store.selection) &&
     !!store.selection.道号.trim()
   );
 });
