@@ -21,7 +21,7 @@ jobs:
       # 人物细化界面会在构建期读取角色卡仓库中的提示词与世界书规则。
       # 保持与本地两个仓库互为同级目录的布局，否则 webpack 无法解析这些 ?raw 导入。
       - name: Checkout Cultivation-Card-Game build inputs
-        run:
+        run: |
           git clone --depth 1 --branch main https://github.com/Awene/Cultivation-Card-Game.git ../Cultivation-Card-Game
           git -C ../Cultivation-Card-Game rev-parse HEAD
 
