@@ -1,8 +1,6 @@
 name: sync_template
 
 on:
-  schedule:
-    - cron: 0 3 * * *
   workflow_dispatch:
 
 permissions:
@@ -20,6 +18,7 @@ jobs:
         with:
           fetch-depth: 0
       - uses: AndreasAugustin/actions-template-sync@v2
+        id: template_sync
         with:
           source_repo_path: StageDog/tavern_helper_template
           pr_title: '[bot] 同步模板仓库的更新'
@@ -28,3 +27,42 @@ jobs:
           template_sync_ignore_file_path: .github/.templatesyncignore
           is_force_deletion: true
           git_remote_pull_params: --allow-unrelated-histories --strategy=recursive --no-edit -X diff-algorithm=minimal -X ignore-all-space -X patience -X renormalize
+      - name: Keep only the latest template sync branch
+        if: ${{ always() && steps.template_sync.outputs.pr_branch != '' }}
+        shell: bash
+        env:
+          KEEP_BRANCH: ${{ steps.template_sync.outputs.pr_branch }}
+        run: |
+          set -euo pipefail
+
+          case "$KEEP_BRANCH" in
+            chore/template_sync_*) ;;
+            *)
+              echo "::error::Refusing to clean up unexpected branch: $KEEP_BRANCH"
+              exit 1
+              ;;
+          esac
+
+          mapfile -t sync_branches < <(
+            git ls-remote --heads origin 'refs/heads/chore/template_sync_*' |
+              awk '{ sub("refs/heads/", "", $2); print $2 }'
+          )
+
+          if ! printf '%s\n' "${sync_branches[@]}" | grep -Fxq -- "$KEEP_BRANCH"; then
+            echo "::error::Branch to keep was not found on origin: $KEEP_BRANCH"
+            exit 1
+          fi
+
+          for branch in "${sync_branches[@]}"; do
+            case "$branch" in
+              chore/template_sync_*) ;;
+              *)
+                echo "::error::Refusing to delete unexpected branch: $branch"
+                exit 1
+                ;;
+            esac
+
+            if [[ "$branch" != "$KEEP_BRANCH" ]]; then
+              git push origin --delete "$branch"
+            fi
+          done
