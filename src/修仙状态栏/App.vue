@@ -643,11 +643,104 @@
     <!-- 全局头像上传 input（始终挂载，避免切换页面后无法触发） -->
     <input ref="avatarFileInput" type="file" accept="image/*" class="xy-avatar-file" @change="onAvatarFileChange" />
 
-    <!-- ============ 头像放大查看 ============ -->
+    <!-- ============ 图片 / 地图大图预览 ============ -->
     <transition name="xy-fade">
-      <div v-if="state.lightboxImage" class="xy-lightbox" @click="closeLightbox" @contextmenu.prevent>
-        <img :src="state.lightboxImage" class="xy-lightbox-img" alt="头像大图" @click.stop />
-        <button type="button" class="xy-lightbox-close" aria-label="关闭" @click.stop="closeLightbox">×</button>
+      <div
+        v-if="state.lightboxImage"
+        ref="lightboxRoot"
+        class="xy-lightbox"
+        :class="{ 'xy-lightbox-map': state.lightboxKind === 'map' }"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="state.lightboxKind === 'map' ? '地图大图预览' : '图片大图预览'"
+        @click="closeLightbox"
+        @contextmenu.prevent
+        @wheel="onLightboxWheel"
+      >
+        <div
+          class="xy-lightbox-viewport"
+          :class="{ dragging: lightboxDragging }"
+          @click.stop="onLightboxBackdropClick"
+          @pointerdown="onLightboxPointerDown"
+          @pointermove="onLightboxPointerMove"
+          @pointerup="onLightboxPointerUp"
+          @pointercancel="onLightboxPointerUp"
+        >
+          <img
+            ref="lightboxImage"
+            :src="state.lightboxImage"
+            class="xy-lightbox-img"
+            :class="{ zoomable: state.lightboxKind === 'map' }"
+            :style="lightboxImageStyle"
+            :alt="state.lightboxKind === 'map' ? '地图大图' : '头像大图'"
+            draggable="false"
+            @click.stop
+            @dblclick.stop="resetLightboxView"
+            @load="refreshLightboxLayout"
+          />
+        </div>
+        <div v-if="state.lightboxKind === 'map'" class="xy-lightbox-toolbar" :style="lightboxToolbarStyle" @click.stop>
+          <button
+            type="button"
+            aria-label="缩小地图"
+            title="缩小"
+            :disabled="lightboxScale <= MIN_LIGHTBOX_SCALE"
+            @click="adjustLightboxZoom(-LIGHTBOX_ZOOM_STEP)"
+          >
+            −
+          </button>
+          <button
+            type="button"
+            class="xy-lightbox-zoom-value"
+            title="恢复适应窗口"
+            aria-label="恢复适应窗口"
+            @click="resetLightboxView"
+          >
+            {{ Math.round(lightboxScale * 100) }}%
+          </button>
+          <button
+            type="button"
+            aria-label="放大地图"
+            title="放大"
+            :disabled="lightboxScale >= MAX_LIGHTBOX_SCALE"
+            @click="adjustLightboxZoom(LIGHTBOX_ZOOM_STEP)"
+          >
+            ＋
+          </button>
+          <button
+            type="button"
+            class="xy-lightbox-rotate"
+            title="顺时针旋转 90°"
+            aria-label="顺时针旋转地图 90°"
+            @click="rotateLightbox"
+          >
+            ↻
+          </button>
+          <button type="button" :title="lightboxFullscreen ? '退出全屏' : '进入全屏'" @click="toggleLightboxFullscreen">
+            {{ lightboxFullscreen ? '退出' : '全屏' }}
+          </button>
+          <button
+            type="button"
+            class="xy-lightbox-toolbar-close"
+            title="关闭地图"
+            aria-label="关闭地图"
+            @click="closeLightbox"
+          >
+            关闭
+          </button>
+        </div>
+        <div v-if="state.lightboxKind === 'map' && lightboxScale > 1" class="xy-lightbox-tip" :style="lightboxTipStyle">
+          拖动查看 · 双击复位
+        </div>
+        <button
+          v-if="state.lightboxKind !== 'map'"
+          type="button"
+          class="xy-lightbox-close"
+          aria-label="关闭"
+          @click.stop="closeLightbox"
+        >
+          ×
+        </button>
       </div>
     </transition>
 
@@ -690,7 +783,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { publishSharedTheme, readSharedTheme, subscribeSharedTheme, type SharedTheme } from '../shared/theme';
 import { useDataStore } from './store';
 import PageAssets from './pages/PageAssets.vue';
@@ -742,6 +835,192 @@ const MAX_UI_SCALE = 1.2;
 const UI_SCALE_STEP = 0.1;
 const uiScale = ref(1);
 const uiScalePercent = computed(() => Math.round(uiScale.value * 100));
+
+const MIN_LIGHTBOX_SCALE = 1;
+const MAX_LIGHTBOX_SCALE = 5;
+const LIGHTBOX_ZOOM_STEP = 0.5;
+const lightboxRoot = ref<HTMLElement | null>(null);
+const lightboxImage = ref<HTMLImageElement | null>(null);
+const lightboxScale = ref(1);
+const lightboxPanX = ref(0);
+const lightboxPanY = ref(0);
+const lightboxDragging = ref(false);
+const lightboxFullscreen = ref(false);
+const lightboxRotation = ref(0);
+const lightboxFitScale = ref(1);
+const lightboxControlsTop = ref<number | null>(null);
+const lightboxPointers = new Map<number, { x: number; y: number }>();
+let lightboxPinchDistance = 0;
+let lightboxPointerStart = { x: 0, y: 0 };
+let lightboxIgnoreBackdropClick = false;
+
+const lightboxImageStyle = computed(() =>
+  state.lightboxKind === 'map'
+    ? {
+        transform: `translate3d(${lightboxPanX.value}px, ${lightboxPanY.value}px, 0) scale(${lightboxScale.value * lightboxFitScale.value}) rotate(${lightboxRotation.value}deg)`,
+      }
+    : undefined,
+);
+const lightboxToolbarStyle = computed(() =>
+  lightboxControlsTop.value == null ? undefined : { top: `${lightboxControlsTop.value}px` },
+);
+const lightboxTipStyle = computed(() =>
+  lightboxControlsTop.value == null ? undefined : { top: `${Math.max(8, lightboxControlsTop.value - 32)}px` },
+);
+
+function positionLightboxControls() {
+  const root = lightboxRoot.value;
+  const image = lightboxImage.value;
+  if (!root || !image || state.lightboxKind !== 'map') return;
+  const rotated = lightboxRotation.value % 180 !== 0;
+  const imageHeight = (rotated ? image.clientWidth : image.clientHeight) * lightboxFitScale.value;
+  const desiredTop = (root.clientHeight + imageHeight) / 2 + 10;
+  lightboxControlsTop.value = Math.min(root.clientHeight - 58, desiredTop);
+}
+
+function updateLightboxFit() {
+  const viewport = lightboxRoot.value?.querySelector<HTMLElement>('.xy-lightbox-viewport');
+  const image = lightboxImage.value;
+  if (!viewport || !image || lightboxRotation.value % 180 === 0) {
+    lightboxFitScale.value = 1;
+    return;
+  }
+  lightboxFitScale.value = Math.min(
+    viewport.clientWidth / image.clientHeight,
+    viewport.clientHeight / image.clientWidth,
+  );
+}
+
+function refreshLightboxLayout() {
+  updateLightboxFit();
+  clampLightboxPan();
+  positionLightboxControls();
+}
+
+function clampLightboxPan() {
+  if (lightboxScale.value <= 1) {
+    lightboxPanX.value = 0;
+    lightboxPanY.value = 0;
+    return;
+  }
+  const viewport = lightboxRoot.value?.querySelector<HTMLElement>('.xy-lightbox-viewport');
+  const image = lightboxRoot.value?.querySelector<HTMLImageElement>('.xy-lightbox-img');
+  if (!viewport || !image) return;
+  const rotated = lightboxRotation.value % 180 !== 0;
+  const effectiveScale = lightboxScale.value * lightboxFitScale.value;
+  const imageWidth = rotated ? image.clientHeight : image.clientWidth;
+  const imageHeight = rotated ? image.clientWidth : image.clientHeight;
+  const maxX = Math.max(0, (imageWidth * effectiveScale - viewport.clientWidth) / 2);
+  const maxY = Math.max(0, (imageHeight * effectiveScale - viewport.clientHeight) / 2);
+  lightboxPanX.value = _.clamp(lightboxPanX.value, -maxX, maxX);
+  lightboxPanY.value = _.clamp(lightboxPanY.value, -maxY, maxY);
+}
+
+function setLightboxZoom(value: number) {
+  lightboxScale.value = _.clamp(value, MIN_LIGHTBOX_SCALE, MAX_LIGHTBOX_SCALE);
+  requestAnimationFrame(clampLightboxPan);
+}
+
+function adjustLightboxZoom(delta: number) {
+  setLightboxZoom(lightboxScale.value + delta);
+}
+
+function resetLightboxView() {
+  lightboxScale.value = 1;
+  lightboxPanX.value = 0;
+  lightboxPanY.value = 0;
+}
+
+function rotateLightbox() {
+  lightboxRotation.value = (lightboxRotation.value + 90) % 360;
+  resetLightboxView();
+  requestAnimationFrame(refreshLightboxLayout);
+}
+
+function onLightboxWheel(event: WheelEvent) {
+  if (state.lightboxKind !== 'map') return;
+  event.preventDefault();
+  setLightboxZoom(lightboxScale.value + (event.deltaY < 0 ? LIGHTBOX_ZOOM_STEP : -LIGHTBOX_ZOOM_STEP));
+}
+
+function pointerDistance() {
+  const points = [...lightboxPointers.values()];
+  return points.length < 2 ? 0 : Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+}
+
+function onLightboxBackdropClick(event: MouseEvent) {
+  if (event.target === event.currentTarget && !lightboxIgnoreBackdropClick) closeLightbox();
+}
+
+function onLightboxPointerDown(event: PointerEvent) {
+  if (lightboxPointers.size === 0) {
+    lightboxPointerStart = { x: event.clientX, y: event.clientY };
+    // 指针捕获可能把图片上的点击重新定向到空白容器。
+    lightboxIgnoreBackdropClick = event.target !== event.currentTarget;
+  } else {
+    lightboxIgnoreBackdropClick = true;
+  }
+  if (state.lightboxKind !== 'map') return;
+  (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+  lightboxPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+  lightboxDragging.value = lightboxScale.value > 1;
+  if (lightboxPointers.size === 2) lightboxPinchDistance = pointerDistance();
+}
+
+function onLightboxPointerMove(event: PointerEvent) {
+  const previous = lightboxPointers.get(event.pointerId);
+  if (!previous) return;
+  if (Math.hypot(event.clientX - lightboxPointerStart.x, event.clientY - lightboxPointerStart.y) > 6) {
+    lightboxIgnoreBackdropClick = true;
+  }
+  lightboxPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+  if (lightboxPointers.size >= 2) {
+    const distance = pointerDistance();
+    if (lightboxPinchDistance > 0) setLightboxZoom(lightboxScale.value * (distance / lightboxPinchDistance));
+    lightboxPinchDistance = distance;
+    return;
+  }
+  if (lightboxScale.value <= 1) return;
+  lightboxPanX.value += event.clientX - previous.x;
+  lightboxPanY.value += event.clientY - previous.y;
+  clampLightboxPan();
+}
+
+function onLightboxPointerUp(event: PointerEvent) {
+  if (event.type === 'pointercancel') lightboxIgnoreBackdropClick = true;
+  lightboxPointers.delete(event.pointerId);
+  lightboxPinchDistance = lightboxPointers.size === 2 ? pointerDistance() : 0;
+  lightboxDragging.value = lightboxPointers.size > 0 && lightboxScale.value > 1;
+  clampLightboxPan();
+}
+
+async function toggleLightboxFullscreen() {
+  if (document.fullscreenElement) await document.exitFullscreen();
+  else await lightboxRoot.value?.requestFullscreen();
+}
+
+function onLightboxFullscreenChange() {
+  lightboxFullscreen.value = document.fullscreenElement === lightboxRoot.value;
+  requestAnimationFrame(refreshLightboxLayout);
+}
+
+function onLightboxKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape' && state.lightboxImage && !document.fullscreenElement) closeLightbox();
+}
+
+watch(
+  () => state.lightboxImage,
+  () => {
+    resetLightboxView();
+    lightboxRotation.value = 0;
+    lightboxFitScale.value = 1;
+    lightboxPointers.clear();
+    lightboxDragging.value = false;
+    lightboxPinchDistance = 0;
+    lightboxControlsTop.value = null;
+    nextTick(refreshLightboxLayout);
+  },
+);
 
 function normalizeUiScale(value: number): number {
   const normalized = Math.round(value * 10) / 10;
@@ -838,11 +1117,17 @@ onMounted(() => {
     /* 使用默认缩放。 */
   }
   window.addEventListener('storage', onUiScaleStorage);
+  window.addEventListener('resize', refreshLightboxLayout);
+  window.addEventListener('keydown', onLightboxKeydown);
+  document.addEventListener('fullscreenchange', onLightboxFullscreenChange);
   applyTheme(readSharedTheme('dark'));
   stopThemeSync = subscribeSharedTheme(theme => applyTheme(theme));
 });
 onBeforeUnmount(() => {
   window.removeEventListener('storage', onUiScaleStorage);
+  window.removeEventListener('resize', refreshLightboxLayout);
+  window.removeEventListener('keydown', onLightboxKeydown);
+  document.removeEventListener('fullscreenchange', onLightboxFullscreenChange);
   stopThemeSync?.();
 });
 

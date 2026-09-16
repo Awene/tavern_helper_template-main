@@ -14,6 +14,7 @@ export const state = reactive({
   puppetFilter: 'all' as string,
   beastFilter: 'all' as string,
   lightboxImage: null as string | null,
+  lightboxKind: 'image' as 'image' | 'map',
   toast: '' as string,
   appCollapsed: false,
   editMode: false,
@@ -462,11 +463,14 @@ export const closeCharacterRefinement = () => {
 };
 
 // ============ 灯箱 ============
-export const openLightbox = (url: string) => {
-  if (url) state.lightboxImage = url;
+export const openLightbox = (url: string, kind: 'image' | 'map' = 'image') => {
+  if (!url) return;
+  state.lightboxKind = kind;
+  state.lightboxImage = url;
 };
 export const closeLightbox = () => {
   state.lightboxImage = null;
+  state.lightboxKind = 'image';
 };
 // ============ NPC 头像（玩家本地上传）============
 // 存储改用 IndexedDB：localStorage 配额只有几 MB，2048px 高清图 base64 常常存不下，
@@ -870,7 +874,9 @@ export const openedBuffData = computed(() => {
 });
 
 // 只读 MVU 传闻，禁止从旧 localStorage 缓存重新生成/覆盖。
-export const activeTimelineEvents = computed(() => Object.entries(useDataStore().data.传闻.条目).map(([标题, entry]) => ({ ...entry, 标题 })));
+export const activeTimelineEvents = computed(() =>
+  Object.entries(useDataStore().data.传闻.条目).map(([标题, entry]) => ({ ...entry, 标题 })),
+);
 
 export const storageCount = (key: '功法' | '物品' | '装备' | '傀儡' | '灵兽') => {
   const store = useDataStore();

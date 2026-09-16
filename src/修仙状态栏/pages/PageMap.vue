@@ -38,7 +38,11 @@
                   here: isHere(world.name, region),
                   empty: !getMap(world.name, region),
                 }"
-                :title="getMap(world.name, region) ? `查看 ${world.name} · ${region} 地图` : `${world.name} · ${region}（暂无地图）`"
+                :title="
+                  getMap(world.name, region)
+                    ? `查看 ${world.name} · ${region} 地图`
+                    : `${world.name} · ${region}（暂无地图）`
+                "
                 @click="selectRegion(world.name, region)"
               >
                 <span class="xy-map-tree-dot" />
@@ -55,16 +59,16 @@
     <!-- 主显示区 -->
     <div class="xy-map-stage">
       <div class="xy-map-stage-head">
-        <span class="xy-map-stage-title">{{ selected.世界 }} · {{ selected.地域 }}地图</span>
+        <span class="xy-map-stage-title">{{ mapTitle }}</span>
       </div>
 
       <div class="xy-map-stage-body">
         <img
           v-if="currentMap"
           :src="currentMap"
-          :alt="`${selected.世界} ${selected.地域}地图`"
+          :alt="mapTitle"
           class="xy-map-img"
-          @click="openLightbox(currentMap)"
+          @click="openLightbox(currentMap, 'map')"
         />
         <div v-else class="xy-map-empty">
           <div class="xy-map-empty-mark">舆</div>
@@ -79,12 +83,14 @@
 import { computed, reactive, ref, watch } from 'vue';
 import { useDataStore } from '../store';
 import { openLightbox } from '../composables';
+import underworldMap from '../maps/冥界/冥界地图.png?url';
 
 // ============ 世界地图 ============
-// 注意：不要用 `import ...png?url` 内联（webpack 会转 base64 塞进 index.html，
+// 既有地图保持远程加载，不要全部用 `import ...png?url` 内联（webpack 会转 base64 塞进 index.html，
 // 5 张约 3.5MB 的地图会把 index.html 撑到 ~24MB，超过 jsDelivr 20MB 单文件上限导致整页加载失败）。
 // 改为以仓库自身为图床，经 jsDelivr 逐张加载（每张 <20MB 可正常服务）。
 // 正式地图固定到已发布版本；发版时与新 tag 一起核验，禁止跟随 latest。
+// 冥界新图约 3MB，单独内联，避免依赖尚未发布的 CDN 文件；构建后仍需保持 HTML 小于 20MB。
 const MAP_CDN_BASE =
   (window as Window & { __CULTIVATION_MAP_BASE__?: string }).__CULTIVATION_MAP_BASE__ ||
   'https://testingcf.jsdelivr.net/gh/Awene/tavern_helper_template-main@v1.0.57/src/修仙状态栏/maps';
@@ -106,18 +112,25 @@ const MAPS: Record<string, Record<string, string>> = {
     万兽大陆: `${MAP_CDN_BASE}/灵界/万兽大陆地图.png`,
     殒落大陆: `${MAP_CDN_BASE}/灵界/殒落大陆地图.png`,
   },
+  冥界: { 全图: underworldMap },
   仙界: {},
 };
 
 const store = useDataStore();
 
 // ============ 树结构（来自打包地图 + 当前所在地）============
-const DEFAULT_TREE_ORDER = ['凡界', '灵界', '仙界'] as const;
+const DEFAULT_TREE_ORDER = ['凡界', '灵界', '冥界', '仙界'] as const;
 const REGION_ORDER: Record<string, string[]> = {
   凡界: ['中原', '东土', '西域', '北境', '南疆'],
   灵界: ['沧溟大陆', '圣银大陆', '星坠大陆', '灵境大陆', '太初大陆', '万兽大陆', '殒落大陆'],
+  冥界: ['全图'],
   仙界: [],
 };
+
+function mapRegion(world: string, region: string): string {
+  if (world === '冥界') return '全图';
+  return world === '灵界' && region === '陨落大陆' ? '殒落大陆' : region;
+}
 
 const tree = computed(() => {
   const here = store.data?.地点;
@@ -127,38 +140,39 @@ const tree = computed(() => {
     const merged: string[] = [];
     for (const r of ordered) if (!merged.includes(r)) merged.push(r);
     for (const r of fromMaps) if (!merged.includes(r)) merged.push(r);
-    if (here && here.世界 === worldName && here.地域 && !merged.includes(here.地域)) {
-      merged.push(here.地域);
+    const hereRegion = here ? mapRegion(here.世界, here.地域) : '';
+    if (here && here.世界 === worldName && hereRegion && !merged.includes(hereRegion)) {
+      merged.push(hereRegion);
     }
     return { name: worldName, regions: merged };
   });
 });
 
 function getMap(world: string, region: string): string {
-  const mapRegion = world === '灵界' && region === '陨落大陆' ? '殒落大陆' : region;
-  return MAPS[world]?.[mapRegion] || '';
+  return MAPS[world]?.[mapRegion(world, region)] || '';
 }
 function isHere(world: string, region: string): boolean {
   const here = store.data?.地点;
-  return !!here && here.世界 === world && here.地域 === region;
+  return !!here && here.世界 === world && mapRegion(world, here.地域) === region;
 }
 
 // ============ 选中状态 ============
 const selected = reactive<{ 世界: string; 地域: string }>({
   世界: store.data?.地点?.世界 || '凡界',
-  地域: store.data?.地点?.地域 || '中原',
+  地域: mapRegion(store.data?.地点?.世界 || '凡界', store.data?.地点?.地域 || '中原'),
 });
 
 const currentMap = computed(() => getMap(selected.世界, selected.地域));
+const mapTitle = computed(() => (selected.世界 === '冥界' ? '冥界全图' : `${selected.世界} · ${selected.地域}地图`));
 
 // 玩家所在地变化 → 若用户没手动切换，跟随
 watch(
   () => [store.data?.地点?.世界, store.data?.地点?.地域] as const,
   ([world, region], [prevWorld, prevRegion]) => {
-    if (!world || !region) return;
-    if (selected.世界 === prevWorld && selected.地域 === prevRegion) {
+    if (!world || (!region && world !== '冥界')) return;
+    if (selected.世界 === prevWorld && selected.地域 === mapRegion(prevWorld || '', prevRegion || '')) {
       selected.世界 = world;
-      selected.地域 = region;
+      selected.地域 = mapRegion(world, region || '');
     }
   },
 );
@@ -168,6 +182,7 @@ const pickerOpen = ref(false);
 const worldOpen = reactive<Record<string, boolean>>({
   凡界: true,
   灵界: false,
+  冥界: false,
   仙界: false,
 });
 

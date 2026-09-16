@@ -1074,7 +1074,7 @@
   border-color: var(--xy-cinnabar);
 }
 
-/* 头像放大查看（lightbox） */
+/* 图片 / 地图大图预览（lightbox） */
 .xy-lightbox {
   position: fixed;
   inset: 0;
@@ -1085,21 +1085,124 @@
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  padding: 20px;
+  padding: clamp(8px, 2vw, 20px);
   cursor: zoom-out;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  box-sizing: border-box;
+}
+.xy-lightbox-viewport {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.xy-lightbox-map .xy-lightbox-viewport {
+  touch-action: none;
+  cursor: zoom-in;
+}
+.xy-lightbox-map .xy-lightbox-viewport.dragging {
+  cursor: grabbing;
 }
 .xy-lightbox-img {
-  max-width: min(90vw, 640px);
-  max-height: 90vh;
+  display: block;
+  max-width: min(90%, 640px);
+  max-height: 90%;
+  object-fit: contain;
   border-radius: 8px;
   box-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.6);
   cursor: default;
   border: 2px solid var(--xy-paper);
+  box-sizing: border-box;
+}
+.xy-lightbox-map .xy-lightbox-img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 5px;
+  cursor: inherit;
+  will-change: transform;
+  transform-origin: center;
+  transition: transform 0.12s ease-out;
+}
+.xy-lightbox-map .xy-lightbox-viewport.dragging .xy-lightbox-img {
+  transition: none;
+}
+.xy-lightbox-toolbar {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px;
+  max-width: calc(100% - 20px);
+  background: color-mix(in srgb, var(--xy-paper) 92%, transparent);
+  border: 1px solid var(--xy-line-gold);
+  border-radius: 9px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.xy-lightbox-toolbar button {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 9px;
+  border: 1px solid var(--xy-line-gold);
+  border-radius: 6px;
+  background: var(--xy-paper-warm);
+  color: var(--xy-ink);
+  font: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.xy-lightbox-toolbar button:hover:not(:disabled) {
+  border-color: var(--xy-cinnabar);
+  color: var(--xy-cinnabar);
+}
+.xy-lightbox-toolbar button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.xy-lightbox-toolbar .xy-lightbox-zoom-value {
+  width: 48px;
+  color: var(--xy-ink-soft);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  text-align: center;
+}
+.xy-lightbox-toolbar .xy-lightbox-rotate {
+  font-size: 23px;
+  line-height: 1;
+}
+.xy-lightbox-toolbar .xy-lightbox-toolbar-close {
+  color: var(--xy-cinnabar);
+  border-color: var(--xy-cinnabar);
+}
+.xy-lightbox-tip {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 11px;
+  pointer-events: none;
+  white-space: nowrap;
 }
 .xy-lightbox-close {
   position: fixed;
-  top: 18px;
-  right: 18px;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
   width: 38px;
   height: 38px;
   display: flex;
@@ -1122,6 +1225,33 @@
   color: var(--xy-paper);
   border-color: var(--xy-cinnabar);
   transform: rotate(90deg);
+}
+
+@media (max-width: 600px) {
+  .xy-lightbox {
+    padding: 5px;
+  }
+  .xy-lightbox-map .xy-lightbox-img {
+    border-width: 1px;
+  }
+  .xy-lightbox-toolbar {
+    gap: 3px;
+    padding: 4px;
+  }
+  .xy-lightbox-toolbar button {
+    min-width: 32px;
+    height: 44px;
+    padding: 0 7px;
+  }
+  .xy-lightbox-toolbar .xy-lightbox-zoom-value {
+    width: 50px;
+  }
+  .xy-lightbox-close {
+    top: max(8px, env(safe-area-inset-top));
+    right: max(8px, env(safe-area-inset-right));
+    width: 34px;
+    height: 34px;
+  }
 }
 
 .xy-loc,
