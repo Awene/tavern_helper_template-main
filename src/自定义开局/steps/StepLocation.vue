@@ -7,9 +7,13 @@
       <!-- 世界 -->
       <div class="xs-loc-row xs-loc-row-world">
         <span class="xs-loc-row-label">世界</span>
-        <button v-for="world in LOCATION_WORLDS" :key="world.name" type="button"
+        <button
+          v-for="world in LOCATION_WORLDS" :key="world.name" type="button"
+          :disabled="!isWorldAvailable(world.name, store.selection.种族)"
+          :title="world.name === '冥界' ? '仅冥族可在冥界出生' : world.description"
           class="xs-loc-chip" :class="{ active: worldName === world.name }" @click="pickWorld(world.name)">
           {{ world.name }}
+          <small v-if="!isWorldAvailable(world.name, store.selection.种族)">（仅冥族）</small>
         </button>
         <span class="xs-loc-row-hint">{{ currentWorld.description }}</span>
       </div>
@@ -134,7 +138,7 @@
       <button
         type="button"
         class="xs-btn xs-btn-primary"
-        :disabled="!store.selection.locationId || store.overBudget"
+        :disabled="!isLocationAvailable(store.selection.locationId, store.selection.种族) || store.overBudget"
         @click="store.next"
       >
         继续 ▸
@@ -148,6 +152,8 @@ import { computed, ref, watch } from 'vue';
 import {
   LOCATION_REGIONS,
   LOCATION_WORLDS,
+  isWorldAvailable,
+  isLocationAvailable,
   worldForRegion,
   findLocation,
   findLocationPath,
@@ -201,6 +207,7 @@ function pickRegion(id: string) {
   regionId.value = id;
 }
 function pickWorld(name: string) {
+  if (!isWorldAvailable(name, store.selection.种族)) return;
   if (name === worldName.value) return;
   worldName.value = name;
   regionId.value = currentWorld.value.regions[0].id;
@@ -209,6 +216,10 @@ function pickWorld(name: string) {
   if (store.selection.门派归属 !== '散修') store.selectMenpai('');
   menpaiRegion.value = sectGroups.value[0]?.region || '';
 }
+
+watch(() => store.selection.种族, race => {
+  if (!isWorldAvailable(worldName.value, race)) pickWorld('凡界');
+});
 
 // 已选生态变化时同步展开地域
 watch(
@@ -269,6 +280,10 @@ watch(
 .xs-loc-chip:hover:not(.active):not(:disabled) {
   border-color: var(--xs-cinnabar);
   color: var(--xs-cinnabar);
+}
+.xs-loc-chip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 .xs-loc-chip.active {
   background: var(--xs-cinnabar);

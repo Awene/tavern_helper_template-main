@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { reconcileSelection } from './selectionRules';
 import {
   PHYSIQUE_TIER_S,
   canMutate,
@@ -63,9 +64,19 @@ const normalizeSelection = (raw: any): Selection => {
   } else if (Array.isArray(raw.customStories) && raw.customStories.length > 0) {
     customStory = raw.customStories[0];
   }
-  // 自创剧本不设「分类」：读取时按宗门字段归一化，清洗历史遗留的「特殊」等值
+  // 旧预设分类迁移为通用/特殊；凡人不保留小境界。
   if (customStory && typeof customStory.settings?.宗门 === 'string') {
-    customStory = { ...customStory, 类型: deriveCustomStoryKind(customStory.settings.宗门) };
+    customStory = {
+      ...customStory,
+      类型: deriveCustomStoryKind(customStory.settings.宗门),
+      settings: {
+        ...customStory.settings,
+        初始境界: {
+          ...customStory.settings.初始境界,
+          小境界: customStory.settings.初始境界.大境界 === '凡人' ? '' : customStory.settings.初始境界.小境界 || '初期',
+        },
+      },
+    };
   }
   return {
     ...base,
@@ -135,6 +146,17 @@ export const useStartStore = defineStore('xs-start', () => {
     }, durationMs);
   }
 
+  // 统一覆盖返回重选、直接绑定修改和预设载入，不依赖某一步骤是否挂载。
+  watch(
+    () => reconcileSelection(selection.value),
+    result => {
+      if (!result.cleared.length) return;
+      selection.value = result.selection;
+      showToast(`已清除不再适用的${result.cleared.join('、')}，请重新选择`);
+    },
+    { flush: 'sync' },
+  );
+
   // ============ 当前难度对应的总点数 ============
   const totalPoints = computed(() => {
     const d = findDifficulty(selection.value.difficultyId);
@@ -196,9 +218,12 @@ export const useStartStore = defineStore('xs-start', () => {
 
   function setRace(race: RaceName) {
     if (selection.value.种族 === race) return;
-    selection.value.种族 = normalizeRaceName(race);
-    selection.value.种族细分 = '';
-    selection.value.种族可化形 = true;
+    selection.value = {
+      ...selection.value,
+      种族: normalizeRaceName(race),
+      种族细分: '',
+      种族可化形: true,
+    };
   }
 
   function setRaceDetail(detail: string) {
@@ -429,8 +454,9 @@ export const useStartStore = defineStore('xs-start', () => {
   function loadPreset(id: string) {
     const p = presets.value.find(x => x.id === id);
     if (!p) return false;
-    selection.value = normalizeSelection(JSON.parse(JSON.stringify(p.selection)));
-    showToast(`已读取「${p.name}」`);
+    const result = reconcileSelection(normalizeSelection(JSON.parse(JSON.stringify(p.selection))));
+    selection.value = result.selection;
+    showToast(`已读取「${p.name}」${result.cleared.length ? `；请重选${result.cleared.join('、')}` : ''}`);
     return true;
   }
 

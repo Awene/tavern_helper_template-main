@@ -4,7 +4,7 @@ import type { RaceName, RaceOption } from '../types';
  * 初始种族清单。
  *
  * 名称与《世界设定-生命种族》保持一致；自定义开局开放全部九种种族。
- * 妖族、灵族、物化生灵与魔族允许补充具体血脉/本体，主种族仍写入 MVU 的 `种族` 字段。
+ * 带 detailLabel 的种族可补充具体血脉/本体，主种族仍写入 MVU 的 `种族` 字段。
  */
 export const races: RaceOption[] = [
   { id: 'human', name: '人族', glyph: '人', brief: '世间最常见的种族', selectable: true },
@@ -57,6 +57,10 @@ export const races: RaceOption[] = [
     glyph: '冥',
     brief: '死后转化，阴气滋养，年龄不随时间增长',
     selectable: true,
+    detailLabel: '冥族种类',
+    detailPlaceholder: '如：幽魂、行尸、白骨、怨煞',
+    canChooseTransformation: true,
+    originalFormLabel: '冥族本体',
   },
   {
     id: 'shen',
@@ -71,6 +75,10 @@ export const races: RaceOption[] = [
     glyph: '外',
     brief: '来自虚空，多具高智，受吞噬本能驱使',
     selectable: true,
+    detailLabel: '异类种类',
+    detailPlaceholder: '如：域外天魔、虚空巨兽',
+    canChooseTransformation: true,
+    originalFormLabel: '异类本体',
   },
 ];
 

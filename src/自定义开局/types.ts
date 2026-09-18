@@ -300,7 +300,7 @@ export interface PlotItem {
 export type Gender = '男' | '女' | '其他';
 
 // =============== 开局故事 ===============
-export type StoryKind = '宗门' | '散修' | '特殊';
+export type StoryKind = '通用' | '特殊';
 export type SmallRealm = '初期' | '中期' | '后期';
 
 /** 故事可选条件：未满足则禁选 */
@@ -319,7 +319,7 @@ export interface StoryConstraints {
   元阳元阴状态?: boolean;
   /** 主种族必须为其中之一。 */
   种族?: RaceName[];
-  /** 妖族、灵族、物化生灵必须开启可化形；天然人形种族自动满足。 */
+  /** 有化形开关的种族须开启可化形；天然人形种族自动满足。 */
   必须人形?: boolean;
   /** 种族类型输入必须为空，由剧本正文决定具体本体。 */
   种族细分必须为空?: boolean;
@@ -342,8 +342,8 @@ export interface StorySettings {
   时间: { 年: number; 月: number; 日: number; 时辰?: string };
   /** 宗门名称；散修则填 '散修' */
   宗门: string;
-  /** 初始境界 = 大境界 + 小境界 */
-  初始境界: { 大境界: string; 小境界: SmallRealm };
+  /** 凡人小境界为空；其余为大境界 + 小境界。 */
+  初始境界: { 大境界: string; 小境界: SmallRealm | '' };
 }
 
 export interface StoryOption extends Option {
@@ -386,9 +386,9 @@ export interface Selection {
   difficultyId: string | null;
   /** 玩家初始主种族；写入 stat_data.种族。 */
   种族: RaceName;
-  /** 妖/灵/物化/魔的可选细分，仅参与开局叙述。 */
+  /** 种族可选细分，仅参与开局叙述。 */
   种族细分: string;
-  /** 妖/灵/物化生灵是否能够化为人形；其他种族忽略。 */
+  /** 带化形开关的种族是否能够化为人形；其他种族忽略。 */
   种族可化形: boolean;
   /** 自定义灵根：多选属性 + 可选变异 */
   root: RootChoice;

@@ -93,7 +93,7 @@
           <select v-model="draft.bigRealm">
             <option v-for="r in BIG_REALMS" :key="r" :value="r">{{ r }}</option>
           </select>
-          <select v-model="draft.smallRealm">
+          <select v-if="draft.bigRealm !== '凡人'" v-model="draft.smallRealm">
             <option v-for="r in SMALL_REALMS" :key="r" :value="r">{{ r }}</option>
           </select>
         </div>
@@ -128,8 +128,7 @@
           <span class="xs-inv-filter-label">类型</span>
           <select v-model="kindFilter">
             <option value="">全部</option>
-            <option value="宗门">宗门</option>
-            <option value="散修">散修</option>
+            <option value="通用">通用</option>
             <option value="特殊">特殊</option>
           </select>
         </div>
@@ -169,7 +168,7 @@
             <p v-if="s.subtitle" class="xs-story-sub">{{ s.subtitle }}</p>
             <p v-if="s.desc" class="xs-story-desc">{{ s.desc }}</p>
             <div class="xs-story-settings">
-              <span v-for="(line, idx) in describeSettings(s.settings)" :key="idx">{{ line }}</span>
+              <span v-for="(line, idx) in describeSettings(resolveStorySettings(s, store.selection))" :key="idx">{{ line }}</span>
             </div>
             <div v-if="s.constraints" class="xs-story-constraints">
               <span class="xs-pill" v-for="(line, idx) in describeConstraints(s.constraints)" :key="idx">
@@ -240,12 +239,14 @@ import {
   deriveCustomStoryKind,
   describeConstraints,
   describeSettings,
+  resolveStorySettings,
   isCustomStoryValid,
   isStoryAvailable,
   stories,
   whyStoryUnavailable,
 } from '../config';
 import { useStartStore } from '../store';
+import { isSelectedStoryValid } from '../selectionRules';
 
 const store = useStartStore();
 
@@ -302,16 +303,9 @@ watch(filteredStories, () => {
   currentPage.value = 1;
 });
 
-const hasValidSelectedStory = computed(() => {
-  const id = store.selection.storyId;
-  if (!id) return false;
-  if (store.selection.customStory && store.selection.customStory.id === id) return true;
-  const s = stories.find(x => x.id === id);
-  if (!s) return false;
-  return isStoryAvailable(s, store.selection);
-});
+const hasValidSelectedStory = computed(() => isSelectedStoryValid(store.selection));
 
-// 自创剧本不设「分类」；卡片上按宗门字段推导展示（散修→散修，其余→宗门）
+// 自创剧本按宗门字段推导分类（散修→通用，其余→特殊）。
 const customKind = computed(() =>
   store.selection.customStory
     ? deriveCustomStoryKind(store.selection.customStory.settings.宗门)
@@ -376,7 +370,7 @@ function openEdit() {
   draft.shichen = c.settings.时间.时辰 || '';
   draft.sect = c.settings.宗门;
   draft.bigRealm = c.settings.初始境界.大境界;
-  draft.smallRealm = c.settings.初始境界.小境界;
+  draft.smallRealm = c.settings.初始境界.小境界 || '初期';
   editorOpen.value = true;
 }
 function closeEditor() {
@@ -400,7 +394,7 @@ const canSave = computed(() => {
         时辰: draft.shichen.trim() || undefined,
       },
       宗门: draft.sect.trim(),
-      初始境界: { 大境界: draft.bigRealm.trim(), 小境界: draft.smallRealm },
+      初始境界: { 大境界: draft.bigRealm.trim(), 小境界: draft.bigRealm === '凡人' ? '' : draft.smallRealm },
     },
   };
   return isCustomStoryValid(built);
@@ -420,7 +414,7 @@ function onSave() {
         时辰: draft.shichen.trim() || undefined,
       },
       宗门: draft.sect.trim(),
-      初始境界: { 大境界: draft.bigRealm.trim(), 小境界: draft.smallRealm },
+      初始境界: { 大境界: draft.bigRealm.trim(), 小境界: draft.bigRealm === '凡人' ? '' : draft.smallRealm },
     },
   });
   store.selectStory(created.id);

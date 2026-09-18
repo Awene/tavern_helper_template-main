@@ -106,7 +106,7 @@
           <strong>{{ story.name }}</strong>
           <span style="color: var(--xs-ink-mute);">
             {{ story.subtitle || '' }}
-            <template v-if="story.settings"> · {{ story.settings.宗门 }} · {{ story.settings.初始境界.大境界 }}{{ story.settings.初始境界.小境界 }} · {{ story.settings.时间.年 }}年</template>
+            <template v-if="story.settings"> · {{ story.settings.宗门 }} · {{ realmLabel(story.settings.初始境界) }} · {{ story.settings.时间.年 }}年</template>
           </span>
         </span>
       </div>
@@ -139,7 +139,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import {
   customStoryToOption,
   findDifficulty,
@@ -147,16 +147,19 @@ import {
   findLocation,
   findRace,
   findStory,
-  isStoryAvailable,
   physiqueResolved,
   plotItemsForStory,
   rootDisplayName,
   rootTierLabel,
+  realmLabel,
+  resolveStorySettings,
 } from '../config';
 import { useStartStore } from '../store';
 import { commitJourney } from '../export';
+import { selectionConflict } from '../selectionRules';
 
 const store = useStartStore();
+const submitting = ref(false);
 
 const difficulty = computed(() => findDifficulty(store.selection.difficultyId));
 const selectedRace = computed(() => findRace(store.selection.种族));
@@ -171,7 +174,8 @@ const story = computed(() => {
   if (!id) return undefined;
   const custom = store.selection.customStory;
   if (custom && custom.id === id) return customStoryToOption(custom);
-  return findStory(id);
+  const preset = findStory(id);
+  return preset ? { ...preset, settings: resolveStorySettings(preset, store.selection) } : undefined;
 });
 const selectedItems = computed(() =>
   store.selection.itemIds.map(id => findItem(id)).filter(Boolean) as NonNullable<ReturnType<typeof findItem>>[],
@@ -186,17 +190,18 @@ const 身份文本 = computed(() => {
 
 const canConfirm = computed(() => {
   return (
+    !submitting.value &&
     !store.overBudget &&
     !!store.selection.difficultyId &&
     store.rootChosen &&
     store.physiqueChosen &&
-      !!location.value &&
-      !!story.value && isStoryAvailable(story.value, store.selection) &&
+    !selectionConflict(store.selection) &&
     !!store.selection.道号.trim()
   );
 });
 
 async function onConfirm() {
+  if (submitting.value) return;
   if (!canConfirm.value) {
     if (!store.selection.道号.trim()) store.showToast('请先填写道号');
     else if (store.overBudget) store.showToast('点数超出预算');
@@ -204,11 +209,15 @@ async function onConfirm() {
     return;
   }
   store.showToast('命途落定中…');
-  const res = await commitJourney(store.selection);
-  if (res.ok) {
-    store.showToast(res.reason || '命途已落定，AI 将为你生成开局剧情');
-  } else {
-    store.showToast(res.reason || '提交失败，请检查酒馆接口');
+  submitting.value = true;
+  try {
+    const res = await commitJourney(store.selection);
+    store.showToast(res.reason || (res.ok ? '命途已落定，AI 将为你生成开局剧情' : '提交失败，请检查酒馆接口'));
+  } catch (error) {
+    console.error('[自定义开局] 提交失败', error);
+    store.showToast('提交失败，请检查酒馆接口');
+  } finally {
+    submitting.value = false;
   }
 }
 </script>

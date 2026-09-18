@@ -1,5 +1,6 @@
-import type { EcoEntity, LocationNode, LocationOption } from '../types';
+import type { EcoEntity, LocationNode, LocationOption, RaceName } from '../types';
 import spiritRegions from './spiritLocations.json';
+import { underworldRegions } from './underworldLocations';
 
 /** 旧存档默认世界；仙界尚未开放。 */
 export const LOCATION_WORLD = '凡界';
@@ -667,7 +668,22 @@ export const LOCATION_REGIONS: LocationNode[] = [
 export const LOCATION_WORLDS = [
   { name: LOCATION_WORLD, description: LOCATION_WORLD_DESC, regions: LOCATION_REGIONS },
   { name: '灵界', description: '生于灵界，从当地开始修行；不视为飞升，不额外提升初始境界或赠送资源。', regions: spiritRegions as LocationNode[] },
+  { name: '冥界', description: '仅冥族可在此开局。灵气稀薄，修行缓慢，亡魂与常住者共居。', regions: underworldRegions },
 ];
+export const isWorldAvailable = (world: string, race: RaceName): boolean =>
+  LOCATION_WORLDS.some(w => w.name === world) && (world !== '冥界' || race === '冥族');
+
+export function isLocationAvailable(id: string | null, race: RaceName): boolean {
+  const location = findLocation(id);
+  return !!location && isWorldAvailable(location.世界, race);
+}
+
+/** 已知宗门限所属世界；自创宗门由自创剧本定义。 */
+export function isSectAvailable(sect: string, locationId: string | null): boolean {
+  const name = sect.replace(/[（(].*$/, '').trim();
+  const homes = locations.filter(l => l.sects?.some(s => s.name === name));
+  return !homes.length || homes.some(l => l.世界 === findLocation(locationId)?.世界);
+}
 export const ALL_LOCATION_REGIONS = LOCATION_WORLDS.flatMap(w => w.regions);
 export const worldForRegion = (id: string) => LOCATION_WORLDS.find(w => w.regions.some(r => r.id === id));
 /** 扁平化所有可选地点（仅生态叶节点） */

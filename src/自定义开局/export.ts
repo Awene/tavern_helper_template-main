@@ -16,8 +16,11 @@ import {
   rootDescription,
   rootDisplayName,
   rootTierCanonical,
+  realmLabel,
+  resolveStorySettings,
 } from './config';
 import { applyApiMode } from './apiMode';
+import { selectionConflict } from './selectionRules';
 import { normalizeItemForMvu } from './itemNormalizer';
 import type { Selection, StoryOption } from './types';
 
@@ -28,7 +31,7 @@ function resolveStory(sel: Selection): StoryOption | undefined {
   if (custom && custom.id === id) return customStoryToOption(custom);
   const story = findStory(id);
   if (story && !isStoryAvailable(story, sel)) throw new Error('当前出生地或人物条件与剧本不符，请重新选择开局剧本。');
-  return story;
+  return story ? { ...story, settings: resolveStorySettings(story, sel) } : undefined;
 }
 
 // 物品规范化逻辑已抽到 ./itemNormalizer.ts(UI 卡片与此处共用)
@@ -150,8 +153,7 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
   const storySettings = story?.settings;
   const 大境界 = storySettings?.初始境界.大境界 || '炼气';
   const 小境界 = storySettings?.初始境界.小境界 || '初期';
-  const 原始境界 = `${大境界}${小境界}`;
-  const 境界 = /^凡人(?:初期|前期|中期|后期)$/.test(原始境界) ? '凡人' : 原始境界;
+  const 境界 = realmLabel({ 大境界, 小境界 });
   const 起始时间 = storySettings?.时间 || { 年: 7000, 月: 1, 日: 1, 时辰: '辰时' };
   const 宗门 = storySettings?.宗门 || '散修';
 
@@ -412,7 +414,7 @@ export function generateAIPrompt(sel: Selection): string {
     lines.push('【开局设定】');
     lines.push(`时间：${s.时间.年}年 ${s.时间.月}月 ${s.时间.日}日${s.时间.时辰 ? ' · ' + s.时间.时辰 : ''}`);
     lines.push(`宗门：${s.宗门}`);
-    lines.push(`初始境界：${s.初始境界.大境界}${s.初始境界.小境界}`);
+    lines.push(`初始境界：${realmLabel(s.初始境界)}`);
   }
 
   // —— 难度 ——
@@ -492,7 +494,7 @@ export function generateAIPrompt(sel: Selection): string {
     '- 故事正文中的「你」直接指代玩家角色（道号见上）；',
     `- 故事时间须从「${story?.settings.时间.年 ?? 7000}年」开始推进；`,
     `- 玩家所属：${story?.settings.宗门 ?? '散修'}；`,
-    `- 初始境界：${story?.settings.初始境界.大境界 ?? '炼气'}${story?.settings.初始境界.小境界 ?? '初期'}；`,
+    `- 初始境界：${realmLabel(story?.settings.初始境界 ?? { 大境界: '炼气', 小境界: '初期' })}；`,
     '- 请生成一段贴合上述设定的开局叙述，篇幅自然即可，不必再罗列上述信息。',
   ].join('\n');
 
@@ -504,16 +506,20 @@ export function generateAIPrompt(sel: Selection): string {
  * 参考 src/custom_start/core/composables/use-journey.ts 的 executeJourney。
  */
 export async function commitJourney(sel: Selection): Promise<{ ok: boolean; reason?: string }> {
+  // 固定提交快照，异步写入期间的重选不会混入本次开局。
+  sel = JSON.parse(JSON.stringify(sel)) as Selection;
+  const conflict = selectionConflict(sel);
+  if (conflict) return { ok: false, reason: conflict };
+  const data = buildInitialStatData(sel);
+  const prompt = generateAIPrompt(sel);
   // 0) 按玩家选择的变量更新模式，确保世界书/预设条目为最终状态（幂等）
   await applyApiMode(sel.变量更新模式);
 
   // 1) 写 MVU 变量
-  const data = buildInitialStatData(sel);
   const mvuOk = await writeInitialStatData(data);
   if (!mvuOk) return { ok: false, reason: '写入 MVU 变量失败' };
 
   // 2) 生成 AI 提示词并发送
-  const prompt = generateAIPrompt(sel);
   try {
     if (typeof createChatMessages !== 'function') {
       return { ok: false, reason: '当前环境不支持 createChatMessages' };
