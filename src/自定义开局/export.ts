@@ -186,7 +186,7 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
   // —— 修为进度上限 [Y] = 10^L × 100 (按 [修为获取规则] 参数声明) —— //
   const 进度上限 = Math.floor(tenPowL * 100);
 
-  // —— 寿元.寿命:凡人 100 + 累积突破奖励 15×L^3 (跨大境界,小境界忽略) —— //
+  // —— 寿元.寿命:100×2^floor(L)，仅大境界影响基准寿命 —— //
   const realmIndex: Record<string, number> = {
     凡人: 0,
     炼气: 1,
@@ -203,8 +203,7 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
     飞升: 9,
   };
   const realmIdx = realmIndex[大境界] ?? 0;
-  let 寿命 = 100; // 凡人基础寿命
-  for (let i = 1; i <= realmIdx; i++) 寿命 += 15 * Math.pow(i, 3);
+  const 寿命 = 100 * 2 ** realmIdx;
 
   // 起始年龄默认 16(青年),凡人保留默认上限;外观年龄=年龄(初始时尚未停止衰老)
   const 起始年龄 = 16;

@@ -873,15 +873,40 @@
         font-family: 'Noto Serif SC', 'Songti SC', serif;
         position: relative;
       }
-      .time-paper.time-person-vignette { padding: 12px 14px; margin: 14px 0; border-radius: 10px; }
-      .time-paper.time-person-vignette .tp-masthead { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 0 8px; margin-bottom: 8px; text-align: left; }
-      .time-paper.time-person-vignette .tp-paper-title { font-size: 1em; letter-spacing: 2px; }
+      .time-paper.time-person-vignette {
+        padding: 12px 14px;
+        margin: 14px 0;
+        border-radius: 10px;
+      }
+      .time-paper.time-person-vignette .tp-masthead {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 0 0 8px;
+        margin-bottom: 8px;
+        text-align: left;
+      }
+      .time-paper.time-person-vignette .tp-paper-title {
+        font-size: 1em;
+        letter-spacing: 2px;
+      }
       .time-paper.time-person-vignette .tp-paper-rule,
-      .time-paper.time-person-vignette .tp-paper-sub { display: none; }
-      .time-paper.time-person-vignette .tp-section { margin-top: 8px; }
-      .time-paper.time-person-vignette .tp-section-people > .tp-section-title { display: none; }
-      .time-paper.time-person-vignette .tp-people-grid { grid-template-columns: minmax(0, 1fr); }
-      .time-paper.time-person-vignette .tp-person-line { overflow-wrap: anywhere; }
+      .time-paper.time-person-vignette .tp-paper-sub {
+        display: none;
+      }
+      .time-paper.time-person-vignette .tp-section {
+        margin-top: 8px;
+      }
+      .time-paper.time-person-vignette .tp-section-people > .tp-section-title {
+        display: none;
+      }
+      .time-paper.time-person-vignette .tp-people-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .time-paper.time-person-vignette .tp-person-line {
+        overflow-wrap: anywhere;
+      }
       .time-paper::before,
       .time-paper::after {
         content: '';
@@ -4227,7 +4252,11 @@
       function loadCustomQuickReplies() {
         try {
           const parsed = JSON.parse(localStorage.getItem(RB_CUSTOM_REPLY_STORAGE_KEY) || '[]');
-          const replies = Array.isArray(parsed) ? parsed : Array.isArray(parsed && parsed.replies) ? parsed.replies : [];
+          const replies = Array.isArray(parsed)
+            ? parsed
+            : Array.isArray(parsed && parsed.replies)
+              ? parsed.replies
+              : [];
           return replies.map(normalizeCustomQuickReply).filter(Boolean).slice(0, 300);
         } catch (_) {
           return [];
@@ -4326,7 +4355,8 @@
         const userName = String(statData && statData.姓名 ? statData.姓名 : '').trim() || '主角';
         const physique = statData && statData.体质 && typeof statData.体质 === 'object' ? statData.体质 : {};
         const userIsFemale = physique.元阴 != null && physique.元阳 == null;
-        const relations = statData && statData.关系列表 && typeof statData.关系列表 === 'object' ? statData.关系列表 : {};
+        const relations =
+          statData && statData.关系列表 && typeof statData.关系列表 === 'object' ? statData.关系列表 : {};
         const relationNames = Object.entries(relations)
           .filter(([name, value]) => {
             if (!String(name || '').trim() || !value || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -4590,6 +4620,92 @@
       // char_info 缩进式语法（一级标题无缩进、二级标题缩进 2 空格以冒号结尾）
       // 解析 char_info: 用栈构建任意深度的树,然后转成 items
       // 关键:先做"基础缩进归一化",AI 整段缩进时(<char_info> 内的内容套了 N 个空格)也能正确识别顶级
+      function normalizeStringArray(input) {
+        const result = [];
+        const append = value => {
+          const text = value
+            .trim()
+            .replace(/^[-•]\s+/, '')
+            .replace(/：/g, ':');
+          if (text && !result.includes(text)) result.push(text);
+        };
+        const visit = (value, split) => {
+          if (value == null) return;
+          if (Array.isArray(value)) {
+            value.forEach(item => visit(item, false));
+            return;
+          }
+          if (typeof value === 'object') {
+            Object.entries(value).forEach(([key, item]) => {
+              if (item != null && typeof item !== 'object') append(`${key}:${item}`);
+            });
+            return;
+          }
+          let text = String(value).trim();
+          if (!text || /^(null|undefined)$/i.test(text)) return;
+          const structured = /^[[{［【]/.test(text);
+          if (!split && !structured && !/^[-•]\s/.test(text)) {
+            append(text);
+            return;
+          }
+          try {
+            const parsed = JSON.parse(text);
+            if (parsed === null || typeof parsed === 'object') {
+              visit(parsed, false);
+              return;
+            }
+            if (typeof parsed === 'string') {
+              visit(parsed, false);
+              return;
+            }
+          } catch {
+            /* Read legacy brackets, YAML lists, and loosely quoted arrays below. */
+          }
+          text = text
+            .replace(/[［【]/g, '[')
+            .replace(/[］】]/g, ']')
+            .replace(/(^|\n)\s*[-•]\s+/g, '$1');
+          let token = '';
+          let quote = '';
+          let quoted = false;
+          let parentheses = 0;
+          const flush = () => {
+            const part = token.trim();
+            if (quoted || !/^(null|undefined)$/i.test(part)) append(part);
+            token = '';
+            quoted = false;
+          };
+          for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            if (quote) {
+              if (char === '\\' && i + 1 < text.length) token += text[++i];
+              else if (char === quote) quote = '';
+              else token += char;
+              continue;
+            }
+            if (['"', "'", '“', '‘'].includes(char) && !token.trim()) {
+              quote = char === '“' ? '”' : char === '‘' ? '’' : char;
+              quoted = true;
+            } else if ('(（'.includes(char)) {
+              parentheses++;
+              token += char;
+            } else if (')）'.includes(char)) {
+              parentheses = Math.max(0, parentheses - 1);
+              token += char;
+            } else if (
+              !parentheses &&
+              (/[[\]{},，、;；|\r\n]/.test(char) ||
+                (char === '/' && /\s/.test(text[i - 1] || '') && /\s/.test(text[i + 1] || '')))
+            ) {
+              flush();
+            } else token += char;
+          }
+          flush();
+        };
+        visit(input, true);
+        return result;
+      }
+
       function parseCharIndentedPanel(content) {
         const rawLines = content.split('\n');
         // 基础缩进:取所有非空行最小缩进,然后从每行减去
@@ -4617,7 +4733,7 @@
           const parent = stack[stack.length - 1].node;
           parent.children = parent.children || [];
 
-          const colonIdx = trimmed.indexOf(':');
+          const colonIdx = trimmed.search(/[:：]/);
           let key, value;
           if (colonIdx > 0) {
             key = trimmed.slice(0, colonIdx).trim();
@@ -4669,6 +4785,26 @@
           if (value === '') {
             stack.push({ node, indent });
           }
+        }
+
+        // 数组字段统一为行内字符串数组，兼容 AI 写出的 YAML 块列表。
+        const normalizeArrayNodes = nodes => {
+          for (const node of nodes) {
+            if (['身份', '灵根五行', '标签', '分配人物'].includes(node.key)) {
+              const input = node.children.length
+                ? node.children.map(child => child.key + (child.value ? ':' + child.value : '')).join('\n')
+                : node.value;
+              node.value = JSON.stringify(normalizeStringArray(input));
+              node.children = [];
+              delete node.multiline;
+            } else normalizeArrayNodes(node.children);
+          }
+        };
+        normalizeArrayNodes(root.children);
+
+        // char_info 已限定人物面板；省略顶级类型时补齐，兼容旧面板的显式类型。
+        if (root.children.length && !root.children.some(node => node.key === '类型')) {
+          root.children.unshift({ key: '类型', value: '人物', children: [] });
         }
 
         // 树 → items(向后兼容旧渲染流程)
@@ -5040,7 +5176,22 @@
         {
           key: '背景',
           label: '背景',
-          match: ['身份', '背景', '背景故事', '经历', '简介', '出身', '家世', '过往', '关系', '人际', '亲属', '师承', '道侣', '好感度'],
+          match: [
+            '身份',
+            '背景',
+            '背景故事',
+            '经历',
+            '简介',
+            '出身',
+            '家世',
+            '过往',
+            '关系',
+            '人际',
+            '亲属',
+            '师承',
+            '道侣',
+            '好感度',
+          ],
         },
       ];
       function classifyCharItem(item) {
@@ -5067,8 +5218,7 @@
         }
         // 五行 / 灵根五行 — 支持 [水]/[水, 木]/水 各种写法
         if (key === '五行' || key === '灵根五行') {
-          const m = v.match(/^\[(.+)\]$/);
-          const elems = m ? m[1].split(/[,，\s]+/).filter(Boolean) : [v];
+          const elems = normalizeStringArray(v);
           return elems.map(e => `<span class="tag">${_.escape(e)}</span>`).join(' ');
         }
         // 境界 / 类型 / 品阶
@@ -5275,8 +5425,7 @@
         if (type) metaTags += `<span class="tag">${_.escape(type)}</span>`;
         if (realm) metaTags += `<span class="tag">${_.escape(realm)}</span>`;
         if (elem) {
-          const m = String(elem).match(/^\[(.+)\]$/);
-          const elems = m ? m[1].split(/[,，\s]+/).filter(Boolean) : [String(elem).trim()];
+          const elems = normalizeStringArray(elem);
           elems.forEach(e => {
             if (e) metaTags += `<span class="tag">${_.escape(e)}</span>`;
           });
@@ -5285,34 +5434,9 @@
         if (def) metaTags += `<span class="tag tag-attr">防 ${_.escape(def)}</span>`;
         if (cost) metaTags += `<span class="tag">耗 ${_.escape(cost)}</span>`;
 
-        // 自定义标签解析 - 兼容多种 AI 输出格式:
-        //   1) "[命中:2][穿透%:14][攻击力:5]"  — 多括号串联(本次 case)
-        //   2) "[命中:2, 穿透%:14]"            — 单括号 + 逗号
-        //   3) "命中:2, 穿透%:14"              — 无括号 + 逗号
-        //   4) "[[a],[b]]"                      — 双层包裹
-        //   5) "- 防御力:8000 / - 修行速度:4500" — YAML 列表项被拍平(带 "- " 前缀, " / " 分隔)
         let customTags = '';
-        if (tagsField && tagsField !== '[]') {
-          const s = String(tagsField).trim();
-          let ts = [];
-          // 优先用 \[([^\[\]]+)\] 全局匹配,捕获所有形如 [xxx] 的内层片段
-          const bracketMatches = s.match(/\[([^\[\]]+)\]/g);
-          if (bracketMatches && bracketMatches.length) {
-            for (const m of bracketMatches) {
-              const inner = m.slice(1, -1).trim();
-              // 再按 ,，、 二次拆分,兼容 [a, b, c] 这种情况
-              for (const part of inner.split(/[,，、]\s*/)) {
-                const p = part.trim();
-                if (p) ts.push(p);
-              }
-            }
-          } else if (s) {
-            // 完全无括号: 按 换行 / 斜杠 / 逗号顿号 多种分隔切开(兼容被拍平的 YAML 列表)
-            for (const part of s.split(/[\n,，、]|\s*\/\s*/)) {
-              const p = part.trim();
-              if (p) ts.push(p);
-            }
-          }
+        if (tagsField) {
+          const ts = normalizeStringArray(tagsField);
           // 兜底规范化:去掉 YAML 列表标记/项目符号前缀;数值型 K:V 标签拆成「键 值」漂亮展示;
           // 攻击力/防御力 已在上方 meta 区以 攻/防 chip 呈现,这里跳过避免重复。
           const META_STAT_KEYS = ['攻击力', '防御力'];
@@ -5441,21 +5565,10 @@
 
       // —— 身份 拆分:健壮处理 逗号/中文逗号/分号/顿号/竖线/斜杠/换行/列表破折号 等多种分隔符 —— //
       function splitIdentity(value) {
-        if (value == null) return [];
-        const s = String(value).trim();
-        if (!s) return [];
-        // 处理 [a, b] 数组语法 或 (a; b) 括号语法
-        const m = s.match(/^[\[\(\【](.*)[\]\)\】]$/s);
-        const inner = m ? m[1] : s;
-        return inner
-          .split(/[,，;；、|｜\/／\n\r]+/)
-          .map(t =>
-            t
-              .replace(/^[\s\-•·*‣◦‧]+/, '')
-              .replace(/[\s。.]+$/, '')
-              .trim(),
-          )
-          .filter(Boolean);
+        if (typeof value !== 'string') return normalizeStringArray(value);
+        const text = value.trim();
+        if (/^[\[［【]/.test(text)) return normalizeStringArray(text);
+        return normalizeStringArray(text.replace(/^\((.*)\)$/s, '$1').replace(/[｜/／]/g, ','));
       }
       // —— 身份 渲染:无论 scalar/section/multiline 都拍成 tag 列表 —— //
       function renderCharIdentity(item) {
@@ -5703,9 +5816,36 @@
         混沌: '#888',
       };
 
+      function splitPanelColumns(row) {
+        const parts = [];
+        let part = '',
+          quote = '',
+          depth = 0;
+        for (const char of String(row)) {
+          if (quote) {
+            part += char;
+            if (char === quote && !part.endsWith('\\' + quote)) quote = '';
+          } else if ('"\'“‘'.includes(char)) {
+            quote = char === '“' ? '”' : char === '‘' ? '’' : char;
+            part += char;
+          } else if ('[［【{'.includes(char)) {
+            depth++;
+            part += char;
+          } else if (']］】}'.includes(char)) {
+            depth = Math.max(0, depth - 1);
+            part += char;
+          } else if (char === '|' && !depth) {
+            parts.push(part.trim());
+            part = '';
+          } else part += char;
+        }
+        parts.push(part.trim());
+        return parts;
+      }
+
       function _splitRowKv(row) {
         const result = [];
-        const parts = String(row).split(/\s*\|\s*/);
+        const parts = splitPanelColumns(row);
         for (const part of parts) {
           if (!part.trim()) continue;
           const colonIdx = part.indexOf(':');
@@ -5761,7 +5901,7 @@
         if (m_def) return { type: 'defense', value: m_def[1] };
 
         // 技能行: 多 | 段且首段是裸名(无冒号) 且 后续段含 攻击力/消耗/效果 关键字
-        const parts = r.split(/\s*\|\s*/);
+        const parts = splitPanelColumns(r);
         if (parts.length >= 2) {
           const first = parts[0].trim();
           const firstHasColon = /[:：]/.test(first);
@@ -5824,23 +5964,7 @@
               for (const { key, value } of cls.kvs) {
                 if (!key) continue;
                 if (key === '标签') {
-                  const matches = String(value).match(/\[([^\]]+)\]/g) || [];
-                  if (matches.length) {
-                    for (const m of matches) {
-                      const t = m.slice(1, -1).trim();
-                      if (t) cur.标签.push(t);
-                    }
-                  } else {
-                    // 去掉外层方括号(空数组 [] / [ ] 在此收敛为空,不再产生空标签),再按分隔符拆
-                    const inner = String(value)
-                      .trim()
-                      .replace(/^\[|\]$/g, '')
-                      .trim();
-                    for (const t of inner.split(/[,，、]+/)) {
-                      const tt = t.trim();
-                      if (tt) cur.标签.push(tt);
-                    }
-                  }
+                  cur.标签.push(...normalizeStringArray(value));
                 } else if (key === '效果') {
                   Object.assign(cur.效果, _parseEffectValue(value));
                 } else {
@@ -6424,8 +6548,7 @@
             return { id, label, icon, replies, subgroups };
           })
           .filter(
-            category =>
-              category.id && category.label && (category.replies.length > 0 || category.subgroups.length > 0),
+            category => category.id && category.label && (category.replies.length > 0 || category.subgroups.length > 0),
           );
         categories.push({
           id: 'custom',

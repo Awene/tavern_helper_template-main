@@ -1,3 +1,4 @@
+import { normalizeStringArray } from '../../util/string-array';
 import { z } from 'zod';
 
 const clamp = (n: number, min: number, max: number): number => Math.max(min, Math.min(max, n));
@@ -9,21 +10,6 @@ const normalizeCultivationRealm = (value: string): string => {
 
 const normalizeEntityRealm = (value: string): string =>
   normalizeCultivationRealm(value) === '凡人' ? '炼气初期' : value;
-
-const normalizeStringArray = (input: unknown): string[] => {
-  if (input == null || input === '') return [];
-  let value = input;
-  if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value);
-      if (Array.isArray(parsed)) value = parsed;
-    } catch {
-      /* 按普通分隔字符串处理 */
-    }
-  }
-  const source = Array.isArray(value) ? value.flat(Infinity) : String(value).split(/[,，、;；|]/);
-  return [...new Set(source.map(item => String(item).trim()).filter(Boolean))];
-};
 
 const normalizeStringRecord = (input: unknown): Record<string, string> => {
   if (input == null || input === '') return {};
@@ -150,7 +136,7 @@ const LifespanSchema = z
 const SpiritualRootSchema = z
   .object({
     名称: z.string().prefault('未检测'),
-    五行: z.array(FiveElementsExtEnum).prefault(['未知']),
+    五行: z.preprocess(normalizeStringArray, z.array(FiveElementsExtEnum)).prefault(['未知']),
     品阶: SpiritualRootRankEnum.prefault('未检测'),
   })
   .prefault({ 名称: '未检测', 五行: ['未知'], 品阶: '未检测' });
@@ -319,7 +305,7 @@ const CultivationArtSchema = z.object({
   五行: FiveElementsEnum.optional(),
   类型: z.enum(['心法', '攻击', '幻术', '神识', '咒法', '身法', '护体', '阵法']).prefault('心法'),
   消耗: z.string().optional(),
-  标签: z.array(z.string()).prefault([]),
+  标签: z.preprocess(normalizeStringArray, z.array(z.string())).prefault([]),
   效果: z.record(z.string(), z.string()).optional(),
   描述: z.string().prefault(''),
 });
@@ -331,7 +317,7 @@ const ItemSchema = z.object({
   类型: z.enum(['秘籍', '配方', '符箓', '丹药', '素材', '工具']).prefault('素材'),
   消耗: z.string().optional(),
   五行: FiveElementsEnum.optional(),
-  标签: z.array(z.string()).prefault([]),
+  标签: z.preprocess(normalizeStringArray, z.array(z.string())).prefault([]),
   数量: z.coerce
     .number()
     .transform(n => clamp(n, 0, Infinity))
@@ -347,7 +333,7 @@ const EquipmentSchema = z.object({
   类型: z.enum(['法宝', '护甲', '饰品']).prefault('法宝'),
   消耗: z.string().optional(),
   五行: FiveElementsEnum.optional(),
-  标签: z.array(z.string()).prefault([]), // 法宝→[攻击力:N]、护甲→[防御力:N]
+  标签: z.preprocess(normalizeStringArray, z.array(z.string())).prefault([]), // 法宝→[攻击力:N]、护甲→[防御力:N]
   效果: z.record(z.string(), z.string()).optional(),
   描述: z.string().prefault(''),
   位置: z.string().prefault('储物袋'),
@@ -369,7 +355,7 @@ const CombatUnitSchema = z.object({
   品质: QualityEnum.prefault('凡'),
   境界: z.string().transform(normalizeEntityRealm).prefault('炼气初期'),
   五行: FiveElementsEnum.optional(),
-  标签: z.array(z.string()).prefault([]),
+  标签: z.preprocess(normalizeStringArray, z.array(z.string())).prefault([]),
   描述: z.string().prefault(''),
   资源池: ResourcePoolSchema,
   防御力: z.coerce
@@ -397,7 +383,7 @@ const NPCSchema = z.object({
   类型: z.literal('人物').prefault('人物'),
   在场: z.boolean().prefault(false),
   种族: z.string().prefault('人族'),
-  身份: z.array(z.string()).prefault([]),
+  身份: z.preprocess(normalizeStringArray, z.array(z.string())).prefault([]),
   修炼进度: CultivationProgressSchema,
   寿元: LifespanSchema,
   灵根: SpiritualRootSchema,
@@ -432,7 +418,7 @@ const WildPuppetSchema = z.object({
   品质: QualityEnum.prefault('凡'),
   境界: z.string().transform(normalizeEntityRealm).prefault('炼气初期'),
   五行: FiveElementsEnum.optional(),
-  标签: z.array(z.string()).prefault([]),
+  标签: z.preprocess(normalizeStringArray, z.array(z.string())).prefault([]),
   描述: z.string().prefault(''),
   资源池: ResourcePoolSchema,
   防御力: z.coerce
@@ -509,12 +495,17 @@ const timePeriodAliases: Record<string, (typeof timePeriods)[number]> = {
 };
 
 function normalizeTimePeriod(input: unknown) {
-  const text = String(input ?? "").normalize('NFKC').replace(/\s/g, '');
-  const period = timePeriods.find((item) =>
-    text === item || ["时", "初", "正", "刻", "中", "末", "半"].some((suffix) => text.includes(`${item}${suffix}`)),
+  const text = String(input ?? '')
+    .normalize('NFKC')
+    .replace(/\s/g, '');
+  const period = timePeriods.find(
+    item =>
+      text === item || ['时', '初', '正', '刻', '中', '末', '半'].some(suffix => text.includes(`${item}${suffix}`)),
   );
   if (period) return `${period}时`;
-  const clock = text.match(/^(凌晨|清晨|早上|上午|中午|下午|傍晚|晚上|晚间|夜间)?(\d{1,2}|[零〇一二两三四五六七八九十]+)(?:点|时|:)(?:(\d{1,2})分?|半|整)?$/);
+  const clock = text.match(
+    /^(凌晨|清晨|早上|上午|中午|下午|傍晚|晚上|晚间|夜间)?(\d{1,2}|[零〇一二两三四五六七八九十]+)(?:点|时|:)(?:(\d{1,2})分?|半|整)?$/,
+  );
   if (clock) {
     let hour = parseCalendarNumber(clock[2]);
     if (clock[3] && Number(clock[3]) > 59) return undefined;
@@ -527,39 +518,83 @@ function normalizeTimePeriod(input: unknown) {
   }
   const alias = Object.entries(timePeriodAliases).find(([name]) => text.includes(name));
   if (alias) return `${alias[1]}时`;
-  const vague: Record<string, string> = { 凌晨:'丑', 清晨:'卯', 早:'卯', 早上:'卯', 上午:'巳', 中午:'午', 白天:'午', 日间:'午', 下午:'申', 傍晚:'酉', 晚:'戌', 晚间:'戌', 晚上:'戌', 夜间:'戌', 深夜:'亥' };
+  const vague: Record<string, string> = {
+    凌晨: '丑',
+    清晨: '卯',
+    早: '卯',
+    早上: '卯',
+    上午: '巳',
+    中午: '午',
+    白天: '午',
+    日间: '午',
+    下午: '申',
+    傍晚: '酉',
+    晚: '戌',
+    晚间: '戌',
+    晚上: '戌',
+    夜间: '戌',
+    深夜: '亥',
+  };
   return vague[text] ? `${vague[text]}时` : undefined;
 }
 
 // 接受中文数字及月份别名；无法理解时返回 NaN，由命令钩子保留原值。
 function parseCalendarNumber(input: unknown): number {
   if (typeof input === 'number') return Number.isFinite(input) ? Math.trunc(input) : NaN;
-  let text = String(input ?? '').normalize('NFKC').trim().replace(/[年月日号]$/, '').replace(/^初/, '');
-  text = ({ 正:'一', 冬:'十一', 腊:'十二', 臘:'十二' } as Record<string,string>)[text] ?? text;
+  let text = String(input ?? '')
+    .normalize('NFKC')
+    .trim()
+    .replace(/[年月日号]$/, '')
+    .replace(/^初/, '');
+  text = ({ 正: '一', 冬: '十一', 腊: '十二', 臘: '十二' } as Record<string, string>)[text] ?? text;
   if (/^\d+$/.test(text)) return Number(text);
   const digits = '零一二三四五六七八九';
-  text = text.replace(/〇/g,'零').replace(/两/g,'二').replace(/廿/g,'二十').replace(/卅/g,'三十');
+  text = text.replace(/〇/g, '零').replace(/两/g, '二').replace(/廿/g, '二十').replace(/卅/g, '三十');
   if (!/^[零一二三四五六七八九十百千万]+$/.test(text)) return NaN;
-  if (!/[十百千万]/.test(text)) return Number([...text].map(c=>digits.indexOf(c)).join(''));
-  let total=0, section=0, n=0;
+  if (!/[十百千万]/.test(text)) return Number([...text].map(c => digits.indexOf(c)).join(''));
+  let total = 0,
+    section = 0,
+    n = 0;
   for (const c of text) {
-    const digit=digits.indexOf(c);
-    if (digit>=0) n=digit;
-    else if(c==='万') { total+=(section+n)*10000; section=0; n=0; }
-    else { section+=(n||1)*({十:10,百:100,千:1000} as Record<string,number>)[c]; n=0; }
+    const digit = digits.indexOf(c);
+    if (digit >= 0) n = digit;
+    else if (c === '万') {
+      total += (section + n) * 10000;
+      section = 0;
+      n = 0;
+    } else {
+      section += (n || 1) * ({ 十: 10, 百: 100, 千: 1000 } as Record<string, number>)[c];
+      n = 0;
+    }
   }
-  return total+section+n;
+  return total + section + n;
 }
 
 const TimeSchema = z
   .object({
     年: z.preprocess(parseCalendarNumber, z.number().min(1).catch(1)).prefault(1),
-    月: z.preprocess(parseCalendarNumber, z.number().transform(n=>clamp(n,1,12)).catch(1)).prefault(1),
-    日: z.preprocess(parseCalendarNumber, z.number().transform(n=>clamp(n,1,30)).catch(1)).prefault(1),
+    月: z
+      .preprocess(
+        parseCalendarNumber,
+        z
+          .number()
+          .transform(n => clamp(n, 1, 12))
+          .catch(1),
+      )
+      .prefault(1),
+    日: z
+      .preprocess(
+        parseCalendarNumber,
+        z
+          .number()
+          .transform(n => clamp(n, 1, 30))
+          .catch(1),
+      )
+      .prefault(1),
     // “子时中 / 子时三刻 / 子初 / 子正”等可理解写法统一收敛到所属时辰。
-    时辰: z.preprocess(normalizeTimePeriod, z.enum(timePeriodValues).catch('午时')).prefault("午时"),
+    时辰: z.preprocess(normalizeTimePeriod, z.enum(timePeriodValues).catch('午时')).prefault('午时'),
   })
-  .prefault({ 年: 1, 月: 1, 日: 1, 时辰: "午时" });
+  .prefault({ 年: 1, 月: 1, 日: 1, 时辰: '午时' });
 
 // ===== 固定资产 Schema =====
 // 固定资产是 AI 高频增量更新字段：允许常见别名、带单位数字、字符串地点/日期与数组式设施，
@@ -727,22 +762,34 @@ function migrateRumorEntries(value: unknown) {
   const array = Array.isArray(value);
   const result: Record<string, unknown> = Object.create(null);
   for (const [key, raw] of Object.entries(value)) {
-    if (!raw || typeof raw !== 'object') { result[key] = raw; continue; }
+    if (!raw || typeof raw !== 'object') {
+      result[key] = raw;
+      continue;
+    }
     const item = raw as Record<string, unknown>;
     const content = String(item.内容 ?? '');
-    const base = array ? String(item.标题 || content.split(/[，。；\n]/)[0].slice(0,24) || item.类别 || ('旧传闻' + key)) : key;
-    let title = base, suffix = 2;
+    const base = array
+      ? String(item.标题 || content.split(/[，。；\n]/)[0].slice(0, 24) || item.类别 || '旧传闻' + key)
+      : key;
+    let title = base,
+      suffix = 2;
     while (Object.hasOwn(result, title)) title = base + '（' + suffix++ + '）';
     const location = String(item.地点 || [item.世界, item.地域].filter(Boolean).join('·'));
     const category = item.类别 === '通缉魔修' ? '通缉逃犯' : item.类别 === '灵植奇遇' ? '素材奇遇' : item.类别;
-    result[title] = { 类别: category ?? '', 内容: location && !content.includes(location) ? location + '：' + content : content, 难度: item.难度 ?? item.境界 ?? '待查' };
+    result[title] = {
+      类别: category ?? '',
+      内容: location && !content.includes(location) ? location + '：' + content : content,
+      难度: item.难度 ?? item.境界 ?? '待查',
+    };
   }
   return result;
 }
 const RumorEntrySchema = z.object({
-  类别: z.preprocess(v=>String(v ?? '待分类'), z.string()).prefault('待分类'),
-  内容: z.preprocess(v=>String(v ?? '暂无详情'), z.string()).prefault('暂无详情'),
-  难度: z.preprocess(v=>Array.isArray(v) ? v.map(x=>String(x ?? '待查')).join('—') : String(v ?? '待查'), z.string()).prefault('待查'),
+  类别: z.preprocess(v => String(v ?? '待分类'), z.string()).prefault('待分类'),
+  内容: z.preprocess(v => String(v ?? '暂无详情'), z.string()).prefault('暂无详情'),
+  难度: z
+    .preprocess(v => (Array.isArray(v) ? v.map(x => String(x ?? '待查')).join('—') : String(v ?? '待查')), z.string())
+    .prefault('待查'),
 });
 
 // ===== 自定义开局元数据 =====
@@ -755,7 +802,7 @@ const CustomStartMetadataSchema = z
     story_body: z.string().optional(),
     points_total: z.coerce.number().optional(),
     created_at: z.string().optional(),
-    flags: z.array(z.string()).prefault([]),
+    flags: z.preprocess(normalizeStringArray, z.array(z.string())).prefault([]),
   })
   .prefault({ flags: [] });
 
@@ -767,7 +814,7 @@ export const CultivationStatusSchema = z.object({
   姓名: z.string().prefault('User'),
   寿元: LifespanSchema,
   种族: z.string().prefault('人族'),
-  身份: z.array(z.string()).prefault([]),
+  身份: z.preprocess(normalizeStringArray, z.array(z.string())).prefault([]),
   灵根: SpiritualRootSchema,
   体质: PhysiqueSchema,
   // 性器（外部脚本按五行随机填充，AI 只读不更新；仅 NSFW 基础指导开启时经专属条目发给 AI）。
@@ -793,11 +840,15 @@ export const CultivationStatusSchema = z.object({
 
   // 保留旧数组中的全部条目；核验脚本负责初始化推进时间。
   传闻: z.preprocess(
-    value => Array.isArray(value) ? { 条目: value } : value == null ? {} : value,
-    z.object({
-      上次世界推进时间点: z.preprocess(value => _.isEmpty(value) ? null : value, TimeSchema.nullable()).prefault(null),
-      条目: z.preprocess(migrateRumorEntries, z.record(z.string(), RumorEntrySchema)).prefault({}),
-    }).prefault({}),
+    value => (Array.isArray(value) ? { 条目: value } : value == null ? {} : value),
+    z
+      .object({
+        上次世界推进时间点: z
+          .preprocess(value => (_.isEmpty(value) ? null : value), TimeSchema.nullable())
+          .prefault(null),
+        条目: z.preprocess(migrateRumorEntries, z.record(z.string(), RumorEntrySchema)).prefault({}),
+      })
+      .prefault({}),
   ),
 });
 
