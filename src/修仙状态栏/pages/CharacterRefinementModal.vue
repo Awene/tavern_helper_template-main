@@ -525,7 +525,7 @@
 import _ from 'lodash';
 import { computed, onMounted, ref } from 'vue';
 // 编入构建产物，运行时无需访问本地文件。
-import characterPromptExample from '../../../../Cultivation-Card-Game/Doc/人物提示词示例.txt?raw';
+import characterPromptExample from '../../../../Cultivation-Card-Game/Doc/世界书设定相关/人物提示词示例.txt?raw';
 import mvuUpdateRules from '../../../../Cultivation-Card-Game/世界书/变量/[mvu_update]变量更新规则.yaml?raw';
 import nonCombatRules from '../../../../Cultivation-Card-Game/世界书/[非战斗判定规则].txt?raw';
 import coreCoefficientTable from '../../../../Cultivation-Card-Game/世界书/[核心系数总表].txt?raw';

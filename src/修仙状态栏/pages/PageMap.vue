@@ -93,7 +93,7 @@ import underworldMap from '../maps/冥界/冥界地图.png?url';
 // 冥界新图约 3MB，单独内联，避免依赖尚未发布的 CDN 文件；构建后仍需保持 HTML 小于 20MB。
 const MAP_CDN_BASE =
   (window as Window & { __CULTIVATION_MAP_BASE__?: string }).__CULTIVATION_MAP_BASE__ ||
-  'https://testingcf.jsdelivr.net/gh/Awene/tavern_helper_template-main@v1.0.57/src/修仙状态栏/maps';
+  'https://testingcf.jsdelivr.net/gh/Awene/tavern_helper_template-main@v1.0.58/src/修仙状态栏/maps';
 
 const MAPS: Record<string, Record<string, string>> = {
   凡界: {
