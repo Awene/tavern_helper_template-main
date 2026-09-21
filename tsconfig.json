@@ -6,8 +6,9 @@
       "lodash",
       "toastr",
       "type-fest",
+      "web-bluetooth",
       "yaml",
-      "zod",
+      "zod"
     ],
     "target": "ESNext",
     "module": "ESNext",

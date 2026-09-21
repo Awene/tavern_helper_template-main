@@ -671,9 +671,9 @@ const normalizeNamedRecord = (input: unknown, fallbackName: string): Record<stri
   if (!Array.isArray(input)) return typeof input === 'object' ? (input as Record<string, unknown>) : {};
   return Object.fromEntries(
     input.map((entry, index) => {
-      const value =
+      const value: Record<string, unknown> =
         entry && typeof entry === 'object'
-          ? ({ ...(entry as Record<string, unknown>) } as Record<string, unknown>)
+          ? { ...(entry as Record<string, unknown>) }
           : { 效果: entry };
       const name = String(value.名称 ?? value.设施名 ?? value.资产名 ?? `${fallbackName}${index + 1}`).trim();
       delete value.名称;

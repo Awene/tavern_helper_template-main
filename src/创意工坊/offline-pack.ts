@@ -68,6 +68,7 @@ function assertManifest(value: unknown): asserts value is OfflineManifest {
     manifest.pack.description.length > 500 ||
     typeof manifest.pack.owner_name !== 'string' ||
     manifest.pack.owner_name.length > 100 ||
+    typeof manifest.exported_at !== 'number' ||
     !Number.isInteger(manifest.exported_at) ||
     manifest.exported_at < 1
   ) {

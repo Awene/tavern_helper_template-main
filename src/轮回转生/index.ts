@@ -771,7 +771,7 @@ function updateBudget() {
 }
 function updateSubmit() {
   const v = valid();
-  $('rcSubmit').disabled = !v;
+  ($('rcSubmit') as HTMLButtonElement).disabled = !v;
   $('rcHint').textContent =
     path === 'ghost'
       ? '已定：转生冥族，保留记忆与修为，直接生成回复。'

@@ -7,7 +7,8 @@
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "dump": "node dump_schema.ts",
-    "sync": "node tavern_sync.mjs"
+    "sync": "node tavern_sync.mjs",
+    "ignore:dist": "node scratchpad/ignore_dist.mjs"
   },
   "browserslist": [
     "defaults and partially supports es6-module"
@@ -22,6 +23,7 @@
     "@types/react-dom": "^19.3.0",
     "@types/showdown": "^2.0.6",
     "@types/toastr": "^2.1.44",
+    "@types/web-bluetooth": "0.0.21",
     "@types/webpack": "^5.28.5",
     "@typescript-eslint/parser": "^8.70.0",
     "autoprefixer": "^10.6.1",
