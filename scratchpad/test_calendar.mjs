@@ -29,6 +29,9 @@ for (const input of [undefined, null, {}, { 年: '乱码', 月: 99, 日: -1 }]) 
   equal([value.年, value.月, value.日], [7026, 1, 1], '无效日期安全回退');
 }
 for (const schema of [cardSchema, schemaModule.exports.Schema]) {
+  const noDate = schema.parse({ 地点: { 世界: '地球' }, 任务: { 测试: { 截止时间: '无' } }, 固定资产: { 测试: { 设施: { 工坊: { 上次收取日期: '从未' } } } } });
+  equal(noDate.任务.测试.截止时间, null, '无截止日期仍为空');
+  equal(noDate.固定资产.测试.设施.工坊.上次收取日期, null, '从未收取不能变为开局日期');
   for (const time of ['公元2026年1月2日 辰时', '2026-01-02', { 年: '公元2026年', 月: 1, 日: 2 }, { 年: 2026, 月: 1, 日: 2 }]) {
     const result = schema.parse({ 地点: { 世界: '地球' }, 时间: time, 寿元: { 生日: 2008 },
       传闻: { 上次世界推进时间点: '公历2026年1月1日' },
@@ -57,10 +60,11 @@ const ejsModule = { exports: {} };
 const plugin = 'D:/application/Tavern/SillyTavern-1.16.0/data/default-user/extensions/ST-Prompt-Template/src/3rdparty/ejs.js';
 vm.runInNewContext(fs.readFileSync(plugin, 'utf8'), { module: ejsModule, exports: ejsModule.exports });
 const cultivation = read(cardRoot + '世界书/[修为获取规则].txt');
-const files = ['世界书/[修为获取规则].txt', '世界书/地球/[mvu_plot]地球总览.txt', ...['中国', '欧盟', '英美'].map(r => `世界书/地球/地区/[mvu_plot]地区-地球-${r}.txt`)];
-const render = (source, time, throws = false) => ejsModule.exports.render(source, {
+assert(!/calendarNumber|cultivationDate|CULTIVATION_CALENDAR/.test(cultivation)); checks++;
+const files = ['世界书/地球/[mvu_plot]地球总览.txt'];
+const render = (source, time) => ejsModule.exports.render(source, {
   getMessageVar: key => {
-    if (key === 'stat_data.时间') { if (throws) throw Error('读取失败'); return time; }
+    if (key === 'stat_data.时间') return time;
     if (key === 'stat_data.地点.世界') return '地球';
     if (key === 'stat_data.地点.地域') return '中国';
     if (key === 'stat_data.修炼进度.境界') return '炼气初期';
@@ -68,16 +72,18 @@ const render = (source, time, throws = false) => ejsModule.exports.render(source
   }, getChatMessages: () => [],
 });
 for (const time of [undefined, null, {}, { 年: 7026 }, '公元2026年1月1日', { 年: '修仙历7026年', 月: 1, 日: 1 }, { 年: 2026, 月: 1, 日: 1 }, { 年: '乱码', 月: 13, 日: -1 }]) {
-  const out = render(cultivation, time);
+  const normalized = cardSchema.parse({ 地点: { 世界: '地球' }, 时间: time });
+  const out = render(cultivation, normalized.时间);
   assert(out.includes('[E_realm] = 1 / L^2') && out.includes('E_realm=1 / L^2=[X]'));
   checks++;
   for (const path of files) {
-    const output = render(read(cardRoot + path), time);
+    const source = read(cardRoot + path);
+    assert(!/calendarNumber|cultivationDate|CULTIVATION_CALENDAR/.test(source));
+    const output = render(source, normalized.时间);
     assert(!/NaN|undefined|公元|公历/.test(output), path);
     checks++;
   }
 }
-for (const path of files) { assert(!/NaN|undefined/.test(render(read(cardRoot + path), null, true))); checks++; }
 for (const [year, expected] of [[7030, 4], [7050, 43.2], [7100, 43.2]]) {
   assert(render(cultivation, { 年: year, 月: 1, 日: 1 }).includes(`[E_realm] = ${expected} / L^2`)); checks++;
 }

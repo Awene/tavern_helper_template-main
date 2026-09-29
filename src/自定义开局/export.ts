@@ -234,7 +234,7 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
   const mp = (sel.门派归属 || '').trim();
   if (!storySettings?.身份) {
     if (mp === '散修') 身份.push('散修');
-    else if (mp) 身份.push(mp === '东风修仙基地' ? '东风修仙基地学员' : `${mp}弟子`);
+    else if (mp) 身份.push(mp === '华夏修真科学技术大学' ? '华夏修真科学技术大学学员' : `${mp}弟子`);
   }
 
   return {
@@ -370,7 +370,7 @@ export function generateAIPrompt(sel: Selection): string {
     );
   }
   const mp = (sel.门派归属 || '').trim();
-  const 身份文本 = story?.settings.身份?.join('、') || (mp === '散修' ? '散修' : mp === '东风修仙基地' ? '东风修仙基地学员' : mp ? `${mp}弟子` : '（无）');
+  const 身份文本 = story?.settings.身份?.join('、') || (mp === '散修' ? '散修' : mp === '华夏修真科学技术大学' ? '华夏修真科学技术大学学员' : mp ? `${mp}弟子` : '（无）');
   lines.push(`身份：${身份文本}`);
   lines.push(`性别：${sel.性别}`);
   if (sel.性别 === '男') lines.push(`元阳：${sel.元阳元阴 ? '尚存' : '已损'}`);

@@ -188,7 +188,7 @@ const 身份文本 = computed(() => {
   if (story.value?.settings.身份) return story.value.settings.身份.join('、');
   const mp = (store.selection.门派归属 || '').trim();
   if (mp === '散修') return '散修';
-  if (mp === '东风修仙基地') return '东风修仙基地学员';
+  if (mp === '华夏修真科学技术大学') return '华夏修真科学技术大学学员';
   if (mp) return `${mp}弟子`;
   return '无';
 });

@@ -199,7 +199,7 @@ const currentRegionSects = computed(
 const currentMenpaiLabel = computed(() => {
   const mp = store.selection.门派归属;
   if (mp === '') return worldName.value === '地球' ? '由开局剧本确定' : '无（不添加身份）';
-  if (mp === '东风修仙基地') return '东风修仙基地学员';
+  if (mp === '华夏修真科学技术大学') return '华夏修真科学技术大学学员';
   if (mp === '散修') return '散修';
   return `${mp}弟子`;
 });
