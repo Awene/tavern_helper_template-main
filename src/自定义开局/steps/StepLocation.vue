@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2 class="xs-step-title">择 · 出生地</h2>
+    <h2 class="xs-step-title">择 · 出身与起点</h2>
     <p class="xs-step-subtitle">道始于地。出身决定起步的人脉与性格底色，本身不耗费开局点数。</p>
 
     <div class="xs-loc-tree">
@@ -61,7 +61,7 @@
             </ul>
           </div>
           <div v-if="eco.sects && eco.sects.length" class="xs-eco-section">
-            <span class="xs-eco-label">宗门</span>
+            <span class="xs-eco-label">{{ worldName === '地球' ? '机构' : '宗门' }}</span>
             <ul class="xs-eco-list">
               <li v-for="s in eco.sects" :key="s.name">
                 <strong>{{ s.name }}</strong>
@@ -92,7 +92,7 @@
     <!-- 门派归属（地域 → 二级宗门；可自由选择全域门派，不限出生地） -->
     <section v-if="selectedLocation" class="xs-menpai">
       <div class="xs-menpai-head">
-        <h3 class="xs-menpai-title">门派归属</h3>
+        <h3 class="xs-menpai-title">{{ worldName === '地球' ? '培养机构' : '门派归属' }}</h3>
         <span class="xs-menpai-hint">
           决定生成时的「身份」标签；不耗点数。当前身份：<strong>{{ currentMenpaiLabel }}</strong>
         </span>
@@ -129,7 +129,7 @@
           :class="{ active: store.selection.门派归属 === s.name }"
           :title="`${s.eco} · ${s.brief}`"
           @click="store.selectMenpai(s.name)"
-        >{{ s.name }}<span class="xs-menpai-弟子">弟子</span></button>
+        >{{ s.name }}<span class="xs-menpai-弟子">{{ worldName === '地球' ? '学员' : '弟子' }}</span></button>
       </div>
     </section>
 
@@ -175,10 +175,10 @@ const currentRegion = computed(() => findRegionById(regionId.value));
 const selectedLocation = computed(() => findLocation(store.selection.locationId));
 
 // —— 门派归属：地域 → 二级宗门（可选全域门派，不限出生地）——
-const baseMenpai = [
+const baseMenpai = computed(() => worldName.value === '地球' ? [{ value: '', label: '随开局剧本' }] : [
   { value: '', label: '无' },
   { value: '散修', label: '散修' },
-];
+]);
 const sectGroups = computed(() => sectsByRegion.filter(g => currentWorld.value.regions.some(r => r.name === g.region)));
 // 当前选中门派所属的地域（用于一级 chip 高亮 & 初始展开）
 const pickedSectRegion = computed(() => {
@@ -198,7 +198,8 @@ const currentRegionSects = computed(
 );
 const currentMenpaiLabel = computed(() => {
   const mp = store.selection.门派归属;
-  if (mp === '') return '无（不添加身份）';
+  if (mp === '') return worldName.value === '地球' ? '由开局剧本确定' : '无（不添加身份）';
+  if (mp === '东风修仙基地') return '东风修仙基地学员';
   if (mp === '散修') return '散修';
   return `${mp}弟子`;
 });

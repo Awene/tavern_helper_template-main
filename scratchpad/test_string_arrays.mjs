@@ -102,7 +102,7 @@ const schemaJs = ts.transpileModule(read('../src/修仙状态栏/schema.ts'), {
 }).outputText;
 vm.runInNewContext(schemaJs, {
   exports,
-  require: name => (name.includes('string-array') ? { normalizeStringArray } : require(name)),
+  require: name => (name.includes('string-array') ? { normalizeStringArray } : name.includes('cultivation-calendar') ? require('../util/cultivation-calendar.js') : require(name)),
   _,
 });
 for (const schema of [mvuSchema, exports.Schema]) {

@@ -8,7 +8,7 @@ const check = (v, msg) => {
 };
 const general = ['story-zayou', 'story-yinyu', 'story-fuchou', 'story-dadao', 'story-fan-zhigen', 'story-fan-renjian', 'story-wanderer-auction'];
 const removed = ['story-tianxuan-zayou', 'story-lingfeng-yueye', 'story-liuli-baicao', 'story-nanjiang-fox'];
-check(config.stories.length === 22, '22 remaining stories');
+check(config.stories.length === 23, '23 stories including Earth school opening');
 for (const id of general.filter(id => id !== 'story-wanderer-auction')) {
   const story = config.findStory(id);
   check(story.body.length >= 300 && story.constraints.必须人形, id + ' concrete scene and matching shape constraint');
@@ -65,7 +65,7 @@ for (const id of general)
     store.setRace(race.name);
     store.toggleRootElement(id === 'story-fan-zhigen' ? '无' : '水');
     store.setRaceTransformation(!!story.constraints?.必须人形);
-    for (const world of config.LOCATION_WORLDS) {
+    for (const world of config.LOCATION_WORLDS.filter(w => w.name !== '地球')) {
       if (!config.isWorldAvailable(world.name, race.name)) continue;
       store.selectLocation(world.regions[0].children[0].id);
       check(config.isStoryAvailable(story, store.selection), id + race.name + world.name);
@@ -92,9 +92,11 @@ if (process.argv.includes('--csv-patch')) {
     const c = s.constraints || {};
     const t = s.settings.时间;
     const requirements = [...config.describeConstraints(c)];
+    requirements.unshift(s.settings.世界 ? '世界：' + s.settings.世界 : '世界：凡界 / 灵界 / 冥界');
     if (s.settings.初始境界.大境界 !== '凡人') requirements.unshift('须有灵根');
     requirements.push('出生地须对种族开放（冥界仅冥族）');
     const notes = [];
+    if (s.id === 'story-earth-dongfeng') notes.push('修仙历7026-01-01；18岁人族学生，原学校检测后自愿转学；北京报到首日，凡人且有灵根；身份按新生导出');
     if (s.类型 === '通用') notes.push('正文适配所选界域、种族与形态；宗门沿用玩家选择');
     if (s.id === 'story-fan-zhigen') notes.push('无灵根凡人，秘法尚未施行；植根及修炼在后续剧情结算');
     if (s.id === 'story-fan-renjian') notes.push('凡人不等于人族、凡体或无灵根；不设小境界');

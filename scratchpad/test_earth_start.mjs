@@ -1,0 +1,62 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {createRequire} from 'node:module';
+import {config,store,exporter} from './test_start_selection.mjs';
+let checks=0;
+const check=(v,m)=>{assert(v,m);checks++;};
+const setup=()=>{
+  store.resetAll();
+  store.setRace('人族');
+  store.toggleRootElement('水');
+  store.selectLocation('eco-earth-beijing');
+  store.selectStory('story-earth-dongfeng');
+};
+setup();
+const story=config.findStory('story-earth-dongfeng');
+check(store.selection.storyId===story.id,'地球剧本可选择');
+check(config.whyStoryUnavailable(story,store.selection).length===0,'条件提示一致');
+const data=exporter.buildInitialStatData(store.selection);
+check(data.地点.世界==='地球'&&data.地点.地域==='中国'&&data.地点.具体地点==='北京-东风修仙基地-新生报到处','地点精确导出');
+check(data.时间.年===7026&&data.时间.月===1&&data.时间.日===1,'修仙历数据');
+check(data.修炼进度.境界==='凡人'&&data.寿元.年龄===18&&data.寿元.寿命===100,'新生尚未引气');
+check(data.身份.join('、')==='已登记、东风修仙基地新生','现代身份不套弟子或散修');
+const prompt=exporter.generateAIPrompt(store.selection);
+for(const text of ['修仙历7026年','原学校','接受了入学邀请','转学','新生报到处','年龄：18岁'])check(prompt.includes(text),text+'提示词');
+for(const text of ['凡人初期','东风修仙基地弟子','身份：散修','洛阳开局'])check(!prompt.includes(text),'不出现'+text);
+for(const s of config.stories.filter(s=>s.id!==story.id))check(!config.isStoryAvailable(s,store.selection),s.id+'不误入地球');
+for(const world of config.LOCATION_WORLDS.filter(w=>w.name!=='地球')){
+  check(!config.isStoryAvailable(story,{...store.selection,种族:world.name==='冥界'?'冥族':'人族',locationId:world.regions[0].children[0].id}),'地球剧本不串到'+world.name);
+}
+store.setRace('妖族');
+check(store.selection.storyId===null,'返回改种族清除学生开局');
+setup();
+store.selection.root.elements = ['无'];
+check(store.selection.storyId===null,'返回改无根清除学生开局');
+setup();
+store.toggleRootElement('水');
+check(store.selection.storyId===null,'空灵根不绕过检测条件');
+setup();
+store.selectMenpai('东风修仙基地');
+check(store.selection.storyId===story.id,'学院选择保留有效开局');
+store.selectLocation('eco-zy-zhongzhou');
+check(store.selection.storyId===null&&store.selection.门派归属==='','切换世界清理学院及剧本');
+setup();
+store.presets.push({id:'earth-invalid',name:'旧选择',selection:{...JSON.parse(JSON.stringify(store.selection)),root:{...store.selection.root,elements:['无']}}});
+store.loadPreset('earth-invalid');
+check(store.selection.storyId===null,'预设加载校验灵根');
+setup();
+const custom=config.customStoryToOption({...config.emptyCustomStory(),id:'cstory-earth',name:'自创校园',body:'校园生活',settings:{时间:{年:7026,月:2,日:1},宗门:'东风修仙基地',初始境界:{大境界:'凡人',小境界:''}}});
+check(config.isStoryAvailable(custom,store.selection),'保留地球自创剧本能力');
+custom.settings.时间.年=7025;
+check(!config.isStoryAvailable(custom,store.selection),'不进入未定义历史环境');
+const require=createRequire(import.meta.url);
+const vue=require('vue/compiler-sfc');
+for(const name of ['StepLocation','StepStory','StepConfirm']) {
+  const filename=`src/自定义开局/steps/${name}.vue`;
+  const {descriptor,errors}=vue.parse(fs.readFileSync(filename,'utf8'),{filename});
+  check(errors.length===0,name+' SFC解析');
+  const compiled=vue.compileScript(descriptor,{id:name});
+  const result=vue.compileTemplate({source:descriptor.template.content,filename,id:name,compilerOptions:{bindingMetadata:compiled.bindings}});
+  check(result.errors.length===0,name+' 模板编译');
+}
+console.log(`${checks} Earth custom-start checks passed.`);

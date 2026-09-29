@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { cultivationDate } from '../../util/cultivation-calendar.js';
 import { computed, ref, watch } from 'vue';
 import { reconcileSelection } from './selectionRules';
 import {
@@ -13,6 +14,7 @@ import {
   emptyRootChoice,
   findDifficulty,
   findItem,
+  findLocation,
   isPhysiqueChoiceValid,
   makeDefaultPhysiqueChoice,
   mutationsByElement,
@@ -399,6 +401,7 @@ export const useStartStore = defineStore('xs-start', () => {
     const existing = selection.value.customStory;
     const full: CustomStory = {
       ...story,
+      settings: { ...story.settings, 时间: cultivationDate(story.settings.时间, findLocation(selection.value.locationId)?.世界 ?? story.settings.世界) },
       id: existing?.id || 'cstory-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     };
     selection.value.customStory = full;

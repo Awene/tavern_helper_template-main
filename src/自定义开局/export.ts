@@ -18,6 +18,7 @@ import {
   rootTierCanonical,
   realmLabel,
   resolveStorySettings,
+  describeSettings,
 } from './config';
 import { applyApiMode } from './apiMode';
 import { selectionConflict } from './selectionRules';
@@ -208,7 +209,7 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
   const 寿命 = 100 * 2 ** realmIdx;
 
   // 起始年龄默认 16(青年),凡人保留默认上限;外观年龄=年龄(初始时尚未停止衰老)
-  const 起始年龄 = 16;
+  const 起始年龄 = storySettings?.年龄 ?? 16;
 
   // 性别 / 元阳元阴：按角色生成规则保留对应键（已并入 体质，见下方 体质 对象）
   // 其他性别：元阳与元阴均为 null，表示对应性征不存在/不适用。
@@ -226,13 +227,15 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
   const 生态名 = location?.具体地点 || location?.生态 || '';
   const 宗门清 = 宗门.replace(/[（(].*$/, '').trim();
   const 是本生态宗门 = !!宗门清 && 宗门清 !== '散修' && !!location?.sects?.some(s => s.name === 宗门清);
-  const 具体地点 = 生态名 ? (是本生态宗门 ? `${生态名}-${宗门清}` : 生态名) : '某处村落';
+  const 具体地点 = storySettings?.具体地点 || (生态名 ? (是本生态宗门 ? `${生态名}-${宗门清}` : 生态名) : '某处村落');
 
   // —— 身份：由门派归属决定（''=无身份 / '散修'=散修 / 宗门名=「XX弟子」）——
-  const 身份: string[] = [];
+  const 身份: string[] = [...(storySettings?.身份 || [])];
   const mp = (sel.门派归属 || '').trim();
-  if (mp === '散修') 身份.push('散修');
-  else if (mp) 身份.push(`${mp}弟子`);
+  if (!storySettings?.身份) {
+    if (mp === '散修') 身份.push('散修');
+    else if (mp) 身份.push(mp === '东风修仙基地' ? '东风修仙基地学员' : `${mp}弟子`);
+  }
 
   return {
     // —— 原 基本信息.* (扁平化:升至根级) ——
@@ -357,7 +360,7 @@ export function generateAIPrompt(sel: Selection): string {
 
   // —— 角色信息 ——
   lines.push('【角色信息】');
-  lines.push(`道号：${sel.道号 || '无名'}`);
+  lines.push(`${location?.世界 === '地球' ? '姓名' : '道号'}：${sel.道号 || '无名'}`);
   lines.push(`种族：${race.name}${raceDetail ? `（${raceDetail}）` : ''}`);
   if (race.canChooseTransformation) {
     lines.push(
@@ -367,7 +370,7 @@ export function generateAIPrompt(sel: Selection): string {
     );
   }
   const mp = (sel.门派归属 || '').trim();
-  const 身份文本 = mp === '散修' ? '散修' : mp ? `${mp}弟子` : '（无）';
+  const 身份文本 = story?.settings.身份?.join('、') || (mp === '散修' ? '散修' : mp === '东风修仙基地' ? '东风修仙基地学员' : mp ? `${mp}弟子` : '（无）');
   lines.push(`身份：${身份文本}`);
   lines.push(`性别：${sel.性别}`);
   if (sel.性别 === '男') lines.push(`元阳：${sel.元阳元阴 ? '尚存' : '已损'}`);
@@ -395,7 +398,7 @@ export function generateAIPrompt(sel: Selection): string {
   // —— 出生地 ——
   if (location) {
     lines.push('');
-    lines.push('【出生地】');
+    lines.push(location.世界 === '地球' ? '【开局地点】' : '【出生地】');
     lines.push(`${location.世界} · ${location.地域} · ${location.生态}`);
     if (location.世界 === '灵界') lines.push('主角生于灵界，在所选地点开局，并非从凡界飞升；初始境界、年龄、物品仍按所选开局设定，不因出生世界额外提升。宗门地位与入门条件以当地世界书为准。');
     if (location.desc) lines.push(`说明：${location.desc}`);
@@ -403,7 +406,7 @@ export function generateAIPrompt(sel: Selection): string {
       lines.push(`凡国：${location.kingdoms.map(k => `${k.name}（${k.brief}）`).join('；')}`);
     }
     if (location.sects?.length) {
-      lines.push(`宗门：${location.sects.map(s => `${s.name}（${s.brief}）`).join('；')}`);
+      lines.push(`${location.世界 === '地球' ? '机构' : '宗门'}：${location.sects.map(s => `${s.name}（${s.brief}）`).join('；')}`);
     }
   }
 
@@ -412,9 +415,9 @@ export function generateAIPrompt(sel: Selection): string {
     const s = story.settings;
     lines.push('');
     lines.push('【开局设定】');
-    lines.push(`时间：${s.时间.年}年 ${s.时间.月}月 ${s.时间.日}日${s.时间.时辰 ? ' · ' + s.时间.时辰 : ''}`);
-    lines.push(`宗门：${s.宗门}`);
-    lines.push(`初始境界：${realmLabel(s.初始境界)}`);
+    lines.push(...describeSettings(s, location?.世界));
+    if (s.年龄) lines.push(`年龄：${s.年龄}岁`);
+    if (s.具体地点) lines.push(`场景：${s.具体地点}`);
   }
 
   // —— 难度 ——
@@ -492,7 +495,7 @@ export function generateAIPrompt(sel: Selection): string {
     '---',
     '请你严格按照以上设定为玩家展开开局剧情。注意事项：',
     '- 故事正文中的「你」直接指代玩家角色（道号见上）；',
-    `- 故事时间须从「${story?.settings.时间.年 ?? 7000}年」开始推进；`,
+    `- 故事时间须从「修仙历${story?.settings.时间.年 ?? 7000}年」开始推进；`,
     `- 玩家所属：${story?.settings.宗门 ?? '散修'}；`,
     `- 初始境界：${realmLabel(story?.settings.初始境界 ?? { 大境界: '炼气', 小境界: '初期' })}；`,
     '- 请生成一段贴合上述设定的开局叙述，篇幅自然即可，不必再罗列上述信息。',

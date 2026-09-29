@@ -1,3 +1,4 @@
+import { cultivationDate, cultivationYear } from '../../../util/cultivation-calendar.js';
 import type { CustomStory, Selection, StoryConstraints, StoryKind, StoryOption, StorySettings } from '../types';
 import { findLocation, findLocationPath, findRegionById, isLocationAvailable, isSectAvailable } from './locations';
 import { findRace } from './races';
@@ -5,6 +6,37 @@ import { rootTierLabel } from './roots';
 
 // ============ 故事数据 ============
 export const stories: StoryOption[] = [
+  {
+    id: 'story-earth-dongfeng',
+    name: '东风新程',
+    subtitle: '检测灵根，转学报到',
+    desc: '原学校的灵根检测改变了你的求学方向。今天，你带着转学材料来到北京，在东风修仙基地迎来开学第一天。',
+    cost: 0,
+    glyph: '学',
+    类型: '特殊',
+    tags: ['地球', '校园', '凡人'],
+    constraints: {
+      locationIds: ['eco-earth-beijing'],
+      种族: ['人族'],
+      灵根五行任意: ['金', '木', '水', '火', '土', '阴', '阳', '混沌'],
+      灵根禁止: ['无'],
+      门派归属: ['', '东风修仙基地'],
+    },
+    settings: {
+      世界: '地球',
+      时间: { 年: 7026, 月: 1, 日: 1, 时辰: '辰时' },
+      宗门: '东风修仙基地',
+      身份: ['已登记', '东风修仙基地新生'],
+      具体地点: '北京-东风修仙基地-新生报到处',
+      年龄: 18,
+      初始境界: { 大境界: '凡人', 小境界: '' },
+    },
+    body:
+      '不久前，原学校组织了一次灵根检测。轮到你时，检测仪亮起了与往常体检完全不同的读数。复核结束，老师把检测报告和一份转学介绍交给你：北京的东风修仙基地正在接收新生。你与家里商量后接受了入学邀请，办完学籍转接，也完成了灵根与身份登记。你知道自己具备修行资质，却还没有学会引气入体。\n' +
+      '开学第一天，北京的清晨很冷。你拖着行李箱穿过基地大门，轮子碾过砖缝，一路轻响。教学楼前挂着迎新横幅，志愿者举着写有报到流程的牌子，广播提醒新生准备检测报告和转学材料。有人正同送行的家人告别，也有人拿着校园图，站在岔路口寻找宿舍。\n' +
+      '事务大厅里暖气很足，玻璃门上蒙了一层薄雾。报到桌后的老师核对完你的材料，把校园卡、宿舍领取单和第一周课表一并推过来。课表上，经典研读、基础调息与工学导论排在相邻的格子里；旁边的展板介绍着凡人工程师和修行导师共同负责的实验课。\n' +
+      '你刚收好材料，背着植物徽章帆布包的周小满便在旁边停下，低头核对自己的教室号：“你也是今天报到的？我正找去阅览楼的路。”大厅另一头，工作人员提醒大家，稍后的新生见面课将在教学楼开始。她把校园图展开，指了指食堂与宿舍之间那条路，等着你的回应。',
+  },
   // 通用开局
   {
     id: 'story-zayou',
@@ -714,13 +746,16 @@ export const findStory = (id: string | null): StoryOption | undefined =>
   id ? stories.find(s => s.id === id) : undefined;
 
 export function resolveStorySettings(story: StoryOption, sel: Selection): StorySettings {
-  return story.类型 === '通用' && findStory(story.id)
-    ? { ...story.settings, 宗门: sel.门派归属 || '散修' }
-    : story.settings;
+  const world = findLocation(sel.locationId)?.世界 ?? story.settings.世界;
+  return { ...story.settings,
+    时间: cultivationDate(story.settings.时间, world, { 年: world === '地球' ? 7026 : 7000, 月: 1, 日: 1 }),
+    宗门: story.类型 === '通用' && findStory(story.id) ? sel.门派归属 || '散修' : story.settings.宗门,
+  };
 }
 
 // ============ 故事约束校验 / 描述 ============
 export function isStoryAvailable(story: StoryOption, sel: Selection): boolean {
+  if (storyWorldConflict(story, sel)) return false;
   if (!isLocationAvailable(sel.locationId, sel.种族) || !isSectAvailable(story.settings.宗门, sel.locationId))
     return false;
   if (story.settings.初始境界.大境界 !== '凡人' && (!sel.root.elements.length || sel.root.elements.includes('无')))
@@ -780,6 +815,7 @@ export function isStoryAvailable(story: StoryOption, sel: Selection): boolean {
 
 /** 门派归属值 → 展示文本（''=无） */
 function menpaiLabel(v: string): string {
+  if (v === '东风修仙基地') return '东风修仙基地学员';
   if (v === '') return '无';
   if (v === '散修') return '散修';
   return `${v}弟子`;
@@ -789,6 +825,8 @@ function menpaiLabel(v: string): string {
 export function whyStoryUnavailable(story: StoryOption, sel: Selection): string[] {
   const c = story.constraints;
   const reasons: string[] = [];
+  const worldConflict = storyWorldConflict(story, sel);
+  if (worldConflict) reasons.push(worldConflict);
   if (story.settings.初始境界.大境界 !== '凡人' && (!sel.root.elements.length || sel.root.elements.includes('无')))
     reasons.push('修士开局须选择灵根');
   if (!isLocationAvailable(sel.locationId, sel.种族)) reasons.push('请先选择当前种族可用的出生地');
@@ -897,13 +935,24 @@ export function realmLabel(realm: StorySettings['初始境界']): string {
   return realm.大境界 === '凡人' ? '凡人' : `${realm.大境界}${realm.小境界 || '初期'}`;
 }
 
-export function describeSettings(s: StorySettings): string[] {
-  const t = s.时间;
+export function describeSettings(s: StorySettings, world = s.世界): string[] {
+  const t = cultivationDate(s.时间, world);
   return [
-    `时间：${t.年}年 ${t.月}月 ${t.日}日${t.时辰 ? ' · ' + t.时辰 : ''}`,
-    `宗门：${s.宗门}`,
+    `时间：修仙历${t.年}年 ${t.月}月 ${t.日}日${t.时辰 ? ' · ' + t.时辰 : ''}`,
+    `${world === '地球' ? '培养机构' : '宗门'}：${s.宗门}`,
     `初始境界：${realmLabel(s.初始境界)}`,
   ];
+}
+
+function storyWorldConflict(story: StoryOption, sel: Selection): string | undefined {
+  const world = findLocation(sel.locationId)?.世界;
+  if (!world) return undefined;
+  if (story.settings.世界 && story.settings.世界 !== world) return `开局世界须为：${story.settings.世界}`;
+  if (world === '地球') {
+    if (!story.settings.世界 && !story.tags?.includes('自创')) return '此剧本适用于凡界、灵界、冥界';
+    if (cultivationYear(story.settings.时间.年, world) < 7026) return '地球开局时间须从修仙历7026年起';
+  }
+  return undefined;
 }
 
 // ============ 自创剧本 ============
@@ -949,7 +998,7 @@ export function customStoryToOption(c: CustomStory): StoryOption {
 export function isCustomStoryValid(c: CustomStory): boolean {
   if (!c.name.trim()) return false;
   if (!c.body.trim()) return false;
-  if (c.settings.时间.年 < 7000) return false;
+  if (!(cultivationYear(c.settings.时间.年, c.settings.世界) >= 7000)) return false;
   if (!c.settings.宗门.trim()) return false;
   if (!c.settings.初始境界.大境界.trim()) return false;
   return true;

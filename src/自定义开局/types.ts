@@ -339,6 +339,12 @@ export interface StoryConstraints {
 
 /** 故事开局设定：年份必须 ≥ 7000 */
 export interface StorySettings {
+  /** 固定世界的剧本；未指定的既有剧本适用于凡界、灵界、冥界。 */
+  世界?: string;
+  /** 剧本固定身份，可用于现代学员等非宗门身份。 */
+  身份?: string[];
+  具体地点?: string;
+  年龄?: number;
   时间: { 年: number; 月: number; 日: number; 时辰?: string };
   /** 宗门名称；散修则填 '散修' */
   宗门: string;

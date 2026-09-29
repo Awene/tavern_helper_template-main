@@ -74,7 +74,7 @@
         </div>
         <div class="xs-custom-edit-row xs-edit-time">
           <label>时间</label>
-          <input type="number" min="7000" v-model.number="draft.year" /> 年
+          修仙历 <input type="number" min="7000" v-model.number="draft.year" /> 年
           <input type="number" min="1" max="12" v-model.number="draft.month" /> 月
           <input type="number" min="1" max="30" v-model.number="draft.day" /> 日
           <input type="text" v-model="draft.shichen" placeholder="时辰" maxlength="6" />
@@ -168,7 +168,7 @@
             <p v-if="s.subtitle" class="xs-story-sub">{{ s.subtitle }}</p>
             <p v-if="s.desc" class="xs-story-desc">{{ s.desc }}</p>
             <div class="xs-story-settings">
-              <span v-for="(line, idx) in describeSettings(resolveStorySettings(s, store.selection))" :key="idx">{{ line }}</span>
+              <span v-for="(line, idx) in describeSettings(resolveStorySettings(s, store.selection), findLocation(store.selection.locationId)?.世界)" :key="idx">{{ line }}</span>
             </div>
             <div v-if="s.constraints" class="xs-story-constraints">
               <span class="xs-pill" v-for="(line, idx) in describeConstraints(s.constraints)" :key="idx">
@@ -231,6 +231,7 @@
 </template>
 
 <script setup lang="ts">
+import { cultivationYear } from '../../../util/cultivation-calendar.js';
 import { computed, reactive, ref, watch } from 'vue';
 import type { CustomStory, StoryKind, StoryOption, SmallRealm } from '../types';
 import {
@@ -239,6 +240,7 @@ import {
   deriveCustomStoryKind,
   describeConstraints,
   describeSettings,
+  findLocation,
   resolveStorySettings,
   isCustomStoryValid,
   isStoryAvailable,
@@ -377,7 +379,8 @@ function closeEditor() {
   editorOpen.value = false;
 }
 
-const yearOk = computed(() => draft.year >= 7000);
+const normalizedYear = computed(() => cultivationYear(draft.year, findLocation(store.selection.locationId)?.世界));
+const yearOk = computed(() => normalizedYear.value >= 7000);
 
 const canSave = computed(() => {
   const built: CustomStory = {
@@ -388,7 +391,7 @@ const canSave = computed(() => {
     类型: deriveCustomStoryKind(draft.sect),
     settings: {
       时间: {
-        年: draft.year,
+        年: normalizedYear.value,
         月: draft.month,
         日: draft.day,
         时辰: draft.shichen.trim() || undefined,
@@ -408,7 +411,7 @@ function onSave() {
     类型: deriveCustomStoryKind(draft.sect),
     settings: {
       时间: {
-        年: draft.year,
+        年: normalizedYear.value,
         月: draft.month,
         日: draft.day,
         时辰: draft.shichen.trim() || undefined,
