@@ -21,6 +21,7 @@ import {
   describeSettings,
 } from './config';
 import { applyApiMode } from './apiMode';
+import { initialIdentities } from './identity';
 import { selectionConflict } from './selectionRules';
 import { normalizeItemForMvu } from './itemNormalizer';
 import type { Selection, StoryOption } from './types';
@@ -229,13 +230,7 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
   const 是本生态宗门 = !!宗门清 && 宗门清 !== '散修' && !!location?.sects?.some(s => s.name === 宗门清);
   const 具体地点 = storySettings?.具体地点 || (生态名 ? (是本生态宗门 ? `${生态名}-${宗门清}` : 生态名) : '某处村落');
 
-  // —— 身份：由门派归属决定（''=无身份 / '散修'=散修 / 宗门名=「XX弟子」）——
-  const 身份: string[] = [...(storySettings?.身份 || [])];
-  const mp = (sel.门派归属 || '').trim();
-  if (!storySettings?.身份) {
-    if (mp === '散修') 身份.push('散修');
-    else if (mp) 身份.push(mp === '华夏修真科学技术大学' ? '华夏修真科学技术大学学员' : `${mp}弟子`);
-  }
+  const 身份 = initialIdentities(sel, storySettings);
 
   return {
     // —— 原 基本信息.* (扁平化:升至根级) ——
@@ -369,8 +364,7 @@ export function generateAIPrompt(sel: Selection): string {
         : `形态：主角已经开智但不可化形；开局叙述中保持${race.originalFormLabel || '本体'}，不能变身为人。`,
     );
   }
-  const mp = (sel.门派归属 || '').trim();
-  const 身份文本 = story?.settings.身份?.join('、') || (mp === '散修' ? '散修' : mp === '华夏修真科学技术大学' ? '华夏修真科学技术大学学员' : mp ? `${mp}弟子` : '（无）');
+  const 身份文本 = initialIdentities(sel, story?.settings).join('、') || '（无）';
   lines.push(`身份：${身份文本}`);
   lines.push(`性别：${sel.性别}`);
   if (sel.性别 === '男') lines.push(`元阳：${sel.元阳元阴 ? '尚存' : '已损'}`);
@@ -433,6 +427,10 @@ export function generateAIPrompt(sel: Selection): string {
     lines.push('');
     lines.push('【携带资材 · 预设】');
     presetCarry.forEach(it => {
+      if (it.category === '灵石') {
+        lines.push(`- ${it.灵石 ?? 0}枚灵石`);
+        return;
+      }
       const tags: string[] = [];
       if (it.品质) tags.push(`${it.品质}品`);
       if (it.境界) tags.push(it.境界);

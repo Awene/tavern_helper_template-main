@@ -19,11 +19,11 @@ const data=exporter.buildInitialStatData(store.selection);
 check(data.地点.世界==='地球'&&data.地点.地域==='中国'&&data.地点.具体地点==='北京-华夏修真科学技术大学-新生报到处','地点精确导出');
 check(data.时间.年===7026&&data.时间.月===1&&data.时间.日===1,'修仙历数据');
 check(data.修炼进度.境界==='凡人'&&data.寿元.年龄===18&&data.寿元.寿命===100,'新生尚未引气');
-check(data.身份.join('、')==='已登记、华夏修真科学技术大学新生','现代身份不套弟子或散修');
+check(data.身份.join('、')==='中国人、已登记、华夏修真科学技术大学新生','国籍与剧情身份并列');
 const prompt=exporter.generateAIPrompt(store.selection);
 for(const text of ['修仙历7026年','原学校','接受了入学邀请','转学','新生报到处','年龄：18岁'])check(prompt.includes(text),text+'提示词');
 for(const text of ['凡人初期','华夏修真科学技术大学弟子','身份：散修','洛阳开局'])check(!prompt.includes(text),'不出现'+text);
-for(const s of config.stories.filter(s=>s.id!==story.id))check(!config.isStoryAvailable(s,store.selection),s.id+'不误入地球');
+for(const s of config.stories.filter(s=>s.settings.世界!=='地球'))check(!config.isStoryAvailable(s,store.selection),s.id+'不误入地球');
 for(const world of config.LOCATION_WORLDS.filter(w=>w.name!=='地球')){
   check(!config.isStoryAvailable(story,{...store.selection,种族:world.name==='冥界'?'冥族':'人族',locationId:world.regions[0].children[0].id}),'地球剧本不串到'+world.name);
 }
@@ -60,3 +60,70 @@ for(const name of ['StepLocation','StepStory','StepConfirm']) {
   check(result.errors.length===0,name+' 模板编译');
 }
 console.log(`${checks} Earth custom-start checks passed.`);
+
+const expectedCountries = ['中国', '日本', '俄罗斯', '意大利', '美国', '英国', '以色列', '埃及', '印度', '贝宁'];
+const earthLocations = config.locations.filter(l => l.世界 === '地球');
+check(earthLocations.length === 10, '十个出生国家');
+const earthRegion = config.LOCATION_WORLDS.find(w => w.name === '地球').regions;
+check(earthRegion.length === 1 && earthRegion[0].name === '地球', '唯一地球地域');
+check(earthRegion[0].children.every(node => expectedCountries.includes(node.name) && !node.children?.length), '直接选择国家，无城市选择层');
+earthLocations.forEach((loc, index) => {
+  check(loc.sects?.length >= 2, loc.name + '展示培养机构和协作组织');
+  check(loc.sects.every(org => org.name && org.brief), loc.name + '机构名称与简介完整');
+  setup();
+  store.selectLocation(loc.id);
+  store.selectStory('story-earth-city');
+  check(store.selection.storyId === 'story-earth-city', loc.name + '可完成通用开局');
+  const result = exporter.buildInitialStatData(store.selection);
+  check(result.身份.join('、') === expectedCountries[index] + '人', loc.name + '默认国籍');
+  check(result.地点.地域 === loc.地域 && result.地点.具体地点 === loc.生态, loc.name + '地点导出');
+  check(result.宗门 === '无' && !result.身份.some(x => x.includes('弟子')), '国籍不写入宗门');
+  const countryPrompt = exporter.generateAIPrompt(store.selection);
+  for (const org of loc.sects) check(countryPrompt.includes(org.name), loc.name + org.name + '同步开局提示词');
+  store.selectStory('story-earth-dongfeng');
+  check(store.selection.storyId === 'story-earth-dongfeng', loc.name + '学院开局可选');
+  const academy = loc.sects.find(org => org.tags?.includes('培养机构'));
+  const student = exporter.buildInitialStatData(store.selection);
+  check(student.宗门 === academy.name && student.身份.includes(academy.name + '新生'), loc.name + '学府身份');
+  check(student.地点.具体地点 === `${loc.生态}-${academy.name}-新生报到处`, loc.name + '报到地点');
+  check(exporter.generateAIPrompt(store.selection).includes(academy.name), loc.name + '学府提示词');
+  if (loc.name !== '中国') check(!exporter.generateAIPrompt(store.selection).includes('华夏修真科学技术大学'), loc.name + '无中国学校串入');
+});
+setup();
+store.selection.国籍 = '法国';
+check(exporter.buildInitialStatData(store.selection).身份[0] === '法国人', '可另选国籍，保留校园身份');
+store.presets.push({ id: 'earth-nationality', name: '法国学生', selection: JSON.parse(JSON.stringify(store.selection)) });
+store.resetAll();
+store.loadPreset('earth-nationality');
+check(exporter.buildInitialStatData(store.selection).身份[0] === '法国人', '预设保留所选国籍');
+store.selectLocation('eco-earth-london');
+check(store.selection.storyId === 'story-earth-dongfeng' && store.selection.国籍 === '法国', '跨国保留通用校园剧本与国籍');
+check(exporter.buildInitialStatData(store.selection).宗门 === '永恩圣约学院', '跨国重新匹配当地学府');
+store.selectLocation('eco-zy-zhongzhou');
+check(store.selection.国籍 === '', '跨界清理国籍选择');
+setup();
+store.selection.国籍 = ' 加拿大人 ';
+check(exporter.buildInitialStatData(store.selection).身份[0] === '加拿大人', '自定义国籍去空格、避免双重人字');
+store.presets.push({ id: 'custom-nationality', name: '自定义国籍', selection: JSON.parse(JSON.stringify(store.selection)) });
+store.resetAll();
+store.loadPreset('custom-nationality');
+check(exporter.buildInitialStatData(store.selection).身份[0] === '加拿大人', '自定义国籍可恢复');
+store.selection.国籍 = '  ';
+check(exporter.buildInitialStatData(store.selection).身份[0] === '中国人', '空白国籍使用出生国家');
+for (const race of config.races) {
+  check(config.isWorldAvailable('地球', race.name) === (race.name === '人族'), race.name + '地球世界资格');
+  for (const loc of earthLocations) check(config.isLocationAvailable(loc.id, race.name) === (race.name === '人族'), race.name + loc.name + '出生资格');
+}
+setup();
+store.presets.push({ id: 'old-haifa', name: '旧海法', selection: { ...JSON.parse(JSON.stringify(store.selection)), locationId: 'eco-earth-haifa', storyId: 'story-earth-city' } });
+store.loadPreset('old-haifa');
+check(store.selection.locationId === 'eco-earth-jerusalem' && exporter.buildInitialStatData(store.selection).地点.具体地点 === '耶路撒冷', '旧海法预设迁移');
+store.presets.push({ id: 'old-luoyang', name: '旧洛阳', selection: { ...JSON.parse(JSON.stringify(store.selection)), locationId: 'eco-earth-luoyang' } });
+store.loadPreset('old-luoyang');
+check(store.selection.locationId === null && store.selection.storyId === null, '旧洛阳开局要求重选');
+setup();
+store.selectStory('story-earth-city');
+store.setRace('妖族');
+store.selection.种族可化形 = false;
+check(store.selection.storyId === null && store.selection.locationId === null && !store.selection.国籍, '改为非人族清空地球出生地、国籍和剧本');
+console.log(`${checks} expanded Earth checks passed.`);

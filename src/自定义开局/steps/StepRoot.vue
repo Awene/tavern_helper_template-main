@@ -141,7 +141,7 @@
             <span class="xs-element-chip-glyph">{{ glyph(el) }}</span>
             <span class="xs-element-chip-name">{{ el }}</span>
           </button>
-          <span class="xs-root-picker-hint">阴/阳 视同五行属性，与五行可任意组合；最多 5 个属性。</span>
+          <span class="xs-root-picker-hint">含阴/阳的组合最多 4 项；五灵根仅限金木水火土。</span>
         </div>
         <div class="xs-root-picker-row">
           <span class="xs-root-picker-label">特殊</span>

@@ -124,6 +124,8 @@ export interface EcoEntity {
 export interface LocationNode {
   id: string;
   name: string;
+  /** 国家型选项对应的世界书地点。 */
+  地点?: { 地域: string; 城市: string };
   /** 简短描述 */
   description?: string;
   /** 子节点；叶节点（生态）不写或为空 */
@@ -305,6 +307,8 @@ export type SmallRealm = '初期' | '中期' | '后期';
 
 /** 故事可选条件：未满足则禁选 */
 export interface StoryConstraints {
+  /** 预设剧本适用的世界。 */
+  世界?: string[];
   /** 必须为这些叶节点 id 之一（出生地） */
   locationIds?: string[];
   /** 必须落在这些大地域 id 之一 */
@@ -407,6 +411,8 @@ export interface Selection {
   locationId: string | null;
   /** 门派归属（决定生成时的「身份」标签）：''=无(不加身份) / '散修'(身份=散修) / 宗门名(身份=「XX弟子」) */
   门派归属: string;
+  /** 地球初始国籍；空值按出生城市确定。 */
+  国籍?: string;
   itemIds: string[];
   /** 玩家自创的资材（可多件） */
   customItems: CustomItem[];

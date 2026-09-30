@@ -668,12 +668,12 @@ export const LOCATION_REGIONS: LocationNode[] = [
 // ============ 树形遍历助手 ============
 export const LOCATION_WORLDS = [
   { name: LOCATION_WORLD, description: LOCATION_WORLD_DESC, regions: LOCATION_REGIONS },
-  { name: '灵界', description: '生于灵界，从当地开始修行；不视为飞升，不额外提升初始境界或赠送资源。', regions: spiritRegions as LocationNode[] },
+  { name: '灵界', description: '生于灵界，灵气充沛，修行迅速；应对天魔入侵。', regions: spiritRegions as LocationNode[] },
   { name: '冥界', description: '仅冥族可在此开局。灵气稀薄，修行缓慢，亡魂与常住者共居。', regions: underworldRegions },
-  { name: '地球', description: '修仙历7026年，北京。原学校检测出灵根后，自愿转入华夏修真科学技术大学，从开学第一天开始。', regions: earthRegions },
+  { name: '地球', description: '仅人族可在此开局。开始都市生活或修行求学。', regions: earthRegions },
 ];
 export const isWorldAvailable = (world: string, race: RaceName): boolean =>
-  LOCATION_WORLDS.some(w => w.name === world) && (world !== '冥界' || race === '冥族');
+  LOCATION_WORLDS.some(w => w.name === world) && (world !== '冥界' || race === '冥族') && (world !== '地球' || race === '人族');
 
 export function isLocationAvailable(id: string | null, race: RaceName): boolean {
   const location = findLocation(id);
@@ -683,7 +683,6 @@ export function isLocationAvailable(id: string | null, race: RaceName): boolean 
 /** 已知宗门限所属世界；自创宗门由自创剧本定义。 */
 export function isSectAvailable(sect: string, locationId: string | null): boolean {
   const name = sect.replace(/[（(].*$/, '').trim();
-  if (findLocation(locationId)?.世界 === '地球') return name === '' || name === '华夏修真科学技术大学';
   const homes = locations.filter(l => l.sects?.some(s => s.name === name));
   return !homes.length || homes.some(l => l.世界 === findLocation(locationId)?.世界);
 }
@@ -699,9 +698,9 @@ export const locations: LocationOption[] = (() => {
         name: eco.name,
         desc: eco.description,
         世界: worldForRegion(region.id)!.name,
-        地域: region.name,
-        生态: eco.name,
-        具体地点: region.name === '殒落大陆' ? `殒落大陆-${eco.name}` : eco.name,
+        地域: eco.地点?.地域 || region.name,
+        生态: eco.地点?.城市 || eco.name,
+        具体地点: eco.地点?.城市 || (region.name === '殒落大陆' ? `殒落大陆-${eco.name}` : eco.name),
         kingdoms: eco.kingdoms,
         sects: eco.sects,
         tags: eco.tags,

@@ -29,6 +29,10 @@ export function reconcileSelection(sel: Selection): { selection: Selection; clea
     next.门派归属 = '';
     cleared.push('门派归属');
   }
+  if (next.国籍 && findLocation(next.locationId)?.世界 !== '地球') {
+    next.国籍 = '';
+    cleared.push('国籍');
+  }
   if (next.storyId && !isSelectedStoryValid(next)) {
     next.storyId = null;
     cleared.push('开局剧本');
@@ -37,7 +41,7 @@ export function reconcileSelection(sel: Selection): { selection: Selection; clea
 }
 
 export function selectionConflict(sel: Selection): string | undefined {
-  if (!isLocationAvailable(sel.locationId, sel.种族)) return '请重新选择出生地：冥界仅限冥族。';
+  if (!isLocationAvailable(sel.locationId, sel.种族)) return '请重新选择出生地：冥界仅限冥族，地球仅限人族。';
   if (!isSectAvailable(sel.门派归属, sel.locationId)) return '门派或培养机构与开局世界不符，请重新选择。';
   if (!isSelectedStoryValid(sel)) return '开局剧本未选择或条件不符，请重新选择。';
   return undefined;

@@ -10,10 +10,10 @@
         <button
           v-for="world in LOCATION_WORLDS" :key="world.name" type="button"
           :disabled="!isWorldAvailable(world.name, store.selection.种族)"
-          :title="world.name === '冥界' ? '仅冥族可在冥界出生' : world.description"
+          :title="world.description"
           class="xs-loc-chip" :class="{ active: worldName === world.name }" @click="pickWorld(world.name)">
           {{ world.name }}
-          <small v-if="!isWorldAvailable(world.name, store.selection.种族)">（仅冥族）</small>
+          <small v-if="!isWorldAvailable(world.name, store.selection.种族)">{{ world.name === '地球' ? '（仅人族）' : '（仅冥族）' }}</small>
         </button>
         <span class="xs-loc-row-hint">{{ currentWorld.description }}</span>
       </div>
@@ -90,9 +90,26 @@
     </div>
 
     <!-- 门派归属（地域 → 二级宗门；可自由选择全域门派，不限出生地） -->
-    <section v-if="selectedLocation" class="xs-menpai">
+    <section v-if="selectedLocation && worldName === '地球'" class="xs-menpai">
       <div class="xs-menpai-head">
-        <h3 class="xs-menpai-title">{{ worldName === '地球' ? '培养机构' : '门派归属' }}</h3>
+        <h3 class="xs-menpai-title">初始身份 · 国籍</h3>
+        <span class="xs-menpai-hint">当前身份：<strong>{{ earthNationality(store.selection) }}人</strong>；入学等身份由剧本补充。</span>
+      </div>
+      <div class="xs-menpai-row">
+        <button v-for="country in earthCountries" :key="country" type="button"
+          class="xs-menpai-chip" :class="{ active: !showCustomNationality && earthNationality(store.selection) === country }"
+          @click="customNationality = false; store.selection.国籍 = country">{{ country }}人</button>
+        <button type="button" class="xs-menpai-chip" :class="{ active: showCustomNationality }"
+          @click="customNationality = true">自定义</button>
+      </div>
+      <label v-if="showCustomNationality" class="xs-nationality-custom">
+        国籍
+        <input v-model="store.selection.国籍" type="text" maxlength="20" placeholder="例如：加拿大" />
+      </label>
+    </section>
+    <section v-else-if="selectedLocation" class="xs-menpai">
+      <div class="xs-menpai-head">
+        <h3 class="xs-menpai-title">门派归属</h3>
         <span class="xs-menpai-hint">
           决定生成时的「身份」标签；不耗点数。当前身份：<strong>{{ currentMenpaiLabel }}</strong>
         </span>
@@ -129,7 +146,7 @@
           :class="{ active: store.selection.门派归属 === s.name }"
           :title="`${s.eco} · ${s.brief}`"
           @click="store.selectMenpai(s.name)"
-        >{{ s.name }}<span class="xs-menpai-弟子">{{ worldName === '地球' ? '学员' : '弟子' }}</span></button>
+        >{{ s.name }}<span class="xs-menpai-弟子">弟子</span></button>
       </div>
     </section>
 
@@ -161,8 +178,12 @@ import {
   sectsByRegion,
 } from '../config';
 import { useStartStore } from '../store';
+import { earthCountries } from '../config/earthLocations';
+import { earthNationality } from '../identity';
 
 const store = useStartStore();
+const customNationality = ref(false);
+const showCustomNationality = computed(() => customNationality.value || (!!store.selection.国籍 && !earthCountries.some(country => country === store.selection.国籍)));
 
 // 根据当前选中的生态反推 region，初始展开
 const initialPath = findLocationPath(store.selection.locationId || '');
@@ -175,10 +196,10 @@ const currentRegion = computed(() => findRegionById(regionId.value));
 const selectedLocation = computed(() => findLocation(store.selection.locationId));
 
 // —— 门派归属：地域 → 二级宗门（可选全域门派，不限出生地）——
-const baseMenpai = computed(() => worldName.value === '地球' ? [{ value: '', label: '随开局剧本' }] : [
+const baseMenpai = [
   { value: '', label: '无' },
   { value: '散修', label: '散修' },
-]);
+];
 const sectGroups = computed(() => sectsByRegion.filter(g => currentWorld.value.regions.some(r => r.name === g.region)));
 // 当前选中门派所属的地域（用于一级 chip 高亮 & 初始展开）
 const pickedSectRegion = computed(() => {
@@ -198,8 +219,7 @@ const currentRegionSects = computed(
 );
 const currentMenpaiLabel = computed(() => {
   const mp = store.selection.门派归属;
-  if (mp === '') return worldName.value === '地球' ? '由开局剧本确定' : '无（不添加身份）';
-  if (mp === '华夏修真科学技术大学') return '华夏修真科学技术大学学员';
+  if (mp === '') return '无（不添加身份）';
   if (mp === '散修') return '散修';
   return `${mp}弟子`;
 });
@@ -211,6 +231,7 @@ function pickWorld(name: string) {
   if (!isWorldAvailable(name, store.selection.种族)) return;
   if (name === worldName.value) return;
   worldName.value = name;
+  customNationality.value = false;
   regionId.value = currentWorld.value.regions[0].id;
   store.selection.locationId = null;
   store.selection.storyId = null;
@@ -237,6 +258,22 @@ watch(
 </script>
 
 <style scoped>
+.xs-nationality-custom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+.xs-nationality-custom input {
+  width: 220px;
+  max-width: 100%;
+  min-width: 0;
+  padding: 8px 12px;
+  color: var(--xs-ink);
+  background: var(--xs-paper-warm);
+  border: 1px solid var(--xs-line);
+  border-radius: 6px;
+}
 .xs-loc-tree {
   display: flex;
   flex-direction: column;

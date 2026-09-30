@@ -1,5 +1,5 @@
 <template>
-  <div class="xs-app">
+  <div class="xs-app" :class="{ 'xs-app--cover': store.stepIndex === 0 }">
     <!-- 装饰背景 -->
     <div class="xs-bg" aria-hidden="true">
       <svg class="xs-bg-mountain" viewBox="0 0 1200 240" preserveAspectRatio="none">
@@ -84,8 +84,8 @@
       <div v-if="store.toast" class="xs-toast">{{ store.toast }}</div>
     </transition>
 
-    <!-- 主题悬浮切换按钮（封面页也可见） -->
-    <button type="button" class="xs-floating-theme" :title="isDark ? '切换日间' : '切换夜间'" @click="toggleTheme">
+    <!-- 进入配置后显示主题切换 -->
+    <button v-if="store.stepIndex > 0" type="button" class="xs-floating-theme" :title="isDark ? '切换日间' : '切换夜间'" @click="toggleTheme">
       {{ isDark ? '☀' : '🌙' }}
     </button>
   </div>

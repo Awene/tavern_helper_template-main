@@ -8,20 +8,21 @@ const check = (v, msg) => {
 };
 const general = ['story-zayou', 'story-yinyu', 'story-fuchou', 'story-dadao', 'story-fan-zhigen', 'story-fan-renjian', 'story-wanderer-auction'];
 const removed = ['story-tianxuan-zayou', 'story-lingfeng-yueye', 'story-liuli-baicao', 'story-nanjiang-fox'];
-check(config.stories.length === 23, '23 stories including Earth school opening');
+check(config.stories.length === 24, '24 stories including Earth school and city openings');
 for (const id of general.filter(id => id !== 'story-wanderer-auction')) {
   const story = config.findStory(id);
   check(story.body.length >= 300 && story.constraints.必须人形, id + ' concrete scene and matching shape constraint');
 }
 for (const id of removed) check(!config.findStory(id), 'deleted story absent');
 for (const story of config.stories) {
-  check(story.类型 === (general.includes(story.id) ? '通用' : '特殊'), story.id + ' category');
+  check(story.类型 === (general.includes(story.id) || story.id.startsWith('story-earth-') ? '通用' : '特殊'), story.id + ' category');
+  check(story.constraints.世界?.length > 0, story.id + ' explicit worlds');
   const c = story.constraints || {};
   store.resetAll();
   store.setRace(c.种族?.[0] || '人族');
   const loc =
     c.locationIds?.[0] ||
-    config.locations.find(l => !c.regionIds || c.regionIds.includes(config.findLocationPath(l.id).region.id)).id;
+    config.locations.find(l => (!story.settings.世界 || l.世界 === story.settings.世界) && (!c.regionIds || c.regionIds.includes(config.findLocationPath(l.id).region.id))).id;
   store.selectLocation(loc);
   store.setGender(c.性别 || (c.性别禁止?.includes('男') ? '女' : '男'));
   store.setVirgin(c.元阳元阴状态 ?? true);
