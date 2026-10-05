@@ -1,10 +1,16 @@
 <template>
   <section class="xy-page xy-page-tasks">
+    <!-- 编辑模式工具栏：清晰提供 3 种模式的新增操作 -->
     <div v-if="state.editMode" class="xy-asset-toolbar xy-task-toolbar">
-      <span>任务名与各字段均可编辑；完成、失败或放弃的任务应直接删除。</span>
-      <button type="button" class="xy-effect-add" @click="addTask">＋ 新增任务</button>
+      <span>历练事项与各字段均可编辑；完成或平息后直接删除。</span>
+      <div class="xy-task-add-btns">
+        <button type="button" class="xy-effect-add" @click="addTask">＋ 新增委托</button>
+        <button type="button" class="xy-effect-add" @click="addEvent">＋ 新增奇遇/事件</button>
+        <button type="button" class="xy-effect-add" @click="addPlot">＋ 新增剧情</button>
+      </div>
     </div>
 
+    <!-- 筛选状态 Chip 组 -->
     <div v-if="!_.isEmpty(tasks)" class="xy-rumor-filter">
       <button type="button" :class="['xy-chip', { active: taskFilter === 'all' }]" @click="taskFilter = 'all'">
         全部 <em>{{ Object.keys(tasks).length }}</em>
@@ -13,129 +19,54 @@
         进行中 <em>{{ runningCount }}</em>
       </button>
       <button type="button" :class="['xy-chip', { active: taskFilter === '待结算' }]" @click="taskFilter = '待结算'">
-        待结算 <em>{{ settlementCount }}</em>
+        待结算/待平息 <em>{{ settlementCount }}</em>
       </button>
     </div>
 
+    <!-- 空状态 -->
     <div v-if="_.isEmpty(tasks) && !state.editMode" class="xy-empty">
       <div class="xy-empty-mark">闲</div>
-      <p>当前没有已接取的任务</p>
+      <p>当前没有进行中的历练事项（任务或事件）</p>
     </div>
 
     <div v-else-if="_.isEmpty(filteredTasks)" class="xy-empty xy-empty-soft">
       <div class="xy-empty-mark">·</div>
-      <p>该状态下暂无任务</p>
+      <p>该状态下暂无历练事项</p>
     </div>
 
+    <!-- 历练事项网格：3 种模式组件分离呈现，结构直观解耦 -->
     <div v-else class="xy-task-grid">
-      <article
-        v-for="(task, taskName) in filteredTasks"
-        :key="taskName"
-        class="xy-task-card"
-        :class="{
-          'xy-task-ready': task.状态 === '待结算',
-          'xy-collapsible-open': state.editMode || isCardOpen('task', String(taskName)),
-        }"
-      >
-        <button
-          type="button"
-          class="xy-trash"
-          title="删除此任务"
-          @click.stop="requestDelete('task', String(taskName), String(taskName))"
-        >
-          <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true">
-            <path d="M9 3v1H4v2h16V4h-5V3H9zM6 8l1 13h10l1-13H6zm3 2h2v9H9v-9zm4 0h2v9h-2v-9z" />
-          </svg>
-        </button>
+      <template v-for="(task, taskName) in filteredTasks" :key="taskName">
+        <!-- 模式三：长线剧情/宿命事件（专属大纲驱动·统一紫色风格） -->
+        <TaskCardPlot
+          v-if="resolveMode(task, String(taskName)) === 'plot'"
+          :task="task"
+          :task-name="String(taskName)"
+          :current-time="store.data.时间"
+          @rename="renameTask(String(taskName), $event)"
+          @delete="requestDelete('task', String(taskName), String(taskName))"
+        />
 
-        <div
-          class="xy-task-head xy-collapsible-head"
-          role="button"
-          tabindex="0"
-          :aria-expanded="state.editMode || isCardOpen('task', String(taskName))"
-          :title="isCardOpen('task', String(taskName)) ? '点击收起任务详情' : '点击展开任务详情'"
-          @click="toggleCard('task', String(taskName))"
-          @keydown.enter.self.prevent="toggleCard('task', String(taskName))"
-          @keydown.space.self.prevent="toggleCard('task', String(taskName))"
-        >
-          <span class="xy-task-seal" aria-hidden="true">{{ task.状态 === '待结算' ? '成' : '令' }}</span>
-          <span class="xy-task-title">
-            <EditableValue
-              :model-value="String(taskName)"
-              label="任务名"
-              @update:model-value="renameTask(String(taskName), String($event))"
-            />
-            <CopyNameButton :text="String(taskName)" label="任务名" />
-          </span>
-          <select v-if="state.editMode" v-model="task.状态" class="xy-task-status-select" @click.stop>
-            <option value="进行中">进行中</option>
-            <option value="待结算">待结算</option>
-          </select>
-          <span v-else :class="['xy-task-status', { ready: task.状态 === '待结算' }]">{{ task.状态 }}</span>
-          <span v-if="task.难度" class="xy-task-difficulty">
-            <EditableValue v-model="task.难度" label="难度" />
-          </span>
-          <span v-if="task.截止时间" class="xy-task-deadline-brief" :class="{ overdue: isOverdue(task.截止时间) }">
-            {{ isOverdue(task.截止时间) ? '已逾期 · ' : '' }}{{ formatTime(task.截止时间, true) }}
-          </span>
-        </div>
+        <!-- 模式二：奇遇/突发事件/危机（快进快出结构） -->
+        <TaskCardEvent
+          v-else-if="resolveMode(task, String(taskName)) === 'event'"
+          :task="task"
+          :task-name="String(taskName)"
+          :current-time="store.data.时间"
+          @rename="renameTask(String(taskName), $event)"
+          @delete="requestDelete('task', String(taskName), String(taskName))"
+        />
 
-        <div v-show="state.editMode || isCardOpen('task', String(taskName))" class="xy-task-body xy-collapsible-body">
-          <div class="xy-task-objective">
-            <span class="xy-task-field-label">目标</span>
-            <EditableValue v-model="task.目标" label="目标" multiline :rows="2" />
-          </div>
-
-          <div class="xy-task-progress">
-            <span class="xy-task-field-label">进展</span>
-            <EditableValue v-model="task.进展" label="进展" multiline :rows="2" />
-          </div>
-
-          <div class="xy-task-details">
-            <div class="xy-task-detail">
-              <span>委托方</span>
-              <strong><EditableValue v-model="task.委托方" label="委托方" /></strong>
-            </div>
-            <div class="xy-task-detail">
-              <span>奖励</span>
-              <strong><EditableValue v-model="task.奖励" label="奖励" multiline :rows="2" /></strong>
-            </div>
-            <div class="xy-task-detail">
-              <span>交付</span>
-              <strong><EditableValue v-model="task.交付" label="交付" multiline :rows="2" /></strong>
-            </div>
-          </div>
-
-          <div class="xy-task-deadline">
-            <span class="xy-task-field-label">期限</span>
-            <template v-if="task.截止时间">
-              <span v-if="!state.editMode" :class="{ overdue: isOverdue(task.截止时间) }">
-                {{ formatTime(task.截止时间) }}{{ isOverdue(task.截止时间) ? '（已逾期）' : '' }}
-              </span>
-              <span v-else class="xy-asset-date-fields" @click.stop>
-                <EditableValue v-model.number="task.截止时间.年" type="number" label="年" :min="1" />年
-                <EditableValue v-model.number="task.截止时间.月" type="number" label="月" :min="1" :max="12" />月
-                <EditableValue v-model.number="task.截止时间.日" type="number" label="日" :min="1" :max="30" />日
-                <select v-model="task.截止时间.时辰" class="xy-asset-select xy-asset-select-time">
-                  <option v-for="hour in hours" :key="hour" :value="hour">{{ hour }}</option>
-                </select>
-                <button type="button" class="xy-asset-date-clear" @click="task.截止时间 = null">设为无期限</button>
-              </span>
-            </template>
-            <template v-else>
-              <span>无期限</span>
-              <button
-                v-if="state.editMode"
-                type="button"
-                class="xy-asset-date-clear"
-                @click="task.截止时间 = newTime()"
-              >
-                填写期限
-              </button>
-            </template>
-          </div>
-        </div>
-      </article>
+        <!-- 模式一：委托任务（契约委托结构） -->
+        <TaskCardQuest
+          v-else
+          :task="task"
+          :task-name="String(taskName)"
+          :current-time="store.data.时间"
+          @rename="renameTask(String(taskName), $event)"
+          @delete="requestDelete('task', String(taskName), String(taskName))"
+        />
+      </template>
     </div>
   </section>
 </template>
@@ -145,22 +76,35 @@ import _ from 'lodash';
 import { computed, ref } from 'vue';
 import { isCardOpen, requestDelete, showToast, state, toggleCard } from '../composables';
 import { useDataStore } from '../store';
-import CopyNameButton from './CopyNameButton.vue';
-import EditableValue from './EditableValue.vue';
+import TaskCardEvent from './TaskCardEvent.vue';
+import TaskCardPlot from './TaskCardPlot.vue';
+import TaskCardQuest from './TaskCardQuest.vue';
+import { getTaskMode, type TaskMode, type TaskTime } from './taskShared';
 
 const store = useDataStore();
 const tasks = computed(() => store.data.任务);
 const taskFilter = ref<'all' | '进行中' | '待结算'>('all');
+
 const runningCount = computed(() => Object.values(tasks.value).filter(task => task.状态 === '进行中').length);
-const settlementCount = computed(() => Object.values(tasks.value).filter(task => task.状态 === '待结算').length);
-const filteredTasks = computed(() =>
-  taskFilter.value === 'all' ? tasks.value : _.pickBy(tasks.value, task => task.状态 === taskFilter.value),
+const settlementCount = computed(
+  () => Object.values(tasks.value).filter(task => task.状态 === '待结算' || task.状态 === '待平息').length,
 );
-const hours = ['子时', '丑时', '寅时', '卯时', '辰时', '巳时', '午时', '未时', '申时', '酉时', '戌时', '亥时'] as const;
+
+const filteredTasks = computed(() => {
+  if (taskFilter.value === 'all') return tasks.value;
+  if (taskFilter.value === '待结算') {
+    return _.pickBy(tasks.value, task => task.状态 === '待结算' || task.状态 === '待平息');
+  }
+  return _.pickBy(tasks.value, task => task.状态 === taskFilter.value);
+});
 
 type TaskEntry = (typeof store.data.任务)[string];
 type TaskRecord = Record<string, TaskEntry>;
-type TaskTime = { 年: number; 月: number; 日: number; 时辰: string };
+
+function resolveMode(task: any, taskName: string): TaskMode {
+  const activeStoryTitle = store.data.事件 && store.data.事件.标题;
+  return getTaskMode(task, taskName, activeStoryTitle);
+}
 
 function uniqueName(record: TaskRecord, base: string): string {
   if (!(base in record)) return base;
@@ -169,6 +113,7 @@ function uniqueName(record: TaskRecord, base: string): string {
   return `${base}${index}`;
 }
 
+/** 新增模式一：委托任务 */
 function addTask() {
   const name = uniqueName(tasks.value, '新任务');
   tasks.value[name] = {
@@ -180,6 +125,60 @@ function addTask() {
     奖励: '无',
     交付: '无',
     截止时间: null,
+    触发时间: null,
+    态势: '',
+    紧迫: '',
+    牵涉: '',
+    焦点: '',
+    祸福: '',
+  };
+  if (!isCardOpen('task', name)) toggleCard('task', name);
+}
+
+/** 新增模式二：奇遇/事件/危机 */
+function addEvent() {
+  const name = uniqueName(tasks.value, '新奇遇');
+  tasks.value[name] = {
+    状态: '进行中',
+    态势: '机缘',
+    难度: '未定',
+    紧迫: '局势平缓',
+    触发时间: newTime(),
+    牵涉: '',
+    焦点: '',
+    进展: '',
+    祸福: '',
+    委托方: '',
+    目标: '',
+    奖励: '',
+    交付: '',
+    截止时间: null,
+  };
+  if (!isCardOpen('task', name)) toggleCard('task', name);
+}
+
+/** 新增模式三：长线剧情/宿命事件 */
+function addPlot() {
+  const name = uniqueName(tasks.value, '新剧情');
+  tasks.value[name] = {
+    类别: '剧情',
+    状态: '进行中',
+    幕次: '第一幕',
+    难度: '未定',
+    局势: '',
+    契机: '',
+    焦点: '',
+    进展: '',
+    牵涉: '',
+    祸福: '',
+    紧迫: '局势平缓',
+    委托方: '',
+    目标: '',
+    奖励: '',
+    交付: '',
+    截止时间: null,
+    触发时间: null,
+    态势: '',
   };
   if (!isCardOpen('task', name)) toggleCard('task', name);
 }
@@ -188,11 +187,11 @@ function renameTask(oldName: string, rawName: string) {
   const newName = rawName.trim();
   if (!newName || newName === oldName) return;
   if (/[~/]/.test(newName)) {
-    showToast('任务名不能包含 / 或 ~');
+    showToast('名称不能包含 / 或 ~');
     return;
   }
   if (newName in tasks.value) {
-    showToast(`任务“${newName}”已存在，未覆盖原数据`);
+    showToast(`“${newName}”已存在，未覆盖原数据`);
     return;
   }
   const entries = Object.entries(tasks.value).map(
@@ -205,18 +204,5 @@ function renameTask(oldName: string, rawName: string) {
 function newTime(): TaskTime {
   const current = store.data.时间;
   return { 年: current.年, 月: current.月, 日: current.日, 时辰: current.时辰 };
-}
-
-function formatTime(time: TaskTime, compact = false): string {
-  return compact ? `${time.年}年${time.月}月${time.日}日` : `修仙历${time.年}年${time.月}月${time.日}日 · ${time.时辰}`;
-}
-
-function timeValue(time: TaskTime): number {
-  const hour = Math.max(0, hours.indexOf(time.时辰 as (typeof hours)[number]));
-  return ((time.年 * 12 + time.月 - 1) * 30 + time.日 - 1) * 12 + hour;
-}
-
-function isOverdue(deadline: TaskTime): boolean {
-  return timeValue(store.data.时间) > timeValue(deadline);
 }
 </script>

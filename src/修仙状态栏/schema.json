@@ -185,7 +185,8 @@
             "type": "string",
             "enum": [
               "进行中",
-              "待结算"
+              "待结算",
+              "待平息"
             ]
           },
           "委托方": {
@@ -214,6 +215,26 @@
           },
           "截止时间": {
             "$ref": "#/$defs/__schema7"
+          },
+          "态势": {
+            "default": "",
+            "type": "string"
+          },
+          "紧迫": {
+            "default": "",
+            "type": "string"
+          },
+          "牵涉": {
+            "default": "",
+            "type": "string"
+          },
+          "焦点": {
+            "default": "",
+            "type": "string"
+          },
+          "祸福": {
+            "default": "",
+            "type": "string"
           }
         }
       }

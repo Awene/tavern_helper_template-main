@@ -30,9 +30,11 @@ function pctStat(L: number, Q: number): number {
   return Math.max(0, Math.floor(L * 5 + Q * 20));
 }
 
-function stripStatTag(tags: any[], statName: string): string[] {
+function stripStatTags(tags: any[], ...statNames: string[]): string[] {
   if (!Array.isArray(tags)) return [];
-  const re = new RegExp(`^\\s*${statName}\\s*[:：]`);
+  if (statNames.length === 0) return tags.filter(t => typeof t === 'string');
+  const escaped = statNames.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+  const re = new RegExp(`^\\s*(?:${escaped})\\s*[:：]`);
   return tags.filter(t => typeof t === 'string' && !re.test(t));
 }
 
@@ -92,13 +94,13 @@ export function normalizeItemForMvu(item: ItemLike): Record<string, any> {
   switch (rawType) {
     case '法宝': {
       const v = pickOverride(d, '攻击力', calc(0.25));
-      d.标签 = [...stripStatTag(d.标签, '攻击力'), `攻击力:${v}`];
+      d.标签 = [...stripStatTags(d.标签, '攻击力'), `攻击力:${v}`];
       break;
     }
     case '护甲': {
       const v = pickOverride(d, '防御力', calc(0.15));
       d.位置 = d.位置 || '上装';
-      d.标签 = [...stripStatTag(d.标签, '防御力'), `防御力:${v}`];
+      d.标签 = [...stripStatTags(d.标签, '防御力'), `防御力:${v}`];
       break;
     }
     case '饰品': {
@@ -108,7 +110,7 @@ export function normalizeItemForMvu(item: ItemLike): Record<string, any> {
     case '工具': {
       // 工具 仅当显式标记 加成型 (核心生产工具如丹炉/器鼎/符笔) 才入 加成 标签;
       // 收纳类工具 (储物袋/锦囊) 不加
-      d.标签 = stripStatTag(d.标签, '加成');
+      d.标签 = stripStatTags(d.标签, '加成');
       if ((d as any).加成型 === true) {
         d.标签 = [...d.标签, `加成:${calc(1.0)}`];
       }
@@ -117,7 +119,7 @@ export function normalizeItemForMvu(item: ItemLike): Record<string, any> {
     }
     case '心法': {
       const v = pickOverride(d, '修行速度', calc(0.3));
-      d.标签 = [...stripStatTag(d.标签, '修行速度'), `修行速度:${v}`];
+      d.标签 = [...stripStatTags(d.标签, '修行速度'), `修行速度:${v}`];
       break;
     }
     case '攻击':
@@ -126,9 +128,7 @@ export function normalizeItemForMvu(item: ItemLike): Record<string, any> {
       const pen = pickOverride(d, '穿透', pctStat(L, Q));
       const atk = pickOverride(d, '攻击力', calc(0.4));
       d.标签 = [
-        ...stripStatTag(d.标签, '命中'),
-        ...stripStatTag(d.标签, '穿透%'),
-        ...stripStatTag(d.标签, '攻击力'),
+        ...stripStatTags(d.标签, '命中', '穿透%', '攻击力'),
         `命中:${hit}`,
         `穿透%:${pen}`,
         `攻击力:${atk}`,
@@ -139,8 +139,7 @@ export function normalizeItemForMvu(item: ItemLike): Record<string, any> {
       const dodge = pickOverride(d, '闪避', d20Stat(L, Q));
       const dun = pickOverride(d, '遁速', calc(1.5));
       d.标签 = [
-        ...stripStatTag(d.标签, '闪避'),
-        ...stripStatTag(d.标签, '遁速'),
+        ...stripStatTags(d.标签, '闪避', '遁速'),
         `闪避:${dodge}`,
         `遁速:${dun}`,
       ];
@@ -155,10 +154,11 @@ export function normalizeItemForMvu(item: ItemLike): Record<string, any> {
       const trigger = userTrigger || existingTrigger || '灵气受击';
       const reduce = pickOverride(d, '减免', pctStat(L, Q));
       const defense = pickOverride(d, '防御力', calc(0.3));
+      const cleanTags = (d.标签 as any[]).filter(
+        t => typeof t === 'string' && t !== '灵气受击' && t !== '气血受击',
+      );
       d.标签 = [
-        ...(d.标签 as any[]).filter(t => t !== '灵气受击' && t !== '气血受击'),
-        ...stripStatTag(d.标签, '减免%'),
-        ...stripStatTag(d.标签, '防御力'),
+        ...stripStatTags(cleanTags, '减免%', '防御力'),
         trigger,
         `减免%:${reduce}`,
         `防御力:${defense}`,
@@ -171,15 +171,14 @@ export function normalizeItemForMvu(item: ItemLike): Record<string, any> {
       const atk = pickOverride(d, '攻击力', calc(0.15));
       d.消耗 = '无';
       d.标签 = [
-        ...stripStatTag(d.标签, '灵气容量'),
-        ...stripStatTag(d.标签, '攻击力'),
+        ...stripStatTags(d.标签, '灵气容量', '攻击力'),
         `灵气容量:${cap}`, `攻击力:${atk}`,
       ];
       break;
     }
     case '丹药': {
       // 丹药 无强制标签;恢复值由 效果 描述,不再生成 恢复:N 标签
-      d.标签 = stripStatTag(d.标签, '恢复');
+      d.标签 = stripStatTags(d.标签, '恢复');
       break;
     }
     case '符箓': {
@@ -189,8 +188,7 @@ export function normalizeItemForMvu(item: ItemLike): Record<string, any> {
       const atk = pickOverride(d, '攻击力', atkDefault);
       const mana = pickOverride(d, '灵气消耗', calc(0.2));
       d.标签 = [
-        ...stripStatTag(d.标签, '灵气消耗'),
-        ...stripStatTag(d.标签, '攻击力'),
+        ...stripStatTags(d.标签, '灵气消耗', '攻击力'),
         `灵气消耗:${mana}`,
         `攻击力:${atk}`,
       ];
@@ -202,8 +200,7 @@ export function normalizeItemForMvu(item: ItemLike): Record<string, any> {
       d.完整度 = d.完整度 || '抄本';
       d.阅读进度 = `0/${Y}`;
       d.标签 = [
-        ...stripStatTag(d.标签, '完整度'),
-        ...stripStatTag(d.标签, '阅读进度'),
+        ...stripStatTags(d.标签, '完整度', '阅读进度'),
         `完整度:${d.完整度}`,
         `阅读进度:${d.阅读进度}`,
       ];
@@ -212,7 +209,7 @@ export function normalizeItemForMvu(item: ItemLike): Record<string, any> {
     case '素材': {
       const diff = pickOverride(d, '炼制难度', calc(0.5));
       d.标签 = [
-        ...stripStatTag(d.标签, '炼制难度'),
+        ...stripStatTags(d.标签, '炼制难度'),
         `炼制难度:${diff}`,
       ];
       break;
@@ -236,9 +233,7 @@ export function normalizeItemForMvu(item: ItemLike): Record<string, any> {
       delete (d as any).遁速;
       // 技能字典：若 data.技能 已是对象则保留（自创可注入），否则给空对象
       if (!d.技能 || typeof d.技能 !== 'object') d.技能 = {};
-      d.标签 = stripStatTag(d.标签, '气血');
-      d.标签 = stripStatTag(d.标签, '攻击力');
-      d.标签 = stripStatTag(d.标签, '遁速');
+      d.标签 = stripStatTags(d.标签, '气血', '攻击力', '遁速');
       break;
     }
   }
@@ -414,7 +409,7 @@ export function dataToCardView(
       if (label === '完整度') { 完整度 = value; continue; }
       if (label === '阅读进度') { 阅读进度 = value; continue; }
       stats.push({ label, value, cls: statCls(label) });
-    } else {
+    } else if (!descTags.includes(t)) {
       descTags.push(t);
     }
   }

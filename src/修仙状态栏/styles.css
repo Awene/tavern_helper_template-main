@@ -1896,6 +1896,62 @@
 .xy-task-card.xy-task-ready::before {
   background: var(--xy-jade);
 }
+/* ============ 模式三：剧情专属高贵紫色卡片完整样式系统 ============ */
+.xy-task-card.is-plot {
+  border-color: var(--xy-plot-purple-border) !important;
+  background: var(--xy-plot-card-bg) !important;
+  box-shadow: var(--xy-plot-card-shadow) !important;
+}
+.xy-task-card.is-plot::before {
+  background: linear-gradient(180deg, var(--xy-plot-purple-light), var(--xy-plot-purple)) !important;
+}
+.xy-task-card.is-plot .xy-task-seal {
+  color: var(--xy-plot-seal-text) !important;
+  background: var(--xy-plot-seal-bg) !important;
+  border-color: var(--xy-plot-purple-border) !important;
+  box-shadow: 0 0 10px var(--xy-plot-purple-glow) !important;
+}
+.xy-task-card.is-plot .xy-task-title {
+  color: var(--xy-plot-purple) !important;
+}
+.xy-task-card.is-plot .xy-task-status {
+  color: var(--xy-plot-purple) !important;
+  background: var(--xy-plot-purple-soft) !important;
+  border: 1px solid var(--xy-plot-purple-border) !important;
+}
+.xy-task-card.is-plot .xy-task-difficulty {
+  color: var(--xy-plot-purple) !important;
+  background: var(--xy-plot-purple-soft) !important;
+  border: 1px solid var(--xy-plot-purple-border) !important;
+  font-weight: 700 !important;
+}
+.xy-task-card.is-plot .xy-task-deadline-brief {
+  color: var(--xy-plot-purple) !important;
+}
+.xy-task-card.is-plot .xy-task-field-label {
+  color: var(--xy-plot-purple) !important;
+  font-weight: 700 !important;
+  text-shadow: 0 0 8px var(--xy-plot-purple-glow);
+}
+.xy-task-card.is-plot .xy-task-objective {
+  background: var(--xy-plot-purple-soft) !important;
+  border: 1px solid var(--xy-plot-purple-border) !important;
+}
+.xy-task-card.is-plot .xy-task-progress {
+  background: var(--xy-plot-purple-soft) !important;
+  border: 1px solid rgba(168, 85, 247, 0.22) !important;
+}
+.xy-task-card.is-plot .xy-task-detail {
+  background: var(--xy-plot-purple-soft) !important;
+  border-left: 2px solid var(--xy-plot-purple) !important;
+}
+.xy-task-card.is-plot .xy-task-detail > span {
+  color: var(--xy-plot-purple) !important;
+  font-weight: 600;
+}
+.xy-task-card.is-plot .xy-task-deadline {
+  color: var(--xy-plot-purple) !important;
+}
 .xy-task-card.xy-collapsible-open {
   box-shadow: 0 8px 20px -12px rgba(42, 37, 32, 0.5);
 }

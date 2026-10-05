@@ -739,20 +739,66 @@ const FixedAssetsSchema = z
   .preprocess(value => normalizeNamedRecord(value, '新资产'), z.record(z.string(), FixedAssetSchema))
   .prefault({});
 
-// ===== 任务 Schema =====
-// 任务只保存尚未结束的条目；完成、失败或放弃后直接移除，不保留履历。
+function normalizeTaskStatus(input: unknown): string {
+  const text = String(input ?? '').trim();
+  if (text.includes('结算')) return '待结算';
+  if (text.includes('平息')) return '待平息';
+  if (text.includes('抉择') || text.includes('选择') || text.includes('分支')) return '待抉择';
+  return '进行中';
+}
+
+// ===== 任务与事件 Schema =====
+// 对应世界书《[任务与事件规则]》的三大模式：
+// 1. 模式一：委托任务（契约委托）
+// 2. 模式二：奇遇/突发事件/危机（快进快出）
+// 3. 模式三：长线剧情/宿命事件（专属大纲驱动·统一紫色风格）
+// 任务与事件只保存尚未结束的条目；完成、失败、放弃或平息后直接移除，不保留履历。
 const TaskSchema = z.object({
-  状态: z.enum(['进行中', '待结算']).prefault('进行中'),
-  委托方: looseString('未知').prefault('未知'),
+  状态: z.preprocess(normalizeTaskStatus, z.enum(['进行中', '待结算', '待平息', '待抉择'])).catch('进行中').prefault('进行中'),
   难度: looseString('未定').prefault('未定'),
-  目标: looseString('').prefault(''),
   进展: looseString('').prefault(''),
+  // 模式一：委托任务字段
+  委托方: looseString('未知').prefault('未知'),
+  目标: looseString('').prefault(''),
   奖励: looseString('无').prefault('无'),
   交付: looseString('无').prefault('无'),
   截止时间: AssetTimeSchema,
+  // 模式二：奇遇/事件/危机字段
+  态势: looseString('').prefault(''),
+  紧迫: looseString('').prefault(''),
+  牵涉: looseString('').prefault(''),
+  焦点: looseString('').prefault(''),
+  祸福: looseString('').prefault(''),
+  触发时间: AssetTimeSchema,
+  // 模式三：长线剧情/宿命事件字段
+  类别: looseString('').prefault(''),
+  幕次: looseString('').prefault(''),
+  局势: looseString('').prefault(''),
+  契机: looseString('').prefault(''),
 });
 
 const TasksSchema = z.record(z.string(), TaskSchema).prefault({});
+
+const normalizeBoolean = (input: unknown): boolean => {
+  if (typeof input === 'boolean') return input;
+  if (typeof input === 'string') {
+    const text = input.trim().toLowerCase();
+    if (['true', '1', 'yes', '是', '开', '开启'].includes(text)) return true;
+    if (['false', '0', 'no', '否', '关', '关闭'].includes(text)) return false;
+  }
+  return Boolean(input);
+};
+
+// ===== 剧情事件 Schema =====
+const EventSchema = z
+  .object({
+    开启: z.preprocess(normalizeBoolean, z.boolean()).prefault(false),
+    标题: z.string().prefault(''),
+    阶段: z.string().prefault(''),
+    已完成事件: z.preprocess(normalizeStringArray, z.array(z.string())).prefault([]),
+    进度: z.record(z.string(), z.unknown()).optional(),
+  })
+  .prefault({ 开启: false, 标题: '', 阶段: '', 已完成事件: [] });
 
 // ===== 传闻 Schema =====
 // 旧数组/旧类别兼容；新条目只保留类别、内容、难度。重名加序号，避免覆盖。
@@ -825,6 +871,7 @@ export const CultivationStatusSchema = z.object({
   资源池: ResourcePoolSchema,
   固定资产: FixedAssetsSchema,
   任务: TasksSchema,
+  事件: EventSchema,
   地点: LocationSchema,
   时间: TimeSchema,
   状态效果: z.record(z.string(), StatusEffectSchema).prefault({}),
