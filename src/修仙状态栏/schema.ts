@@ -870,7 +870,7 @@ export const CultivationStatusSchema = z.object({
   技艺: SkillSchema,
   资源池: ResourcePoolSchema,
   固定资产: FixedAssetsSchema,
-  任务: TasksSchema,
+  历练: TasksSchema,
   事件: EventSchema,
   地点: LocationSchema,
   时间: TimeSchema,

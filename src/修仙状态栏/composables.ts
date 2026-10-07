@@ -739,7 +739,8 @@ export const performDelete = () => {
       if (data.固定资产) delete data.固定资产[c.key];
       break;
     case 'task':
-      if (data.任务) delete data.任务[c.key];
+      if (data.历练) delete data.历练[c.key];
+      if ('任务' in data) delete data.任务;
       break;
     case 'npc':
       if (data.关系列表) delete data.关系列表[c.key];

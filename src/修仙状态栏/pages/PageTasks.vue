@@ -82,7 +82,7 @@ import TaskCardQuest from './TaskCardQuest.vue';
 import { getTaskMode, type TaskMode, type TaskTime } from './taskShared';
 
 const store = useDataStore();
-const tasks = computed(() => store.data.任务);
+const tasks = computed(() => store.data.历练);
 const taskFilter = ref<'all' | '进行中' | '待结算'>('all');
 
 const runningCount = computed(() => Object.values(tasks.value).filter(task => task.状态 === '进行中').length);
@@ -98,7 +98,7 @@ const filteredTasks = computed(() => {
   return _.pickBy(tasks.value, task => task.状态 === taskFilter.value);
 });
 
-type TaskEntry = (typeof store.data.任务)[string];
+type TaskEntry = (typeof store.data.历练)[string];
 type TaskRecord = Record<string, TaskEntry>;
 
 function resolveMode(task: any, taskName: string): TaskMode {

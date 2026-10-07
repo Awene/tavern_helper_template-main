@@ -171,7 +171,7 @@
         }
       }
     },
-    "任务": {
+    "历练": {
       "default": {},
       "type": "object",
       "propertyNames": {
@@ -186,22 +186,23 @@
             "enum": [
               "进行中",
               "待结算",
-              "待平息"
+              "待平息",
+              "待抉择"
             ]
-          },
-          "委托方": {
-            "default": "未知",
-            "type": "string"
           },
           "难度": {
             "default": "未定",
             "type": "string"
           },
-          "目标": {
+          "进展": {
             "default": "",
             "type": "string"
           },
-          "进展": {
+          "委托方": {
+            "default": "未知",
+            "type": "string"
+          },
+          "目标": {
             "default": "",
             "type": "string"
           },
@@ -235,7 +236,63 @@
           "祸福": {
             "default": "",
             "type": "string"
+          },
+          "触发时间": {
+            "$ref": "#/$defs/__schema7"
+          },
+          "类别": {
+            "default": "",
+            "type": "string"
+          },
+          "幕次": {
+            "default": "",
+            "type": "string"
+          },
+          "局势": {
+            "default": "",
+            "type": "string"
+          },
+          "契机": {
+            "default": "",
+            "type": "string"
           }
+        }
+      }
+    },
+    "事件": {
+      "default": {
+        "开启": false,
+        "标题": "",
+        "阶段": "",
+        "已完成事件": []
+      },
+      "type": "object",
+      "properties": {
+        "开启": {
+          "default": false,
+          "type": "boolean"
+        },
+        "标题": {
+          "default": "",
+          "type": "string"
+        },
+        "阶段": {
+          "default": "",
+          "type": "string"
+        },
+        "已完成事件": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "进度": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {}
         }
       }
     },

@@ -454,7 +454,6 @@ export const stories: StoryOption[] = [
     tags: ['拍卖会', '囚徒'],
   },
 
-  // ==================== 特殊 · 秘境灵族 ====================
   {
     id: 'story-wanderer-spirit-plant',
     name: '日月凝灵 · 守兽相候',
@@ -479,7 +478,6 @@ export const stories: StoryOption[] = [
     tags: ['散修', '灵族', '自然成灵', '守护妖兽'],
   },
 
-  // ==================== 特殊 · 破庙拾简 ====================
   {
     id: 'story-wanderer-ruined-temple',
     name: '破庙拾简',
@@ -510,7 +508,6 @@ export const stories: StoryOption[] = [
     tags: ['散修', '奇遇'],
   },
 
-  // ==================== 特殊 · 血池魔剑 ====================
   {
     id: 'story-bloodpool-demon-sword',
     name: '血池魔剑 · 煞中初醒',
@@ -540,7 +537,6 @@ export const stories: StoryOption[] = [
     tags: ['特殊', '物化生灵', '魔剑', '血池'],
   },
 
-  // ==================== 合欢宗 · 百艳录 ====================
   {
     id: 'story-hehuan-baiyan',
     name: '百艳录 · 风流入宗',
@@ -574,7 +570,6 @@ export const stories: StoryOption[] = [
     tags: ['合欢宗', '男性人族', '非处男', '百艳录'],
   },
 
-  // ==================== 合欢宗 · 医心弟子 ====================
   {
     id: 'story-hehuan-healer',
     name: '医心问诊 · 慕怜心',
@@ -605,7 +600,6 @@ export const stories: StoryOption[] = [
     tags: ['合欢宗', '医术', '心理疏导', '慕怜心'],
   },
 
-  // ==================== 合欢宗 · 双头龙成灵 ====================
   {
     id: 'story-hehuan-double-dragon',
     name: '双头龙 · 阴华生灵',
@@ -637,7 +631,6 @@ export const stories: StoryOption[] = [
     tags: ['合欢宗', '物化生灵', '双头龙', '宗主法器'],
   },
 
-  // ==================== 合欢宗 · 上古肛塞成灵 ====================
   {
     id: 'story-hehuan-ancient-plug',
     name: '古府秘塞 · 众目成欢',
