@@ -51,7 +51,7 @@ export const rumorGroups = [
 ] as const;
 
 export const artTypes = ['心法', '攻击', '咒法', '身法', '护体', '幻术', '神识', '其他'] as const;
-export const itemTypes = ['秘籍', '配方', '符箓', '丹药', '素材', '工具', '其他'] as const;
+export const itemTypes = ['秘籍', '配方', '符箓', '阵物', '丹药', '素材', '工具', '其他'] as const;
 export const equipTypes = ['法宝', '护甲', '饰品'] as const;
 export const qualityRanks = ['凡', '黄', '玄', '地', '天'] as const;
 

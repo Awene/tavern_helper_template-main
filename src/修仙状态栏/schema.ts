@@ -315,7 +315,10 @@ const CultivationArtSchema = z.object({
 const ItemSchema = z.object({
   品质: QualityEnum.prefault('凡'),
   境界: z.string().transform(normalizeEntityRealm).optional(),
-  类型: z.enum(['秘籍', '配方', '符箓', '丹药', '素材', '工具']).prefault('素材'),
+  类型: z.preprocess(value => {
+    const type = typeof value === 'string' ? value.trim() : value;
+    return ['阵盘', '阵旗', '陣盤', '陣旗', '陣物'].includes(type as string) ? '阵物' : type;
+  }, z.enum(['秘籍', '配方', '符箓', '阵物', '丹药', '素材', '工具']).prefault('素材')),
   消耗: z.string().optional(),
   五行: FiveElementsEnum.optional(),
   标签: z.preprocess(normalizeStringArray, z.array(z.string())).prefault([]),
@@ -323,7 +326,7 @@ const ItemSchema = z.object({
     .number()
     .transform(n => clamp(n, 0, Infinity))
     .prefault(0),
-  效果: z.record(z.string(), z.string()).optional(),
+  效果: z.preprocess(normalizeStringRecord, z.record(z.string(), z.string())).optional(),
   描述: z.string().prefault(''),
 });
 

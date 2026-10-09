@@ -106,6 +106,7 @@
 /* ============ 夜间模式 ============ */
 :root[data-theme='dark'],
 html[data-theme='dark'] {
+  --xy-el-hundun: #d4c8e8;
   --xy-paper: #1f1c25;
   --xy-paper-soft: #25212c;
   --xy-paper-warm: #2c2632;

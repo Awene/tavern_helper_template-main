@@ -105,6 +105,9 @@ export const FIELD_SCHEMAS: Partial<Record<ItemKind, FieldDef[]>> = {
     { key: '加成型', label: '核心生产工具', type: 'toggle', group: 'top', default: false, hint: '丹炉/器鼎/符笔等启用后会按品质给出加成数值' },
   ],
   // —— 物品 ——
+  阵物: [
+    { key: '数量', label: '数量', type: 'integer', group: 'top', default: 1, hint: '阵盘、阵旗等；在效果中填写对应阵法及加成，使用者须掌握该阵法' },
+  ],
   丹药: [
     { key: '数量', label: '数量', type: 'integer', group: 'top', default: 1 },
   ],

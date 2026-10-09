@@ -5008,6 +5008,7 @@
           '饰品',
           '工具',
           '符箓',
+          '阵物',
           '丹药',
           '秘籍',
           '素材',
@@ -5045,6 +5046,7 @@
           '秘籍',
           '配方',
           '符箓',
+          '阵物',
           '丹药',
           '素材',
           '工具',
@@ -5799,6 +5801,7 @@
         工具: 'fa-solid fa-screwdriver-wrench',
         丹药: 'fa-solid fa-prescription-bottle',
         符箓: 'fa-solid fa-scroll',
+        阵物: 'fa-solid fa-compass',
         秘籍: 'fa-solid fa-book',
         配方: 'fa-solid fa-flask',
         素材: 'fa-solid fa-cubes-stacked',
@@ -5858,6 +5861,11 @@
           }
         }
         return result;
+      }
+
+      function normalizeFormationItemType(value) {
+        const type = String(value || '').replace(/[\[\]]/g, '').trim();
+        return ['阵盘', '阵旗', '陣盤', '陣旗', '陣物'].includes(type) ? '阵物' : type;
       }
 
       // 把 效果 字段值解析成 {name: desc} 字典(兼容三种格式)
@@ -5968,7 +5976,7 @@
                 } else if (key === '效果') {
                   Object.assign(cur.效果, _parseEffectValue(value));
                 } else {
-                  cur.fields[key] = value;
+                  cur.fields[key] = key === '类型' ? normalizeFormationItemType(value) : value;
                 }
               }
             }

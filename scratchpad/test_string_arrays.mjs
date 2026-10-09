@@ -116,4 +116,35 @@ for (const schema of [mvuSchema, exports.Schema]) {
   assert.deepEqual(plain(data.物品.剑.标签), ['命中:4', '攻击力:450000']);
   checks += 3;
 }
+for (const name of ['聚灵阵盘', '聚灵阵旗']) {
+  const formationItem = { 类型: '阵物', 品质: '玄', 境界: '筑基', 数量: 2, 标签: [], 效果: { 回灵: '聚灵阵运转期间，每回合结束恢复75灵气' } };
+  for (const schema of [mvuSchema, exports.Schema]) {
+    const data = schema.parse({ 物品: { [name]: formationItem }, 功法: { 聚灵阵: { 类型: '阵法' } }, 关系列表: { 测试: { 物品: { [name]: formationItem } } } });
+    assert.equal(data.物品[name].类型, '阵物');
+    assert.equal(data.物品[name].数量, 2);
+    assert.equal(data.物品[name].效果.回灵, formationItem.效果.回灵);
+    assert.equal(data.功法.聚灵阵.类型, '阵法');
+    assert.equal(data.关系列表.测试.物品[name].类型, '阵物');
+    assert.deepEqual(plain(schema.parse(data)), plain(data));
+    checks += 6;
+  }
+  const panel = item.parseTablePanel(`{${name}}\n| 类型: 阵物 | 数量: 2 |\n| 效果: 回灵: 聚灵阵每回合恢复75灵气 |`);
+  const cards = item._flattenItemSections(panel);
+  assert.equal(cards[0].fields.类型, '阵物');
+  assert(renderer.renderItemHtml(panel).includes('阵物'));
+  checks += 2;
+}
+for (const type of ['阵盘', ' 阵旗 ', '陣盤', '陣旗', '陣物', ' 阵物 ']) {
+  for (const schema of [mvuSchema, exports.Schema]) {
+    const data = schema.parse({ 物品: { 测试: { 类型: type, 数量: '2', 效果: '聚灵阵每回合恢复75灵气' } } });
+    assert.equal(data.物品.测试.类型, '阵物');
+    assert.equal(data.物品.测试.数量, 2);
+    assert.equal(data.物品.测试.效果.说明, '聚灵阵每回合恢复75灵气');
+    assert.deepEqual(plain(schema.parse(data)), plain(data));
+    checks += 4;
+  }
+  const cards = item._flattenItemSections(item.parseTablePanel(`{测试}\n| 类型: ${type} | 数量: 2 |`));
+  assert.equal(cards[0].fields.类型, '阵物');
+  checks++;
+}
 console.log(`PASS: ${checks} array normalization, panel, and schema checks.`);

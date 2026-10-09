@@ -10,7 +10,7 @@ export const ITEM_CATEGORIES: ItemCategory[] = ['功法', '装备', '物品', '�
 export const ITEM_KINDS_BY_CATEGORY: Record<ItemCategory, ItemKind[]> = {
   功法: ['心法', '攻击', '咒法', '身法', '护体', '阵法'],
   装备: ['法宝', '护甲', '饰品'],
-  物品: ['丹药', '符箓', '秘籍', '素材', '工具'],
+  物品: ['丹药', '符箓', '阵物', '秘籍', '素材', '工具'],
   灵石: ['灵石'],
   傀儡: ['傀儡'],
   灵兽: ['灵兽'],
@@ -35,6 +35,7 @@ export const EFFECT_SUPPORTED_KINDS: ReadonlySet<ItemKind> = new Set<ItemKind>([
   '工具', // 全部装备
   '丹药',
   '符箓',
+  '阵物',
   '秘籍',
   '素材', // 全部物品
 ]);
@@ -52,6 +53,7 @@ export const ALL_ITEM_KINDS: ItemKind[] = [
   '工具',
   '丹药',
   '符箓',
+  '阵物',
   '秘籍',
   '素材',
   '傀儡',
