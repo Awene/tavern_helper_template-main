@@ -1,5 +1,10 @@
 <template>
-  <div class="xy-refine-overlay" @click="close" @contextmenu.prevent>
+  <div
+    class="xy-refine-overlay"
+    :style="{ top: `${visibleFrame.top}px`, height: `${visibleFrame.height}px` }"
+    @click="close"
+    @contextmenu.prevent
+  >
     <section
       class="xy-refine-dialog"
       :class="{ 'has-preview': refinementPreview }"
@@ -524,6 +529,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { computed, onMounted, ref } from 'vue';
+import { useVisibleFrame } from '../../shared/visible-frame';
 // 编入构建产物，运行时无需访问本地文件。
 import characterPromptExample from '../../../../Cultivation-Card-Game/Doc/世界书设定相关/人物提示词示例.txt?raw';
 import mvuUpdateRules from '../../../../Cultivation-Card-Game/世界书/变量/[mvu_update]变量更新规则.yaml?raw';
@@ -559,6 +565,7 @@ import { closeCharacterRefinement, showToast, state } from '../composables';
 const SUMMARY_WORLDBOOK_PREFIX = '本格修仙总结世界书';
 const SUMMARY_WORLDBOOK_VAR_KEY = 'summary_assistant_worldbook';
 const store = useDataStore();
+const visibleFrame = useVisibleFrame();
 const busy = ref(false);
 const progress = ref('');
 const duplicateWarning = ref('');
@@ -944,7 +951,11 @@ async function refineCharacter() {
     const connectionKey = await refinementConnectionKey();
     const userInput = `请细化以下人物变量：\n${refinementCharacterInput()}`;
     let storage: Storage | undefined;
-    try { storage = window.localStorage; } catch { /* 禁用本地存储时仍可生成。 */ }
+    try {
+      storage = window.localStorage;
+    } catch {
+      /* 禁用本地存储时仍可生成。 */
+    }
     const response = await requestRefinementJson({
       key: connectionKey,
       storage,
@@ -953,7 +964,7 @@ async function refineCharacter() {
         console.info('[人物细化] 移除 JSON Schema，尝试一次兼容请求。');
       },
       request: async structured => {
-        if (await refinementConnectionKey() !== connectionKey)
+        if ((await refinementConnectionKey()) !== connectionKey)
           throw new Error('主 API 连接已切换，请重新发起人物细化。');
         // 一次性路由绕过标记必须为每次请求重新申请。
         const cancelRouteBypass = requestRuleRouterBypass('人物细化');
@@ -1261,7 +1272,10 @@ onMounted(() => {
 <style scoped>
 .xy-refine-overlay {
   position: fixed;
-  inset: 0;
+  left: 0;
+  right: 0;
+  box-sizing: border-box;
+  zoom: calc(1 / var(--xy-ui-scale, 1));
   z-index: 10003;
   display: flex;
   align-items: center;
@@ -1273,7 +1287,8 @@ onMounted(() => {
 }
 .xy-refine-dialog {
   width: min(660px, 100%);
-  max-height: calc(100vh - 36px);
+  max-height: 100%;
+  min-height: 0;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -1286,8 +1301,10 @@ onMounted(() => {
 }
 .xy-refine-dialog.has-preview {
   width: min(980px, 100%);
+  height: 100%;
 }
 .xy-refine-head {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1400,6 +1417,9 @@ onMounted(() => {
   border-top: 0;
   overflow: hidden;
   background: var(--xy-glass, rgba(255, 255, 255, 0.18));
+}
+.xy-refine-review-bar {
+  flex-shrink: 0;
 }
 .xy-refine-character-avatar {
   display: flex;
@@ -2028,9 +2048,6 @@ onMounted(() => {
 @media (max-width: 720px) {
   .xy-refine-overlay {
     padding: 10px;
-  }
-  .xy-refine-dialog {
-    max-height: calc(100vh - 20px);
   }
   .xy-refine-head {
     padding: 10px;

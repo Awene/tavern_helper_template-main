@@ -1148,6 +1148,11 @@
     align-items: stretch;
     flex-direction: column;
   }
+  .cw-toolbar label,
+  .cw-toolbar .cw-search {
+    flex: none;
+    min-width: 0;
+  }
   .cw-installed {
     grid-template-columns: minmax(0, 1fr) 112px;
   }
