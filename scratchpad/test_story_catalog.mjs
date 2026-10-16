@@ -11,8 +11,9 @@ const removed = ['story-tianxuan-zayou', 'story-lingfeng-yueye', 'story-liuli-ba
 check(config.stories.length === 24, '24 stories including Earth school and city openings');
 for (const id of general.filter(id => id !== 'story-wanderer-auction')) {
   const story = config.findStory(id);
-  check(story.body.length >= 300 && story.constraints.必须人形, id + ' concrete scene and matching shape constraint');
+  check(story.body.length >= (id === 'story-zayou' ? 200 : 300) && story.constraints.必须人形, id + ' concrete scene and matching shape constraint');
 }
+check(!config.findStory('story-zayou').body.includes('铜环') && config.findStory('story-zayou').body.endsWith('你的灵根资质开始显现。'), 'root-testing opening ends at the test');
 for (const id of removed) check(!config.findStory(id), 'deleted story absent');
 for (const story of config.stories) {
   check(story.类型 === (general.includes(story.id) || story.id.startsWith('story-earth-') ? '通用' : '特殊'), story.id + ' category');

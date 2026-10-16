@@ -101,7 +101,7 @@ events.chat(); check(!host.CultivationWorldAdvance.pending(), 'chat change clear
 
 const ejsContext = {};
 vm.runInNewContext(fs.readFileSync('D:/application/Tavern/SillyTavern-1.16.0/data/default-user/extensions/ST-Prompt-Template/src/3rdparty/ejs.js', 'utf8'), ejsContext);
-for (const filename of ['⚓️Gemini3.1p开.txt', '⚓️Gemini3.7F与3.8开.txt']) {
+for (const filename of ['⚓️Gemini开.txt']) {
   const text = fs.readFileSync(card + '预设/本格修仙/条目/' + filename, 'utf8');
   await ejsContext.ejs.render(text, {}, { async: true });
   check(!text.includes('lastMessageId') && text.includes('cot头'), filename + ' keeps format variables without context dependency');
