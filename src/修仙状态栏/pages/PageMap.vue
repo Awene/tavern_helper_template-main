@@ -94,7 +94,7 @@ import earthMap from '../maps/地球/地球地图.png?url';
 // 冥界、地球新图单独内联，避免依赖尚未发布的 CDN 文件；构建后核验 HTML 小于 20MB。
 const MAP_CDN_BASE =
   (window as Window & { __CULTIVATION_MAP_BASE__?: string }).__CULTIVATION_MAP_BASE__ ||
-  'https://testingcf.jsdelivr.net/gh/Awene/tavern_helper_template-main@v1.0.59/src/修仙状态栏/maps';
+  'https://testingcf.jsdelivr.net/gh/Awene/tavern_helper_template-main@v1.0.60/src/修仙状态栏/maps';
 
 const MAPS: Record<string, Record<string, string>> = {
   凡界: {
