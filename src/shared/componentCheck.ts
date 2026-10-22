@@ -151,7 +151,7 @@ export async function inspectComponents(): Promise<ComponentCheck[]> {
       ? 'unknown'
       : !matches.length
         ? 'missing'
-        : !diagnostics.ready || !diagnostics.enabled || !compatible.length || compatible.some(x => !x.value!.rules)
+        : !diagnostics.ready || !diagnostics.enabled || !compatible.length || compatible.every(x => !x.value!.rules)
           ? 'warning'
           : versions.some(v => versionState(v, COMPONENT_BASELINE.routerConfig) !== 'ok')
             ? 'warning'

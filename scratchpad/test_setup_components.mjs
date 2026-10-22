@@ -44,22 +44,23 @@ variablePreset.prompts=[];
 assert.equal((await apiMode.applyApiMode('额外API')).ok,false,'incompatible preset never reports success');
 assert.equal(worldbook[0].enabled,false,'preflight failure does not change worldbook');
 
-let missing = '', failFetch = false, disabled = false, configVersion = '2026.10.22';
+let missing = '', failFetch = false, disabled = false, configVersion = '2026.10.22', ruleCount = 5;
 const host = {
   TavernHelper: {}, Mvu: {getMvuData(){},parseMessage(){}},
   EjsTemplate: {getFeatures:()=>({enabled:!disabled})},
-  CultivationRuleRouter:{getDiagnostics:()=>({version:'0.19.6',ready:true,enabled:true,books:{book:{rules:5,metadata:configVersion?{id:'bengexiuxian',version:configVersion}:null}}})},
+  CultivationRuleRouter:{getDiagnostics:()=>({version:'0.19.6',ready:true,enabled:true,books:{book:{rules:ruleCount,metadata:configVersion?{id:'bengexiuxian',version:configVersion}:null},summary:{rules:0,metadata:{id:'bengexiuxian',version:'2026.10.22'}}}})},
   fetch: async url => { if(failFetch) throw Error('offline'); return {ok:true,json:async()=>({version:url.includes('JS-Slash')?'4.9.3':url.includes('ST-Prompt')?'1.17.8.1':'0.19.6'})}; },
 };
 const check = load('componentCheck.ts', {
   window:{parent:host},AbortSignal,
   isInstalledExtension:id=>id!==missing,
   getPreset:()=>({extensions:{cultivation_card:{id:'bengexiuxian',version:'2026.10.22'}}}),
-  getCharWorldbookNames:()=>({primary:'book',additional:[]}),
+  getCharWorldbookNames:()=>({primary:'book',additional:['summary']}),
 });
 assert.equal(check.compareComponentVersion('1.17.10','1.17.8.1'),1);
 assert.equal(check.compareComponentVersion('unknown','1.0'),null);
 assert.ok((await check.inspectComponents()).every(r=>r.state==='ok'));
+ruleCount=0; assert.equal((await check.inspectComponents()).at(-1).state,'warning'); ruleCount=5;
 const readyMvu = host.Mvu;
 host.Mvu = {};
 assert.equal((await check.inspectComponents()).find(r=>r.id==='mvu').state,'warning');
