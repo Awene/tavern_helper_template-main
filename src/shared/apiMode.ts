@@ -44,9 +44,7 @@ export interface ApplyApiModeResult {
 function charWorldbookNames(): string[] {
   if (typeof getCharWorldbookNames !== 'function') return [];
   const bound = getCharWorldbookNames('current');
-  return [bound.primary, ...bound.additional].filter(
-    (n): n is string => typeof n === 'string' && n.length > 0,
-  );
+  return [bound.primary, ...bound.additional].filter((n): n is string => typeof n === 'string' && n.length > 0);
 }
 
 /** 把当前角色卡绑定的世界书按模式表切换启用状态 */
@@ -71,11 +69,7 @@ async function applyWorldbook(mode: ApiMode): Promise<number> {
       continue;
     }
     await updateWorldbookWith(wbName, wb =>
-      wb.map(e =>
-        WORLDBOOK_ENABLED[e.name] !== undefined
-          ? { ...e, enabled: WORLDBOOK_ENABLED[e.name][mode] }
-          : e,
-      ),
+      wb.map(e => (WORLDBOOK_ENABLED[e.name] !== undefined ? { ...e, enabled: WORLDBOOK_ENABLED[e.name][mode] } : e)),
     );
     changed += hits.length;
   }
@@ -111,8 +105,16 @@ async function applyPreset(mode: ApiMode): Promise<number> {
  */
 export async function applyApiMode(mode: ApiMode): Promise<ApplyApiModeResult> {
   try {
+    if (typeof getPreset !== 'function' || typeof updatePresetWith !== 'function')
+      throw new Error('酒馆助手预设接口不可用');
+    const prompts = getPreset('in_use').prompts ?? [];
+    if (!Object.keys(PRESET_ENABLED).every(name => prompts.filter(p => p.name === name).length === 1)) {
+      throw new Error('当前预设缺少变量模式条目，请先选择本格修仙预设');
+    }
     const worldbookChanged = await applyWorldbook(mode);
+    if (worldbookChanged === 0) throw new Error('当前角色未绑定本格修仙世界书，未切换模式');
     const presetChanged = await applyPreset(mode);
+    if (presetChanged !== 2) throw new Error('预设切换失败，世界书可能已改变，请重新应用');
     return { ok: true, worldbookChanged, presetChanged };
   } catch (err) {
     console.error('[apiMode] 应用变量更新模式失败：', err);

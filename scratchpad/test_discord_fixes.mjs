@@ -101,10 +101,17 @@ events.chat(); check(!host.CultivationWorldAdvance.pending(), 'chat change clear
 
 const ejsContext = {};
 vm.runInNewContext(fs.readFileSync('D:/application/Tavern/SillyTavern-1.16.0/data/default-user/extensions/ST-Prompt-Template/src/3rdparty/ejs.js', 'utf8'), ejsContext);
-for (const filename of ['⚓️Gemini开.txt']) {
+for (const filename of ['🔌 Gemini头部.txt', '🔌 Gemini尾部.txt']) {
   const text = fs.readFileSync(card + '预设/本格修仙/条目/' + filename, 'utf8');
-  await ejsContext.ejs.render(text, {}, { async: true });
-  check(!text.includes('lastMessageId') && text.includes('cot头'), filename + ' keeps format variables without context dependency');
+  const rendered = await ejsContext.ejs.render(text, { getvar: key => key === 'ai模型' ? 'Gemini' : '' }, { async: true });
+  check(!text.includes('lastMessageId') && !rendered.includes('<%'), filename + ' renders without chat-context dependency');
+  if (filename.includes('头部')) {
+    check(rendered.includes('{{setvar::ai模型::Gemini}}') && rendered.includes('<role_adapter model="Gemini">'), 'Gemini header declares its profile and output adapter');
+  } else {
+    check(rendered.includes('output_template'), 'Gemini tail follows the current output contract');
+    const inactive = await ejsContext.ejs.render(text, { getvar: () => 'Claude' }, { async: true });
+    check(inactive.trim() === '', 'Gemini tail is omitted for another model');
+  }
 }
 console.log('Discord fixes:', checks, 'checks passed');
 

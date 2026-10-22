@@ -1,11 +1,13 @@
 <template>
   <div>
-    <h2 class="xs-step-title">配 · 变量更新方式</h2>
+    <h2 class="xs-step-title">配 · 模型与变量</h2>
     <p class="xs-step-subtitle">
-      决定「面板变量」由谁来更新。选择后，卡片会自动开关世界书与预设里对应的条目；
-      余下的 MVU 扩展设置见「额外API」旁的图文教程。
+      决定「面板变量」由谁来更新。选择后，卡片会自动开关世界书与预设里对应的条目； 余下的 MVU
+      扩展设置见「额外API」旁的图文教程。
     </p>
 
+    <ModelModeControl :disabled="applying" @busy="modelBusy = $event" />
+    <h3>变量更新方式</h3>
     <div class="xs-card-grid cols-2">
       <div class="xs-apimode-cell">
         <OptionCard
@@ -41,12 +43,7 @@
 
     <div class="xs-actions">
       <button type="button" class="xs-btn" @click="store.prev">返回</button>
-      <button
-        type="button"
-        class="xs-btn xs-btn-primary"
-        :disabled="applying"
-        @click="onContinue"
-      >
+      <button type="button" class="xs-btn xs-btn-primary" :disabled="applying || modelBusy" @click="onContinue">
         {{ applying ? '应用中…' : '继续 ▸' }}
       </button>
     </div>
@@ -56,33 +53,40 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
+import ModelModeControl from '../../shared/ModelModeControl.vue';
+import { getModelMode } from '../../shared/modelMode';
 import { useStartStore } from '../store';
-import { applyApiMode } from '../apiMode';
+import { applyApiMode, getApiMode } from '../apiMode';
 import OptionCard from '../components/OptionCard.vue';
 import ApiTutorialModal from '../components/ApiTutorialModal.vue';
 
 const store = useStartStore();
 const tutorialOpen = ref(false);
 const applying = ref(false);
+const modelBusy = ref(false);
+onMounted(async () => {
+  store.setApiMode(await getApiMode());
+});
 
 async function onContinue() {
-  if (applying.value) return;
+  if (applying.value || modelBusy.value) return;
   applying.value = true;
   const mode = store.selection.变量更新模式;
   try {
+    if (!getModelMode()) throw new Error('请先选择一个预设模型模式');
     const res = await applyApiMode(mode);
     if (res.ok) {
       const label = mode === '额外API' ? '额外API输出' : '随主AI输出';
       store.showToast(`已切换为「${label}」（世界书 ${res.worldbookChanged} 条 / 预设 ${res.presetChanged} 条）`);
+      store.next();
     } else {
-      store.showToast('切换条目时出错，请检查酒馆环境；可稍后手动开关');
+      store.showToast(res.reason || '切换失败，请重新应用');
     }
-  } catch {
-    store.showToast('切换条目失败，可稍后手动开关');
+  } catch (error) {
+    store.showToast(error instanceof Error ? error.message : '切换失败，请重试');
   } finally {
     applying.value = false;
-    store.next();
   }
 }
 </script>

@@ -85,7 +85,13 @@
     </transition>
 
     <!-- 进入配置后显示主题切换 -->
-    <button v-if="store.stepIndex > 0" type="button" class="xs-floating-theme" :title="isDark ? '切换日间' : '切换夜间'" @click="toggleTheme">
+    <button
+      v-if="store.stepIndex > 0"
+      type="button"
+      class="xs-floating-theme"
+      :title="isDark ? '切换日间' : '切换夜间'"
+      @click="toggleTheme"
+    >
       {{ isDark ? '☀' : '🌙' }}
     </button>
   </div>
@@ -96,6 +102,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { publishSharedTheme, readSharedTheme, subscribeSharedTheme, type SharedTheme } from '../shared/theme';
 import { useStartStore } from './store';
 import StepCover from './steps/StepCover.vue';
+import StepComponents from './steps/StepComponents.vue';
 import StepApiMode from './steps/StepApiMode.vue';
 import StepDifficulty from './steps/StepDifficulty.vue';
 import StepRoot from './steps/StepRoot.vue';
@@ -109,6 +116,7 @@ const store = useStartStore();
 
 const steps = [
   { title: '封面', comp: StepCover },
+  { title: '检测', comp: StepComponents },
   { title: '配置', comp: StepApiMode },
   { title: '难度', comp: StepDifficulty },
   { title: '种族 · 灵根 · 体质', comp: StepRoot },
