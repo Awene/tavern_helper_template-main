@@ -1,4 +1,4 @@
-export type TaskMode = 'plot' | 'event' | 'quest';
+export type TaskMode = 'plot' | 'quest';
 
 export type TaskTime = { 年: number; 月: number; 日: number; 时辰: string };
 
@@ -36,46 +36,11 @@ export function getEventTimeString(task: any, currentTime: TaskTime): string {
   return '';
 }
 
-/** 模式三：长线剧情判断 */
-export function isPlot(task: any, taskName?: string, activeStoryTitle?: string): boolean {
-  if (!task) return false;
-  if (
-    task.类别 === '剧情' ||
-    task.类型 === '剧情' ||
-    task.幕次 ||
-    task.契机 ||
-    task.局势
-  ) {
-    return true;
-  }
-  const name = String(taskName || task.名称 || '');
-  if (name.includes('剧情') || name === '残简之秘') {
-    return true;
-  }
-  if (activeStoryTitle && (name === activeStoryTitle || name.includes(activeStoryTitle))) {
-    return true;
-  }
-  return false;
+/** 世界书剧情标识；委托不会因共享字段而被误判。 */
+export function isPlot(task: any): boolean {
+  return task?.类别 === '剧情';
 }
 
-/** 模式二：奇遇/突发事件/危机判断 */
-export function isEvent(task: any, taskName?: string, activeStoryTitle?: string): boolean {
-  if (!task) return false;
-  if (isPlot(task, taskName, activeStoryTitle)) return false;
-  return Boolean(
-    task.态势 ||
-    task.牵涉 ||
-    task.焦点 ||
-    task.祸福 ||
-    task.紧迫 ||
-    task.状态 === '待平息' ||
-    task.状态 === '待抉择',
-  );
-}
-
-/** 确定所属模式：模式一 (quest) | 模式二 (event) | 模式三 (plot) */
-export function getTaskMode(task: any, taskName?: string, activeStoryTitle?: string): TaskMode {
-  if (isPlot(task, taskName, activeStoryTitle)) return 'plot';
-  if (isEvent(task, taskName, activeStoryTitle)) return 'event';
-  return 'quest';
+export function getTaskMode(task: any): TaskMode {
+  return isPlot(task) ? 'plot' : 'quest';
 }

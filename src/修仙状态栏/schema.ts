@@ -748,29 +748,24 @@ function normalizeTaskStatus(input: unknown): string {
 }
 
 // ===== 任务与事件 Schema =====
-// 对应世界书《[任务与事件规则]》的三大模式：
-// 1. 模式一：委托任务（契约委托）
-// 2. 模式二：奇遇/突发事件/危机（快进快出）
-// 3. 模式三：长线剧情/宿命事件（专属大纲驱动·统一紫色风格）
+// 委托与世界书剧情共用历练结构；
 // 任务与事件只保存尚未结束的条目；完成、失败、放弃或平息后直接移除，不保留履历。
 const TaskSchema = z.object({
   状态: z.preprocess(normalizeTaskStatus, z.enum(['进行中', '待结算', '待平息', '待抉择'])).catch('进行中').prefault('进行中'),
   难度: looseString('未定').prefault('未定'),
   进展: looseString('').prefault(''),
-  // 模式一：委托任务字段
+  // 委托任务字段
   委托方: looseString('未知').prefault('未知'),
   目标: looseString('').prefault(''),
   奖励: looseString('无').prefault('无'),
   交付: looseString('无').prefault('无'),
   截止时间: AssetTimeSchema,
-  // 模式二：奇遇/事件/危机字段
-  态势: looseString('').prefault(''),
+  // 剧情共享字段
   紧迫: looseString('').prefault(''),
   牵涉: looseString('').prefault(''),
   焦点: looseString('').prefault(''),
-  祸福: looseString('').prefault(''),
   触发时间: AssetTimeSchema,
-  // 模式三：长线剧情/宿命事件字段
+  // 剧情标识与里程碑
   类别: looseString('').prefault(''),
   幕次: looseString('').prefault(''),
   局势: looseString('').prefault(''),

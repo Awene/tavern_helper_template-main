@@ -1896,7 +1896,7 @@
 .xy-task-card.xy-task-ready::before {
   background: var(--xy-jade);
 }
-/* ============ 模式三：剧情专属高贵紫色卡片完整样式系统 ============ */
+/* ============ 剧情专属高贵紫色卡片完整样式系统 ============ */
 .xy-task-card.is-plot {
   border-color: var(--xy-plot-purple-border) !important;
   background: var(--xy-plot-card-bg) !important;

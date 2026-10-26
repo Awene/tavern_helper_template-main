@@ -18,7 +18,7 @@
       </svg>
     </button>
 
-    <!-- 模式三头部：剧 / 终 -->
+    <!-- 剧情头部：剧 / 终 -->
     <div
       class="xy-task-head xy-collapsible-head"
       role="button"
@@ -67,7 +67,7 @@
       </span>
     </div>
 
-    <!-- 模式三主体：长线剧情专属紫色大纲结构 -->
+    <!-- 剧情主体：长线剧情专属紫色大纲结构 -->
     <div v-show="state.editMode || isCardOpen('task', taskName)" class="xy-task-body xy-collapsible-body">
 
       <!-- 焦点 -->
@@ -82,7 +82,7 @@
         <EditableValue v-model="task.进展" label="进展" multiline :rows="2" />
       </div>
 
-      <!-- 幕次 / 局势 / 契机 / 牵涉 / 祸福 -->
+      <!-- 幕次 / 局势 / 契机 / 牵涉 -->
       <div class="xy-task-details">
         <div v-if="task.幕次 || state.editMode" class="xy-task-detail">
           <span>幕次</span>
@@ -99,10 +99,6 @@
         <div v-if="task.牵涉 || state.editMode" class="xy-task-detail">
           <span>牵涉</span>
           <strong><EditableValue v-model="task.牵涉" label="牵涉" multiline :rows="2" /></strong>
-        </div>
-        <div v-if="task.祸福 || state.editMode" class="xy-task-detail">
-          <span>祸福</span>
-          <strong><EditableValue v-model="task.祸福" label="祸福" multiline :rows="2" /></strong>
         </div>
       </div>
 

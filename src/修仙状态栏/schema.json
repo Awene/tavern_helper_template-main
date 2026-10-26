@@ -217,10 +217,6 @@
           "截止时间": {
             "$ref": "#/$defs/__schema7"
           },
-          "态势": {
-            "default": "",
-            "type": "string"
-          },
           "紧迫": {
             "default": "",
             "type": "string"
@@ -230,10 +226,6 @@
             "type": "string"
           },
           "焦点": {
-            "default": "",
-            "type": "string"
-          },
-          "祸福": {
             "default": "",
             "type": "string"
           },

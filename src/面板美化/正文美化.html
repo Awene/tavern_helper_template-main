@@ -37,17 +37,6 @@
         --rb-bubble-bg: linear-gradient(135deg, rgba(70, 60, 90, 0.65) 0%, rgba(50, 40, 70, 0.85) 100%);
         --rb-bubble-border: rgba(168, 153, 104, 0.55);
 
-        --rb-plot-purple: #c084fc;
-        --rb-plot-purple-deep: #7c3a8f;
-        --rb-plot-purple-bright: #a855f7;
-        --rb-plot-bg: linear-gradient(135deg, rgba(124, 58, 143, 0.16) 0%, rgba(30, 20, 42, 0.65) 60%, rgba(20, 14, 28, 0.82) 100%);
-        --rb-plot-border: rgba(124, 58, 143, 0.45);
-        --rb-plot-border-accent: #a855f7;
-        --rb-plot-title: #f3e8ff;
-        --rb-plot-subtle: rgba(124, 58, 143, 0.08);
-        --rb-plot-highlight: rgba(168, 85, 247, 0.12);
-        --rb-plot-badge-bg: linear-gradient(135deg, #7c3a8f 0%, #5e286d 100%);
-        --rb-plot-badge-shadow: 0 2px 6px rgba(124, 58, 143, 0.4);
       }
 
       [data-theme='light'] {
@@ -69,18 +58,6 @@
         --rb-bubble-bg: linear-gradient(135deg, #faf5e8 0%, #f0e7d0 100%);
         --rb-bubble-border: rgba(201, 169, 110, 0.6);
 
-        /* 模式三：剧情专属高贵紫色调设计系统 Tokens (Plot Theme) */
-        --rb-plot-purple: #7c3a8f;
-        --rb-plot-purple-deep: #5e286d;
-        --rb-plot-purple-bright: #9333ea;
-        --rb-plot-bg: linear-gradient(135deg, rgba(246, 238, 252, 0.95) 0%, rgba(240, 226, 248, 0.88) 100%);
-        --rb-plot-border: rgba(124, 58, 143, 0.35);
-        --rb-plot-border-accent: #7c3a8f;
-        --rb-plot-title: #2e1b38;
-        --rb-plot-subtle: rgba(124, 58, 143, 0.06);
-        --rb-plot-highlight: rgba(124, 58, 143, 0.10);
-        --rb-plot-badge-bg: linear-gradient(135deg, #7c3a8f 0%, #5e286d 100%);
-        --rb-plot-badge-shadow: 0 2px 6px rgba(124, 58, 143, 0.25);
       }
 
       * {
@@ -714,7 +691,7 @@
         font-weight: 700;
         white-space: nowrap;
       }
-      /* —— 模式三：剧情事件专属紫色强调色（完全保持任务卡片风格） —— */
+      /* —— 剧情事件专属紫色强调色（完全保持任务卡片风格） —— */
       .task-panel.is-plot {
         --rb-panel-accent: #7c3a8f !important;
         border-left: 3px solid #7c3a8f;
@@ -3484,24 +3461,6 @@
         height: 1px;
         background: rgba(255, 255, 255, 0.06);
       }
-      .rb-options-section-label.is-plot {
-        color: var(--rb-plot-purple);
-        font-weight: 700;
-        letter-spacing: 1px;
-      }
-      .rb-options-section-label.is-plot i {
-        color: var(--rb-plot-purple-bright);
-        font-size: 0.95em;
-        filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.6));
-      }
-      .rb-options-section-label.is-plot::after {
-        background: linear-gradient(
-          90deg,
-          rgba(168, 85, 247, 0.45) 0%,
-          rgba(124, 58, 143, 0.15) 60%,
-          transparent 100%
-        );
-      }
       .rb-options-group {
         display: flex;
         flex-direction: column;
@@ -3595,55 +3554,6 @@
         font-size: 0.92em;
         white-space: pre-wrap;
         word-break: break-word;
-      }
-      /* —— 模式三：剧情专属选项卡片 (统一使用 CSS Variables) —— */
-      .rb-options-item.is-plot {
-        background: var(--rb-plot-bg);
-        border: 1px solid var(--rb-plot-border);
-        border-left: 3px solid var(--rb-plot-border-accent);
-        box-shadow:
-          0 4px 14px rgba(0, 0, 0, 0.28),
-          inset 0 0 16px rgba(124, 58, 143, 0.08);
-      }
-      .rb-options-item.is-plot:hover {
-        background: linear-gradient(
-          135deg,
-          rgba(124, 58, 143, 0.26) 0%,
-          rgba(48, 28, 64, 0.78) 60%,
-          rgba(28, 18, 38, 0.92) 100%
-        );
-        border-color: var(--rb-plot-purple);
-        border-left-color: var(--rb-plot-purple-bright);
-        transform: translateX(3px);
-        box-shadow:
-          0 6px 20px rgba(124, 58, 143, 0.38),
-          inset 0 0 20px rgba(124, 58, 143, 0.16);
-      }
-      .rb-options-num.is-plot {
-        background: var(--rb-plot-badge-bg);
-        box-shadow:
-          0 0 10px rgba(142, 68, 173, 0.45),
-          0 1px 0 rgba(255, 255, 255, 0.25) inset;
-      }
-      .rb-options-plot-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 1px 7px;
-        margin-right: 7px;
-        border-radius: 4px;
-        background: var(--rb-plot-badge-bg);
-        border: 1px solid rgba(255, 255, 255, 0.24);
-        color: #ffffff;
-        font-size: 0.78em;
-        font-weight: 700;
-        letter-spacing: 0.8px;
-        box-shadow: var(--rb-plot-badge-shadow);
-        vertical-align: 1px;
-      }
-      .rb-options-plot-badge i {
-        font-size: 0.88em;
-        opacity: 0.92;
       }
       /* light theme */
       [data-theme='light'] .rb-options {
@@ -3773,21 +3683,6 @@
       [data-theme='light'] .rb-options-section-label::after {
         background: rgba(160, 127, 72, 0.18);
       }
-      [data-theme='light'] .rb-options-section-label.is-plot {
-        color: #7c3a8f;
-      }
-      [data-theme='light'] .rb-options-section-label.is-plot i {
-        color: #7c3a8f;
-        filter: none;
-      }
-      [data-theme='light'] .rb-options-section-label.is-plot::after {
-        background: linear-gradient(
-          90deg,
-          rgba(124, 58, 143, 0.4) 0%,
-          rgba(124, 58, 143, 0.1) 60%,
-          transparent 100%
-        );
-      }
       [data-theme='light'] .rb-options-item {
         background: rgba(168, 153, 104, 0.07);
         border: 1px solid rgba(168, 153, 104, 0.2);
@@ -3797,41 +3692,6 @@
       [data-theme='light'] .rb-options-item:hover {
         background: rgba(168, 153, 104, 0.14);
         border-left-color: var(--rb-options-accent);
-      }
-      [data-theme='light'] .rb-options-item.is-plot {
-        background: linear-gradient(
-          135deg,
-          rgba(246, 238, 252, 0.95) 0%,
-          rgba(240, 226, 248, 0.88) 100%
-        );
-        border: 1px solid rgba(124, 58, 143, 0.32);
-        border-left: 3px solid #7c3a8f;
-        color: #2e1b38;
-        box-shadow:
-          0 4px 14px rgba(124, 58, 143, 0.08),
-          inset 0 0 12px rgba(124, 58, 143, 0.04);
-      }
-      [data-theme='light'] .rb-options-item.is-plot:hover {
-        background: linear-gradient(
-          135deg,
-          rgba(242, 228, 252, 1) 0%,
-          rgba(234, 214, 246, 0.95) 100%
-        );
-        border-color: #7c3a8f;
-        border-left-color: #6a2f7c;
-        box-shadow:
-          0 6px 18px rgba(124, 58, 143, 0.2),
-          inset 0 0 16px rgba(124, 58, 143, 0.08);
-      }
-      [data-theme='light'] .rb-options-num.is-plot {
-        background: linear-gradient(135deg, #7c3a8f 0%, #522062 100%);
-        color: #fff;
-        box-shadow: 0 2px 6px rgba(124, 58, 143, 0.35);
-      }
-      [data-theme='light'] .rb-options-plot-badge {
-        background: #7c3a8f;
-        border-color: #6a2f7c;
-        color: #ffffff;
       }
       @media (max-width: 600px) {
         .rb-options {
@@ -5281,40 +5141,18 @@
 
           const rawTitle = String(section.title || fields.事件 || fields.任务 || '');
 
-          // 判断是否为模式三【长线剧情/宿命事件】与模式二【奇遇/事件/危机】
-          const isPlot = Boolean(
-            fields.类别 === '剧情' ||
-            fields.类型 === '剧情' ||
-            fields.幕次 ||
-            fields.契机 ||
-            fields.局势 ||
-            rawTitle.includes('剧情') ||
-            rawTitle === '残简之秘',
-          );
-          const isEvent = isPlot || Boolean(
-            fields.态势 || fields.牵涉 || fields.焦点 || fields.祸福 || fields.紧迫 || fields.状态 === '待平息',
-          );
-
-          const title = rawTitle || (isPlot ? '未命名剧情' : isEvent ? '未命名奇遇' : '未命名任务');
-          const status = fields.状态 || (isEvent ? '进行中' : '待接取');
+          // 由世界书显式标记剧情，其他面板按委托呈现。
+          const isPlot = fields.类别 === '剧情';
+          const title = rawTitle || (isPlot ? '未命名剧情' : '未命名任务');
+          const status = fields.状态 || (isPlot ? '进行中' : '待接取');
           const statusType = statusClass[status] || 'pending';
 
-          if (isEvent) {
-            // 模式三：剧情事件 或 模式二：奇遇/事件/危机
-            let meta;
-            if (isPlot) {
-              meta = [
-                ['fa-solid fa-scroll', '幕次', fields.幕次 || '第一幕'],
-                ['fa-solid fa-mountain-sun', '难度', fields.难度 || '未定'],
-                ['fa-solid fa-hourglass-half', '紧迫', fields.紧迫 || fields.截止时间 || '局势平缓'],
-              ];
-            } else {
-              meta = [
-                ['fa-solid fa-yin-yang', '态势', fields.态势 || '机缘'],
-                ['fa-solid fa-mountain-sun', '难度', fields.难度 || '未定'],
-                ['fa-solid fa-hourglass-half', '紧迫', fields.紧迫 || fields.截止时间 || '无'],
-              ];
-            }
+          if (isPlot) {
+            const meta = [
+              ['fa-solid fa-scroll', '幕次', fields.幕次 || '第一幕'],
+              ['fa-solid fa-mountain-sun', '难度', fields.难度 || '未定'],
+              ['fa-solid fa-hourglass-half', '紧迫', fields.紧迫 || fields.截止时间 || '局势平缓'],
+            ];
             const metaHtml = meta
               .map(
                 ([icon, label, value]) =>
@@ -5331,9 +5169,7 @@
               );
             }
 
-            const subKeys = isPlot
-              ? ['契机', '焦点', '进展', '牵涉', '祸福'].filter(k => k !== topBannerKey)
-              : ['进展', '牵涉', '祸福'].filter(k => k !== topBannerKey);
+            const subKeys = ['契机', '焦点', '进展', '牵涉'].filter(k => k !== topBannerKey);
 
             subKeys.forEach(k => {
               if (fields[k]) {
@@ -5344,8 +5180,8 @@
             });
             const detailHtml = detailParts.join('');
 
-            const panelClass = `action-panel task-panel is-event${isPlot ? ' is-plot' : ''} task-status-${statusType}`;
-            const headerIcon = isPlot ? 'fa-solid fa-book-bookmark' : 'fa-solid fa-scroll';
+            const panelClass = `action-panel task-panel is-plot task-status-${statusType}`;
+            const headerIcon = 'fa-solid fa-book-bookmark';
 
             html +=
               `<div class="${panelClass}">` +
@@ -5353,7 +5189,7 @@
               `<div class="panel-content"><div class="task-meta">${metaHtml}</div>${detailHtml ? `<div class="task-detail">${detailHtml}</div>` : ''}</div>` +
               `</div>`;
           } else {
-            // 模式一：委托任务
+            // 委托任务
             const meta = [
               ['fa-solid fa-user-tie', '委托方', fields.委托方 || '未说明'],
               ['fa-solid fa-mountain-sun', '难度', fields.难度 || '未定'],
@@ -6874,88 +6710,32 @@
           const m = line.match(/^(\d+)\s*[.、)\]:]\s*(.+)$/);
           if (m) {
             const rawContent = m[2].trim();
-            // 匹配剧情前缀：【剧情参考文案】/【剧情】/【参考输入】/【事件】/【主线】等，支持二级注记
-            const plotMatch = rawContent.match(
-              /^(?:[【\[(（])(?:★\s*)?(剧情参考文案|参考输入|剧情|主线|事件)(?:[·\-:：]([^】\])）]+))?[】\])）]\s*(.*)$/s,
-            );
-            if (plotMatch) {
-              const mainTag = plotMatch[1];
-              const subTag = plotMatch[2] ? plotMatch[2].trim() : '';
-              const badgeLabel = subTag ? `${mainTag} · ${subTag}` : mainTag;
-              const cleanText = plotMatch[3].trim() || rawContent;
-              options.push({
-                idx: m[1],
-                text: cleanText,
-                rawText: rawContent,
-                isPlot: true,
-                badgeLabel: badgeLabel,
-              });
-            } else {
-              options.push({
-                idx: m[1],
-                text: rawContent,
-                rawText: rawContent,
-                isPlot: false,
-              });
-            }
+            options.push({ idx: m[1], text: rawContent });
           } else if (options.length > 0) {
             options[options.length - 1].text += '\n' + line;
-            options[options.length - 1].rawText += '\n' + line;
           } else {
             // 行首没有编号且没有已有项 -> 视为整段说明,直接归入第 0 项
-            options.push({ idx: '·', text: line, rawText: line, isPlot: false });
+            options.push({ idx: '·', text: line });
           }
         }
 
         function renderSingleOption(o, displayIdx) {
-          const itemCls = o.isPlot ? 'rb-options-item is-plot' : 'rb-options-item';
-          const numCls = o.isPlot ? 'rb-options-num is-plot' : 'rb-options-num';
-          const badgeHtml = o.isPlot
-            ? `<span class="rb-options-plot-badge"><i class="fa-solid fa-scroll"></i> ${_.escape(o.badgeLabel || '剧情')}</span>`
-            : '';
-          const tip = o.isPlot ? '【剧情专属选项】点击填入输入框' : '点击填入输入框';
-          const showIdx = (displayIdx !== undefined) ? displayIdx : (o.idx || '·');
           return (
-            `<div class="${itemCls}" data-option-text="${_.escape(o.text)}" title="${tip}">` +
-            `<span class="${numCls}">${_.escape(showIdx)}</span>` +
-            `<span class="rb-options-text">${badgeHtml}${_.escape(o.text)}</span>` +
+            `<div class="rb-options-item" data-option-text="${_.escape(o.text)}" title="点击填入输入框">` +
+            `<span class="rb-options-num">${_.escape(displayIdx)}</span>` +
+            `<span class="rb-options-text">${_.escape(o.text)}</span>` +
             `</div>`
           );
         }
 
         const quickReplies = renderQuickReplyPanel();
-        const plotOptions = options.filter(o => o.isPlot);
-        const normalOptions = options.filter(o => !o.isPlot);
-
-        let body = '';
-        let seq = 1;
-        if (options.length === 0) {
-          body = `<div class="rb-options-item" data-option-text="${_.escape(text)}"><span class="rb-options-text">${_.escape(text)}</span></div>`;
-        } else if (plotOptions.length > 0 && normalOptions.length > 0) {
-          // 先渲染本轮建议（1~4项），再在下方渲染专属剧情选项栏（5~6项）
-          const normalLabel = `<div class="rb-options-section-label"><span>本轮建议</span></div>`;
-          const normalHtml = `<div class="rb-options-group">${normalOptions.map(o => renderSingleOption(o, seq++)).join('')}</div>`;
-
-          const plotLabel = `<div class="rb-options-section-label is-plot"><i class="fa-solid fa-scroll"></i><span>参考剧情选项</span></div>`;
-          const plotHtml = `<div class="rb-options-group is-plot">${plotOptions.map(o => renderSingleOption(o, seq++)).join('')}</div>`;
-
-          body = `${normalLabel}${normalHtml}${plotLabel}${plotHtml}`;
-        } else if (plotOptions.length > 0) {
-          const plotLabel = `<div class="rb-options-section-label is-plot"><i class="fa-solid fa-scroll"></i><span>参考剧情选项</span></div>`;
-          const plotHtml = `<div class="rb-options-group is-plot">${plotOptions.map(o => renderSingleOption(o, seq++)).join('')}</div>`;
-          body = `${plotLabel}${plotHtml}`;
-        } else {
-          const normalLabel = quickReplies.hasCategories
-            ? `<div class="rb-options-section-label"><span>本轮建议</span></div>`
-            : '';
-          const normalHtml = `<div class="rb-options-group">${normalOptions.map(o => renderSingleOption(o, seq++)).join('')}</div>`;
-          body = `${normalLabel}${normalHtml}`;
-        }
-
-        const countText =
-          plotOptions.length > 0
-            ? `本轮 ${options.length} 项 · ${plotOptions.length} 剧情`
-            : `本轮 ${Math.max(1, options.length)} 项`;
+        const normalLabel = quickReplies.hasCategories
+          ? `<div class="rb-options-section-label"><span>本轮建议</span></div>`
+          : '';
+        const body = options.length
+          ? normalLabel + `<div class="rb-options-group">${options.map((o, i) => renderSingleOption(o, String(i + 1))).join('')}</div>`
+          : `<div class="rb-options-item" data-option-text="${_.escape(text)}"><span class="rb-options-text">${_.escape(text)}</span></div>`;
+        const countText = `本轮 ${Math.max(1, options.length)} 项`;
 
         return (
           `<div class="rb-options">` +
