@@ -45,6 +45,7 @@
       <!-- 状态 -->
       <select v-if="state.editMode" v-model="task.状态" class="xy-task-status-select" @click.stop>
         <option value="进行中">进行中</option>
+        <option value="待抉择">待抉择</option>
         <option value="待平息">待平息</option>
         <option value="待结算">待结算</option>
         <option value="已完结">已完结</option>
@@ -120,6 +121,7 @@ import { isCardOpen, state, toggleCard } from '../composables';
 import CopyNameButton from './CopyNameButton.vue';
 import EditableValue from './EditableValue.vue';
 import { getEventTimeString, type TaskTime } from './taskShared';
+
 
 const props = defineProps<{
   task: any;

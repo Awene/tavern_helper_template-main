@@ -123,6 +123,15 @@
       </div>
     </div>
 
+    <section v-if="initialPlot" class="xs-opening-plot" aria-label="开局剧情">
+      <h3>{{ initialPlot.name }}</h3>
+      <p>第一幕 · 开局即已成立，确认后保存至历练</p>
+      <dl>
+        <template v-for="key in (['幕次', '局势', '契机', '焦点', '进展', '推进线索'] as const)" :key="key">
+          <dt>{{ key }}</dt><dd>{{ initialPlot.task[key] }}</dd>
+        </template>
+      </dl>
+    </section>
     <div class="xs-actions">
       <button type="button" class="xs-btn" @click="store.prev">返回</button>
       <button type="button" class="xs-btn xs-btn-ghost" @click="store.resetAll()">重新开始</button>
@@ -140,6 +149,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { openingPlot } from '../openingPlot';
 import {
   customStoryToOption,
   findDifficulty,
@@ -160,6 +170,7 @@ import { selectionConflict } from '../selectionRules';
 
 const store = useStartStore();
 const submitting = ref(false);
+const initialPlot = computed(() => openingPlot(store.selection.storyId));
 
 const difficulty = computed(() => findDifficulty(store.selection.difficultyId));
 const selectedRace = computed(() => findRace(store.selection.种族));
@@ -221,3 +232,12 @@ async function onConfirm() {
   }
 }
 </script>
+
+<style scoped>
+.xs-opening-plot { margin: 18px 0; padding: 16px; border: 1px solid #9165a3; border-radius: 8px; background: #9666ad10; color: var(--xs-ink); }
+.xs-opening-plot h3 { margin: 0 0 8px; color: #9165a3; }
+.xs-opening-plot p { font-size: 12px; color: var(--xs-ink-mute); }
+.xs-opening-plot dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px 14px; margin: 12px 0 0; line-height: 1.7; }
+.xs-opening-plot dt { color: #9165a3; }
+.xs-opening-plot dd { margin: 0; overflow-wrap: anywhere; }
+</style>

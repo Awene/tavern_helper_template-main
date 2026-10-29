@@ -193,6 +193,7 @@
             </div>
           </div>
 
+          <PlotFocus />
           <div class="xy-overview-grid">
             <!-- 三脉资源：压缩为细条，为灵根与体质腾出横向空间 -->
             <div class="xy-resources">
@@ -783,6 +784,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
+import PlotFocus from './pages/PlotFocus.vue';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { publishSharedTheme, readSharedTheme, subscribeSharedTheme, type SharedTheme } from '../shared/theme';
 import { useDataStore } from './store';

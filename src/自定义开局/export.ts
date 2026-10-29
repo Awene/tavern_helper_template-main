@@ -1,3 +1,4 @@
+import { openingPlot } from './openingPlot';
 /**
  * 把玩家选择组装成 MVU 的 stat_data，并写入当前消息的酒馆变量。
  * 输出形状对齐 src/修仙状态栏/schema.ts。
@@ -288,7 +289,9 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
       时辰: 起始时间.时辰 || '辰时',
     },
     状态效果: {},
+    历练: openingPlot(sel.storyId) ? { [openingPlot(sel.storyId)!.name]: openingPlot(sel.storyId)!.task } : {},
     事件: {
+      聚焦模式: '自动',
       开启: false,
       标题: '',
       阶段: '',
@@ -354,6 +357,8 @@ export function generateAIPrompt(sel: Selection): string {
   const raceDetail = race.detailLabel ? sel.种族细分.trim() : '';
 
   const lines: string[] = [];
+
+  if (openingPlot(sel.storyId)) lines.push('【开局状态交接】首幕卡已在开局确认页展示，历练已初始化为吞果初醒。初始物品及噬心蛊经已经到账，不重复发放或重复输出首幕 task_info；可以描写醒来后的现场，等待玩家行动，不跳至筑基节点。');
 
   // —— 角色信息 ——
   lines.push('【角色信息】');

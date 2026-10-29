@@ -765,6 +765,8 @@ const TaskSchema = z.object({
   牵涉: looseString('').prefault(''),
   焦点: looseString('').prefault(''),
   触发时间: AssetTimeSchema,
+  阶段: looseString('').optional(),
+  推进线索: looseString('').optional(),
   // 剧情标识与里程碑
   类别: looseString('').prefault(''),
   幕次: looseString('').prefault(''),
@@ -787,6 +789,7 @@ const normalizeBoolean = (input: unknown): boolean => {
 // ===== 剧情事件 Schema =====
 const EventSchema = z
   .object({
+    聚焦模式: z.enum(['自动', '手动', '暂停']).prefault('自动'),
     开启: z.preprocess(normalizeBoolean, z.boolean()).prefault(false),
     标题: z.string().prefault(''),
     阶段: z.string().prefault(''),

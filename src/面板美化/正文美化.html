@@ -696,6 +696,7 @@
         --rb-panel-accent: #7c3a8f !important;
         border-left: 3px solid #7c3a8f;
       }
+      .task-panel.is-plot .task-detail { grid-template-columns: minmax(0, 1fr); }
       [data-theme='dark'] .task-panel.is-plot {
         --rb-panel-accent: #c084fc !important;
         border-left: 3px solid #a855f7;
@@ -5149,8 +5150,7 @@
 
           if (isPlot) {
             const meta = [
-              ['fa-solid fa-scroll', '幕次', fields.幕次 || '第一幕'],
-              ['fa-solid fa-mountain-sun', '难度', fields.难度 || '未定'],
+                            ['fa-solid fa-mountain-sun', '难度', fields.难度 || '未定'],
               ['fa-solid fa-hourglass-half', '紧迫', fields.紧迫 || fields.截止时间 || '局势平缓'],
             ];
             const metaHtml = meta
@@ -5160,7 +5160,7 @@
               )
               .join('');
 
-            // 对齐任务卡片结构：首行核心诉求通栏，其余字段规整双列并排
+            // 剧情字段逐项独占一行，与状态栏保持一致。
             const detailParts = [];
             const topBannerKey = fields.局势 ? '局势' : fields.焦点 ? '焦点' : fields.进展 ? '进展' : '';
             if (topBannerKey && fields[topBannerKey]) {
@@ -5169,7 +5169,7 @@
               );
             }
 
-            const subKeys = ['契机', '焦点', '进展', '牵涉'].filter(k => k !== topBannerKey);
+            const subKeys = ['幕次', '契机', '焦点', '进展', '牵涉'].filter(k => k !== topBannerKey);
 
             subKeys.forEach(k => {
               if (fields[k]) {

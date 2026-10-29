@@ -4926,3 +4926,9 @@ html[data-theme='dark'] .xy-npc-name--male {
   margin: 0;
   font-size: 13px;
 }
+
+/* 剧情详情逐项通栏，避免窄屏出现三列长文字。 */
+.xy-task-card.is-plot .xy-task-details { grid-template-columns: minmax(0, 1fr); }
+.xy-task-card.is-plot .xy-task-detail { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 8px; padding: 7px 9px; line-height: 1.65; }
+.xy-task-card.is-plot .xy-task-detail > span { margin: 0; font-family: var(--xy-font-display); font-size: inherit; letter-spacing: 2px; }
+.xy-task-card.is-plot .xy-task-detail strong { font-size: inherit; line-height: inherit; }

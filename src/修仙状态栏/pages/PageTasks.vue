@@ -46,7 +46,6 @@
           @delete="requestDelete('task', String(taskName), String(taskName))"
         />
 
-
         <!-- 委托任务（契约委托结构） -->
         <TaskCardQuest
           v-else
@@ -63,7 +62,7 @@
 
 <script setup lang="ts">
 import _ from 'lodash';
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
 import { isCardOpen, requestDelete, showToast, state, toggleCard } from '../composables';
 import { useDataStore } from '../store';
 import TaskCardPlot from './TaskCardPlot.vue';
@@ -73,8 +72,15 @@ import { getTaskMode, type TaskMode } from './taskShared';
 const store = useDataStore();
 const tasks = computed(() => store.data.历练);
 const taskFilter = ref<'all' | '进行中' | '待结算'>('all');
+const revealPlot = () => {
+  taskFilter.value = 'all';
+};
+onMounted(() => document.addEventListener('xy-show-plot', revealPlot));
+onBeforeUnmount(() => document.removeEventListener('xy-show-plot', revealPlot));
 
-const runningCount = computed(() => Object.values(tasks.value).filter(task => task.状态 === '进行中').length);
+const runningCount = computed(
+  () => Object.values(tasks.value).filter(task => task.状态 === '进行中' || task.状态 === '待抉择').length,
+);
 const settlementCount = computed(
   () => Object.values(tasks.value).filter(task => task.状态 === '待结算' || task.状态 === '待平息').length,
 );
@@ -84,7 +90,10 @@ const filteredTasks = computed(() => {
   if (taskFilter.value === '待结算') {
     return _.pickBy(tasks.value, task => task.状态 === '待结算' || task.状态 === '待平息');
   }
-  return _.pickBy(tasks.value, task => task.状态 === taskFilter.value);
+  return _.pickBy(
+    tasks.value,
+    task => task.状态 === taskFilter.value || (taskFilter.value === '进行中' && task.状态 === '待抉择'),
+  );
 });
 
 type TaskEntry = (typeof store.data.历练)[string];
@@ -166,6 +175,4 @@ function renameTask(oldName: string, rawName: string) {
   for (const name of Object.keys(tasks.value)) delete tasks.value[name];
   for (const [name, value] of entries) tasks.value[name] = value;
 }
-
-
 </script>
