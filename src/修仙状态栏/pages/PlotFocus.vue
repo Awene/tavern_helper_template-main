@@ -22,7 +22,7 @@ const store = useDataStore();
 const expanded = ref(false);
 const root = ref<HTMLElement>();
 const stories = computed(() => Object.entries(store.data.历练).filter(([name, task]) => task.类别 === '剧情' && !store.data.事件.已完成事件.includes(name)).map(([name, task]) => ({ ...task, name })));
-const selection = computed(() => store.data.事件.聚焦模式 === '暂停' ? 'none' : store.data.事件.聚焦模式 === '手动' && stories.value.some(s => s.name === store.data.事件.标题) ? store.data.事件.标题 : 'auto');
+const selection = computed(() => store.data.事件.聚焦模式 === '暂停' ? 'none' : stories.value.some(s => s.name === store.data.事件.标题 && (store.data.事件.聚焦模式 === '手动' || (store.data.事件.开启 && s.本幕进行中))) ? store.data.事件.标题 : 'auto');
 const choices = computed(() => [
   { value: 'auto', name: '自由模式', hint: '随当前行动自由探索，遇到合适的剧情再展开。' },
   { value: 'none', name: '无剧情模式', hint: '不触发或推进剧情，保留已有进度；修炼、探索与委托照常。' },

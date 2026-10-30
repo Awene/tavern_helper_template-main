@@ -766,6 +766,8 @@ const TaskSchema = z.object({
   焦点: looseString('').prefault(''),
   触发时间: AssetTimeSchema,
   阶段: looseString('').optional(),
+  本幕进行中: z.preprocess(v => v === true || v === 1 || v === 'true' || v === '是', z.boolean()).prefault(false),
+  分支: looseString('').prefault(''),
   推进线索: looseString('').optional(),
   // 剧情标识与里程碑
   类别: looseString('').prefault(''),

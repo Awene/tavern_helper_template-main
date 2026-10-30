@@ -1,6 +1,9 @@
-import { dreamPlot } from './regions/nanjiang/dream';
-import { saintPlot } from './regions/nanjiang/saint';
-import { ancestorPlot } from './regions/nanjiang/ancestor';
-import type { DailyDefinition } from './types';
-export const registeredPlots = [dreamPlot, saintPlot, ancestorPlot];
-export const registeredDaily: DailyDefinition[] = [{ name: '五毒教日常', entry: '[事件]五毒教-日常', pending: ({ data }) => Boolean(data.事件?.进度?.五毒教日常?.名称) }];
+import { dispatchPlots } from './core';
+import { nanjiangPlots, nanjiangDaily } from './regions/nanjiang';
+
+// 新增地区只在这里汇总，不修改调度核心。
+export const registeredPlots = [...nanjiangPlots];
+export const registeredDaily = [...nanjiangDaily];
+export function resolvePlotFocus(data: any, action = ''): string {
+  return dispatchPlots(data, action, registeredPlots, registeredDaily).title;
+}

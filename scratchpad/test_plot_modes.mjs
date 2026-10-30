@@ -16,7 +16,7 @@ function loadTs(filename) {
  vm.runInNewContext('(function(require,module,exports){'+js+'\n})', {console})(id=>loadTs(new URL(id, 'file:///'+filename.replaceAll('\\','/')).href),module,module.exports);
  return module.exports;
 }
-const resolve = loadTs('../src/修仙状态栏/plotFocus.ts').resolvePlotFocus;
+const resolve = loadTs('../src/修仙状态栏/plotScheduling/registry.ts').resolvePlotFocus;
 async function render(source,data,action="",extra={}){let code='let out="";\n',end=0;for(const m of source.matchAll(/<%([_=-]?)([\s\S]*?)_?%>/g)){code+=`out+=${JSON.stringify(source.slice(end,m.index))};\n`;code+=['-','='].includes(m[1])?`out+=(${m[2]});\n`:m[2]+'\n';end=m.index+m[0].length;}code+=`out+=${JSON.stringify(source.slice(end))};return out;`;return new (Object.getPrototypeOf(async function(){}).constructor)('getMessageVar','getChatMessage','lastUserMessageId','getwi','plotName',code)((p,o={})=>_.get({stat_data:data},p,o.defaults),()=>action,1,async (name,extra={})=>{assert.equal(name,'[公共]统一剧情调度');return render(fs.readFileSync(c+'世界书/事件/[公共]统一剧情调度.txt','utf8'),data,action,extra);},extra.plotName);}
 const paths=['南疆/五毒教/梦茧.txt','南疆/五毒教/五毒教圣女.txt','南疆/五毒教/五毒教日常.txt','开局剧情/[开局]五毒教-万毒祖窟.txt'];
 const books=paths.map(p=>fs.readFileSync(c+'世界书/事件/凡界/'+p,'utf8'));
@@ -62,4 +62,7 @@ for(const type of ['TaskSchema','EventSchema']){const a=vm.runInContext(type,run
 console.log(`PASS ${count} mode/EJS scenarios, independent stages, single-node, schema parity and YAML.`);
 
 
+const repeated = await render(rulesText + '\n' + rulesText, d);
+assert.equal((repeated.match(/本轮剧情状态衔接：/g)||[]).length,2,'重复插入变量规则必须可编译且两处独立执行');
+console.log('PASS repeated EJS rules in one prompt scope.');
 export {render,books,base,loadTs};

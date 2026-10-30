@@ -292,9 +292,9 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
     历练: openingPlot(sel.storyId) ? { [openingPlot(sel.storyId)!.name]: openingPlot(sel.storyId)!.task } : {},
     事件: {
       聚焦模式: '自动',
-      开启: false,
-      标题: '',
-      阶段: '',
+      开启: Boolean(openingPlot(sel.storyId)),
+      标题: openingPlot(sel.storyId)?.name || '',
+      阶段: openingPlot(sel.storyId) ? '第一幕' : '',
       已完成事件: [],
     },
     // —— 原 修炼功法.功法 ——
@@ -358,7 +358,7 @@ export function generateAIPrompt(sel: Selection): string {
 
   const lines: string[] = [];
 
-  if (openingPlot(sel.storyId)) lines.push('【开局状态交接】首幕卡已在开局确认页展示，历练已初始化为吞果初醒。初始物品及噬心蛊经已经到账，不重复发放或重复输出首幕 task_info；可以描写醒来后的现场，等待玩家行动，不跳至筑基节点。');
+  if (openingPlot(sel.storyId)) lines.push('【开局状态交接】首幕卡已在开局确认页展示，历练已初始化为第一幕、本幕进行中为 true，自动聚焦本线；实际通过入门考核并获准加入五毒教后，本幕进行中记 false、保留第一幕进度并解除聚焦回自由模式，不能仅凭初始身份判断考核已完成。初始物品及噬心蛊经已经到账，不重复发放或重复输出首幕 task_info；不得把“寻找万毒祖窟”另建任务卡或剧情卡，神秘低语不是委托，初始探索目标只保存在原祖窟历练中；首轮必须忠实呈现所选剧本的既定开场：饥寒绝境、辨毒无果、吞下五彩怪果、昏迷后苏醒、识海浮现蛊经与祖窟低语。这些是开局既定事实，可以简短回溯，不能只用“已经发生”一笔略过。写到苏醒、发现异变后立即停笔，入门试炼仍未完成；不得替玩家起身出发、决定寻祖窟、修炼或通过考核。司南只能辨南北，不能推定祖窟在南方。不跳至筑基节点。');
 
   // —— 角色信息 ——
   lines.push('【角色信息】');

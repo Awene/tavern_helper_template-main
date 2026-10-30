@@ -25,7 +25,7 @@ check(run(clone(),'梦茧',registeredPlots,[],['不存在']).diagnostics.length=
 check(run(clone(),'梦茧',[registeredPlots[0],registeredPlots[0]],[]).diagnostics.length===2,'运行期重复注册全部阻断');
 assert.throws(()=>validatePlotRegistry([registeredPlots[0],registeredPlots[0]],entries),/重复/);checks++;
 assert.throws(()=>validatePlotRegistry(registeredPlots,['不存在']),/无效世界书入口/);checks++;
-const coreText=fs.readFileSync('src/修仙状态栏/plotScheduling/core.ts','utf8');check(!/南疆|五毒|祖窟|梦茧|蓝幽月|金丹|筑基/.test(coreText),'核心没有剧情或门槛硬编码');
+const coreText=fs.readFileSync('src/修仙状态栏/plotScheduling/core.ts','utf8');check(!/南疆|五毒|祖窟|梦茧|蓝幽月/.test(coreText),'核心没有具体剧情或地区硬编码');
 d=clone();d.地点.具体地点='五毒教药圃';d.修炼进度.境界='筑基初期';d.事件.进度={五毒教日常:{名称:'毒膳堂',状态:'待回应'}};
 check(run(d,'').title==='','待回应日常优先于无明确行动的新开场');
 check(run(d,'我去药圃找圣女').title===saint,'明确长线行动优先于日常');

@@ -644,7 +644,7 @@
       }
       .task-panel .task-meta {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: minmax(0, 1fr);
         gap: 7px;
         margin-bottom: 8px;
       }
@@ -691,12 +691,13 @@
         font-weight: 700;
         white-space: nowrap;
       }
+      .task-panel .task-deadline { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--rb-panel-accent); font-size: .82em; overflow-wrap: anywhere; }
       /* —— 剧情事件专属紫色强调色（完全保持任务卡片风格） —— */
       .task-panel.is-plot {
         --rb-panel-accent: #7c3a8f !important;
         border-left: 3px solid #7c3a8f;
       }
-      .task-panel.is-plot .task-detail { grid-template-columns: minmax(0, 1fr); }
+      .task-panel .task-detail { grid-template-columns: minmax(0, 1fr); }
       [data-theme='dark'] .task-panel.is-plot {
         --rb-panel-accent: #c084fc !important;
         border-left: 3px solid #a855f7;
@@ -5148,75 +5149,20 @@
           const status = fields.状态 || (isPlot ? '进行中' : '待接取');
           const statusType = statusClass[status] || 'pending';
 
-          if (isPlot) {
-            const meta = [
-                            ['fa-solid fa-mountain-sun', '难度', fields.难度 || '未定'],
-              ['fa-solid fa-hourglass-half', '紧迫', fields.紧迫 || fields.截止时间 || '局势平缓'],
-            ];
-            const metaHtml = meta
-              .map(
-                ([icon, label, value]) =>
-                  `<div class="task-meta-item"><i class="${icon}"></i><span class="task-detail-label">${_.escape(label)}</span>${_.escape(value)}</div>`,
-              )
-              .join('');
-
-            // 剧情字段逐项独占一行，与状态栏保持一致。
-            const detailParts = [];
-            const topBannerKey = fields.局势 ? '局势' : fields.焦点 ? '焦点' : fields.进展 ? '进展' : '';
-            if (topBannerKey && fields[topBannerKey]) {
-              detailParts.push(
-                `<div class="task-detail-row task-goal"><span class="task-detail-label">${_.escape(topBannerKey)}</span>${_.escape(fields[topBannerKey])}</div>`,
-              );
-            }
-
-            const subKeys = ['幕次', '契机', '焦点', '进展', '牵涉'].filter(k => k !== topBannerKey);
-
-            subKeys.forEach(k => {
-              if (fields[k]) {
-                detailParts.push(
-                  `<div class="task-detail-row"><span class="task-detail-label">${_.escape(k)}</span>${_.escape(fields[k])}</div>`,
-                );
-              }
-            });
-            const detailHtml = detailParts.join('');
-
-            const panelClass = `action-panel task-panel is-plot task-status-${statusType}`;
-            const headerIcon = 'fa-solid fa-book-bookmark';
-
-            html +=
-              `<div class="${panelClass}">` +
-              `<div class="panel-header"><i class="panel-icon ${headerIcon}"></i><span class="panel-title">${_.escape(title)}</span><span class="task-status">${_.escape(status)}</span><i class="panel-toggle fa-solid fa-chevron-down"></i></div>` +
-              `<div class="panel-content"><div class="task-meta">${metaHtml}</div>${detailHtml ? `<div class="task-detail">${detailHtml}</div>` : ''}</div>` +
-              `</div>`;
-          } else {
-            // 委托任务
-            const meta = [
-              ['fa-solid fa-user-tie', '委托方', fields.委托方 || '未说明'],
-              ['fa-solid fa-mountain-sun', '难度', fields.难度 || '未定'],
-              ['fa-solid fa-hourglass-half', '截止', fields.截止时间 || '无'],
-            ];
-            const metaHtml = meta
-              .map(
-                ([icon, label, value]) =>
-                  `<div class="task-meta-item"><i class="${icon}"></i><span class="task-detail-label">${_.escape(label)}</span>${_.escape(value)}</div>`,
-              )
-              .join('');
-
-            const detailKeys = ['目标', '进展', '奖励', '交付'];
-            const detailHtml = detailKeys
-              .filter(key => fields[key])
-              .map(
-                key =>
-                  `<div class="task-detail-row${key === '目标' ? ' task-goal' : ''}"><span class="task-detail-label">${_.escape(key)}</span>${_.escape(fields[key])}</div>`,
-              )
-              .join('');
-
-            html +=
-              `<div class="action-panel task-panel task-status-${statusType}">` +
-              `<div class="panel-header"><i class="panel-icon fa-solid fa-clipboard-list"></i><span class="panel-title">${_.escape(title)}</span><span class="task-status">${_.escape(status)}</span><i class="panel-toggle fa-solid fa-chevron-down"></i></div>` +
-              `<div class="panel-content"><div class="task-meta">${metaHtml}</div>${detailHtml ? `<div class="task-detail">${detailHtml}</div>` : ''}</div>` +
-              `</div>`;
-          }
+          const detailKeys = isPlot ? ['焦点', '进展', '幕次', '局势', '契机', '牵涉'] : ['目标', '进展', '委托方', '奖励', '交付'];
+          const goalKey = isPlot ? '焦点' : '目标';
+          const detailHtml = detailKeys.filter(key => fields[key]).map(key =>
+            `<div class="task-detail-row${key === goalKey ? ' task-goal' : ''}"><span class="task-detail-label">${_.escape(key)}</span>${_.escape(fields[key])}</div>`,
+          ).join('');
+          const deadlineLabel = isPlot ? '紧迫' : '期限';
+          const deadline = isPlot ? fields.紧迫 || '局势平缓' : fields.截止时间 || '无期限';
+          const headerIcon = isPlot ? 'fa-solid fa-book-bookmark' : 'fa-solid fa-clipboard-list';
+          html +=
+            `<div class="action-panel task-panel${isPlot ? ' is-plot' : ''} task-status-${statusType}">` +
+            `<div class="panel-header"><i class="panel-icon ${headerIcon}"></i><span class="panel-title">${_.escape(title)}</span><span class="task-status">${_.escape(status)}</span><i class="panel-toggle fa-solid fa-chevron-down"></i></div>` +
+            `<div class="panel-content"><div class="task-meta"><div class="task-meta-item"><span class="task-detail-label">难度</span>${_.escape(fields.难度 || '未定')}</div></div>` +
+            `${detailHtml ? `<div class="task-detail">${detailHtml}</div>` : ''}` +
+            `<div class="task-deadline"><span class="task-detail-label">${deadlineLabel}</span>${_.escape(deadline)}</div></div></div>`;
         });
         return html;
       }
