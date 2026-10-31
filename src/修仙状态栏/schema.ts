@@ -1,3 +1,4 @@
+import { cultivationYear, normalizeCalendarState } from '../../util/cultivation-calendar.js';
 import { normalizeStringArray } from '../../util/string-array';
 import { z } from 'zod';
 
@@ -314,7 +315,10 @@ const CultivationArtSchema = z.object({
 const ItemSchema = z.object({
   品质: QualityEnum.prefault('凡'),
   境界: z.string().transform(normalizeEntityRealm).optional(),
-  类型: z.enum(['秘籍', '配方', '符箓', '丹药', '素材', '工具']).prefault('素材'),
+  类型: z.preprocess(value => {
+    const type = typeof value === 'string' ? value.trim() : value;
+    return ['阵盘', '阵旗', '陣盤', '陣旗', '陣物'].includes(type as string) ? '阵物' : type;
+  }, z.enum(['秘籍', '配方', '符箓', '阵物', '丹药', '素材', '工具']).prefault('素材')),
   消耗: z.string().optional(),
   五行: FiveElementsEnum.optional(),
   标签: z.preprocess(normalizeStringArray, z.array(z.string())).prefault([]),
@@ -322,7 +326,7 @@ const ItemSchema = z.object({
     .number()
     .transform(n => clamp(n, 0, Infinity))
     .prefault(0),
-  效果: z.record(z.string(), z.string()).optional(),
+  效果: z.preprocess(normalizeStringRecord, z.record(z.string(), z.string())).optional(),
   描述: z.string().prefault(''),
 });
 
@@ -455,7 +459,7 @@ const RelationEntrySchema = z.preprocess(
 // ===== 地点 Schema =====
 const LocationSchema = z
   .object({
-    世界: z.enum(['凡界', '灵界', '仙界']).prefault('凡界'),
+    世界: z.enum(['凡界', '灵界', '仙界', '冥界', '地球']).prefault('凡界'),
     地域: z.string().prefault('中原'),
     具体地点: z.string().prefault('荒野'),
   })
@@ -572,7 +576,7 @@ function parseCalendarNumber(input: unknown): number {
 
 const TimeSchema = z
   .object({
-    年: z.preprocess(parseCalendarNumber, z.number().min(1).catch(1)).prefault(1),
+    年: z.preprocess(value => cultivationYear(value), z.number().min(1).catch(1)).prefault(1),
     月: z
       .preprocess(
         parseCalendarNumber,
@@ -611,7 +615,7 @@ const assetType = (input: unknown): '宗门' | '店铺' | '洞府' => {
 const normalizeAssetLocation = (input: unknown) => {
   if (typeof input === 'string') {
     const parts = input.split(/\s*(?:[·•>＞/／|]|\s+-\s+)\s*/).filter(Boolean);
-    const hasWorld = !!parts[0] && /[凡灵仙]界/.test(parts[0]);
+    const hasWorld = !!parts[0] && /^(?:[凡灵仙冥]界|地球)$/.test(parts[0]);
     return {
       世界: hasWorld ? parts[0] : '凡界',
       地域: hasWorld ? parts[1] || '中原' : parts.length >= 2 ? parts[0] : '中原',
@@ -638,8 +642,19 @@ const AssetLocationSchema = z
     normalizeAssetLocation,
     z.object({
       世界: z.preprocess(
-        value => (/仙/.test(String(value)) ? '仙界' : /灵/.test(String(value)) ? '灵界' : '凡界'),
-        z.enum(['凡界', '灵界', '仙界']),
+        value => {
+          const text = String(value);
+          return /地球/.test(text)
+            ? '地球'
+            : /冥/.test(text)
+              ? '冥界'
+              : /仙/.test(text)
+                ? '仙界'
+                : /灵/.test(text)
+                  ? '灵界'
+                  : '凡界';
+        },
+        z.enum(['凡界', '灵界', '仙界', '冥界', '地球']),
       ),
       地域: looseString('中原'),
       具体地点: looseString('荒野'),
@@ -853,7 +868,7 @@ const CustomStartMetadataSchema = z
   .prefault({ flags: [] });
 
 // ===== 主 Schema (扁平化:三大类一级目录拆掉) =====
-export const CultivationStatusSchema = z.object({
+export const CultivationStatusSchema = z.preprocess(normalizeCalendarState, z.object({
   __custom_start__: CustomStartMetadataSchema,
 
   // —— 原 基本信息.* (现升至根级) ——
@@ -874,6 +889,20 @@ export const CultivationStatusSchema = z.object({
   事件: EventSchema,
   地点: LocationSchema,
   时间: TimeSchema,
+  事件: z
+    .object({
+      开启: z
+        .preprocess(
+          value => (typeof value === 'string' ? /^(true|1|是|开启)$/i.test(value.trim()) : Boolean(value)),
+          z.boolean(),
+        )
+        .prefault(false),
+      标题: z.string().prefault(''),
+      阶段: z.string().prefault(''),
+      已完成事件: z.preprocess(normalizeStringArray, z.array(z.string())).prefault([]),
+      进度: z.record(z.string(), z.unknown()).optional(),
+    })
+    .prefault({}),
   状态效果: z.record(z.string(), StatusEffectSchema).prefault({}),
 
   // —— 原 修炼功法.功法 ——
@@ -897,7 +926,7 @@ export const CultivationStatusSchema = z.object({
       })
       .prefault({}),
   ),
-});
+}));
 
 export type CultivationStatusData = z.infer<typeof CultivationStatusSchema>;
 

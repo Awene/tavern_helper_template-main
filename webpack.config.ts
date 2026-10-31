@@ -227,7 +227,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
   const script_filepath = path.parse(entry.script);
   const should_concatenate_modules = !entry.script.replaceAll('\\', '/').endsWith('src/自定义开局/index.ts');
 
-  return (_env, argv) => ({
+  return (env, argv) => ({
     experiments: {
       outputModule: true,
     },
@@ -479,7 +479,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         inline_quick_reply_config(entry),
         { apply: watch_tavern_helper },
         { apply: schema_dump },
-        { apply: tavern_sync },
+        ...(env?.frontendOnly ? [] : [{ apply: tavern_sync }]),
         new VueLoaderPlugin(),
         unpluginAutoImport({
           dts: true,

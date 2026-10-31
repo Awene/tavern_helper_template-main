@@ -5031,6 +5031,7 @@
           '饰品',
           '工具',
           '符箓',
+          '阵物',
           '丹药',
           '秘籍',
           '素材',
@@ -5068,6 +5069,7 @@
           '秘籍',
           '配方',
           '符箓',
+          '阵物',
           '丹药',
           '素材',
           '工具',
@@ -5817,6 +5819,7 @@
         工具: 'fa-solid fa-screwdriver-wrench',
         丹药: 'fa-solid fa-prescription-bottle',
         符箓: 'fa-solid fa-scroll',
+        阵物: 'fa-solid fa-compass',
         秘籍: 'fa-solid fa-book',
         配方: 'fa-solid fa-flask',
         素材: 'fa-solid fa-cubes-stacked',
@@ -5876,6 +5879,11 @@
           }
         }
         return result;
+      }
+
+      function normalizeFormationItemType(value) {
+        const type = String(value || '').replace(/[\[\]]/g, '').trim();
+        return ['阵盘', '阵旗', '陣盤', '陣旗', '陣物'].includes(type) ? '阵物' : type;
       }
 
       // 把 效果 字段值解析成 {name: desc} 字典(兼容三种格式)
@@ -5986,7 +5994,7 @@
                 } else if (key === '效果') {
                   Object.assign(cur.效果, _parseEffectValue(value));
                 } else {
-                  cur.fields[key] = value;
+                  cur.fields[key] = key === '类型' ? normalizeFormationItemType(value) : value;
                 }
               }
             }
@@ -6387,6 +6395,39 @@
       }
 
       // —— 时空栏 <tp> 渲染:把 "修仙历X年-Y月-Z日-时辰 @ 世界-地域-地点| 天气" 转成漂亮 header —— //
+      // BEGIN CULTIVATION_CALENDAR_YEAR (源: util/cultivation-calendar.js)
+// 修仙历兼容层：仅代码识别旧历输入；提示词和界面始终使用修仙历。
+/** @param {unknown} value */
+function calendarNumber(value) {
+  if (typeof value === 'number') return Number.isInteger(value) ? value : NaN;
+  let text = String(value ?? '').normalize('NFKC').trim().replace(/[年月日号]$/, '').replace(/^初/, '');
+  text = ({ 正: '一', 冬: '十一', 腊: '十二', 臘: '十二' })[text] ?? text;
+  if (/^\d+$/.test(text)) return Number(text);
+  text = text.replace(/〇/g, '零').replace(/两/g, '二').replace(/廿/g, '二十').replace(/卅/g, '三十');
+  const digits = '零一二三四五六七八九';
+  if (!/^[零一二三四五六七八九十百千万]+$/.test(text)) return NaN;
+  if (!/[十百千万]/.test(text)) return Number([...text].map(c => digits.indexOf(c)).join(''));
+  let total = 0, section = 0, n = 0;
+  for (const c of text) {
+    const digit = digits.indexOf(c);
+    if (digit >= 0) n = digit;
+    else if (c === '万') { total += (section + n) * 10000; section = 0; n = 0; }
+    else { section += (n || 1) * ({ 十: 10, 百: 100, 千: 1000 })[c]; n = 0; }
+  }
+  return total + section + n;
+}
+
+/** @param {unknown} value @param {string} world */
+function cultivationYear(value, world = '') {
+  const text = String(value ?? '').normalize('NFKC').trim();
+  const explicitCultivation = /^修仙[历曆]/.test(text);
+  const explicitOld = /^(?:公元|公[历曆]|西[历曆]|阳历|AD\b|CE\b)/i.test(text);
+  let year = calendarNumber(text.replace(/^(?:修仙[历曆]|公元|公[历曆]|西[历曆]|阳历|AD\b|CE\b)\s*/i, ''));
+  // 无前缀的现代年份仅在地球纠正，避免改动其他世界的古代年份。
+  if (explicitOld || (!explicitCultivation && world === '地球' && year >= 1900 && year <= 2999)) year += 5000;
+  return Number.isSafeInteger(year) && year >= 1 && year <= 275000 ? year : NaN;
+}
+      // END CULTIVATION_CALENDAR_YEAR
       function renderTimeSpaceHeader(inner) {
         const text = String(inner || '').trim();
         if (!text) return '';
@@ -6401,6 +6442,11 @@
           weatherPart = (m[3] || '').trim();
         } else {
           timePart = text;
+        }
+        const yearMatch = timePart.match(/^((?:(?:修仙[历曆]|公元|公[历曆]|西[历曆]|阳历|AD\b|CE\b)\s*)?[\d零〇一二两三四五六七八九十百千万]+)(?=年|[-/.])/i);
+        if (yearMatch) {
+          const year = cultivationYear(yearMatch[1], placePart.includes('地球') ? '地球' : '');
+          if (Number.isFinite(year)) timePart = '修仙历' + year + timePart.slice(yearMatch[0].length);
         }
         // 把 "-" 分隔符换成 "·" 并清理空白
         const beautify = s =>

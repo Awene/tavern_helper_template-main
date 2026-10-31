@@ -93,6 +93,7 @@
 /* ============ 夜间模式（覆盖默认变量） ============ */
 :root[data-theme='dark'],
 html[data-theme='dark'] {
+  --xs-el-hundun: #d4c8e8;
   --xs-paper: #1f1c25;
   --xs-paper-soft: #25212c;
   --xs-paper-warm: #2c2632;

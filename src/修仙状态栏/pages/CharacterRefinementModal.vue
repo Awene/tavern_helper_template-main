@@ -1,5 +1,10 @@
 <template>
-  <div class="xy-refine-overlay" @click="close" @contextmenu.prevent>
+  <div
+    class="xy-refine-overlay"
+    :style="{ top: `${visibleFrame.top}px`, height: `${visibleFrame.height}px` }"
+    @click="close"
+    @contextmenu.prevent
+  >
     <section
       class="xy-refine-dialog"
       :class="{ 'has-preview': refinementPreview }"
@@ -524,6 +529,7 @@
 <script setup lang="ts">
 import _ from 'lodash';
 import { computed, onMounted, ref } from 'vue';
+import { useVisibleFrame } from '../../shared/visible-frame';
 // 编入构建产物，运行时无需访问本地文件。
 import characterPromptExample from '../../../../Cultivation-Card-Game/Doc/世界书设定相关/人物提示词示例.txt?raw';
 import mvuUpdateRules from '../../../../Cultivation-Card-Game/世界书/变量/[mvu_update]变量更新规则.yaml?raw';
@@ -553,12 +559,14 @@ import { dataToCardView } from '../../自定义开局/itemNormalizer';
 import { CultivationStatusSchema } from '../schema';
 import { useDataStore } from '../store';
 import { refinementConnectionKey, requestRefinementJson } from '../refinementApi';
+import { beginCharacterGeneration } from '../characterGenerationTask';
 import { closeCharacterRefinement, showToast, state } from '../composables';
 
 // 与「【本格修仙】总结」脚本共用的聊天世界书绑定。
 const SUMMARY_WORLDBOOK_PREFIX = '本格修仙总结世界书';
 const SUMMARY_WORLDBOOK_VAR_KEY = 'summary_assistant_worldbook';
 const store = useDataStore();
+const visibleFrame = useVisibleFrame();
 const busy = ref(false);
 const progress = ref('');
 const duplicateWarning = ref('');
@@ -937,14 +945,20 @@ async function refineCharacter() {
   if (busy.value) return;
   busy.value = true;
   progress.value = '正在读取细化规则并请求主 API…';
+  let task: ReturnType<typeof beginCharacterGeneration> | undefined;
   try {
+    task = beginCharacterGeneration();
     const current = _.cloneDeep(npc.value);
     if (!current) throw new Error(`未找到「${characterName.value}」的人物变量。`);
     const systemPrompt = `你是修仙人物变量细化器。遵循下方列出的规则条目与变量格式样例。\n\n${refinementReferences()}\n\n任务：细化用户给出的一个 NPC 变量。只返回 JSON 对象中的 npc；不得输出推理、Markdown、EJS、剧情正文或代码。\n\n允许读取和更新的字段仅限：名称、寿元、体质、灵根、修炼进度（其中包含境界）、物品、功法、装备、傀儡、灵兽、资源池、技艺、性格、外貌、着装。名称只用于识别人物；境界只能写入修炼进度.境界，不能另建境界字段。\n\n硬性要求：\n1. 不得返回或改动其他字段。\n2. 物品、功法、装备、傀儡、灵兽必须是以名称为键的对象，不能是数组；根据规则补足合理的新条目。\n3. 输入中已有的物品、功法、装备、傀儡、灵兽必须完整保留：不得删除、改名、改数量或改字段。仅可新增不重名的条目。\n4. 输出严格遵循上方 MVU 变量格式样例；资源池不得超过上限，物品数量为合理非负数。\n5. 输出前必须自行验算所有数值：境界与进度上限、资源池当前值与上限、寿元、技艺数值、物品数量及新增条目数量均须符合所给规则与系数表；发现不一致时修正后再输出。\n6. 必须核验体质.效果：它必须是以效果名为键、数值化加成为值的对象，且至少有一条合规效果。每个值只能是明确的数值修正词条，如 "+25%"、"-10%"、"+3"、"+500 年"；禁止“恢复更快”“体魄强健”等无量化的自然语言描述。若效果缺失、为空、不是对象、含任一不合规值，或与体质不相称，则结合体质名称、三维、灵根及规则中的既有词条，为该体质确定并输出合规效果；不得重复悟性、根骨、气感本身已经表达的加成，也不得凭空编造规则外的机制。\n7. 只输出一个可被 JSON.parse 直接解析的对象，形如 {"npc":{"寿元":{...},"修炼进度":{"境界":"..."},...}}，禁止代码块。`;
     const connectionKey = await refinementConnectionKey();
     const userInput = `请细化以下人物变量：\n${refinementCharacterInput()}`;
     let storage: Storage | undefined;
-    try { storage = window.localStorage; } catch { /* 禁用本地存储时仍可生成。 */ }
+    try {
+      storage = window.localStorage;
+    } catch {
+      /* 禁用本地存储时仍可生成。 */
+    }
     const response = await requestRefinementJson({
       key: connectionKey,
       storage,
@@ -953,13 +967,16 @@ async function refineCharacter() {
         console.info('[人物细化] 移除 JSON Schema，尝试一次兼容请求。');
       },
       request: async structured => {
-        if (await refinementConnectionKey() !== connectionKey)
+        task!.check();
+        if ((await refinementConnectionKey()) !== connectionKey)
           throw new Error('主 API 连接已切换，请重新发起人物细化。');
+        task!.check();
         // 一次性路由绕过标记必须为每次请求重新申请。
         const cancelRouteBypass = requestRuleRouterBypass('人物细化');
         try {
           return assertTextResult(
             await generateRaw({
+              generation_id: task!.generationId,
               user_input: userInput,
               ordered_prompts: refinementPrompts(systemPrompt),
               // 保持酒馆停止按钮可中断；每次请求单独绕过路由。
@@ -973,6 +990,7 @@ async function refineCharacter() {
         }
       },
     });
+    task.check();
     const generated = parseGeneratedJson(response.text).npc;
     if (!generated || typeof generated !== 'object' || Array.isArray(generated))
       throw new Error('主 API 没有返回 npc 对象。');
@@ -1000,9 +1018,14 @@ async function refineCharacter() {
         : '细化结果已生成，但 AI 返回值与现有变量一致，无需写入。',
     );
   } catch (error) {
+    if (task?.cancelled || (error instanceof Error && error.name === 'AbortError')) {
+      showToast('已停止本次人物生成。');
+      return;
+    }
     console.error('[人物细化] 人物信息细化失败：', error);
     showToast(error instanceof Error ? error.message : '人物信息细化失败，请重试。');
   } finally {
+    task?.finish();
     busy.value = false;
     progress.value = '';
   }
@@ -1189,15 +1212,19 @@ async function generateWorldbook() {
   if (busy.value) return;
   busy.value = true;
   progress.value = '正在依当前世界书生成绿灯人物设定…';
+  let task: ReturnType<typeof beginCharacterGeneration> | undefined;
   try {
+    task = beginCharacterGeneration();
     const rule = await getCharacterRule();
     // === 可手动修改：世界书生成的主提示词 ===
     const systemPrompt = `你是修仙世界书条目生成器。当前激活的世界书会随本请求提供；以世界观、上下文、当前人物变量、《角色生成规则》共同确定人物设定。\n\n<角色生成规则>\n${rule}\n</角色生成规则>\n\n任务：为尚未拥有绿灯条目的 NPC 补全一段可长期复用的人物设定。content 必须严格采用后附《人物模板》的完整结构；人物变量和当前世界书中已有的事实优先，不得相互矛盾。变量未给出的生活细节、性格表现、关系模式可依身份、修为、势力和修仙世界观合理创作，但不能写成会改变主线的既定事件。\n\n硬性要求：\n1. content 是可直接写入世界书的纯设定，不是剧情续写、人物卡 YAML 或变量面板；不得包含 EJS、JavaScript、模板标签（如 <% %>、{{ }}）、YAML 字段、关键字标题或代码，也不要编写动态分支。\n2. 必须完整填满人物模板的所有栏目、性格小节和编号条目；保持模板规定的字数范围、段落顺序和中文标点。\n3. keywords 返回 2~5 个应触发该人物的纯关键词，必须包含人物名；可补充道号、所属势力、稳定身份、常驻地点等，但不能使用泛词或整句。\n4. 允许情色表达(修仙世界的外貌与年龄无关，常有童颜修仙者)；不得出现疤痕、脏污或大规模纹身。`;
+    task.check();
     const cancelForceRoute = requestRuleRouterForceRoute('人物世界书生成');
     let result: string;
     try {
       result = assertTextResult(
         await generateRaw({
+          generation_id: task!.generationId,
           user_input: `请生成世界书人物条目：\n${worldbookCharacterInput()}`,
           ordered_prompts: basePrompts(`${systemPrompt}${worldbookTemplateInstructions()}`),
           should_silence: false,
@@ -1208,6 +1235,7 @@ async function generateWorldbook() {
     } finally {
       cancelForceRoute?.();
     }
+    task.check();
     const generated = parseGeneratedJson(result);
     const content = typeof generated.content === 'string' ? generated.content.trim() : '';
     const keywords = uniqueKeywords(generated.keywords);
@@ -1217,6 +1245,7 @@ async function generateWorldbook() {
     progress.value = '正在写入总结世界书…';
     const worldbookName = await ensureSummaryWorldbook();
     const entryName = await nextGeneratedEntryName(worldbookName);
+    task.check();
     const created = await createWorldbookEntries(
       worldbookName,
       [
@@ -1245,9 +1274,14 @@ async function generateWorldbook() {
     showToast(`已写入总结世界书「${worldbookName}」的条目「${created.new_entries[0].name}」，并已尝试打开世界书面板。`);
     await refreshDuplicateWarning();
   } catch (error) {
+    if (task?.cancelled || (error instanceof Error && error.name === 'AbortError')) {
+      showToast('已停止本次人物生成。');
+      return;
+    }
     console.error('[人物细化] 世界书生成失败：', error);
     showToast(error instanceof Error ? error.message : '世界书生成失败，请重试。');
   } finally {
+    task?.finish();
     busy.value = false;
     progress.value = '';
   }
@@ -1261,7 +1295,10 @@ onMounted(() => {
 <style scoped>
 .xy-refine-overlay {
   position: fixed;
-  inset: 0;
+  left: 0;
+  right: 0;
+  box-sizing: border-box;
+  zoom: calc(1 / var(--xy-ui-scale, 1));
   z-index: 10003;
   display: flex;
   align-items: center;
@@ -1273,7 +1310,8 @@ onMounted(() => {
 }
 .xy-refine-dialog {
   width: min(660px, 100%);
-  max-height: calc(100vh - 36px);
+  max-height: 100%;
+  min-height: 0;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -1286,8 +1324,10 @@ onMounted(() => {
 }
 .xy-refine-dialog.has-preview {
   width: min(980px, 100%);
+  height: 100%;
 }
 .xy-refine-head {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1400,6 +1440,9 @@ onMounted(() => {
   border-top: 0;
   overflow: hidden;
   background: var(--xy-glass, rgba(255, 255, 255, 0.18));
+}
+.xy-refine-review-bar {
+  flex-shrink: 0;
 }
 .xy-refine-character-avatar {
   display: flex;
@@ -2028,9 +2071,6 @@ onMounted(() => {
 @media (max-width: 720px) {
   .xy-refine-overlay {
     padding: 10px;
-  }
-  .xy-refine-dialog {
-    max-height: calc(100vh - 20px);
   }
   .xy-refine-head {
     padding: 10px;

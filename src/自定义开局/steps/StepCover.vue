@@ -1,46 +1,636 @@
 <template>
-  <div class="xs-cover">
-    <div class="xs-cover-seal">命途</div>
-    <h1 class="xs-cover-title">命途之始</h1>
-    <div class="xs-cover-subtitle">— 自定义开局 —</div>
-    <p class="xs-cover-quote">
-      天地玄黄，宇宙洪荒。
-      <br />
-      诸法万类，皆始于<em>一念</em>。
-      <br />
-      或为<em>剑修</em>仗剑天涯，或为<em>丹师</em>守炉数十寒暑；
-      <br />
-      或承宗门厚望踏阶而上，或自凡尘起步独行万里。
-      <br />
-      —— 是为<em>命途</em>。
-    </p>
-    <div class="xs-cover-btns">
-      <button
-        type="button"
-        class="xs-btn xs-btn-primary xs-cover-cta"
-        @click="onStart"
-      >
-        开启命途 ▸
-      </button>
-      <button
-        v-if="store.presets.length > 0"
-        type="button"
-        class="xs-btn"
-        @click="store.presetOpen = true"
-      >
-        读取封存
-      </button>
+  <main class="cover" :class="{ paused: motionPaused }">
+    <div class="art" aria-hidden="true">
+      <img :src="coverImage" alt="" fetchpriority="high" />
+      <div class="art-shade"></div>
     </div>
-  </div>
+    <div class="halo" aria-hidden="true"></div>
+    <div class="stars" aria-hidden="true"><i v-for="(style, index) in stars" :key="index" :style="style"></i></div>
+    <div class="frame" aria-hidden="true"><i v-for="n in 4" :key="n"></i></div>
+    <header class="masthead">
+      <span class="emblem">修</span><span>诸天万界<span class="dot">·</span>一念问道</span
+      ><span class="edition">卷一 / 初入仙途</span>
+    </header>
+    <section class="content">
+      <div class="eyebrow"><span></span> 一卷山河，待君落笔</div>
+      <h1>本格<span>修仙</span></h1>
+      <div class="title-rule"><span>万 法 归 一 &ensp;·&ensp; 道 由 心 生</span></div>
+      <p class="intro">从凡尘的一缕灵根，<br />到诸天的一段传说。</p>
+      <p class="description">择出身，定行囊，赴一场山海之约。<br />你的修行，从此刻开始。</p>
+      <div class="actions">
+        <button type="button" class="primary" @click="onStart">
+          <span class="button-mark">✧</span><span>开启仙途<small>自定义你的开局</small></span
+          ><span class="arrow">↗</span></button
+        ><button v-if="store.presets.length > 0" type="button" class="secondary" @click="store.presetOpen = true">
+          <span aria-hidden="true">▤</span> 读取封存 <span aria-hidden="true">→</span>
+        </button>
+      </div>
+    </section>
+    <aside class="verse" aria-hidden="true">执剑问天地<span>一念赴长生</span></aside>
+    <footer class="foot">
+      <span><i></i>凡界 · 灵界 · 冥界 · 地球</span><span class="foot-end">山海无尽 / 此身自由</span>
+    </footer>
+    <button
+      type="button"
+      class="motion-toggle"
+      :aria-label="motionPaused ? '播放封面动画' : '暂停封面动画'"
+      :aria-pressed="motionPaused"
+      @click="motionPaused = !motionPaused"
+    >
+      {{ motionPaused ? '▷' : 'Ⅱ' }}
+    </button>
+  </main>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
+import coverImage from '../assets/cover.png?url';
 import { useStartStore } from '../store';
 
 const store = useStartStore();
-
+const motionPaused = ref(false);
+const stars = Array.from({ length: 24 }, (_, i) => ({
+  '--x': `${(i * 37 + 11) % 100}%`,
+  '--y': `${(i * 23 + 7) % 100}%`,
+  '--delay': `${-(i % 9)}s`,
+  '--duration': `${7 + (i % 6)}s`,
+  '--size': i % 4 === 0 ? '3px' : '2px',
+}));
 function onStart() {
   store.ensureDefaultDifficulty();
   store.next();
 }
 </script>
+
+<style scoped>
+* {
+  box-sizing: border-box;
+}
+button {
+  font: inherit;
+}
+button:focus-visible {
+  outline: 2px solid #f5ddb2;
+  outline-offset: 5px;
+}
+.cover {
+  font-family: 'KaiTi', 'STKaiti', 'Noto Serif SC', 'SimSun', serif;
+  color: #eee9d8;
+}
+.cover {
+  isolation: isolate;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  background: radial-gradient(ellipse at 18% 75%, #203d35 0, transparent 60%), #101c1b;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 48px 26px;
+}
+.art {
+  position: absolute;
+  z-index: -3;
+  inset: 0 0 0 34%;
+  overflow: hidden;
+}
+.art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 29%;
+  animation: breathe 16s ease-in-out infinite alternate;
+  filter: saturate(0.78);
+}
+.art-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, #101c1b 0%, #101c1bc9 14%, #101c1b35 43%, transparent 72%),
+    linear-gradient(0deg, #142823 0%, #1428239c 10%, transparent 43%, #101c1b18 75%, #101c1b70);
+}
+.cover:after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 28% 74%, #659d7920, transparent 52%);
+  box-shadow: inset 0 0 90px #06100e40;
+}
+.frame {
+  position: absolute;
+  inset: 14px;
+  border: 1px solid #c9af7138;
+  pointer-events: none;
+}
+.frame:after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid #c9af7113;
+}
+.frame i {
+  position: absolute;
+  width: 23px;
+  height: 23px;
+  border: 0 solid #cbb77d;
+}
+.frame i:nth-child(1) {
+  left: -1px;
+  top: -1px;
+  border-left-width: 2px;
+  border-top-width: 2px;
+}
+.frame i:nth-child(2) {
+  right: -1px;
+  top: -1px;
+  border-right-width: 2px;
+  border-top-width: 2px;
+}
+.frame i:nth-child(3) {
+  left: -1px;
+  bottom: -1px;
+  border-left-width: 2px;
+  border-bottom-width: 2px;
+}
+.frame i:nth-child(4) {
+  right: -1px;
+  bottom: -1px;
+  border-right-width: 2px;
+  border-bottom-width: 2px;
+}
+.masthead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: #c8cbb8;
+}
+.emblem {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 30px;
+  color: #ead5af;
+  border: 1px solid #b59458;
+  background: #66503526;
+  font-size: 18px;
+  letter-spacing: 0;
+}
+.dot {
+  padding: 0 10px;
+  color: #b69f69;
+}
+.edition {
+  margin-left: auto;
+  color: #c9ccbdbb;
+  letter-spacing: 2px;
+  font-size: 11px;
+}
+.content {
+  position: relative;
+  width: 54%;
+  padding: 54px 0 40px;
+  flex: 1;
+  animation: reveal 1.2s both;
+}
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  letter-spacing: 4px;
+  color: #b8c8b9;
+}
+.eyebrow > span {
+  width: 26px;
+  height: 1px;
+  background: #c7b079;
+}
+h1 {
+  margin: 22px 0 15px;
+  font-size: clamp(52px, 7.5cqw, 84px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: 8px;
+  white-space: nowrap;
+  text-shadow: 0 4px 25px #020a0850;
+}
+h1 span {
+  color: #d9c593;
+}
+.title-rule {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: #aa9566;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+.title-rule:after {
+  content: '';
+  width: 70px;
+  height: 1px;
+  background: linear-gradient(90deg, #b5a06b70, transparent);
+}
+.intro {
+  margin: 33px 0 15px;
+  font-size: 21px;
+  line-height: 1.8;
+  letter-spacing: 3px;
+  color: #e5e6d7;
+}
+.description {
+  font-size: 13px;
+  line-height: 2;
+  letter-spacing: 1px;
+  color: #a9bdb1;
+  margin: 0;
+}
+.actions {
+  margin-top: 32px;
+  width: 254px;
+  display: grid;
+  gap: 15px;
+}
+.primary {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  text-align: left;
+  cursor: pointer;
+  border: 1px solid #c4ad76;
+  background: linear-gradient(110deg, #cfb986, #ede0b7 50%, #c7b17e);
+  color: #253c30;
+  padding: 15px 18px;
+  box-shadow:
+    0 6px 24px #030d0940,
+    inset 0 0 0 3px #32493815;
+  transition:
+    transform 0.25s,
+    box-shadow 0.25s;
+  overflow: hidden;
+  font-size: 22px;
+  letter-spacing: 4px;
+}
+.primary:after {
+  content: '';
+  position: absolute;
+  inset: -100% -60%;
+  background: linear-gradient(110deg, transparent 43%, #fff9 50%, transparent 57%);
+  transform: translateX(-60%);
+  animation: sheen 7s ease-in-out infinite;
+  pointer-events: none;
+}
+.primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px #beac6930;
+}
+.primary small {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 3px;
+  opacity: 0.68;
+  margin-top: 5px;
+}
+.button-mark {
+  font-size: 26px;
+  letter-spacing: 0;
+}
+.arrow {
+  margin-left: auto;
+  font-size: 24px;
+  letter-spacing: 0;
+}
+.secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  color: #bec8b8;
+  padding: 7px;
+  font-size: 13px;
+  letter-spacing: 3px;
+  transition: color 0.2s;
+}
+.secondary:hover {
+  color: #f2dfad;
+}
+.secondary span:last-child {
+  color: #9a8b65;
+}
+.verse {
+  position: absolute;
+  top: 105px;
+  right: 32px;
+  writing-mode: vertical-rl;
+  font-size: 12px;
+  letter-spacing: 6px;
+  color: #ece7d0cc;
+  text-shadow: 0 1px 7px #000;
+}
+.verse span {
+  margin-top: 35px;
+  color: #cfc9adc0;
+}
+.foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #baae7830;
+  padding-top: 17px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #a6b6a6;
+}
+.foot > span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.foot i {
+  height: 4px;
+  width: 4px;
+  background: #b4a06c;
+  transform: rotate(45deg);
+}
+.foot-end {
+  color: #b6b397;
+}
+.halo {
+  position: absolute;
+  z-index: -2;
+  width: 570px;
+  height: 570px;
+  border: 1px solid #dfc48420;
+  border-radius: 50%;
+  right: -165px;
+  top: -290px;
+  box-shadow:
+    0 0 50px #dfc48407,
+    inset 0 0 50px #dfc48407;
+  animation: halo 10s ease-in-out infinite alternate;
+}
+.stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+.stars i {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--size);
+  height: var(--size);
+  background: #efe0a5;
+  border-radius: 50%;
+  box-shadow: 0 0 7px #e8d69c80;
+  animation: drift var(--duration) var(--delay) ease-in-out infinite;
+  opacity: 0;
+}
+@keyframes breathe {
+  to {
+    transform: scale(1.035);
+  }
+}
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes sheen {
+  0%,
+  60% {
+    transform: translateX(-60%);
+  }
+  90%,
+  100% {
+    transform: translateX(60%);
+  }
+}
+@keyframes drift {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate(0, 15px);
+  }
+  40%,
+  65% {
+    opacity: 0.55;
+  }
+  90% {
+    transform: translate(8px, -24px);
+  }
+}
+@keyframes halo {
+  to {
+    opacity: 0.3;
+    transform: scale(1.09);
+  }
+}
+.paused *,
+.paused *:after {
+  animation-play-state: paused !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *:after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .stars {
+    display: none;
+  }
+}
+.cover {
+  aspect-ratio: auto;
+}
+.art {
+  mask-image: linear-gradient(90deg, transparent, black 48%);
+}
+@container (max-width:560px) {
+  .content .intro br {
+    display: block;
+  }
+}
+@container (max-width:560px) {
+  .art {
+    mask-image: none;
+  }
+}
+@container (max-width:740px) and (min-width:561px) {
+  .cover {
+    padding: 28px 34px 24px;
+  }
+  .content {
+    padding-top: 40px;
+    width: 62%;
+  }
+  h1 {
+    font-size: 59px;
+    letter-spacing: 5px;
+  }
+  .intro {
+    font-size: 18px;
+  }
+  .verse {
+    right: 25px;
+  }
+  .edition {
+    display: none;
+  }
+  .actions {
+    margin-top: 25px;
+  }
+  .foot-end {
+    display: none;
+  }
+}
+@container (max-width:560px) {
+  .cover {
+    aspect-ratio: auto;
+    padding: 24px 29px 22px;
+  }
+  .frame {
+    inset: 10px;
+  }
+  .masthead {
+    gap: 9px;
+    font-size: 10px;
+    letter-spacing: 2px;
+  }
+  .emblem {
+    width: 23px;
+    height: 25px;
+    font-size: 15px;
+  }
+  .edition {
+    display: none;
+  }
+  .art {
+    inset: 0 0 auto 0;
+    height: 490px;
+  }
+  .art img {
+    object-position: 50% 26%;
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+  }
+  .art-shade {
+    background: linear-gradient(0deg, #13251f 0%, #13251fef 12%, #13251f50 38%, transparent 62%, #101c1b6b 100%);
+  }
+  .cover {
+    background: #13251f;
+  }
+  .content {
+    width: 100%;
+    padding: 270px 0 25px;
+  }
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 2px;
+    gap: 8px;
+  }
+  .eyebrow > span {
+    width: 18px;
+  }
+  h1 {
+    font-size: clamp(40px, 15cqw, 58px);
+    letter-spacing: 5px;
+    margin: 16px 0 12px;
+  }
+  .title-rule {
+    font-size: 8px;
+    letter-spacing: 0.3px;
+  }
+  .title-rule:after {
+    width: 40px;
+  }
+  .intro {
+    font-size: 17px;
+    line-height: 1.65;
+    letter-spacing: 2px;
+    margin: 23px 0 12px;
+  }
+  .intro br {
+    display: none;
+  }
+  .description {
+    font-size: 12px;
+    letter-spacing: 0.7px;
+  }
+  .actions {
+    width: 100%;
+    margin-top: 23px;
+    gap: 8px;
+  }
+  .primary {
+    justify-content: center;
+    padding: 13px 20px;
+    font-size: 21px;
+  }
+  .arrow {
+    margin-left: 16px;
+  }
+  .primary small {
+    font-size: 9px;
+  }
+  .secondary {
+    padding: 9px;
+  }
+  .verse {
+    top: 85px;
+    right: 22px;
+    font-size: 10px;
+    letter-spacing: 4px;
+  }
+  .foot {
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding-top: 13px;
+  }
+  .foot-end {
+    display: none;
+  }
+  .halo {
+    top: -320px;
+  }
+}
+
+.motion-toggle {
+  position: absolute;
+  right: 30px;
+  bottom: 65px;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #c9af7145;
+  background: #10241dd9;
+  color: #d9c593;
+  cursor: pointer;
+  border-radius: 50%;
+  font: 14px sans-serif;
+}
+.motion-toggle:hover {
+  border-color: #c9af71;
+}
+@container (max-width:560px) {
+  .motion-toggle {
+    right: 23px;
+    bottom: 20px;
+    width: 25px;
+    height: 25px;
+  }
+}
+</style>

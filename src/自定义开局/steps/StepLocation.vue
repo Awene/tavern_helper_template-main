@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2 class="xs-step-title">择 · 出生地</h2>
+    <h2 class="xs-step-title">择 · 出身与起点</h2>
     <p class="xs-step-subtitle">道始于地。出身决定起步的人脉与性格底色，本身不耗费开局点数。</p>
 
     <div class="xs-loc-tree">
@@ -10,10 +10,10 @@
         <button
           v-for="world in LOCATION_WORLDS" :key="world.name" type="button"
           :disabled="!isWorldAvailable(world.name, store.selection.种族)"
-          :title="world.name === '冥界' ? '仅冥族可在冥界出生' : world.description"
+          :title="world.description"
           class="xs-loc-chip" :class="{ active: worldName === world.name }" @click="pickWorld(world.name)">
           {{ world.name }}
-          <small v-if="!isWorldAvailable(world.name, store.selection.种族)">（仅冥族）</small>
+          <small v-if="!isWorldAvailable(world.name, store.selection.种族)">{{ world.name === '地球' ? '（仅人族）' : '（仅冥族）' }}</small>
         </button>
         <span class="xs-loc-row-hint">{{ currentWorld.description }}</span>
       </div>
@@ -61,7 +61,7 @@
             </ul>
           </div>
           <div v-if="eco.sects && eco.sects.length" class="xs-eco-section">
-            <span class="xs-eco-label">宗门</span>
+            <span class="xs-eco-label">{{ worldName === '地球' ? '机构' : '宗门' }}</span>
             <ul class="xs-eco-list">
               <li v-for="s in eco.sects" :key="s.name">
                 <strong>{{ s.name }}</strong>
@@ -90,7 +90,24 @@
     </div>
 
     <!-- 门派归属（地域 → 二级宗门；可自由选择全域门派，不限出生地） -->
-    <section v-if="selectedLocation" class="xs-menpai">
+    <section v-if="selectedLocation && worldName === '地球'" class="xs-menpai">
+      <div class="xs-menpai-head">
+        <h3 class="xs-menpai-title">初始身份 · 国籍</h3>
+        <span class="xs-menpai-hint">当前身份：<strong>{{ earthNationality(store.selection) }}人</strong>；入学等身份由剧本补充。</span>
+      </div>
+      <div class="xs-menpai-row">
+        <button v-for="country in earthCountries" :key="country" type="button"
+          class="xs-menpai-chip" :class="{ active: !showCustomNationality && earthNationality(store.selection) === country }"
+          @click="customNationality = false; store.selection.国籍 = country">{{ country }}人</button>
+        <button type="button" class="xs-menpai-chip" :class="{ active: showCustomNationality }"
+          @click="customNationality = true">自定义</button>
+      </div>
+      <label v-if="showCustomNationality" class="xs-nationality-custom">
+        国籍
+        <input v-model="store.selection.国籍" type="text" maxlength="20" placeholder="例如：加拿大" />
+      </label>
+    </section>
+    <section v-else-if="selectedLocation" class="xs-menpai">
       <div class="xs-menpai-head">
         <h3 class="xs-menpai-title">门派归属</h3>
         <span class="xs-menpai-hint">
@@ -161,8 +178,12 @@ import {
   sectsByRegion,
 } from '../config';
 import { useStartStore } from '../store';
+import { earthCountries } from '../config/earthLocations';
+import { earthNationality } from '../identity';
 
 const store = useStartStore();
+const customNationality = ref(false);
+const showCustomNationality = computed(() => customNationality.value || (!!store.selection.国籍 && !earthCountries.some(country => country === store.selection.国籍)));
 
 // 根据当前选中的生态反推 region，初始展开
 const initialPath = findLocationPath(store.selection.locationId || '');
@@ -210,6 +231,7 @@ function pickWorld(name: string) {
   if (!isWorldAvailable(name, store.selection.种族)) return;
   if (name === worldName.value) return;
   worldName.value = name;
+  customNationality.value = false;
   regionId.value = currentWorld.value.regions[0].id;
   store.selection.locationId = null;
   store.selection.storyId = null;
@@ -236,6 +258,22 @@ watch(
 </script>
 
 <style scoped>
+.xs-nationality-custom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+.xs-nationality-custom input {
+  width: 220px;
+  max-width: 100%;
+  min-width: 0;
+  padding: 8px 12px;
+  color: var(--xs-ink);
+  background: var(--xs-paper-warm);
+  border: 1px solid var(--xs-line);
+  border-radius: 6px;
+}
 .xs-loc-tree {
   display: flex;
   flex-direction: column;

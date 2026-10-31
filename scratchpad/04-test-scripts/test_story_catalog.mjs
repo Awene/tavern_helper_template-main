@@ -8,20 +8,22 @@ const check = (v, msg) => {
 };
 const general = ['story-zayou', 'story-yinyu', 'story-fuchou', 'story-dadao', 'story-fan-zhigen', 'story-fan-renjian', 'story-wanderer-auction'];
 const removed = ['story-tianxuan-zayou', 'story-lingfeng-yueye', 'story-liuli-baicao', 'story-nanjiang-fox'];
-check(config.stories.length === 22, '22 remaining stories');
+check(config.stories.length === 24, '24 stories including Earth school and city openings');
 for (const id of general.filter(id => id !== 'story-wanderer-auction')) {
   const story = config.findStory(id);
-  check(story.body.length >= 300 && story.constraints.必须人形, id + ' concrete scene and matching shape constraint');
+  check(story.body.length >= (id === 'story-zayou' ? 200 : 300) && story.constraints.必须人形, id + ' concrete scene and matching shape constraint');
 }
+check(!config.findStory('story-zayou').body.includes('铜环') && config.findStory('story-zayou').body.endsWith('你的灵根资质开始显现。'), 'root-testing opening ends at the test');
 for (const id of removed) check(!config.findStory(id), 'deleted story absent');
 for (const story of config.stories) {
-  check(story.类型 === (general.includes(story.id) ? '通用' : '特殊'), story.id + ' category');
+  check(story.类型 === (general.includes(story.id) || story.id.startsWith('story-earth-') ? '通用' : '特殊'), story.id + ' category');
+  check(story.constraints.世界?.length > 0, story.id + ' explicit worlds');
   const c = story.constraints || {};
   store.resetAll();
   store.setRace(c.种族?.[0] || '人族');
   const loc =
     c.locationIds?.[0] ||
-    config.locations.find(l => !c.regionIds || c.regionIds.includes(config.findLocationPath(l.id).region.id)).id;
+    config.locations.find(l => (!story.settings.世界 || l.世界 === story.settings.世界) && (!c.regionIds || c.regionIds.includes(config.findLocationPath(l.id).region.id))).id;
   store.selectLocation(loc);
   store.setGender(c.性别 || (c.性别禁止?.includes('男') ? '女' : '男'));
   store.setVirgin(c.元阳元阴状态 ?? true);
@@ -65,7 +67,7 @@ for (const id of general)
     store.setRace(race.name);
     store.toggleRootElement(id === 'story-fan-zhigen' ? '无' : '水');
     store.setRaceTransformation(!!story.constraints?.必须人形);
-    for (const world of config.LOCATION_WORLDS) {
+    for (const world of config.LOCATION_WORLDS.filter(w => w.name !== '地球')) {
       if (!config.isWorldAvailable(world.name, race.name)) continue;
       store.selectLocation(world.regions[0].children[0].id);
       check(config.isStoryAvailable(story, store.selection), id + race.name + world.name);
@@ -92,9 +94,11 @@ if (process.argv.includes('--csv-patch')) {
     const c = s.constraints || {};
     const t = s.settings.时间;
     const requirements = [...config.describeConstraints(c)];
+    requirements.unshift(s.settings.世界 ? '世界：' + s.settings.世界 : '世界：凡界 / 灵界 / 冥界');
     if (s.settings.初始境界.大境界 !== '凡人') requirements.unshift('须有灵根');
     requirements.push('出生地须对种族开放（冥界仅冥族）');
     const notes = [];
+    if (s.id === 'story-earth-dongfeng') notes.push('修仙历7026-01-01；18岁人族学生，原学校检测后自愿转学；北京报到首日，凡人且有灵根；身份按新生导出');
     if (s.类型 === '通用') notes.push('正文适配所选界域、种族与形态；宗门沿用玩家选择');
     if (s.id === 'story-fan-zhigen') notes.push('无灵根凡人，秘法尚未施行；植根及修炼在后续剧情结算');
     if (s.id === 'story-fan-renjian') notes.push('凡人不等于人族、凡体或无灵根；不设小境界');

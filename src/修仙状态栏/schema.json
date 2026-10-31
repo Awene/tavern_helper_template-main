@@ -112,7 +112,9 @@
                 "enum": [
                   "凡界",
                   "灵界",
-                  "仙界"
+                  "仙界",
+                  "冥界",
+                  "地球"
                 ]
               },
               "地域": {
@@ -302,7 +304,9 @@
           "enum": [
             "凡界",
             "灵界",
-            "仙界"
+            "仙界",
+            "冥界",
+            "地球"
           ]
         },
         "地域": {
@@ -317,6 +321,38 @@
     },
     "时间": {
       "$ref": "#/$defs/__schema8"
+    },
+    "事件": {
+      "default": {},
+      "type": "object",
+      "properties": {
+        "开启": {
+          "default": false,
+          "type": "boolean"
+        },
+        "标题": {
+          "default": "",
+          "type": "string"
+        },
+        "阶段": {
+          "default": "",
+          "type": "string"
+        },
+        "已完成事件": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "进度": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {}
+        }
+      }
     },
     "状态效果": {
       "default": {},
@@ -1088,6 +1124,7 @@
               "秘籍",
               "配方",
               "符箓",
+              "阵物",
               "丹药",
               "素材",
               "工具"

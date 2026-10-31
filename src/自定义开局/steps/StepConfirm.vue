@@ -4,7 +4,7 @@
     <p class="xs-step-subtitle">最后核对你的选择；点击「确认开局」后将组装为初始变量。</p>
 
     <div class="xs-name-row">
-      <label>道号</label>
+      <label>{{ location?.世界 === '地球' ? '姓名' : '道号' }}</label>
       <input
         v-model="store.selection.道号"
         type="text"
@@ -58,7 +58,7 @@
         </span>
       </div>
       <div class="xs-summary-row" v-if="location">
-        <span class="xs-summary-label">出生地</span>
+        <span class="xs-summary-label">{{ location.世界 === '地球' ? '开局地点' : '出生地' }}</span>
         <span class="xs-summary-value">
           <strong>{{ location.name }}</strong>
           <span style="color: var(--xs-ink-mute);">{{ location.世界 }} · {{ location.地域 }} · {{ location.生态 }}</span>
@@ -106,7 +106,7 @@
           <strong>{{ story.name }}</strong>
           <span style="color: var(--xs-ink-mute);">
             {{ story.subtitle || '' }}
-            <template v-if="story.settings"> · {{ story.settings.宗门 }} · {{ realmLabel(story.settings.初始境界) }} · {{ story.settings.时间.年 }}年</template>
+            <template v-if="story.settings"> · {{ story.settings.宗门 }} · {{ realmLabel(story.settings.初始境界) }} · 修仙历{{ story.settings.时间.年 }}年</template>
           </span>
         </span>
       </div>
@@ -167,6 +167,7 @@ import {
 import { useStartStore } from '../store';
 import { commitJourney } from '../export';
 import { selectionConflict } from '../selectionRules';
+import { initialIdentities } from '../identity';
 
 const store = useStartStore();
 const submitting = ref(false);
@@ -184,7 +185,10 @@ const story = computed(() => {
   const id = store.selection.storyId;
   if (!id) return undefined;
   const custom = store.selection.customStory;
-  if (custom && custom.id === id) return customStoryToOption(custom);
+  if (custom && custom.id === id) {
+    const option = customStoryToOption(custom);
+    return { ...option, settings: resolveStorySettings(option, store.selection) };
+  }
   const preset = findStory(id);
   return preset ? { ...preset, settings: resolveStorySettings(preset, store.selection) } : undefined;
 });
@@ -192,12 +196,7 @@ const selectedItems = computed(() =>
   store.selection.itemIds.map(id => findItem(id)).filter(Boolean) as NonNullable<ReturnType<typeof findItem>>[],
 );
 const plotItems = computed(() => plotItemsForStory(store.selection.storyId));
-const 身份文本 = computed(() => {
-  const mp = (store.selection.门派归属 || '').trim();
-  if (mp === '散修') return '散修';
-  if (mp) return `${mp}弟子`;
-  return '无';
-});
+const 身份文本 = computed(() => initialIdentities(store.selection, story.value?.settings).join('、') || '无');
 
 const canConfirm = computed(() => {
   return (

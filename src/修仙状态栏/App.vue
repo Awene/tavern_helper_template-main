@@ -176,7 +176,7 @@
                 ><EditableValue v-model.number="store.data.寿元.外观年龄" type="number" label="外观年龄" :min="0" />
               </span>
               <span class="xy-meta-item xy-time">
-                <i>时</i>
+                <i>时</i>修仙历
                 <EditableValue v-model.number="store.data.时间.年" type="number" label="年" /> 年
                 <EditableValue v-model.number="store.data.时间.月" type="number" label="月" :min="1" :max="12" /> 月
                 <EditableValue v-model.number="store.data.时间.日" type="number" label="日" :min="1" :max="31" /> 日 ·

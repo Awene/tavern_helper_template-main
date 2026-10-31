@@ -9,6 +9,31 @@
   color: var(--xs-ink);
 }
 
+:root:has(.xs-app--cover),
+:root:has(.xs-app--cover) body {
+  background: #101c1b;
+}
+.xs-app.xs-app--cover {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+.xs-app--cover .xs-scroll {
+  padding: 0;
+  overflow: hidden;
+  background: #101c1b;
+  border-radius: 0;
+  box-shadow: none;
+}
+.xs-app--cover .xs-scroll::before,
+.xs-app--cover .xs-scroll::after,
+.xs-app--cover .xs-bg {
+  display: none;
+}
+.xs-app--cover .xs-step-wrap {
+  container-type: inline-size;
+}
+
 /* ============ 装饰背景 ============ */
 .xs-bg {
   position: absolute;
@@ -366,84 +391,6 @@
   background: transparent;
 }
 
-/* ============ 封面 ============ */
-.xs-cover {
-  position: relative;
-  min-height: 460px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 60px 20px;
-  overflow: hidden;
-}
-.xs-cover-seal {
-  position: absolute;
-  top: 22px;
-  right: 28px;
-  width: 64px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid var(--xs-cinnabar);
-  border-radius: 6px;
-  background: var(--xs-cinnabar);
-  color: #fff;
-  font-family: var(--xs-font-title);
-  font-size: 24px;
-  letter-spacing: 2px;
-  transform: rotate(-6deg);
-  box-shadow: 0 8px 22px -8px var(--xs-cinnabar-glow);
-  animation: xs-ink-bloom 0.9s ease-out 0.3s backwards;
-}
-.xs-cover-title {
-  font-family: var(--xs-font-title);
-  font-size: 64px;
-  letter-spacing: 16px;
-  color: var(--xs-ink);
-  text-shadow: 0 2px 8px rgba(42, 37, 32, 0.18);
-  margin-bottom: 10px;
-  animation: xs-ink-bloom 1.1s ease-out backwards;
-}
-.xs-cover-subtitle {
-  font-family: var(--xs-font-display);
-  font-size: 14px;
-  letter-spacing: 8px;
-  color: var(--xs-ink-mute);
-  margin-bottom: 36px;
-  animation: xs-fade-up 1.2s ease-out 0.4s backwards;
-}
-.xs-cover-quote {
-  font-family: var(--xs-font-body);
-  font-size: 13px;
-  letter-spacing: 1.5px;
-  color: var(--xs-ink-soft);
-  line-height: 2;
-  max-width: 540px;
-  margin: 0 auto 36px;
-  animation: xs-fade-up 1.4s ease-out 0.6s backwards;
-}
-.xs-cover-quote em {
-  font-style: italic;
-  color: var(--xs-cinnabar);
-  font-family: var(--xs-font-display);
-}
-.xs-cover-btns {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  justify-content: center;
-  animation: xs-fade-up 1.5s ease-out 0.9s backwards;
-}
-.xs-cover-cta {
-  font-size: 16px;
-  letter-spacing: 6px;
-  padding: 12px 32px;
-  border-radius: 24px;
-  animation: xs-pulse 2.6s ease-in-out infinite;
-}
 
 /* ============ 难度卡片调色 ============ */
 .xs-card.tone-jade.selected {

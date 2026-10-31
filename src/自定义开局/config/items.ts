@@ -10,7 +10,7 @@ export const ITEM_CATEGORIES: ItemCategory[] = ['功法', '装备', '物品', '�
 export const ITEM_KINDS_BY_CATEGORY: Record<ItemCategory, ItemKind[]> = {
   功法: ['心法', '攻击', '咒法', '身法', '护体', '阵法'],
   装备: ['法宝', '护甲', '饰品'],
-  物品: ['丹药', '符箓', '秘籍', '素材', '工具'],
+  物品: ['丹药', '符箓', '阵物', '秘籍', '素材', '工具'],
   灵石: ['灵石'],
   傀儡: ['傀儡'],
   灵兽: ['灵兽'],
@@ -35,6 +35,7 @@ export const EFFECT_SUPPORTED_KINDS: ReadonlySet<ItemKind> = new Set<ItemKind>([
   '工具', // 全部装备
   '丹药',
   '符箓',
+  '阵物',
   '秘籍',
   '素材', // 全部物品
 ]);
@@ -52,6 +53,7 @@ export const ALL_ITEM_KINDS: ItemKind[] = [
   '工具',
   '丹药',
   '符箓',
+  '阵物',
   '秘籍',
   '素材',
   '傀儡',
@@ -116,7 +118,7 @@ export const items: ItemOption[] = [
   // 1 中品灵石 = 100 下品灵石；1 上品灵石（极品）= 10,000 下品灵石。
   {
     id: 'stone-low-100',
-    name: '下品灵石 · 一小袋',
+    name: '100枚灵石',
     subtitle: '100 枚',
     desc: '通用计价单位；产量庞大、灵气稳定、易于分割。',
     cost: 1,
@@ -127,7 +129,7 @@ export const items: ItemOption[] = [
   },
   {
     id: 'stone-low-1000',
-    name: '下品灵石 · 一囊',
+    name: '1000枚灵石',
     subtitle: '1000 枚',
     desc: '一囊下品灵石；散市最常见的零碎货币。',
     cost: 4,
@@ -138,9 +140,9 @@ export const items: ItemOption[] = [
   },
   {
     id: 'stone-mid-10',
-    name: '中品灵石 · 数枚',
-    subtitle: '10 枚 = 1,000 下品灵石',
-    desc: '高阶灵石灵气浓而杂，多被吸收或入阵；1 中品 = 100 下品。',
+    name: '1000枚灵石',
+    subtitle: '1000 枚',
+    desc: '通用修行资财，可用于交易或修炼。',
     cost: 4,
     category: '灵石',
     类型: '灵石',
@@ -149,8 +151,8 @@ export const items: ItemOption[] = [
   },
   {
     id: 'stone-mid-50',
-    name: '中品灵石 · 一囊',
-    subtitle: '50 枚 = 5,000 下品灵石',
+    name: '5000枚灵石',
+    subtitle: '5000 枚',
     desc: '内门弟子常携之物；可购置一柄玄品法器或半月坐镇灵脉。',
     cost: 10,
     category: '灵石',
@@ -161,9 +163,9 @@ export const items: ItemOption[] = [
   },
   {
     id: 'stone-up-1',
-    name: '上品灵石 · 一枚',
-    subtitle: '1 枚 = 10,000 下品灵石',
-    desc: '亦称极品灵石；高阶修士用于阵眼、炼丹或作为重酬，散市极少流通。',
+    name: '10000枚灵石',
+    subtitle: '10000 枚',
+    desc: '充裕的修行资财，可购置装备、布阵或作为酬金。',
     cost: 14,
     category: '灵石',
     类型: '灵石',

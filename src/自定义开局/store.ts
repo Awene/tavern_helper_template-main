@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia';
+import { cultivationDate } from '../../util/cultivation-calendar.js';
 import { computed, ref, watch } from 'vue';
 import { reconcileSelection } from './selectionRules';
+import { normalizeNationality } from './config/earthLocations';
 import {
   PHYSIQUE_TIER_S,
   canMutate,
@@ -13,6 +15,7 @@ import {
   emptyRootChoice,
   findDifficulty,
   findItem,
+  findLocation,
   isPhysiqueChoiceValid,
   makeDefaultPhysiqueChoice,
   mutationsByElement,
@@ -46,6 +49,7 @@ const emptySelection = (): Selection => ({
   元阳元阴: true,
   locationId: null,
   门派归属: '',
+  国籍: '',
   itemIds: [],
   customItems: [],
   storyId: null,
@@ -89,6 +93,8 @@ const normalizeSelection = (raw: any): Selection => {
     性别: raw.性别 === '女' || raw.性别 === '其他' ? raw.性别 : '男',
     元阳元阴: raw.性别 === '其他' ? false : typeof raw.元阳元阴 === 'boolean' ? raw.元阳元阴 : true,
     门派归属: typeof raw.门派归属 === 'string' ? raw.门派归属 : '',
+    国籍: normalizeNationality(raw.国籍),
+    locationId: raw.locationId === 'eco-earth-haifa' ? 'eco-earth-jerusalem' : raw.locationId ?? null,
     itemIds: Array.isArray(raw.itemIds) ? raw.itemIds : [],
     customItems: Array.isArray(raw.customItems) ? raw.customItems : [],
     customStory,
@@ -399,6 +405,7 @@ export const useStartStore = defineStore('xs-start', () => {
     const existing = selection.value.customStory;
     const full: CustomStory = {
       ...story,
+      settings: { ...story.settings, 时间: cultivationDate(story.settings.时间, findLocation(selection.value.locationId)?.世界 ?? story.settings.世界) },
       id: existing?.id || 'cstory-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     };
     selection.value.customStory = full;

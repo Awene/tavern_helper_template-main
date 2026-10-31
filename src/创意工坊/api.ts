@@ -177,21 +177,14 @@ export class WorkshopApi {
     return this.request(`/api/packs/${encodeURIComponent(packId)}`, { method: 'DELETE' }, true);
   }
 
-  uploadImage(
-    packId: string,
-    input: { file: Blob; filename: string; rating: string },
-  ): Promise<{ image: PackImage }> {
+  uploadImage(packId: string, input: { file: Blob; filename: string; rating: string }): Promise<{ image: PackImage }> {
     const form = new FormData();
     form.set('file', input.file, input.filename);
     form.set('rating', input.rating);
     return this.request(`/api/packs/${encodeURIComponent(packId)}/images`, { method: 'POST', body: form }, true);
   }
 
-  updateImage(
-    packId: string,
-    imageId: string,
-    input: { rating?: string },
-  ): Promise<{ ok: true }> {
+  updateImage(packId: string, imageId: string, input: { rating?: string }): Promise<{ ok: true }> {
     return this.request(
       `/api/packs/${encodeURIComponent(packId)}/images/${encodeURIComponent(imageId)}`,
       { method: 'PATCH', body: JSON.stringify(input) },
@@ -301,12 +294,10 @@ export class WorkshopApi {
     return new Promise((resolve, reject) => {
       const pollIntervalMs = 1000;
       const exchangeTimeoutMs = 8000;
-      const popupClosedGraceMs = 12_000;
       let exchangeCode = loginId;
       let exchanging = false;
       let settled = false;
       let lastTemporaryError: unknown;
-      let popupClosedAt: number | null = null;
       let exchangeController: AbortController | null = null;
 
       const cleanup = () => {
@@ -374,34 +365,8 @@ export class WorkshopApi {
       };
       const poll = () => {
         void tryExchange();
-
-        let popupClosed = false;
-        try {
-          popupClosed = popup.closed;
-        } catch {
-          // 某些浏览器在跨域跳转期间不允许读取弹窗状态，此时继续依靠登录码轮询。
-          return;
-        }
-        if (!popupClosed) {
-          popupClosedAt = null;
-          return;
-        }
-
-        // 正常授权完成也会自动关闭弹窗；保留短暂宽限期，让最终登录码有机会被兑换。
-        popupClosedAt ??= Date.now();
-        if (Date.now() - popupClosedAt < popupClosedGraceMs) return;
-        if (lastTemporaryError) {
-          finish(() =>
-            reject(
-              new WorkshopApiError(
-                `登录窗口已关闭，且登录结果确认失败：${lastTemporaryError instanceof Error ? lastTemporaryError.message : String(lastTemporaryError)}`,
-                0,
-              ),
-            ),
-          );
-          return;
-        }
-        finish(() => reject(new WorkshopApiError('登录窗口已关闭，Discord 登录已取消', 499)));
+        // COOP / 手机外部浏览器可能令 closed=true，但授权仍在继续。
+        // 以兑换结果、用户取消或超时结束等待，不依赖弹窗句柄判断授权状态。
       };
       const pollTimer = window.setInterval(poll, pollIntervalMs);
       const timeoutTimer = window.setTimeout(
@@ -430,13 +395,21 @@ export class WorkshopApi {
   }
 
   async login(): Promise<AuthRecord> {
-    const base = (await this.getApiBase()).replace(/\/$/u, '');
-    const expectedOrigin = new URL(base).origin;
-    const openerOrigin = window.parent.location.origin;
-    const loginId = crypto.randomUUID().replaceAll('-', '') + crypto.randomUUID().replaceAll('-', '');
-    const loginUrl = `${base}/auth/discord/start?opener_origin=${encodeURIComponent(openerOrigin)}&login_id=${loginId}`;
-    const popup = window.parent.open(loginUrl, 'cultivation-workshop-oauth', 'popup,width=560,height=760');
+    // 保留点击时的用户激活；读取 IndexedDB 设置后再 open 会被部分手机浏览器拦截。
+    const popup = window.parent.open('about:blank', 'cultivation-workshop-oauth', 'popup,width=560,height=760');
     if (!popup) throw new WorkshopApiError('浏览器阻止了登录弹窗，请允许弹窗后重试', 0);
+    let expectedOrigin: string;
+    let loginId: string;
+    try {
+      const base = (await this.getApiBase()).replace(/\/$/u, '');
+      expectedOrigin = new URL(base).origin;
+      const openerOrigin = window.parent.location.origin;
+      loginId = crypto.randomUUID().replaceAll('-', '') + crypto.randomUUID().replaceAll('-', '');
+      popup.location.href = `${base}/auth/discord/start?opener_origin=${encodeURIComponent(openerOrigin)}&login_id=${loginId}`;
+    } catch (error) {
+      popup.close();
+      throw error;
+    }
     const exchange = await this.waitForDiscordExchange(popup, expectedOrigin, loginId);
     const me = await this.request<{ user: WorkshopUser }>(
       '/api/auth/me',

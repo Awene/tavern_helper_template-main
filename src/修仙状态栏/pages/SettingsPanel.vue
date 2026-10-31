@@ -3,9 +3,25 @@
     <div v-if="state.settingsOpen" class="xy-confirm-overlay" @click="close" @contextmenu.prevent>
       <div class="xy-settings-box" @click.stop>
         <div class="xy-confirm-title">设置</div>
+        <nav class="xy-settings-tabs" aria-label="设置分类">
+          <button
+            v-for="tab in settingsTabs"
+            :key="tab.id"
+            type="button"
+            :class="{ active: settingsTab === tab.id }"
+            :aria-pressed="settingsTab === tab.id"
+            @click="settingsTab = tab.id"
+          >
+            {{ tab.label }}
+          </button>
+        </nav>
+        <div v-if="settingsTab === 'components'" class="xy-set-section"><ComponentCheckPanel /></div>
+        <div v-show="settingsTab === 'model'">
+          <ModelModeControl :disabled="loading || modelBusy" @busy="modelBusy = $event" />
+        </div>
 
         <!-- ========== 变量更新方式 ========== -->
-        <section class="xy-set-section">
+        <section v-show="settingsTab === 'model'" class="xy-set-section">
           <div class="xy-set-label">变量更新方式</div>
           <div class="xy-set-hint">
             切换后会自动开关世界书与预设里对应的条目。选「额外API」还需在 MVU 扩展里
@@ -17,7 +33,7 @@
               type="button"
               class="xy-set-opt"
               :class="{ active: mode === '额外API' }"
-              :disabled="loading"
+              :disabled="loading || modelBusy"
               @click="switchMode('额外API')"
             >
               <span class="xy-set-opt-name">额外API输出</span>
@@ -28,7 +44,7 @@
               type="button"
               class="xy-set-opt"
               :class="{ active: mode === '随主API' }"
-              :disabled="loading"
+              :disabled="loading || modelBusy"
               @click="switchMode('随主API')"
             >
               <span class="xy-set-opt-name">随主AI输出</span>
@@ -41,7 +57,7 @@
           </div>
         </section>
 
-        <section class="xy-set-section xy-unicode-section">
+        <section v-show="settingsTab === 'unicode'" class="xy-set-section xy-unicode-section">
           <div class="xy-set-section-head">
             <div>
               <div class="xy-set-label">Unicode 转码</div>
@@ -64,11 +80,7 @@
                   <strong>转码输出</strong>
                   <small>要求 AI 转码指定范围，并在生成结束后自动还原。</small>
                 </span>
-                <input
-                  v-model="unicodeSettings.enabled"
-                  type="checkbox"
-                  @change="updateUnicodeBoolean('enabled')"
-                />
+                <input v-model="unicodeSettings.enabled" type="checkbox" @change="updateUnicodeBoolean('enabled')" />
                 <span class="xy-switch" aria-hidden="true"></span>
               </label>
 
@@ -160,7 +172,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, watch, reactive, ref } from 'vue';
+import ModelModeControl from '../../shared/ModelModeControl.vue';
+import ComponentCheckPanel from '../../shared/ComponentCheckPanel.vue';
 import { state, showToast } from '../composables';
 import { applyApiMode, getApiMode, type ApiMode } from '../../shared/apiMode';
 import {
@@ -171,8 +185,15 @@ import {
   type UnicodeTranscoderSettings,
 } from '../unicodeTranscoder';
 
+const settingsTabs = [
+  { id: 'model', label: '模型与变量' },
+  { id: 'unicode', label: '文本处理' },
+  { id: 'components', label: '组件检测' },
+] as const;
+const settingsTab = ref<string>('model');
 const mode = ref<ApiMode>('额外API');
 const loading = ref(true);
+const modelBusy = ref(false);
 const unicodeLoading = ref(true);
 const unicodeError = ref('');
 const unicodeReady = ref(false);
@@ -202,7 +223,7 @@ function close() {
 }
 
 async function switchMode(next: ApiMode) {
-  if (loading.value || next === mode.value) return;
+  if (loading.value || modelBusy.value || next === mode.value) return;
   loading.value = true;
   try {
     const res = await applyApiMode(next);
@@ -211,7 +232,7 @@ async function switchMode(next: ApiMode) {
       const label = next === '额外API' ? '额外API输出' : '随主AI输出';
       showToast(`已切换为「${label}」（世界书 ${res.worldbookChanged} 条 / 预设 ${res.presetChanged} 条）`);
     } else {
-      showToast('切换失败，请检查酒馆环境');
+      showToast(res.reason || '切换失败，请重新应用');
     }
   } catch {
     showToast('切换失败');
@@ -283,14 +304,45 @@ async function retryLatestDecode() {
   }
 }
 
-onMounted(async () => {
-  void loadUnicodeSettings();
-  try {
-    mode.value = await getApiMode();
-  } catch {
-    /* 保底默认额外API */
-  } finally {
-    loading.value = false;
-  }
-});
+watch(
+  () => state.settingsOpen,
+  async open => {
+    if (!open) return;
+    loading.value = true;
+    void loadUnicodeSettings();
+    try {
+      mode.value = await getApiMode();
+    } catch {
+      /* 保底默认额外API */
+    } finally {
+      loading.value = false;
+    }
+  },
+  { immediate: true },
+);
 </script>
+
+<style scoped>
+.xy-settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 22px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #97866044;
+}
+.xy-settings-tabs button {
+  flex: 1;
+  padding: 9px 10px;
+  color: inherit;
+  border: 1px solid #97866055;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.xy-settings-tabs button.active {
+  background: #538e8022;
+  border-color: #538e80;
+}
+</style>

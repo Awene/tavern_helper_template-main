@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="cover.css"><title>本格修仙</title></head>
+<body>
+<main class="cover">
+  <div class="art" aria-hidden="true"><img src="../../../Cultivation-Card-Game/头像.png" alt=""><div class="art-shade"></div></div>
+  <div class="halo" aria-hidden="true"></div><div class="stars" aria-hidden="true"></div>
+  <div class="frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <header class="masthead"><span class="emblem">修</span><span>诸天万界<span class="dot">·</span>一念问道</span><span class="edition">卷一 / 初入仙途</span></header>
+  <section class="content">
+    <div class="eyebrow"><span></span> 一卷山河，待君落笔</div>
+    <h1>本格<span>修仙</span></h1>
+    <div class="title-rule"><span>万 法 归 一　·　道 由 心 生</span></div>
+    <p class="intro">从凡尘的一缕灵根，<br>到诸天的一段传说。</p>
+    <p class="description">择出身，定行囊，赴一场山海之约。<br>你的修行，从此刻开始。</p>
+    <div class="actions"><button class="primary" id="start"><span class="button-mark">✧</span><span>开启仙途<small>自定义你的开局</small></span><span class="arrow">↗</span></button><button class="secondary" id="restore"><span aria-hidden="true">▤</span> 读取封存 <span aria-hidden="true">→</span></button></div>
+  </section>
+  <aside class="verse" aria-hidden="true">执剑问天地<span>一念赴长生</span></aside>
+  <footer class="foot"><span><i></i>凡界 · 灵界 · 冥界 · 地球</span><span class="foot-end">山海无尽 / 此身自由</span></footer>
+  <div class="toast" role="status" aria-live="polite"></div>
+</main>
+<script>
+const stars=document.querySelector('.stars');for(let i=0;i<24;i++){const star=document.createElement('i');star.style.cssText=`--x:${(i*37+11)%100}%;--y:${(i*23+7)%100}%;--delay:${-(i%9)}s;--duration:${7+i%6}s;--size:${i%4===0?3:2}px`;stars.append(star)}
+let timer;function notice(text){const el=document.querySelector('.toast');el.textContent=text;el.classList.add('show');clearTimeout(timer);timer=setTimeout(()=>el.classList.remove('show'),2600)}
+document.getElementById('start').onclick=()=>notice('预览：正式版将进入开局配置');document.getElementById('restore').onclick=()=>notice('预览：正式版将打开已封存的开局');
+</script></body></html>

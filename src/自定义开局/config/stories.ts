@@ -1,3 +1,4 @@
+import { cultivationDate, cultivationYear } from '../../../util/cultivation-calendar.js';
 import type { CustomStory, Selection, StoryConstraints, StoryKind, StoryOption, StorySettings } from '../types';
 import { findLocation, findLocationPath, findRegionById, isLocationAvailable, isSectAvailable } from './locations';
 import { findRace } from './races';
@@ -5,17 +6,53 @@ import { rootTierLabel } from './roots';
 
 // ============ 故事数据 ============
 export const stories: StoryOption[] = [
+  {
+    id: 'story-earth-city', name: '灵潮街巷', subtitle: '熟悉城市里的新日常',
+    desc: '灵气复苏逐渐融入城市日常。你生活在熟悉的街区，在工作、人情往来与新出现的修行机遇之间，寻找自己的生活方向。',
+    cost: 0, glyph: '城', 类型: '通用', tags: ['地球', '都市', '凡人'],
+    constraints: { 世界: ["地球"], 必须人形: true },
+    settings: {
+      世界: '地球', 时间: { 年: 7026, 月: 1, 日: 1, 时辰: '辰时' },
+      宗门: '无', 初始境界: { 大境界: '凡人', 小境界: '' },
+    },
+    body:
+      '灵气复苏已有一段时日，城市仍按熟悉的节奏运转。街边店铺照常开门，人们赶着上班、上学，手机里的消息却多了灵石行情、修行课程与各地古迹的新发现。曾经只存在于故事中的事物，正一点点成为生活的一部分。\n' +
+      '你依旧是这座城市里一个尚未踏入修途的普通人。住处、日常开销、熟识的邻居与朋友，构成了眼前的生活。周围有人开始学习修行，有人转入相关行业，也有人更关心新设备的价格，以及明天的工作安排。\n' +
+      '清晨，你走出住处，融入街上的人流。沿路传来店家的招呼与行人的闲谈，熟悉的街景里夹杂着灵气复苏带来的新变化。今天可以从一顿早餐、一次出门办事，或与熟人的偶遇开始；往后的日子，也会随着你的选择慢慢展开。',
+  },
+  {
+    id: 'story-earth-dongfeng',
+    name: '灵根新程',
+    subtitle: '检测灵根，入学报到',
+    desc: '在原学校检测出灵根后，你转入当地修行学府。从报到、入住到结识同学、参加课程，一段兼有现代校园与修行体验的求学生活就此开始。',
+    cost: 0, glyph: '学', 类型: '通用', tags: ['地球', '校园', '凡人'],
+    constraints: { 世界: ["地球"],
+      种族: ['人族'],
+      灵根五行任意: ['金', '木', '水', '火', '土', '阴', '阳', '混沌'],
+      灵根禁止: ['无'],
+    },
+    settings: {
+      世界: '地球', 时间: { 年: 7026, 月: 1, 日: 1, 时辰: '辰时' },
+      宗门: '培养机构', 年龄: 18,
+      初始境界: { 大境界: '凡人', 小境界: '' },
+    },
+    body:
+      '原学校的一次灵根检测，让你的求学方向发生了变化。确认具备修行资质后，你接受了入学邀请，办妥转学与登记手续，来到当地的修行学府。修行对你仍是陌生的事情，而新的校园已经在眼前展开。\n' +
+      '开学第一天，你带着行李和入学材料走进校门。报到处有人核对资料，也有新生在看校园指引、寻找宿舍。领取证件、安顿住处、熟悉教学区，这些寻常的入学琐事，让即将开始的新生活渐渐有了实感。\n' +
+      '这里既有经典研读、基础调息与术法课程，也有现代科学、工程和日常文化教育。修行导师与凡人专业教师各授所长，同学们带着不同的家庭经历与学习习惯来到一起，往后会共享课堂、食堂、实训与课余时光。\n' +
+      '你尚未学会引气入体，一切才刚开始。眼下可以先办完报到，去看看住处，或与身旁同样初来乍到的新生聊上几句。修行的进展、同伴间的关系，以及你在这所学府里找到的方向，都将从这些日常相处中逐渐成形。',
+  },
   // 通用开局
   {
     id: 'story-zayou',
     name: '问道之始',
     subtitle: '初访修行之门',
-    desc: '招生别院里，测灵盘接连亮起。轮到你时，考官却收起名册，让你先解开桌上一只奇怪的铜环。',
+    desc: '你来到招生别院参加灵根测试。长队缓缓向前，终于轮到你将手放上测灵盘，等待自己的灵根资质显现。',
     cost: 0,
     glyph: '试',
     recommend: '寻常修行 / 砺心问道',
     类型: '通用',
-    constraints: { 灵根禁止: ['无'], 必须人形: true },
+    constraints: { 世界: ["凡界","灵界","冥界"], 灵根禁止: ['无'], 必须人形: true },
     settings: {
       时间: {
         年: 7203,
@@ -30,11 +67,10 @@ export const stories: StoryOption[] = [
       },
     },
     body:
-      '招生别院的门前排着长队。有人捧着引荐书反复默读，有人趁等候时偷偷练习行礼，门房则拿一根细竹敲着桌沿，催后面的人备好姓名。廊下贴着刚换的新榜，纸角还压着两枚石镇。\n' +
-      '你随队伍进了院子。正堂里，一面测灵盘摆在长案中央，每亮起一重光，旁边的记录弟子便在名册上添一笔。排在你前面的人测出了不错的资质，却在接下来的问答中支吾许久，最终被领往偏厅。\n' +
-      '轮到你时，那位袖口磨白的考官先看了看测灵盘，又看了看你。他没有立即报出结果，而是合上名册，从案下取出两枚扣在一起的铜环。环上没有锁孔，接缝里却隐约透着灵光。\n' +
-      '“测资质的事，盘子已经做了。接下来看看你遇事怎么想。”他把铜环推到桌边，示意旁边正要提示的弟子住口，“拆开它，或者告诉我，你为什么拆不开。”\n' +
-      '院外又传来一声催促，考官却抬手让门房暂缓叫人。两枚铜环轻轻相碰，发出清脆的一响，他正等着你动手。',
+      '招生别院的门前排着长队。有人捧着引荐书反复默读，有人低声询问测试的规矩。门房依次核对姓名，将等候的人引入院中。你也在队伍里，等着参加灵根测试。\n' +
+      '正堂里，一面测灵盘摆在长案中央。应试者依次将手放上盘面，随着光纹明灭，负责记录的弟子将各人的灵根资质记入名册。有人听完结果喜形于色，也有人默默退到一旁。\n' +
+      '队伍渐渐缩短，考官终于叫到你的名字。你走到长案前，他指了指测灵盘中央：“将手放在这里，放松心神。”旁边的弟子提起笔，等着记录你的结果。\n' +
+      '你依言伸出手，掌心触到微凉的盘面。细密的光纹随即亮起，沿着刻痕缓缓流转，你的灵根资质开始显现。',
   },
 
   // 通用开局
@@ -47,7 +83,7 @@ export const stories: StoryOption[] = [
     glyph: '机',
     recommend: '寻常修行',
     类型: '通用',
-    constraints: { 灵根禁止: ['无'], 必须人形: true },
+    constraints: { 世界: ["凡界","灵界","冥界"], 灵根禁止: ['无'], 必须人形: true },
     settings: {
       时间: {
         年: 7156,
@@ -79,7 +115,7 @@ export const stories: StoryOption[] = [
     glyph: '仇',
     recommend: '砺心问道 / 逆天改命',
     类型: '通用',
-    constraints: { 灵根禁止: ['无'], 必须人形: true },
+    constraints: { 世界: ["凡界","灵界","冥界"], 灵根禁止: ['无'], 必须人形: true },
     settings: {
       时间: {
         年: 7188,
@@ -112,7 +148,7 @@ export const stories: StoryOption[] = [
     glyph: '道',
     recommend: '小道悠游',
     类型: '通用',
-    constraints: { 必须人形: true },
+    constraints: { 世界: ["凡界","灵界","冥界"], 必须人形: true },
     settings: {
       时间: {
         年: 7301,
@@ -148,16 +184,17 @@ export const stories: StoryOption[] = [
     类型: '特殊',
     剧情: true,
     flags: ['神农遗脉·无字玉简'],
-    constraints: {
+    constraints: { 世界: ["凡界"],
       locationIds: ['eco-dt-liufang'],
       门派归属: ['', '散修', '琉璃丹宗'],
+      灵根五行任意: ['金', '木', '水', '火', '土', '阴', '阳', '混沌'],
       灵根禁止: ['无'],
       种族: ['人族'],
     },
     settings: {
       时间: { 年: 7218, 月: 3, 日: 16, 时辰: '酉时' },
       宗门: '琉璃丹宗（林蘅芷引荐入谷）',
-      初始境界: { 大境界: '炼气', 小境界: '初期' },
+      初始境界: { 大境界: '凡人', 小境界: '' },
     },
     body:
       '流芳岛深处有一道少人踏足的幽谷，唤作试药谷。谷中草木疯长，奇花异草自生自灭，几百年来也没人打理。你便是在谷里长大的凡人——没有名姓，没有来处，像山涧边一块没人捡的石头。每日吃什么，全看你认不认得那些草：哪株能果腹、哪株能解饿出来的病、哪株咬一口要躺上三天……你心里自有一本账，账是拿命记的，从没错过。\n' +
@@ -187,7 +224,7 @@ export const stories: StoryOption[] = [
     recommend: '砺心问道 / 逆天改命',
     类型: '特殊',
     剧情: true,
-    constraints: {
+    constraints: { 世界: ["凡界"],
       locationIds: ['eco-nj-yuzhang'],
       灵根禁止: ['无'],
       门派归属: ['', '散修', '五毒教'],
@@ -227,7 +264,7 @@ export const stories: StoryOption[] = [
     recommend: '寻常修行 / 砺心问道 / 逆天改命',
     类型: '特殊',
     剧情: true,
-    constraints: {
+    constraints: { 世界: ["凡界"],
       locationIds: ['eco-zy-zhuohua'],
       性别禁止: ['女'],
       灵根禁止: ['无'],
@@ -261,7 +298,7 @@ export const stories: StoryOption[] = [
     recommend: '砺心问道 / 逆天改命',
     类型: '特殊',
     剧情: true,
-    constraints: {
+    constraints: { 世界: ["凡界"],
       locationIds: ['eco-zy-zhuohua'],
       性别: '女',
       灵根禁止: ['无'],
@@ -295,7 +332,7 @@ export const stories: StoryOption[] = [
     类型: '特殊',
     剧情: true,
     flags: ['慕璇玑·旧缘转世'],
-    constraints: {
+    constraints: { 世界: ["凡界"],
       locationIds: ['eco-dt-shuanghua'],
       性别禁止: ['女'],
       灵根禁止: ['无'],
@@ -330,7 +367,7 @@ export const stories: StoryOption[] = [
     recommend: '寻常修行 / 砺心问道 / 逆天改命',
     类型: '特殊',
     剧情: true,
-    constraints: {
+    constraints: { 世界: ["凡界"],
       locationIds: ['eco-dt-shuanghua'],
       性别: '女',
       灵根禁止: ['无'],
@@ -363,7 +400,7 @@ export const stories: StoryOption[] = [
     glyph: '器',
     recommend: '小道悠游 / 寻常修行',
     类型: '特殊',
-    constraints: {
+    constraints: { 世界: ["凡界","灵界"],
       种族: ['物化生灵'],
     },
     settings: {
@@ -389,7 +426,7 @@ export const stories: StoryOption[] = [
     glyph: '兽',
     recommend: '小道悠游 / 寻常修行',
     类型: '特殊',
-    constraints: {
+    constraints: { 世界: ["凡界","灵界"],
       种族: ['妖族'],
     },
     settings: {
@@ -415,7 +452,7 @@ export const stories: StoryOption[] = [
     glyph: '遗',
     recommend: '寻常修行 / 砺心问道',
     类型: '特殊',
-    constraints: {
+    constraints: { 世界: ["凡界","灵界"],
       种族: ['物化生灵'],
     },
     settings: {
@@ -441,6 +478,7 @@ export const stories: StoryOption[] = [
     glyph: '笼',
     recommend: '砺心问道 / 逆天改命',
     类型: '通用',
+    constraints: { 世界: ["凡界","灵界","冥界"] },
     settings: {
       时间: { 年: 7246, 月: 10, 日: 3, 时辰: '戌时' },
       宗门: '散修',
@@ -463,7 +501,7 @@ export const stories: StoryOption[] = [
     glyph: '芽',
     recommend: '小道悠游 / 寻常修行',
     类型: '特殊',
-    constraints: {
+    constraints: { 世界: ["凡界","灵界"],
       种族: ['灵族'],
     },
     settings: {
@@ -519,7 +557,7 @@ export const stories: StoryOption[] = [
     类型: '特殊',
     剧情: true,
     flags: ['血池魔剑·初醒'],
-    constraints: {
+    constraints: { 世界: ["凡界","灵界"],
       种族: ['物化生灵'],
       种族细分必须为空: true,
       剧本指定种类: '魔剑',
@@ -548,7 +586,7 @@ export const stories: StoryOption[] = [
     类型: '特殊',
     剧情: true,
     flags: ['合欢宗·百艳录'],
-    constraints: {
+    constraints: { 世界: ["凡界"],
       locationIds: ['eco-dt-linyuan'],
       门派归属: ['', '散修', '合欢宗'],
       种族: ['人族'],
@@ -581,7 +619,7 @@ export const stories: StoryOption[] = [
     类型: '特殊',
     剧情: true,
     flags: ['合欢宗·医心问诊'],
-    constraints: {
+    constraints: { 世界: ["凡界"],
       locationIds: ['eco-dt-linyuan'],
       门派归属: ['', '散修', '合欢宗'],
       必须人形: true,
@@ -611,7 +649,7 @@ export const stories: StoryOption[] = [
     类型: '特殊',
     剧情: true,
     flags: ['合欢宗·双头龙成灵'],
-    constraints: {
+    constraints: { 世界: ["凡界"],
       locationIds: ['eco-dt-linyuan'],
       门派归属: ['', '散修', '合欢宗'],
       种族: ['物化生灵'],
@@ -642,7 +680,7 @@ export const stories: StoryOption[] = [
     类型: '特殊',
     剧情: true,
     flags: ['合欢宗·古府秘塞'],
-    constraints: {
+    constraints: { 世界: ["凡界"],
       locationIds: ['eco-dt-linyuan'],
       门派归属: ['', '散修', '合欢宗'],
       种族: ['物化生灵'],
@@ -672,7 +710,7 @@ export const stories: StoryOption[] = [
     glyph: '续',
     recommend: '寻常修行 / 砺心问道',
     类型: '通用',
-    constraints: {
+    constraints: { 世界: ["凡界","灵界","冥界"],
       灵根五行任意: ['无'],
       必须人形: true,
     },
@@ -708,7 +746,7 @@ export const stories: StoryOption[] = [
     glyph: '俗',
     recommend: '砺心问道 / 逆天改命',
     类型: '通用',
-    constraints: { 必须人形: true },
+    constraints: { 世界: ["凡界","灵界","冥界"], 必须人形: true },
     settings: {
       时间: {
         年: 7222,
@@ -738,13 +776,25 @@ export const findStory = (id: string | null): StoryOption | undefined =>
   id ? stories.find(s => s.id === id) : undefined;
 
 export function resolveStorySettings(story: StoryOption, sel: Selection): StorySettings {
-  return story.类型 === '通用' && findStory(story.id)
-    ? { ...story.settings, 宗门: sel.门派归属 || '散修' }
-    : story.settings;
+  const location = findLocation(sel.locationId);
+  const world = location?.世界 ?? story.settings.世界;
+  if (story.id === 'story-earth-dongfeng' && world === '地球') {
+    const academy = location?.sects?.find(org => org.tags?.includes('培养机构'));
+    if (academy) return { ...story.settings, 宗门: academy.name,
+      身份: ['已登记', `${academy.name}新生`],
+      具体地点: `${location!.生态}-${academy.name}-新生报到处`,
+      时间: cultivationDate(story.settings.时间, world),
+    };
+  }
+  return { ...story.settings,
+    时间: cultivationDate(story.settings.时间, world, { 年: world === '地球' ? 7026 : 7000, 月: 1, 日: 1 }),
+    宗门: world !== '地球' && story.类型 === '通用' && findStory(story.id) ? sel.门派归属 || '散修' : story.settings.宗门,
+  };
 }
 
 // ============ 故事约束校验 / 描述 ============
 export function isStoryAvailable(story: StoryOption, sel: Selection): boolean {
+  if (storyWorldConflict(story, sel)) return false;
   if (!isLocationAvailable(sel.locationId, sel.种族) || !isSectAvailable(story.settings.宗门, sel.locationId))
     return false;
   if (story.settings.初始境界.大境界 !== '凡人' && (!sel.root.elements.length || sel.root.elements.includes('无')))
@@ -804,6 +854,7 @@ export function isStoryAvailable(story: StoryOption, sel: Selection): boolean {
 
 /** 门派归属值 → 展示文本（''=无） */
 function menpaiLabel(v: string): string {
+  if (v === '华夏修真科学技术大学') return '华夏修真科学技术大学学员';
   if (v === '') return '无';
   if (v === '散修') return '散修';
   return `${v}弟子`;
@@ -813,6 +864,8 @@ function menpaiLabel(v: string): string {
 export function whyStoryUnavailable(story: StoryOption, sel: Selection): string[] {
   const c = story.constraints;
   const reasons: string[] = [];
+  const worldConflict = storyWorldConflict(story, sel);
+  if (worldConflict) reasons.push(worldConflict);
   if (story.settings.初始境界.大境界 !== '凡人' && (!sel.root.elements.length || sel.root.elements.includes('无')))
     reasons.push('修士开局须选择灵根');
   if (!isLocationAvailable(sel.locationId, sel.种族)) reasons.push('请先选择当前种族可用的出生地');
@@ -892,6 +945,7 @@ export function whyStoryUnavailable(story: StoryOption, sel: Selection): string[
 export function describeConstraints(c?: StoryConstraints): string[] {
   if (!c) return [];
   const lines: string[] = [];
+  if (c.世界?.length) lines.push(`世界：${c.世界.join(' / ')}`);
   if (c.locationIds?.length) {
     const names = c.locationIds.map(id => findLocation(id)?.name).filter(Boolean) as string[];
     if (names.length) lines.push(`出生地：${names.join(' / ')}`);
@@ -921,13 +975,25 @@ export function realmLabel(realm: StorySettings['初始境界']): string {
   return realm.大境界 === '凡人' ? '凡人' : `${realm.大境界}${realm.小境界 || '初期'}`;
 }
 
-export function describeSettings(s: StorySettings): string[] {
-  const t = s.时间;
+export function describeSettings(s: StorySettings, world = s.世界): string[] {
+  const t = cultivationDate(s.时间, world);
   return [
-    `时间：${t.年}年 ${t.月}月 ${t.日}日${t.时辰 ? ' · ' + t.时辰 : ''}`,
-    `宗门：${s.宗门}`,
+    `时间：修仙历${t.年}年 ${t.月}月 ${t.日}日${t.时辰 ? ' · ' + t.时辰 : ''}`,
+    `${world === '地球' ? '培养机构' : '宗门'}：${s.宗门}`,
     `初始境界：${realmLabel(s.初始境界)}`,
   ];
+}
+
+function storyWorldConflict(story: StoryOption, sel: Selection): string | undefined {
+  const world = findLocation(sel.locationId)?.世界;
+  if (!world) return undefined;
+  if (story.constraints?.世界?.length && !story.constraints.世界.includes(world)) return `开局世界须为：${story.constraints.世界.join(' / ')}`;
+  if (story.settings.世界 && story.settings.世界 !== world) return `开局世界须为：${story.settings.世界}`;
+  if (world === '地球') {
+    if (!story.settings.世界 && !story.tags?.includes('自创')) return '此剧本适用于凡界、灵界、冥界';
+    if (cultivationYear(story.settings.时间.年, world) < 7026) return '地球开局时间须从修仙历7026年起';
+  }
+  return undefined;
 }
 
 // ============ 自创剧本 ============
@@ -973,7 +1039,7 @@ export function customStoryToOption(c: CustomStory): StoryOption {
 export function isCustomStoryValid(c: CustomStory): boolean {
   if (!c.name.trim()) return false;
   if (!c.body.trim()) return false;
-  if (c.settings.时间.年 < 7000) return false;
+  if (!(cultivationYear(c.settings.时间.年, c.settings.世界) >= 7000)) return false;
   if (!c.settings.宗门.trim()) return false;
   if (!c.settings.初始境界.大境界.trim()) return false;
   return true;

@@ -124,6 +124,8 @@ export interface EcoEntity {
 export interface LocationNode {
   id: string;
   name: string;
+  /** 国家型选项对应的世界书地点。 */
+  地点?: { 地域: string; 城市: string };
   /** 简短描述 */
   description?: string;
   /** 子节点；叶节点（生态）不写或为空 */
@@ -171,6 +173,7 @@ export type ItemKind =
   // 物品
   | '丹药'
   | '符箓'
+  | '阵物'
   | '秘籍'
   | '素材'
   | '工具'
@@ -305,6 +308,8 @@ export type SmallRealm = '初期' | '中期' | '后期';
 
 /** 故事可选条件：未满足则禁选 */
 export interface StoryConstraints {
+  /** 预设剧本适用的世界。 */
+  世界?: string[];
   /** 必须为这些叶节点 id 之一（出生地） */
   locationIds?: string[];
   /** 必须落在这些大地域 id 之一 */
@@ -339,6 +344,12 @@ export interface StoryConstraints {
 
 /** 故事开局设定：年份必须 ≥ 7000 */
 export interface StorySettings {
+  /** 固定世界的剧本；未指定的既有剧本适用于凡界、灵界、冥界。 */
+  世界?: string;
+  /** 剧本固定身份，可用于现代学员等非宗门身份。 */
+  身份?: string[];
+  具体地点?: string;
+  年龄?: number;
   时间: { 年: number; 月: number; 日: number; 时辰?: string };
   /** 宗门名称；散修则填 '散修' */
   宗门: string;
@@ -401,6 +412,8 @@ export interface Selection {
   locationId: string | null;
   /** 门派归属（决定生成时的「身份」标签）：''=无(不加身份) / '散修'(身份=散修) / 宗门名(身份=「XX弟子」) */
   门派归属: string;
+  /** 地球初始国籍；空值按出生城市确定。 */
+  国籍?: string;
   itemIds: string[];
   /** 玩家自创的资材（可多件） */
   customItems: CustomItem[];

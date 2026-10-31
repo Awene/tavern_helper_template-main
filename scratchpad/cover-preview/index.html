@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>本格修仙 · 封面设计预览</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#111615;color:#ccc9bd;font:13px system-ui,sans-serif}.tools{max-width:1080px;margin:26px auto 22px;padding:0 18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.label{margin-right:auto;letter-spacing:2px}.label small{display:block;font-size:11px;letter-spacing:1px;color:#7f918a;margin-top:6px}button{font:inherit;cursor:pointer;color:#bdc7bf;background:transparent;border:1px solid #37463f;padding:9px 14px;border-radius:5px}button[aria-pressed=true]{color:#e5d0a4;border-color:#9a855e;background:#252d27}button:focus-visible{outline:2px solid #dbc695;outline-offset:3px}.stage{width:calc(100% - 36px);max-width:1040px;margin:0 auto;transition:max-width .35s}.stage.phone{max-width:390px}iframe{display:block;width:100%;border:0;height:680px;border-radius:6px;box-shadow:0 25px 70px #0007}.note{text-align:center;color:#83958c;margin:20px 18px 30px;font-size:12px;line-height:1.9}.note span{color:#c3b698}@media(max-width:520px){.tools{margin-top:16px}.label{width:100%;margin-bottom:8px}.stage{width:calc(100% - 20px)}}
+</style>
+</head>
+<body>
+<header class="tools"><div class="label">封面设计预览 <small>墨青 · 月白 · 鎏金 / 尚未应用</small></div><button id="desktop" aria-pressed="true">桌面</button><button id="phone" aria-pressed="false">手机</button><button id="motion" aria-pressed="false">暂停动画</button></header>
+<main class="stage"><iframe src="cover.html" title="本格修仙开局封面"></iframe></main>
+<p class="note">头像原图 · 呼吸流光 · 飘浮星尘 · 响应式布局<br><span>按钮仅演示视觉反馈，不读取或修改酒馆存档。</span></p>
+<script>
+const frame=document.querySelector('iframe'),stage=document.querySelector('.stage');
+function fit(){if(frame.contentDocument?.body)frame.style.height=(Math.ceil(frame.contentDocument.body.getBoundingClientRect().height)+2)+'px'}
+frame.addEventListener('load',()=>{new ResizeObserver(fit).observe(frame.contentDocument.body);fit()});
+for(const name of ['desktop','phone'])document.getElementById(name).onclick=()=>{stage.classList.toggle('phone',name==='phone');for(const id of ['desktop','phone'])document.getElementById(id).setAttribute('aria-pressed',String(id===name))};
+document.getElementById('motion').onclick=function(){const paused=this.getAttribute('aria-pressed')!=='true';this.setAttribute('aria-pressed',String(paused));this.textContent=paused?'播放动画':'暂停动画';frame.contentDocument.documentElement.classList.toggle('paused',paused)};
+</script>
+</body></html>
