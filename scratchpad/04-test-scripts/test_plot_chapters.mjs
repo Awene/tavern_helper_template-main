@@ -58,4 +58,19 @@ d.历练.梦茧.本幕进行中=false;old=structuredClone(d);d.历练.梦茧={�
 d=base();d.事件.聚焦模式='暂停';d.历练.梦茧={类别:'剧情',阶段:'第一幕',本幕进行中:true,进展:'原进展'};old=structuredClone(d);delete d.历练.梦茧;d.事件.已完成事件=['梦茧'];got=sync({stat_data:d},{stat_data:old});check(got.历练.梦茧.进展==='原进展'&&!got.事件.已完成事件.includes('梦茧'),'pause restores deleted plot and completion record');
 d=base();d.事件.聚焦模式='手动';d.事件.标题='梦茧';d.历练.梦茧={类别:'剧情',阶段:'第一幕',本幕进行中:true};old=structuredClone(d);d.历练.梦茧.本幕进行中=false;got=sync({stat_data:d},{stat_data:old});check(got.事件.聚焦模式==='自动'&&!got.事件.标题,'manual active chapter end returns to freedom');
 context.input={历练:{梦茧:{类别:'剧情',阶段:'第一幕',本幕进行中:true,分支:'归元'}}};const parsed=vm.runInContext('Schema.parse(input)',context);check(parsed.历练.梦茧.本幕进行中===true&&parsed.历练.梦茧.分支==='归元','script schema retains chapter fields');
+// Regression: root empty snapshots must not erase existing inventory/techniques.
+for (const rootKey of ['物品','功法']) {
+ context.guardVariables={stat_data:{[rootKey]:{既有记录:{数量:1}}}};
+ for (const command of [{type:'set',args:['/'+rootKey,{}]}, {type:'insert',args:['',JSON.stringify(rootKey),{}],reason:'json_patch',full_match:JSON.stringify({op:'insert',path:'/'+rootKey,value:{}})}]) {
+  context.guardCommand=command;
+  vm.runInContext('restoreOriginalJsonPatchPath(guardCommand)',context);
+  check(vm.runInContext('preservePlotRecords(guardCommand,guardVariables)',context)===false,'empty root blocked '+rootKey+command.type);
+ }
+ context.guardCommand={type:'delete',args:['/'+rootKey+'/既有记录']};
+ check(vm.runInContext('preservePlotRecords(guardCommand,guardVariables)',context)===true,'explicit removal remains legal');
+ context.guardCommand={type:'insert',args:['/'+rootKey,'新记录',{数量:1}]};
+ check(vm.runInContext('preservePlotRecords(guardCommand,guardVariables)',context)===true,'child award remains legal');
+}
+context.guardVariables={stat_data:{物品:{}}};context.guardCommand={type:'set',args:['/物品',{}]};
+check(vm.runInContext('preservePlotRecords(guardCommand,guardVariables)',context)===true,'empty initial container allowed');
 console.log('PASS '+checks+' chapter eligibility, EJS, schema, focus and pause checks. These do not validate AI narrative decisions.');

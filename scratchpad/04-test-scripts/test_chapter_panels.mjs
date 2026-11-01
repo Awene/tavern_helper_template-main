@@ -17,3 +17,24 @@ for(const type of ['委托','剧情'])for(const status of ['进行中','待结�
  count++;
 }
 console.log(`PASS ${count} body-panel renderer cases: explicit category, shared field order, footer, status and escaping.`);
+
+// Exercise the actual raw-table parser in both maintained source and delivered build.
+function functionCode(text,name){
+ const start=text.indexOf('function '+name+'(');
+ assert.ok(start>=0,'missing '+name);
+ const next=text.indexOf('function ',start+10);
+ return text.slice(start,next<0?undefined:next);
+}
+for(const [label,text] of [['source',source],['build',fs.readFileSync('dist/正文美化/index.html','utf8')]]){
+ const ctx=vm.createContext({_});
+ const names=['parseTablePanel','splitPanelColumns','_splitRowKv','renderTaskHtml'];
+ vm.runInContext(names.map(n=>functionCode(text,n)).join('\n'),ctx);
+ for(const type of ['剧情','委托',''])for(const ending of ['\n','\r\n']){
+  const rows=['普通任务也可能提及剧情',`| ${type?'类别: '+type+' | ':''}状态: 进行中 | 难度: 筑基 |`,'| 幕次: 第三幕 | 紧迫: 暂无紧迫 |','| 焦点: 面对残魂侵袭 | 目标: 采集灵草 |','| 进展: 尚未决定 | 局势: 残魂侵袭 | 契机: 蛊脉变化 | 牵涉: 识海 |','| 委托方: 百草堂 | 奖励: 灵石三十 | 交付: 交予执事 |'];
+  ctx.raw=rows.join(ending);
+  const out=vm.runInContext('renderTaskHtml(parseTablePanel(raw))',ctx);
+  assert.equal(out.includes('is-plot'),type==='剧情',label+' raw category '+type);
+  for(const value of type==='剧情'?['第三幕','面对残魂侵袭','残魂侵袭','蛊脉变化','识海']:['采集灵草','百草堂','灵石三十','交予执事'])assert.ok(out.includes(value),label+' missing field '+value);
+ }
+}
+console.log('PASS 12 raw-table-to-renderer cases across source/build: plot, quest, legacy quest, LF and CRLF.');

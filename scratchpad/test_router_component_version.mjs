@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import ts from 'typescript';
-const file=new URL('../../../../SillyTavern-1.16.0/data/default-user/extensions/cultivation-rule-router/index.js',import.meta.url);
+const file=new URL('../../cultivation-rule-router/index.js',import.meta.url);
 const source=fs.readFileSync(file,'utf8');
 const ast=ts.createSourceFile('router.js',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
 const functions=new Map();

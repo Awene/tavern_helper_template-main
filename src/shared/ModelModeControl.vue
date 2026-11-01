@@ -4,7 +4,7 @@
     <p>与当前使用的模型系列保持一致。这里只调整预设提示词，实际模型仍在酒馆 API 连接中选择。</p>
     <div class="model-mode-options" role="group" aria-label="预设模型模式">
       <button
-        v-for="item in MODEL_MODES"
+        v-for="item in availableModes"
         :key="item"
         type="button"
         :disabled="busy || disabled"
@@ -26,16 +26,18 @@
 </template>
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { MODEL_MODES, applyModelMode, getModelMode, modelLabel, type ModelMode } from './modelMode';
+import { applyModelMode, getAvailableModelModes, getModelMode, modelLabel, type ModelMode } from './modelMode';
 const props = defineProps<{ disabled?: boolean }>();
 const emit = defineEmits<{ busy: [value: boolean] }>();
 const mode = ref<ModelMode | null>(null);
+const availableModes = ref<ModelMode[]>([]);
 const busy = ref(false),
   error = ref('');
 function read() {
   try {
+    availableModes.value = getAvailableModelModes();
     mode.value = getModelMode();
-    error.value = '';
+    error.value = availableModes.value.length ? '' : '当前预设没有可识别的模型模式条目，请选择本格修仙预设。';
   } catch {
     mode.value = null;
     error.value = '无法读取当前预设，请先选择本格修仙预设。';

@@ -27,7 +27,24 @@ for(const name of names) {
 preset.prompts[0].enabled = true;
 assert.equal(model.getModelMode(), null);
 preset.prompts = preset.prompts.slice(1);
-await assert.rejects(model.applyModelMode('Claude'),/缺少模型条目/);
+await assert.rejects(model.applyModelMode('Gemini'),/缺少模型条目/);
+
+// Use the actual maintained preset, including its two distinct Gemini profiles.
+const realPreset = JSON.parse(fs.readFileSync(new URL('../../Cultivation-Card-Game/预设/本格修仙/本格修仙Kemini5-3.4.json', import.meta.url), 'utf8'));
+const order = realPreset.prompt_order[0].order;
+preset = { prompts: realPreset.prompts.map(p => ({...p, enabled: order.find(o => o.identifier === p.identifier)?.enabled ?? false})), settings: {model:'keep',temperature:0.8} };
+const before = structuredClone(preset);
+assert.deepEqual(Array.from(model.getAvailableModelModes()), ['Gemini','GeminiFlash','Claude','DeepSeek']);
+for (const name of ['Gemini','GeminiFlash','Claude','DeepSeek']) {
+  await model.applyModelMode(name);
+  assert.equal(model.getModelMode(), name);
+  assert.equal(preset.prompts.filter(p => ['⚓️Gemini3.1p开','⚓️Gemini3.7F与3.8开','⚓️Claude开','⚓️DS开'].includes(p.name) && p.enabled).length,1);
+  assert.deepEqual(preset.settings,before.settings);
+  assert.equal(preset.prompts.find(p=>p.name==='🌐COT').content,before.prompts.find(p=>p.name==='🌐COT').content);
+}
+const unchanged = structuredClone(preset);
+await assert.rejects(model.applyModelMode('Glm'),/缺少模型条目/);
+assert.deepEqual(preset,unchanged);
 
 let variablePreset = {prompts:[{name:'🧭变量主API(二选一)',enabled:false},{name:'🧭变量额外API(二选一)',enabled:true}]};
 let worldbook = [{name:'[mvu_update]变量输出格式（额外API开）',enabled:true},{name:'[mvu_update]变量输出格式（随主AI输出开）',enabled:false}];
