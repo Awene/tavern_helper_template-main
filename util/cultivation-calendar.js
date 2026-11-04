@@ -81,14 +81,23 @@ export function normalizeCalendarState(input) {
     result.传闻 = { ...input.传闻 };
     if (input.传闻.上次世界推进时间点 != null) result.传闻.上次世界推进时间点 = normalizeOptional(input.传闻.上次世界推进时间点);
   }
-  if (input.任务) result.任务 = mapRecords(input.任务, raw => {
-    const task = { ...raw };
-    if (task.截止时间 != null) task.截止时间 = normalizeOptional(task.截止时间);
-    return task;
-  });
+  if (input.任务) {
+    const convertTask = raw => {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return raw;
+      const task = { ...raw };
+      if (task.截止时间 != null) task.截止时间 = normalizeOptional(task.截止时间);
+      return task;
+    };
+    result.任务 = Object.fromEntries(Object.entries(input.任务).map(([key, value]) => [key,
+      key === '条目' ? mapRecords(value || {}, convertTask)
+        : ['聚焦任务', '已完成任务'].includes(key) ? value : convertTask(value),
+    ]));
+  }
   if (input.固定资产) result.固定资产 = mapRecords(input.固定资产, raw => {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return raw;
     const asset = { ...raw };
     if (asset.设施) asset.设施 = mapRecords(asset.设施, rawFacility => {
+      if (!rawFacility || typeof rawFacility !== 'object' || Array.isArray(rawFacility)) return rawFacility;
       const facility = { ...rawFacility };
       if (facility.上次收取日期 != null) facility.上次收取日期 = normalizeOptional(facility.上次收取日期);
       return facility;

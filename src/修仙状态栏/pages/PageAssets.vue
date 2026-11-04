@@ -87,6 +87,17 @@
           <div class="xy-asset-status">
             <EditableValue v-model="asset.现状" label="现状" multiline :rows="2" />
           </div>
+          <div v-if="asset.类型 === '宗门'" class="xy-asset-reputation">
+            <span>名气：</span>
+            <EditableValue
+              :model-value="asset.名气"
+              type="number"
+              label="名气"
+              :min="0"
+              :step="1"
+              @update:model-value="asset.名气 = normalizeScale($event)"
+            />
+          </div>
 
           <div class="xy-asset-section-title">设施</div>
           <div v-if="_.isEmpty(asset.设施) && !state.editMode" class="xy-asset-empty">暂无设施</div>
@@ -110,6 +121,16 @@
               </strong>
               <span class="xy-facility-yield">
                 每月产出：<EditableValue v-model="facility.每月产出" label="每月产出" />
+              </span>
+            </div>
+            <div class="xy-facility-metadata">
+              <span>境界：<EditableValue v-model="facility.境界" label="设施境界" /></span>
+              <span>
+                品质：
+                <select v-if="state.editMode" v-model="facility.品质" class="xy-asset-select" title="设施品质">
+                  <option v-for="quality in qualities" :key="quality" :value="quality">{{ quality }}品</option>
+                </select>
+                <span v-else>{{ facility.品质 }}品</span>
               </span>
             </div>
             <div v-if="!_.isEmpty(facility.效果) || state.editMode" class="xy-facility-effect">
@@ -183,6 +204,7 @@ import IdentityTags from './IdentityTags.vue';
 const store = useDataStore();
 const assets = computed(() => store.data.固定资产);
 const assetTypes = ['宗门', '店铺', '洞府'] as const;
+const qualities = ['凡', '黄', '玄', '地', '天'] as const;
 const worlds = ['凡界', '灵界', '仙界'] as const;
 const hours = ['子时', '丑时', '寅时', '卯时', '辰时', '巳时', '午时', '未时', '申时', '酉时', '戌时', '亥时'] as const;
 
@@ -224,6 +246,7 @@ function addAsset() {
   const name = uniqueName(assets.value, '新资产');
   assets.value[name] = {
     类型: '洞府',
+    名气: 0,
     人员规模: 0,
     所在地: { ...store.data.地点 },
     现状: '正常',
@@ -234,7 +257,7 @@ function addAsset() {
 
 function addFacility(facilities: AssetRecord) {
   const name = uniqueName(facilities, '新设施');
-  facilities[name] = { 效果: {}, 每月产出: '无', 上次收取日期: null };
+  facilities[name] = { 境界: '凡人', 品质: '凡', 效果: {}, 每月产出: '无', 上次收取日期: null };
 }
 
 function removeFacility(facilities: AssetRecord, name: string) {
@@ -245,3 +268,18 @@ function formatTime(time: { 年: number; 月: number; 日: number; 时辰: strin
   return `修仙历${time.年}年${time.月}月${time.日}日 · ${time.时辰}`;
 }
 </script>
+
+<style scoped>
+.xy-asset-reputation,
+.xy-facility-metadata {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0.5rem 0;
+}
+
+.xy-asset-reputation {
+  gap: 0.25rem;
+}
+</style>

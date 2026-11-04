@@ -1,9 +1,23 @@
 <template>
   <section class="xy-page xy-page-tasks">
     <div v-if="state.editMode" class="xy-asset-toolbar xy-task-toolbar">
-      <span>任务名与各字段均可编辑；完成、失败或放弃的任务应直接删除。</span>
+      <span>任务名与各字段均可编辑；结清奖励后记录完成，失败或放弃时删除。</span>
       <button type="button" class="xy-effect-add" @click="addTask">＋ 新增任务</button>
     </div>
+
+    <div class="xy-task-focus">
+      <span class="xy-task-field-label">聚焦任务</span>
+      <select v-if="state.editMode" v-model="store.data.任务.聚焦任务" class="xy-task-status-select">
+        <option :value="null">无</option>
+        <option v-for="name in Object.keys(tasks)" :key="name" :value="name">{{ name }}</option>
+      </select>
+      <strong v-else>{{ store.data.任务.聚焦任务 || '无' }}</strong>
+    </div>
+    <details v-if="state.editMode || store.data.任务.已完成任务.length" class="xy-task-history">
+      <summary>已完成任务 · {{ store.data.任务.已完成任务.length }}</summary>
+      <EditableValue v-if="state.editMode" v-model="completedText" label="已完成任务（每行一个任务名）" multiline :rows="4" />
+      <ul v-else><li v-for="name in store.data.任务.已完成任务" :key="name">{{ name }}</li></ul>
+    </details>
 
     <div v-if="!_.isEmpty(tasks)" class="xy-rumor-filter">
       <button type="button" :class="['xy-chip', { active: taskFilter === 'all' }]" @click="taskFilter = 'all'">
@@ -149,7 +163,11 @@ import CopyNameButton from './CopyNameButton.vue';
 import EditableValue from './EditableValue.vue';
 
 const store = useDataStore();
-const tasks = computed(() => store.data.任务);
+const tasks = computed(() => store.data.任务.条目);
+const completedText = computed({
+  get: () => store.data.任务.已完成任务.join('\n'),
+  set: (value: string) => { store.data.任务.已完成任务 = [...new Set(value.split('\n').map(name => name.trim()).filter(Boolean))]; },
+});
 const taskFilter = ref<'all' | '进行中' | '待结算'>('all');
 const runningCount = computed(() => Object.values(tasks.value).filter(task => task.状态 === '进行中').length);
 const settlementCount = computed(() => Object.values(tasks.value).filter(task => task.状态 === '待结算').length);
@@ -158,7 +176,7 @@ const filteredTasks = computed(() =>
 );
 const hours = ['子时', '丑时', '寅时', '卯时', '辰时', '巳时', '午时', '未时', '申时', '酉时', '戌时', '亥时'] as const;
 
-type TaskEntry = (typeof store.data.任务)[string];
+type TaskEntry = (typeof store.data.任务.条目)[string];
 type TaskRecord = Record<string, TaskEntry>;
 type TaskTime = { 年: number; 月: number; 日: number; 时辰: string };
 
@@ -200,6 +218,7 @@ function renameTask(oldName: string, rawName: string) {
   );
   for (const name of Object.keys(tasks.value)) delete tasks.value[name];
   for (const [name, value] of entries) tasks.value[name] = value;
+  if (store.data.任务.聚焦任务 === oldName) store.data.任务.聚焦任务 = newName;
 }
 
 function newTime(): TaskTime {
@@ -220,3 +239,11 @@ function isOverdue(deadline: TaskTime): boolean {
   return timeValue(store.data.时间) > timeValue(deadline);
 }
 </script>
+
+<style scoped>
+.xy-task-focus { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.xy-task-focus strong { overflow-wrap: anywhere; }
+.xy-task-history { margin-bottom: 16px; padding: 10px 12px; border: 1px solid currentColor; border-radius: 6px; }
+.xy-task-history summary { cursor: pointer; }
+.xy-task-history ul { max-height: 180px; overflow-y: auto; padding-left: 20px; overflow-wrap: anywhere; }
+</style>

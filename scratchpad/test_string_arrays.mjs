@@ -1,3 +1,4 @@
+import { normalizeTasks } from '../util/cultivation-tasks.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -102,7 +103,7 @@ const schemaJs = ts.transpileModule(read('../src/修仙状态栏/schema.ts'), {
 }).outputText;
 vm.runInNewContext(schemaJs, {
   exports,
-  require: name => (name.includes('string-array') ? { normalizeStringArray } : name.includes('cultivation-calendar') ? require('../util/cultivation-calendar.js') : require(name)),
+  require: name => (name.includes('cultivation-tasks') ? { normalizeTasks } : name.includes('string-array') ? { normalizeStringArray } : name.includes('cultivation-calendar') ? require('../util/cultivation-calendar.js') : require(name)),
   _,
 });
 for (const schema of [mvuSchema, exports.Schema]) {

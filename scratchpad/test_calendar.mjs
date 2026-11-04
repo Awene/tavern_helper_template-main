@@ -1,3 +1,4 @@
+import { normalizeTasks } from '../util/cultivation-tasks.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -15,7 +16,7 @@ const cardSchema = vm.runInContext('Schema', ctx);
 const schemaModule = { exports: {} };
 new Function('module', 'exports', 'require', '_', ts.transpileModule(read('../src/修仙状态栏/schema.ts'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-}).outputText)(schemaModule, schemaModule.exports, name => name.includes('cultivation-calendar') ? calendar : name.includes('string-array') ? { normalizeStringArray } : require(name), _);
+}).outputText)(schemaModule, schemaModule.exports, name => name.includes('cultivation-tasks') ? { normalizeTasks } : name.includes('cultivation-calendar') ? calendar : name.includes('string-array') ? { normalizeStringArray } : require(name), _);
 let checks = 0;
 const equal = (actual, expected, message) => { assert.deepEqual(JSON.parse(JSON.stringify(actual)), expected, message); checks++; };
 for (const [input, world, expected] of [
@@ -30,7 +31,7 @@ for (const input of [undefined, null, {}, { 年: '乱码', 月: 99, 日: -1 }]) 
 }
 for (const schema of [cardSchema, schemaModule.exports.Schema]) {
   const noDate = schema.parse({ 地点: { 世界: '地球' }, 任务: { 测试: { 截止时间: '无' } }, 固定资产: { 测试: { 设施: { 工坊: { 上次收取日期: '从未' } } } } });
-  equal(noDate.任务.测试.截止时间, null, '无截止日期仍为空');
+  equal(noDate.任务.条目.测试.截止时间, null, '无截止日期仍为空');
   equal(noDate.固定资产.测试.设施.工坊.上次收取日期, null, '从未收取不能变为开局日期');
   for (const time of ['公元2026年1月2日 辰时', '2026-01-02', { 年: '公元2026年', 月: 1, 日: 2 }, { 年: 2026, 月: 1, 日: 2 }]) {
     const result = schema.parse({ 地点: { 世界: '地球' }, 时间: time, 寿元: { 生日: 2008 },
@@ -41,7 +42,7 @@ for (const schema of [cardSchema, schemaModule.exports.Schema]) {
     equal([result.时间.年, result.时间.月, result.时间.日], [7026, 1, 2], '两份Schema统一');
     if (schema === cardSchema) equal(result.寿元.生日, 7008, '出生年份同步');
     equal(result.传闻.上次世界推进时间点.年, 7026, '推进起点同步');
-    equal(result.任务.测试.截止时间.年, 7026, '任务日期同步');
+    equal(result.任务.条目.测试.截止时间.年, 7026, '任务日期同步');
     equal(result.固定资产.测试.设施.工坊.上次收取日期.年, 7026, '资产日期同步');
     equal(schema.parse(result), JSON.parse(JSON.stringify(result)), '重复解析不再次加5000');
   }

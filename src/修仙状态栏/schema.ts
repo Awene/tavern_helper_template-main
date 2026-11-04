@@ -1,3 +1,4 @@
+import { normalizeTasks } from '../../util/cultivation-tasks.js';
 import { cultivationYear, normalizeCalendarState } from '../../util/cultivation-calendar.js';
 import { normalizeStringArray } from '../../util/string-array';
 import { z } from 'zod';
@@ -699,18 +700,43 @@ const normalizeNamedRecord = (input: unknown, fallbackName: string): Record<stri
   );
 };
 
+// 旧设施曾将境界、品质写在“概况”中；只补元数据，保留原效果与产出。
+const normalizeFacilityMetadata = (value: Record<string, unknown>) => {
+  const effects = value.效果 ?? value.效用 ?? value.功能;
+  const summary =
+    typeof effects === 'string'
+      ? effects
+      : effects && typeof effects === 'object' && !Array.isArray(effects)
+        ? String((effects as Record<string, unknown>).概况 ?? '')
+        : '';
+  const realm =
+    String(value.境界 ?? '').trim() ||
+    summary.match(/境界\s*[:：=]\s*([^\s，,；;|/／]+)/)?.[1] ||
+    summary.match(/(?:凡人|炼气|练气|筑基|金丹|结丹|元婴|化神|返虚|合体|大乘|渡劫)(?:初期|前期|中期|后期|圆满|巅峰|期)?/)?.[0] ||
+    '未定';
+  const quality =
+    String(value.品质 ?? '').trim().match(/^([凡黄玄地天])(?:品|阶)?$/)?.[1] ||
+    summary.match(/品质\s*[:：=]\s*([凡黄玄地天])(?:品|阶)?/)?.[1] ||
+    summary.match(/([凡黄玄地天])(?:品|阶)/)?.[1] ||
+    '凡';
+  return { 境界: realm, 品质: quality };
+};
+
 const AssetFacilitySchema = z.preprocess(
   input => {
-    if (typeof input === 'string') return { 效果: input };
+    if (typeof input === 'string') return { ...normalizeFacilityMetadata({ 效果: input }), 效果: input };
     if (!input || typeof input !== 'object' || Array.isArray(input)) return {};
     const value = input as Record<string, unknown>;
     return {
+      ...normalizeFacilityMetadata(value),
       效果: value.效果 ?? value.效用 ?? value.功能,
       每月产出: value.每月产出 ?? value.月产出 ?? value.产出,
       上次收取日期: value.上次收取日期 ?? value.上次收取 ?? value.收取日期,
     };
   },
   z.object({
+    境界: looseString('未定').prefault('未定'),
+    品质: QualityEnum.prefault('凡'),
     效果: z.preprocess(normalizeStringRecord, z.record(z.string(), z.string())).prefault({}),
     每月产出: looseString('无').prefault('无'),
     上次收取日期: AssetTimeSchema,
@@ -723,6 +749,7 @@ const FixedAssetSchema = z.preprocess(
     const value = input as Record<string, unknown>;
     return {
       类型: value.类型 ?? value.分类 ?? value.资产类型,
+      名气: value.名气 ?? value.声望,
       人员规模: value.人员规模 ?? value.人数 ?? value.规模,
       所在地: value.所在地 ?? value.地址 ?? value.位置,
       现状: value.现状 ?? value.状态 ?? value.当前状态,
@@ -740,6 +767,7 @@ const FixedAssetSchema = z.preprocess(
   },
   z.object({
     类型: z.preprocess(assetType, z.enum(['宗门', '店铺', '洞府'])).prefault('洞府'),
+    名气: z.preprocess(looseNonNegativeInteger, z.number().int().min(0)).prefault(0),
     人员规模: z.preprocess(looseNonNegativeInteger, z.number().int().min(0)).prefault(0),
     所在地: AssetLocationSchema,
     现状: looseString('正常').prefault('正常'),
@@ -755,7 +783,7 @@ const FixedAssetsSchema = z
   .prefault({});
 
 // ===== 任务 Schema =====
-// 任务只保存尚未结束的条目；完成、失败或放弃后直接移除，不保留履历。
+// 条目保存未结束任务，已完成任务仅保留名称。
 const TaskSchema = z.object({
   状态: z.enum(['进行中', '待结算']).prefault('进行中'),
   委托方: looseString('未知').prefault('未知'),
@@ -767,7 +795,11 @@ const TaskSchema = z.object({
   截止时间: AssetTimeSchema,
 });
 
-const TasksSchema = z.record(z.string(), TaskSchema).prefault({});
+const TasksSchema = z.preprocess(normalizeTasks, z.object({
+  聚焦任务: z.string().nullable().prefault(null),
+  已完成任务: z.array(z.string()).prefault([]),
+  条目: z.record(z.string(), TaskSchema).prefault({}),
+})).prefault({});
 
 // ===== 传闻 Schema =====
 // 旧数组/旧类别兼容；新条目只保留类别、内容、难度。重名加序号，避免覆盖。
