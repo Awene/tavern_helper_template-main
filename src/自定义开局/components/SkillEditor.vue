@@ -1,6 +1,6 @@
 <template>
   <div class="xs-skill-editor">
-    <div v-if="!modelValue.length" class="xs-skill-empty">尚未添加技能（按规则：凡/黄品 1 条，玄/地品 2 条，天品 3 条）</div>
+    <div v-if="!modelValue.length" class="xs-skill-empty">尚未添加技能（按规则：凡/黄/玄品 1 条，地/天品 2 条）</div>
     <div v-for="(sk, i) in modelValue" :key="i" class="xs-skill-card">
       <div class="xs-skill-card-head">
         <span class="xs-skill-index">技能 {{ i + 1 }}</span>

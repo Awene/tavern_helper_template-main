@@ -42,6 +42,38 @@ export const stories: StoryOption[] = [
       '这里既有经典研读、基础调息与术法课程，也有现代科学、工程和日常文化教育。修行导师与凡人专业教师各授所长，同学们带着不同的家庭经历与学习习惯来到一起，往后会共享课堂、食堂、实训与课余时光。\n' +
       '你尚未学会引气入体，一切才刚开始。眼下可以先办完报到，去看看住处，或与身旁同样初来乍到的新生聊上几句。修行的进展、同伴间的关系，以及你在这所学府里找到的方向，都将从这些日常相处中逐渐成形。',
   },
+  {
+    id: 'story-sect-last-lamp',
+    name: '残灯承门',
+    subtitle: '一灯熄灭，山门待续',
+    desc: '没落宗门仅有你、师父与师妹三人。师父外出游历后魂灯骤灭，你接过宗主之位，承担传承宗门与照顾师妹的责任。',
+    cost: 0, glyph: '灯', 类型: '通用', recommend: '寻常修行 / 砺心问道',
+    tags: ['宗主', '宗门经营', '传承'],
+    constraints: { 世界: ['凡界', '灵界'], 必须人形: true, 灵根禁止: ['无'], 门派归属: ['', '散修'] },
+    settings: {
+      时间: { 年: 7250, 月: 3, 日: 9, 时辰: '酉时' },
+      宗门: '散修', 年龄: 18,
+      初始境界: { 大境界: '炼气', 小境界: '初期' },
+    },
+    初始宗门: {
+      名气: 0, 人员规模: 2,
+      现状: '祖上曾盛，现已没落。师父外出后魂灯熄灭，由你继任宗主，门内仅余你与师妹。',
+      设施: {
+        破旧祠堂: { 境界: '凡人', 品质: '凡',
+          效果: { 概况: '屋瓦漏雨，供奉历代祖师牌位；师父的魂灯已经熄灭', 祭祀: '可供奉祖师、举行小型祭礼' }, 每月产出: '无' },
+        旧弟子舍: { 境界: '凡人', 品质: '凡',
+          效果: { 概况: '三间旧屋，门窗多有破损', 居住: '可供三人起居' }, 每月产出: '无' },
+        荒废药圃: { 境界: '凡人', 品质: '凡',
+          效果: { 概况: '一亩荒地，沟渠淤塞，尚未恢复种植' }, 每月产出: '无' },
+      },
+    },
+    body:
+      '山门的匾额早已褪色，石阶上的青苔一年比一年厚。师父常说，祖上也曾殿宇连绵、弟子如云，可如今，整座宗门只剩你、师父与师妹三人。你们守着几间旧屋、破旧祠堂和一片荒废药圃，将日子勉强过下去。\n' +
+      '师父临行前，又把祠堂的门修了一遍。他说此番外出游历，或许能寻到重振山门的机缘，嘱咐你照看师妹；若他不能归来，便由你接掌宗门，莫让祖师香火断绝。你只当那是老人惯常的叮咛，仍送他走到了山道尽头。\n' +
+      '这一日，你照例走进祠堂添油。师父的魂灯忽然轻颤，灯焰缩成一点，随即彻底熄灭。你握着油壶僵在原地，反复催动灯座，熟悉的光却再也没有亮起。\n' +
+      '师妹循声赶来，看见那盏暗下去的灯，脚步骤然停住。你悲痛难抑，却仍伸手扶住她。牌位前，师父留下的宗主印静静搁在旧匣里。你接过那枚印，从此，这座宗门的传承与师妹的生活，都落在了你的肩上。',
+  },
+
   // 通用开局
   {
     id: 'story-zayou',
@@ -754,6 +786,13 @@ export const findStory = (id: string | null): StoryOption | undefined =>
 export function resolveStorySettings(story: StoryOption, sel: Selection): StorySettings {
   const location = findLocation(sel.locationId);
   const world = location?.世界 ?? story.settings.世界;
+  if (story.初始宗门) {
+    const name = sel.开局宗门名称?.trim() || '未命名宗门';
+    return { ...story.settings, 宗门: name, 身份: [name + '宗主'],
+      具体地点: [location?.生态, name, '祠堂'].filter(Boolean).join('-'),
+      时间: cultivationDate(story.settings.时间, world),
+    };
+  }
   if (story.id === 'story-earth-dongfeng' && world === '地球') {
     const academy = location?.sects?.find(org => org.tags?.includes('培养机构'));
     if (academy) return { ...story.settings, 宗门: academy.name,
@@ -766,6 +805,15 @@ export function resolveStorySettings(story: StoryOption, sel: Selection): StoryS
     时间: cultivationDate(story.settings.时间, world, { 年: world === '地球' ? 7026 : 7000, 月: 1, 日: 1 }),
     宗门: world !== '地球' && story.类型 === '通用' && findStory(story.id) ? sel.门派归属 || '散修' : story.settings.宗门,
   };
+}
+
+export function startingSectNameError(story: StoryOption | undefined, sel: Selection): string | undefined {
+  if (!story?.初始宗门) return undefined;
+  const name = sel.开局宗门名称?.trim() || '';
+  if (!name) return '请填写开局宗门名称。';
+  if (name.length > 30 || /[\r\n<>]/.test(name) || ['无', '散修', '__proto__', 'constructor', 'prototype'].includes(name))
+    return '宗门名称请使用 1—30 字的单行名称，不含尖括号。';
+  return undefined;
 }
 
 // ============ 故事约束校验 / 描述 ============

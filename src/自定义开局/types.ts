@@ -357,7 +357,21 @@ export interface StorySettings {
   初始境界: { 大境界: string; 小境界: SmallRealm | '' };
 }
 
+export interface StartingSect {
+  名气: number;
+  人员规模: number;
+  现状: string;
+  设施: Record<string, {
+    境界: string;
+    品质: '凡' | '黄' | '玄' | '地' | '天';
+    效果: Record<string, string>;
+    每月产出: string;
+  }>;
+}
+
 export interface StoryOption extends Option {
+  /** 初始由玩家拥有的宗门；名称在选择剧本后填写。 */
+  初始宗门?: StartingSect;
   /** 故事正文（Markdown / 纯文本） */
   body: string;
   /** 推荐难度（仅作 UI 提示） */
@@ -418,6 +432,7 @@ export interface Selection {
   /** 玩家自创的资材（可多件） */
   customItems: CustomItem[];
   storyId: string | null;
+  开局宗门名称?: string;
   /** 玩家自创的开局剧本（仅一篇；为 null 表示未自创） */
   customStory: CustomStory | null;
   /** 道号（玩家自行输入） */

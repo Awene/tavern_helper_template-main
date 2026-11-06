@@ -100,6 +100,7 @@
           </div>
 
           <div class="xy-asset-section-title">设施</div>
+          <p class="xy-asset-claim-hint">领取时按距上次收取的完整月数结算；新设施从建成日期起算。</p>
           <div v-if="_.isEmpty(asset.设施) && !state.editMode" class="xy-asset-empty">暂无设施</div>
           <div v-for="(facility, facilityName) in asset.设施" :key="facilityName" class="xy-facility">
             <button
@@ -119,9 +120,6 @@
                   @update:model-value="renameKey(asset.设施, String(facilityName), String($event), '设施')"
                 />
               </strong>
-              <span class="xy-facility-yield">
-                每月产出：<EditableValue v-model="facility.每月产出" label="每月产出" />
-              </span>
             </div>
             <div class="xy-facility-metadata">
               <span>境界：<EditableValue v-model="facility.境界" label="设施境界" /></span>
@@ -136,45 +134,33 @@
             <div v-if="!_.isEmpty(facility.效果) || state.editMode" class="xy-facility-effect">
               <EffectList v-model="facility.效果" />
             </div>
+            <div class="xy-facility-output">
+              <span class="xy-asset-section-title">每月产出</span>
+              <EditableValue v-model="facility.每月产出" label="每月产出" multiline :rows="3" />
+            </div>
             <div class="xy-facility-date">
               <span>上次收取：</span>
-              <template v-if="facility.上次收取日期">
-                <span v-if="!state.editMode">{{ formatTime(facility.上次收取日期) }}</span>
-                <span v-else class="xy-asset-date-fields">
-                  <EditableValue v-model.number="facility.上次收取日期.年" type="number" label="年" :min="1" />年
-                  <EditableValue
-                    v-model.number="facility.上次收取日期.月"
-                    type="number"
-                    label="月"
-                    :min="1"
-                    :max="12"
-                  />月
-                  <EditableValue
-                    v-model.number="facility.上次收取日期.日"
-                    type="number"
-                    label="日"
-                    :min="1"
-                    :max="30"
-                  />日
-                  <select v-model="facility.上次收取日期.时辰" class="xy-asset-select xy-asset-select-time">
-                    <option v-for="hour in hours" :key="hour" :value="hour">{{ hour }}</option>
-                  </select>
-                  <button type="button" class="xy-asset-date-clear" @click="facility.上次收取日期 = null">
-                    设为从未收取
-                  </button>
-                </span>
-              </template>
-              <template v-else>
-                <span>从未收取</span>
-                <button
-                  v-if="state.editMode"
-                  type="button"
-                  class="xy-asset-date-clear"
-                  @click="facility.上次收取日期 = newTime()"
-                >
-                  填写日期
-                </button>
-              </template>
+              <span v-if="!state.editMode">{{ formatTime(facility.上次收取日期) }}</span>
+              <span v-else class="xy-asset-date-fields">
+                <EditableValue v-model.number="facility.上次收取日期.年" type="number" label="年" :min="1" />年
+                <EditableValue
+                  v-model.number="facility.上次收取日期.月"
+                  type="number"
+                  label="月"
+                  :min="1"
+                  :max="12"
+                />月
+                <EditableValue
+                  v-model.number="facility.上次收取日期.日"
+                  type="number"
+                  label="日"
+                  :min="1"
+                  :max="30"
+                />日
+                <select v-model="facility.上次收取日期.时辰" class="xy-asset-select xy-asset-select-time">
+                  <option v-for="hour in hours" :key="hour" :value="hour">{{ hour }}</option>
+                </select>
+              </span>
             </div>
           </div>
           <button v-if="state.editMode" type="button" class="xy-effect-add" @click="addFacility(asset.设施)">
@@ -205,7 +191,7 @@ const store = useDataStore();
 const assets = computed(() => store.data.固定资产);
 const assetTypes = ['宗门', '店铺', '洞府'] as const;
 const qualities = ['凡', '黄', '玄', '地', '天'] as const;
-const worlds = ['凡界', '灵界', '仙界'] as const;
+const worlds = ['凡界', '灵界', '仙界', '冥界', '地球'] as const;
 const hours = ['子时', '丑时', '寅时', '卯时', '辰时', '巳时', '午时', '未时', '申时', '酉时', '戌时', '亥时'] as const;
 
 type AssetRecord = Record<string, any>;
@@ -257,7 +243,7 @@ function addAsset() {
 
 function addFacility(facilities: AssetRecord) {
   const name = uniqueName(facilities, '新设施');
-  facilities[name] = { 境界: '凡人', 品质: '凡', 效果: {}, 每月产出: '无', 上次收取日期: null };
+  facilities[name] = { 境界: '凡人', 品质: '凡', 效果: {}, 每月产出: '无', 上次收取日期: newTime() };
 }
 
 function removeFacility(facilities: AssetRecord, name: string) {
@@ -270,6 +256,25 @@ function formatTime(time: { 年: number; 月: number; 日: number; 时辰: strin
 </script>
 
 <style scoped>
+.xy-asset-claim-hint {
+  font-size: 0.85em;
+  opacity: 0.7;
+  margin: 0.4rem 0 0.8rem;
+}
+.xy-facility-output {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.75rem 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.xy-facility-date {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
 .xy-asset-reputation,
 .xy-facility-metadata {
   display: flex;

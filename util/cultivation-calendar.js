@@ -96,10 +96,21 @@ export function normalizeCalendarState(input) {
   if (input.固定资产) result.固定资产 = mapRecords(input.固定资产, raw => {
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return raw;
     const asset = { ...raw };
-    if (asset.设施) asset.设施 = mapRecords(asset.设施, rawFacility => {
-      if (!rawFacility || typeof rawFacility !== 'object' || Array.isArray(rawFacility)) return rawFacility;
-      const facility = { ...rawFacility };
-      if (facility.上次收取日期 != null) facility.上次收取日期 = normalizeOptional(facility.上次收取日期);
+    const facilities = asset.设施 ?? asset.建筑 ?? asset.功能区;
+    if (facilities) asset.设施 = mapRecords(facilities, rawFacility => {
+      const facility = rawFacility && typeof rawFacility === 'object' && !Array.isArray(rawFacility)
+        ? { ...rawFacility } : typeof rawFacility === 'string' ? { 效果: rawFacility } : {};
+      const dates = [facility.上次收取日期, facility.上次收取, facility.收取日期, facility.建造时间, facility.投产时间];
+      const effects = facility.效果 ?? facility.效用 ?? facility.功能;
+      const summary = typeof effects === 'string' ? effects : effects?.概况;
+      const recorded = typeof summary === 'string'
+        ? summary.match(/(?:建造|建成|投产)(?:时间)?[:：于\s]*([^；;，,]+)/)?.[1]?.trim() : undefined;
+      dates.push(recorded);
+      const date = dates.find(value => {
+        const parts = calendarParts(value);
+        return Number.isFinite(cultivationYear(parts.年 ?? parts.year, world));
+      });
+      facility.上次收取日期 = { ...result.时间, ...cultivationDate(date, world, result.时间) };
       return facility;
     });
     return asset;

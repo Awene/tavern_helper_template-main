@@ -18,6 +18,7 @@ import {
   rootTierCanonical,
   realmLabel,
   resolveStorySettings,
+  startingSectNameError,
   describeSettings,
 } from './config';
 import { applyApiMode } from './apiMode';
@@ -32,6 +33,8 @@ function resolveStory(sel: Selection): StoryOption | undefined {
   const custom = sel.customStory;
   if (custom && custom.id === id) return customStoryToOption(custom);
   const story = findStory(id);
+  const nameError = startingSectNameError(story, sel);
+  if (nameError) throw new Error(nameError);
   if (story && !isStoryAvailable(story, sel)) throw new Error('当前出生地或人物条件与剧本不符，请重新选择开局剧本。');
   return story ? { ...story, settings: resolveStorySettings(story, sel) } : undefined;
 }
@@ -273,6 +276,18 @@ export function buildInitialStatData(sel: Selection): Record<string, any> {
       灵气: { 现值: baseMp, 上限: baseMp },
       遁速: baseDun,
     },
+    固定资产: story?.初始宗门 ? {
+      [宗门]: {
+        类型: '宗门', 名气: story.初始宗门.名气, 人员规模: story.初始宗门.人员规模,
+        所在地: { 世界: location?.世界 || LOCATION_WORLD, 地域: location?.地域 || '中原', 具体地点: [生态名, 宗门].filter(Boolean).join('-') },
+        现状: story.初始宗门.现状,
+        设施: Object.fromEntries(Object.entries(story.初始宗门.设施).map(([name, facility]) => [name, {
+          ...facility, 效果: { ...facility.效果 },
+          上次收取日期: { ...起始时间, 时辰: 起始时间.时辰 || '辰时' },
+        }])),
+        分配人物: [],
+      },
+    } : {},
     任务: { 聚焦任务: null, 已完成任务: [], 条目: {} },
     地点: {
       世界: location?.世界 || LOCATION_WORLD,
@@ -481,6 +496,11 @@ export function generateAIPrompt(sel: Selection): string {
     lines.push(`【开局剧本】${story.name}${story.类型 ? `（${story.类型}）` : ''}`);
     if (story.subtitle) lines.push(story.subtitle);
     if (story.desc) lines.push(story.desc);
+    if (story.初始宗门) {
+      lines.push('开局宗门：' + story.settings.宗门 + '；你已继任宗主，师父魂灯已灭，现有成员为你与师妹。');
+      lines.push('初始资产：' + JSON.stringify(buildInitialStatData(sel).固定资产));
+      lines.push('师妹登场时生成其姓名与人物资料，将姓名加入宗门分配人物。');
+    }
     if (story.body) {
       lines.push('');
       lines.push('—— 正文 ——');

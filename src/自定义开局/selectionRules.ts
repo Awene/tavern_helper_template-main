@@ -1,6 +1,6 @@
 import { cultivationDate } from '../../util/cultivation-calendar.js';
 import { findLocation, isLocationAvailable, isSectAvailable } from './config/locations';
-import { customStoryToOption, findStory, isCustomStoryValid, isStoryAvailable } from './config/stories';
+import { customStoryToOption, findStory, startingSectNameError, isCustomStoryValid, isStoryAvailable } from './config/stories';
 import type { Selection } from './types';
 
 export function isSelectedStoryValid(sel: Selection): boolean {
@@ -44,5 +44,5 @@ export function selectionConflict(sel: Selection): string | undefined {
   if (!isLocationAvailable(sel.locationId, sel.种族)) return '请重新选择出生地：冥界仅限冥族，地球仅限人族。';
   if (!isSectAvailable(sel.门派归属, sel.locationId)) return '门派或培养机构与开局世界不符，请重新选择。';
   if (!isSelectedStoryValid(sel)) return '开局剧本未选择或条件不符，请重新选择。';
-  return undefined;
+  return startingSectNameError(findStory(sel.storyId), sel);
 }

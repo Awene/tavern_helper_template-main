@@ -11,8 +11,8 @@ export const COMPONENT_BASELINE = {
   helper: '4.9.3',
   template: '1.17.8.1',
   router: '0.19.6',
-  preset: '2026.10.22',
-  routerConfig: '2026.10.22',
+  preset: '2026.11.06',
+  routerConfig: '2026.11.06',
 };
 export function compareComponentVersion(current: string, expected: string): number | null {
   const parse = (s: string) =>

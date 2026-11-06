@@ -161,6 +161,7 @@
             <div class="xs-story-head">
               <span v-if="s.剧情" class="xs-pill xs-pill-plot">★ 剧情</span>
               <span class="xs-story-name">{{ s.name }}</span>
+              <span v-if="s.初始宗门" class="xs-pill xs-pill-gold">初始拥有宗门</span>
               <span v-if="s.类型" class="xs-pill xs-pill-jade">{{ s.类型 }}</span>
               <span v-if="s.recommend" class="xs-pill xs-pill-cinnabar">推荐：{{ s.recommend }}</span>
               <span v-for="t in s.tags || []" :key="t" class="xs-pill xs-pill-gold">{{ t }}</span>
@@ -216,12 +217,20 @@
       </div>
     </section>
 
+    <section v-if="selectedSectStory" class="xs-custom-section">
+      <h3 class="xs-section-title">开局宗门 · {{ selectedSectStory.name }}</h3>
+      <label for="starting-sect-name">宗门名称</label>
+      <input id="starting-sect-name" v-model="store.selection.开局宗门名称" class="xs-input"
+        maxlength="30" placeholder="请为你接掌的宗门命名" />
+      <p>你将以宗主身份开局，宗门及初始设施会写入固定资产。</p>
+      <p v-if="sectNameError" role="status">{{ sectNameError }}</p>
+    </section>
     <div class="xs-actions">
       <button type="button" class="xs-btn" @click="store.prev">返回</button>
       <button
         type="button"
         class="xs-btn xs-btn-primary"
-        :disabled="!hasValidSelectedStory || store.overBudget"
+        :disabled="!hasValidSelectedStory || !!sectNameError || store.overBudget"
         @click="store.next"
       >
         继续 ▸
@@ -231,6 +240,7 @@
 </template>
 
 <script setup lang="ts">
+import { findStory, startingSectNameError } from '../config/stories';
 import { cultivationYear } from '../../../util/cultivation-calendar.js';
 import { computed, reactive, ref, watch } from 'vue';
 import type { CustomStory, StoryKind, StoryOption, SmallRealm } from '../types';
@@ -305,6 +315,11 @@ watch(filteredStories, () => {
   currentPage.value = 1;
 });
 
+const selectedSectStory = computed(() => {
+  const story = findStory(store.selection.storyId);
+  return story?.初始宗门 ? story : undefined;
+});
+const sectNameError = computed(() => startingSectNameError(selectedSectStory.value, store.selection));
 const hasValidSelectedStory = computed(() => isSelectedStoryValid(store.selection));
 
 // 自创剧本按宗门字段推导分类（散修→通用，其余→特殊）。

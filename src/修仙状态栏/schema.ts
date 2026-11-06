@@ -700,6 +700,34 @@ const normalizeNamedRecord = (input: unknown, fallbackName: string): Record<stri
   );
 };
 
+// 资产文本保留结构化误输入的内容，不执行其中的公式。
+function normalizeAssetText(input: unknown, fallback = '无'): string {
+  if (input == null || input === '') return fallback;
+  if (typeof input === 'string') {
+    const text = input.trim();
+    if (/^[{[]/.test(text)) {
+      try { return normalizeAssetText(JSON.parse(text), fallback); } catch { /* 普通文本按原文保留。 */ }
+    }
+    return text || fallback;
+  }
+  if (Array.isArray(input)) return input.map(value => normalizeAssetText(value, '')).filter(Boolean).join('；') || fallback;
+  if (typeof input === 'object') return Object.entries(input)
+    .map(([key, value]) => key + '：' + normalizeAssetText(value, '')).join('；') || fallback;
+  return String(input);
+}
+function normalizeAssetEffects(input: unknown): Record<string, string> {
+  if (input == null || input === '') return {};
+  if (typeof input === 'string') {
+    try { return normalizeAssetEffects(JSON.parse(input)); } catch { /* 普通效果文本按原文保留。 */ }
+    return { 说明: input };
+  }
+  if (Array.isArray(input)) return Object.fromEntries(input.map((value, index) => [
+    '效果' + (index + 1), normalizeAssetText(value, ''),
+  ]));
+  if (typeof input !== 'object') return { 说明: String(input) };
+  return Object.fromEntries(Object.entries(input).map(([key, value]) => [key, normalizeAssetText(value, '')]));
+}
+
 // 旧设施曾将境界、品质写在“概况”中；只补元数据，保留原效果与产出。
 const normalizeFacilityMetadata = (value: Record<string, unknown>) => {
   const effects = value.效果 ?? value.效用 ?? value.功能;
@@ -710,12 +738,12 @@ const normalizeFacilityMetadata = (value: Record<string, unknown>) => {
         ? String((effects as Record<string, unknown>).概况 ?? '')
         : '';
   const realm =
-    String(value.境界 ?? '').trim() ||
+    normalizeAssetText(value.境界 ?? value.设施境界, '').trim() ||
     summary.match(/境界\s*[:：=]\s*([^\s，,；;|/／]+)/)?.[1] ||
     summary.match(/(?:凡人|炼气|练气|筑基|金丹|结丹|元婴|化神|返虚|合体|大乘|渡劫)(?:初期|前期|中期|后期|圆满|巅峰|期)?/)?.[0] ||
     '未定';
   const quality =
-    String(value.品质 ?? '').trim().match(/^([凡黄玄地天])(?:品|阶)?$/)?.[1] ||
+    String(value.品质 ?? value.品阶 ?? '').trim().match(/^([凡黄玄地天])(?:品|阶|级)?$/)?.[1] ||
     summary.match(/品质\s*[:：=]\s*([凡黄玄地天])(?:品|阶)?/)?.[1] ||
     summary.match(/([凡黄玄地天])(?:品|阶)/)?.[1] ||
     '凡';
@@ -737,9 +765,9 @@ const AssetFacilitySchema = z.preprocess(
   z.object({
     境界: looseString('未定').prefault('未定'),
     品质: QualityEnum.prefault('凡'),
-    效果: z.preprocess(normalizeStringRecord, z.record(z.string(), z.string())).prefault({}),
-    每月产出: looseString('无').prefault('无'),
-    上次收取日期: AssetTimeSchema,
+    效果: z.preprocess(normalizeAssetEffects, z.record(z.string(), z.string())).prefault({}),
+    每月产出: z.preprocess(value => normalizeAssetText(value), z.string()).prefault('无'),
+    上次收取日期: z.preprocess(value => normalizeAssetTime(value) ?? {}, TimeSchema).prefault({}),
   }),
 );
 
