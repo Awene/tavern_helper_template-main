@@ -8,7 +8,7 @@ const check = (v, msg) => {
 };
 const general = ['story-zayou', 'story-yinyu', 'story-fuchou', 'story-dadao', 'story-fan-zhigen', 'story-fan-renjian', 'story-wanderer-auction'];
 const removed = ['story-tianxuan-zayou', 'story-lingfeng-yueye', 'story-liuli-baicao', 'story-nanjiang-fox'];
-check(config.stories.length === 24, '24 stories including Earth school and city openings');
+check(config.stories.length === 25, '25 stories including sect succession opening');
 for (const id of general.filter(id => id !== 'story-wanderer-auction')) {
   const story = config.findStory(id);
   check(story.body.length >= (id === 'story-zayou' ? 200 : 300) && story.constraints.必须人形, id + ' concrete scene and matching shape constraint');
@@ -16,7 +16,7 @@ for (const id of general.filter(id => id !== 'story-wanderer-auction')) {
 check(!config.findStory('story-zayou').body.includes('铜环') && config.findStory('story-zayou').body.endsWith('你的灵根资质开始显现。'), 'root-testing opening ends at the test');
 for (const id of removed) check(!config.findStory(id), 'deleted story absent');
 for (const story of config.stories) {
-  check(story.类型 === (general.includes(story.id) || story.id.startsWith('story-earth-') ? '通用' : '特殊'), story.id + ' category');
+  check(story.类型 === (general.includes(story.id) || !!story.初始宗门 || story.id.startsWith('story-earth-') ? '通用' : '特殊'), story.id + ' category');
   check(story.constraints.世界?.length > 0, story.id + ' explicit worlds');
   const c = story.constraints || {};
   store.resetAll();
@@ -33,6 +33,7 @@ for (const story of config.stories) {
   check(config.isStoryAvailable(story, sel), story.id + ' reachable');
   check(config.whyStoryUnavailable(story, sel).length === 0, story.id + ' reasons consistent');
   store.selectStory(story.id);
+  if (story.初始宗门) store.selection.开局宗门名称 = '青灯宗';
   const data = exporter.buildInitialStatData(store.selection);
   const prompt = exporter.generateAIPrompt(store.selection);
   check(!/凡人(?:初期|中期|后期)/.test(prompt), story.id + ' no mortal subrealm in prompt');
@@ -99,7 +100,7 @@ if (process.argv.includes('--csv-patch')) {
     requirements.push('出生地须对种族开放（冥界仅冥族）');
     const notes = [];
     if (s.id === 'story-earth-dongfeng') notes.push('修仙历7026-01-01；18岁人族学生，原学校检测后自愿转学；北京报到首日，凡人且有灵根；身份按新生导出');
-    if (s.类型 === '通用') notes.push('正文适配所选界域、种族与形态；宗门沿用玩家选择');
+    if (s.类型 === '通用' && !s.初始宗门) notes.push('正文适配所选界域、种族与形态；宗门沿用玩家选择');
     if (s.id === 'story-fan-zhigen') notes.push('无灵根凡人，秘法尚未施行；植根及修炼在后续剧情结算');
     if (s.id === 'story-fan-renjian') notes.push('凡人不等于人族、凡体或无灵根；不设小境界');
     if (s.id === 'story-liuli-shennong') notes.push('神农血脉限定人族；剧情含引气过程，开局变量为炼气初期');
@@ -118,7 +119,8 @@ if (process.argv.includes('--csv-patch')) {
       s.recommend,
       s.desc,
       `${t.年}-${String(t.月).padStart(2, '0')}-${String(t.日).padStart(2, '0')} ${t.时辰 || ''}`,
-      s.类型 === '通用' ? '随所选门派；未选为散修' : s.settings.宗门,
+      s.初始宗门 ? '玩家填写宗门名称；初始为宗主' : s.类型 === '通用' ? '随所选门派；未选为散修' : s.settings.宗门,
+      s.初始宗门 ? '是' : '否',
       config.realmLabel(s.settings.初始境界),
       requirements.join('；'),
       c.种族?.join(' / ') || '不限主种族',
@@ -128,6 +130,7 @@ if (process.argv.includes('--csv-patch')) {
       c.剧本指定种类 || '无',
       notes.join('；'),
       (s.tags || []).join(' / '),
+      (c.世界 || [s.settings.世界 || '凡界', '灵界', '冥界']).join(' / '),
     ]
       .map(quote)
       .join(',');

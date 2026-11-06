@@ -82,7 +82,7 @@ for (const facilities of [
   for (const schema of schemas) {
     const state = schema.parse({ 固定资产: { 青云宗: { 设施: facilities } } });
     equal(state.固定资产.青云宗.设施.灵田, {
-      境界: '化神初期', 品质: '天', 效果: { 说明: '化神初期，天品' }, 每月产出: '无', 上次收取日期: null,
+      境界: '化神初期', 品质: '天', 效果: { 说明: '化神初期，天品' }, 每月产出: '无', 上次收取日期: state.时间,
     }, '旧字符串/数组设施兼容');
     equal(schema.parse(state).固定资产, state.固定资产, '字符串迁移后再次解析稳定');
   }
@@ -93,8 +93,26 @@ for (const rawFacility of [undefined, null, {}, '']) {
     equal(state.固定资产.青云宗.名气, 0, '旧资产名气默认值');
     equal(state.固定资产.青云宗.设施.灵田, {
       境界: '未定', 品质: '凡', 效果: {},
-      每月产出: '无', 上次收取日期: null,
+      每月产出: '无', 上次收取日期: state.时间,
     }, '无元数据设施不凭空指定境界');
+  }
+}
+// 旧空日期回退到建造时间或当前时间，已有领取日期优先保留。
+for (const schema of schemas) {
+  const now = { 年: 42, 月: 9, 日: 6, 时辰: '辰时' };
+  for (const [record, expected] of [
+    [{ 上次收取日期: null }, now],
+    [{ 上次收取日期: null, 建造时间: claimDate }, claimDate],
+    [{ 上次收取日期: '从未', 投产时间: claimDate }, claimDate],
+    [{ 上次收取日期: claimDate, 建造时间: now }, claimDate],
+    [{ 收取日期: claimDate }, claimDate],
+  ]) {
+    const source = { 时间: now, 固定资产: { 宗门: { 设施: { 灵田: record } } } };
+    const before = structuredClone(source);
+    const state = schema.parse(source);
+    equal(state.固定资产.宗门.设施.灵田.上次收取日期, expected, '领取日期迁移优先级');
+    equal(schema.parse(state).固定资产, state.固定资产, '日期迁移幂等');
+    equal(source, before, '日期迁移不修改原存档');
   }
 }
 for (const [reputation, expected] of [[undefined, 0], [null, 0], ['', 0], [-7, 0], ['-12点', 0], [12.9, 12], ['21.8点', 21]]) {
@@ -147,4 +165,49 @@ equal(modified.固定资产.青云宗.名气, 150, '单字段写入仍进行数�
 const addedAsset = runCommands({}, [command('add', '/固定资产/青云宗', asset)]);
 equal(addedAsset.固定资产.青云宗, asset, '完整宗门插入的两级白名单均保留新字段');
 
+// 异型产出/效果保持内容，旧字段迁移后可直接接收增量更新。
+const legacyAsset = {
+  类型: '宗门', 声望: '125点', 建筑: {
+    灵田: { 设施境界: '筑基中期', 品阶: '玄级', 功能: [{ 培育: '增加3%' }],
+      月产出: { 灵草: '2株/月', 名气: '+2/月' },
+      效果: { 概况: '三亩；投产时间：修仙历31年7月13日 酉时' } },
+  }, 所属人物: ['张三'],
+};
+for (const schema of schemas) {
+  const state = schema.parse({ 时间: { 年: 40, 月: 1, 日: 1 }, 固定资产: { 青云宗: legacyAsset } });
+  const field = state.固定资产.青云宗.设施.灵田;
+  equal(field.境界, '筑基中期', '设施境界别名迁移');
+  equal(field.品质, '玄', '品质别名及后缀兼容');
+  equal(field.每月产出, '灵草：2株/月；名气：+2/月', '对象产出转为可读文本');
+  equal(field.上次收取日期, claimDate, '从旧概况提取投产日期');
+  equal(state.固定资产.青云宗.分配人物, ['张三'], '旧人员字段保留');
+  equal(schema.parse(state).固定资产, state.固定资产, '迁移重读无漂移');
+  const outputs = schema.parse({ 固定资产: { 宗门: { 设施: {
+    工坊: { 每月产出: ['灵石20/月', { 丹药: '1枚/月' }], 效果: [{ 炼丹: '增加2%' }, null] },
+  } } } }).固定资产.宗门.设施.工坊;
+  equal(outputs.每月产出, '灵石20/月；丹药：1枚/月', '数组产出内容保留');
+  equal(outputs.效果, { 效果1: '炼丹：增加2%', 效果2: '' }, '对象数组效果前后端一致');
+}
+const rawVariables = { stat_data: { 固定资产: { 青云宗: legacyAsset } } };
+const aliasCommand = command('replace', '/固定资产/青云宗/设施/灵田/品阶', '天');
+preprocess(rawVariables, [aliasCommand]);
+equal(rawVariables.stat_data.固定资产.青云宗.设施.灵田.品质, '玄', '执行命令前旧设施已迁移');
+equal(splitPath(aliasCommand.args[0]).at(-1), '品质', '增量品质别名修正');
+const missingDateReplacement = { ...facility };
+delete missingDateReplacement.上次收取日期;
+equal(runCommands(input, [command('replace', '/固定资产/青云宗/设施/灵田', missingDateReplacement)])
+  .固定资产.青云宗.设施.灵田.上次收取日期, claimDate, '完整替换漏日期保留旧记录');
+const badDates = [null, '乱码'];
+for (const badDate of badDates) {
+  const variables = { stat_data: backend.parse(input) };
+  const commands = [command('replace', '/固定资产/青云宗/设施/灵田/上次收取日期', badDate)];
+  preprocess(variables, commands);
+  equal(commands.length, 0, '无效日期命令单独丢弃');
+  equal(variables.stat_data.固定资产.青云宗.设施.灵田.上次收取日期, claimDate, '无效日期保留旧领取起点');
+}
+const newTime = { 年: 50, 月: 3, 日: 2, 时辰: '辰时' };
+equal(runCommands({}, [
+  command('replace', '/时间', newTime),
+  command('add', '/固定资产/新宗门', { 设施: { 灵田: missingDateReplacement } }),
+]).固定资产.新宗门.设施.灵田.上次收取日期, newTime, '同轮推进时间再建造以更新后的时间初始化');
 console.log(`PASS: ${checks} asset schema, migration, nonmutation, legacy calendar and JSONPatch checks.`);

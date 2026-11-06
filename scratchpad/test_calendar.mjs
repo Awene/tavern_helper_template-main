@@ -32,7 +32,7 @@ for (const input of [undefined, null, {}, { 年: '乱码', 月: 99, 日: -1 }]) 
 for (const schema of [cardSchema, schemaModule.exports.Schema]) {
   const noDate = schema.parse({ 地点: { 世界: '地球' }, 任务: { 测试: { 截止时间: '无' } }, 固定资产: { 测试: { 设施: { 工坊: { 上次收取日期: '从未' } } } } });
   equal(noDate.任务.条目.测试.截止时间, null, '无截止日期仍为空');
-  equal(noDate.固定资产.测试.设施.工坊.上次收取日期, null, '从未收取不能变为开局日期');
+  equal(noDate.固定资产.测试.设施.工坊.上次收取日期, JSON.parse(JSON.stringify(noDate.时间)), '旧空收取日期回填当前时间');
   for (const time of ['公元2026年1月2日 辰时', '2026-01-02', { 年: '公元2026年', 月: 1, 日: 2 }, { 年: 2026, 月: 1, 日: 2 }]) {
     const result = schema.parse({ 地点: { 世界: '地球' }, 时间: time, 寿元: { 生日: 2008 },
       传闻: { 上次世界推进时间点: '公历2026年1月1日' },
